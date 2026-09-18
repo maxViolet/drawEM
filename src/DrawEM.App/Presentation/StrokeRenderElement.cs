@@ -1,35 +1,41 @@
 using System.Windows;
 using System.Windows.Media;
 using DrawEM.App.Domain;
+using Brush = System.Windows.Media.Brush;
+using Brushes = System.Windows.Media.Brushes;
+using Pen = System.Windows.Media.Pen;
 
 namespace DrawEM.App.Presentation;
 
 public sealed class StrokeRenderElement : FrameworkElement
 {
-    private DrawingState state = new(Array.Empty<Stroke>(), null, false);
-    private Point origin;
+    private readonly DrawingVisual visual = new();
 
-    public void UpdateState(DrawingState newState, Point windowOrigin)
+    public StrokeRenderElement()
     {
-        state = newState;
-        origin = windowOrigin;
-        InvalidateVisual();
+        AddVisualChild(visual);
     }
 
-    protected override void OnRender(DrawingContext drawingContext)
+    protected override int VisualChildrenCount => 1;
+
+    protected override Visual GetVisualChild(int index) => visual;
+
+    public void UpdateState(DrawingState state, PhysicalToLocalTransform transform)
     {
+        using var drawingContext = visual.RenderOpen();
+
         foreach (var stroke in state.CompletedStrokes)
         {
-            DrawStroke(drawingContext, stroke);
+            DrawStroke(drawingContext, stroke, transform);
         }
 
         if (state.ActiveStroke is { } active)
         {
-            DrawStroke(drawingContext, active);
+            DrawStroke(drawingContext, active, transform);
         }
     }
 
-    private void DrawStroke(DrawingContext drawingContext, Stroke stroke)
+    private static void DrawStroke(DrawingContext drawingContext, Stroke stroke, PhysicalToLocalTransform transform)
     {
         if (stroke.Points.Count < 2)
         {
@@ -45,11 +51,12 @@ public sealed class StrokeRenderElement : FrameworkElement
 
         for (var i = 1; i < stroke.Points.Count; i++)
         {
-            drawingContext.DrawLine(pen, ToWpfPoint(stroke.Points[i - 1]), ToWpfPoint(stroke.Points[i]));
+            drawingContext.DrawLine(
+                pen,
+                transform.ToLocalPoint(stroke.Points[i - 1]),
+                transform.ToLocalPoint(stroke.Points[i]));
         }
     }
-
-    private Point ToWpfPoint(ScreenPoint point) => new(point.X - origin.X, point.Y - origin.Y);
 
     private static Brush ToBrush(DrawingColor color) => color switch
     {

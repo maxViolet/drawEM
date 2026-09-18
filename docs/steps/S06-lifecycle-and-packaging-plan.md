@@ -62,7 +62,7 @@ This plan implements only roadmap step 6. Mixed-DPI rendering belongs to step
 
    Create `Properties/PublishProfiles/win-x64.pubxml` with Release,
    `win-x64`, self-contained, single-file publishing, and trimming disabled.
-   Add `docs/SMOKE-TEST.md` with the command and manual checks below.
+   Add `../SMOKE-TEST.md` with the command and manual checks below.
 
 ## Files expected to change
 
@@ -96,7 +96,7 @@ This plan implements only roadmap step 6. Mixed-DPI rendering belongs to step
 4. Choose tray `Exit` and confirm the overlay disappears.
 5. Confirm `DrawEM.App.exe` is absent from Task Manager after exit.
 
-Record these results in `docs/SMOKE-TEST.md`. They are manual verification,
+Record these results in `../SMOKE-TEST.md`. They are manual verification,
 not unit-test evidence.
 
 ## Verification order

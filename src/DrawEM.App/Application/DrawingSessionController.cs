@@ -1,21 +1,7 @@
-namespace DrawEM.App.Domain;
+using System.Collections.ObjectModel;
+using DrawEM.App.Domain;
 
-public readonly record struct ScreenPoint(int X, int Y);
-
-public enum DrawingColor
-{
-    Orange,
-}
-
-public sealed record Stroke(
-    IReadOnlyList<ScreenPoint> Points,
-    DrawingColor Color,
-    int Thickness);
-
-public sealed record DrawingState(
-    IReadOnlyList<Stroke> CompletedStrokes,
-    Stroke? ActiveStroke,
-    bool IsDrawModeActive);
+namespace DrawEM.App.Application;
 
 public sealed class DrawingSessionController
 {
@@ -24,7 +10,7 @@ public sealed class DrawingSessionController
     private List<ScreenPoint>? activePoints;
     private bool drawModeActive;
 
-    public IReadOnlyList<Stroke> CompletedStrokes => completedStrokes;
+    public IReadOnlyList<Stroke> CompletedStrokes => completedStrokes.AsReadOnly();
 
     public event Action<DrawingState>? StateChanged;
     public event Action<bool>? InputCaptureRequested;
@@ -77,7 +63,7 @@ public sealed class DrawingSessionController
         if (activePoints is not null)
         {
             completedStrokes.Add(new Stroke(
-                activePoints.ToArray(),
+                Snapshot(activePoints),
                 DrawingColor.Orange,
                 StrokeThickness));
             activePoints = null;
@@ -97,8 +83,10 @@ public sealed class DrawingSessionController
     {
         var active = activePoints is null
             ? null
-            : new Stroke(activePoints.ToArray(), DrawingColor.Orange, StrokeThickness);
+            : new Stroke(Snapshot(activePoints), DrawingColor.Orange, StrokeThickness);
 
-        StateChanged?.Invoke(new DrawingState(completedStrokes.ToArray(), active, drawModeActive));
+        StateChanged?.Invoke(new DrawingState(Snapshot(completedStrokes), active, drawModeActive));
     }
+
+    private static ReadOnlyCollection<T> Snapshot<T>(List<T> source) => new(source.ToArray());
 }

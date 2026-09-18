@@ -1,6 +1,7 @@
+using DrawEM.App.Application;
 using DrawEM.App.Domain;
 
-namespace DrawEM.Tests;
+namespace DrawEM.Tests.Application;
 
 public class DrawingSessionControllerTests
 {
