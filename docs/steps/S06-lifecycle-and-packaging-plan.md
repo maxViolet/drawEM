@@ -68,16 +68,16 @@ This plan implements only roadmap step 6. Mixed-DPI rendering belongs to step
 
 | File | Change |
 | --- | --- |
-| `src/DrawEM.App/App.xaml.cs` | Compose lifecycle and startup rollback. |
-| `src/DrawEM.App/DrawEM.App.csproj` | Enable Windows Forms for `NotifyIcon`. |
-| `src/DrawEM.App/Infrastructure/TrayApplication.cs` | Add lifecycle owner and test seams. |
-| `src/DrawEM.App/Infrastructure/NotifyIconTrayHost.cs` | Add tray implementation. |
-| `src/DrawEM.App/Infrastructure/WpfApplicationLifetime.cs` | Adapt WPF application shutdown. |
-| `src/DrawEM.App/Presentation/OverlayWindow.xaml.cs` | Expose overlay close lifecycle seam. |
-| `tests/DrawEM.Tests/Infrastructure/TrayApplicationTests.cs` | Add lifecycle behavior tests. |
-| `src/DrawEM.App/Properties/PublishProfiles/win-x64.pubxml` | Add self-contained publish settings. |
-| `docs/SMOKE-TEST.md` | Add manual executable checks. |
-| `README.md` | Link publish command and smoke test. |
+| `../../src/DrawEM.App/App.xaml.cs` | Compose lifecycle and startup rollback. |
+| `../../src/DrawEM.App/DrawEM.App.csproj` | Enable Windows Forms for `NotifyIcon`. |
+| `../../src/DrawEM.App/Infrastructure/TrayApplication.cs` | Add lifecycle owner and test seams. |
+| `../../src/DrawEM.App/Infrastructure/NotifyIconTrayHost.cs` | Add tray implementation. |
+| `../../src/DrawEM.App/Infrastructure/WpfApplicationLifetime.cs` | Adapt WPF application shutdown. |
+| `../../src/DrawEM.App/Presentation/OverlayWindow.xaml.cs` | Expose overlay close lifecycle seam. |
+| `../../tests/DrawEM.Tests/Infrastructure/TrayApplicationTests.cs` | Add lifecycle behavior tests. |
+| `../../src/DrawEM.App/Properties/PublishProfiles/win-x64.pubxml` | Add self-contained publish settings. |
+| `../SMOKE-TEST.md` | Add manual executable checks. |
+| `../../README.md` | Link publish command and smoke test. |
 
 ## Acceptance criteria
 
