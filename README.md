@@ -32,6 +32,17 @@ then continue. The ordered plan is in [docs/ROADMAP.md](docs/ROADMAP.md).
 The module boundaries and runtime data flow are in
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
+## Publish and smoke test
+
+Publish a self-contained x64 executable with:
+
+```powershell
+dotnet publish .\src\DrawEM.App\DrawEM.App.csproj -c Release -p:PublishProfile=win-x64
+```
+
+Run the manual checks in [docs/SMOKE-TEST.md](docs/SMOKE-TEST.md) against the
+published executable.
+
 ## Project layout
 
 ```text
