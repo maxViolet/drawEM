@@ -11,6 +11,8 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
 
     public event Action<int>? KeyUp;
 
+    public event Func<int, bool>? KeyActivity;
+
     public Win32KeyboardHookSource()
     {
         proc = HookCallback;
@@ -39,6 +41,11 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
             {
                 KeyUp?.Invoke(vkCode);
             }
+
+            if (ShouldSuppressKey(vkCode))
+            {
+                return new IntPtr(1);
+            }
         }
 
         return NativeMethods.CallNextHookEx(hookHandle, nCode, wParam, lParam);
@@ -52,4 +59,11 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
             hookHandle = IntPtr.Zero;
         }
     }
+
+    private bool ShouldSuppressKey(int vkCode) =>
+        KeyActivity?
+            .GetInvocationList()
+            .Cast<Func<int, bool>>()
+            .Any(handler => handler(vkCode))
+        ?? false;
 }

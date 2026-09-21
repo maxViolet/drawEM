@@ -86,14 +86,44 @@ public class GlobalShortcutAdapterTests
         Assert.True(Assert.Single(states).IsDrawModeActive);
     }
 
+    [Fact]
+    public void DrawMode_SuppressesNonShortcutKeys_ButAllowsDrawingChord()
+    {
+        var source = new FakeKeyboardHookSource();
+        var controller = new DrawingSessionController();
+        _ = new GlobalShortcutAdapter(source, controller);
+
+        source.PressKey(VirtualKeys.LeftControl);
+        source.PressKey(VirtualKeys.LeftMenu);
+        source.PressKey(VirtualKeys.Z);
+
+        Assert.False(source.ShouldSuppressKey(VirtualKeys.LeftControl));
+        Assert.False(source.ShouldSuppressKey(VirtualKeys.LeftMenu));
+        Assert.False(source.ShouldSuppressKey(VirtualKeys.Z));
+        Assert.True(source.ShouldSuppressKey(VirtualKeys.A));
+
+        source.ReleaseKey(VirtualKeys.Z);
+
+        Assert.False(source.ShouldSuppressKey(VirtualKeys.A));
+    }
+
     private sealed class FakeKeyboardHookSource : IKeyboardHookSource
     {
         public event Action<int>? KeyDown;
 
         public event Action<int>? KeyUp;
 
+        public event Func<int, bool>? KeyActivity;
+
         public void PressKey(int vkCode) => KeyDown?.Invoke(vkCode);
 
         public void ReleaseKey(int vkCode) => KeyUp?.Invoke(vkCode);
+
+        public bool ShouldSuppressKey(int vkCode) =>
+            KeyActivity?
+                .GetInvocationList()
+                .Cast<Func<int, bool>>()
+                .Any(handler => handler(vkCode))
+            ?? false;
     }
 }

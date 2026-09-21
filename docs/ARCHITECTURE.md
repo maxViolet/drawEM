@@ -59,17 +59,18 @@ list itself.
 
 ```text
 Ctrl+Alt+Z pressed
-  → Win32KeyboardHookAdapter
-  → DrawingSessionController starts a drawing session
+  → Win32KeyboardHookAdapter starts a drawing session
+  → Win32MouseHookAdapter forwards physical pointer movement
+  → DrawingSessionController appends ScreenPoint values to the active stroke
   → immutable DrawingState is published on the WPF Dispatcher
-  → OverlayWindow turns off click-through and receives mouse movement
-  → controller appends ScreenPoint values to the active stroke
   → OverlayWindow redraws the current state through one DrawingVisual
 ```
 
-When `Ctrl+Alt+Z` is released, the controller completes the active stroke.
-The mouse hook suppresses pointer-button messages during draw mode, so clicks
-do not reach the application underneath. The overlay is always click-through.
+The `Win32MouseHookAdapter` forwards physical mouse movement to the controller.
+When `Ctrl+Alt+Z` is released, the controller completes the active stroke. The
+mouse hook suppresses pointer-button messages and the keyboard hook suppresses
+non-chord keys during draw mode, so clicks and typed symbols do not reach the
+application underneath. The overlay is always click-through.
 
 ### Clear
 
@@ -85,7 +86,7 @@ Ctrl+Alt+X pressed
 
 ```text
 Tray Exit
-  → unregister keyboard hook
+  → unregister keyboard and mouse hooks
   → close overlay
   → dispose tray icon
   → terminate application

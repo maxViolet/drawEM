@@ -21,6 +21,7 @@ public sealed class GlobalShortcutAdapter
         this.dispatch = dispatch;
         source.KeyDown += OnKeyChanged;
         source.KeyUp += OnKeyUp;
+        source.KeyActivity += ShouldSuppressKey;
     }
 
     private void OnKeyChanged(int vkCode)
@@ -68,4 +69,12 @@ public sealed class GlobalShortcutAdapter
 
     private bool IsAltDown() =>
         pressedKeys.Contains(VirtualKeys.LeftMenu) || pressedKeys.Contains(VirtualKeys.RightMenu);
+
+    private bool ShouldSuppressKey(int vkCode) =>
+        drawModeActive && vkCode is not (
+            VirtualKeys.LeftControl or
+            VirtualKeys.RightControl or
+            VirtualKeys.LeftMenu or
+            VirtualKeys.RightMenu or
+            VirtualKeys.Z);
 }
