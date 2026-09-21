@@ -1,12 +1,15 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Threading;
 using DrawEM.App.Domain;
+using DrawEM.App.Infrastructure;
+using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 
 namespace DrawEM.App.Presentation;
 
-public partial class OverlayWindow : Window, IOverlayView
+public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
 {
     private readonly StrokeRenderElement renderElement = new();
     private readonly object renderLock = new();
@@ -31,15 +34,19 @@ public partial class OverlayWindow : Window, IOverlayView
 
     private void OnMouseMove(object sender, MouseEventArgs e)
     {
-        var position = e.GetPosition(this);
-        PointerMoved?.Invoke(new ScreenPoint((int)(Left + position.X), (int)(Top + position.Y)));
+        if (!NativeMethods.GetCursorPos(out var cursor))
+        {
+            return;
+        }
+
+        PointerMoved?.Invoke(new ScreenPoint(cursor.X, cursor.Y));
     }
 
     public void Render(DrawingState state)
     {
         if (CheckAccess())
         {
-            renderElement.UpdateState(state, new Point(Left, Top));
+            renderElement.UpdateState(state, GetPhysicalToLocalTransform());
             return;
         }
 
@@ -78,7 +85,19 @@ public partial class OverlayWindow : Window, IOverlayView
             renderScheduled = false;
         }
 
-        renderElement.UpdateState(state, new Point(Left, Top));
+        renderElement.UpdateState(state, GetPhysicalToLocalTransform());
+    }
+
+    private PhysicalToLocalTransform GetPhysicalToLocalTransform()
+    {
+        var matrix = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformFromDevice ?? Matrix.Identity;
+
+        if (!NativeMethods.GetWindowRect(new WindowInteropHelper(this).Handle, out var windowRect))
+        {
+            return new PhysicalToLocalTransform(0, 0, matrix);
+        }
+
+        return new PhysicalToLocalTransform(windowRect.Left, windowRect.Top, matrix);
     }
 
     private void SetClickThrough(bool clickThrough)

@@ -1,33 +1,61 @@
 using System.Windows;
-using DrawEM.App.Domain;
 using DrawEM.App.Infrastructure;
 using DrawEM.App.Presentation;
+using DrawingSessionController = DrawEM.App.Application.DrawingSessionController;
+using MessageBox = System.Windows.MessageBox;
 
 namespace DrawEM.App;
 
-public partial class App : Application
+public partial class App : System.Windows.Application
 {
     private DrawingSessionController? controller;
     private OverlayWindow? overlayWindow;
     private Win32KeyboardHookSource? keyboardHookSource;
+    private TrayApplication? trayApplication;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-        controller = new DrawingSessionController();
-        overlayWindow = new OverlayWindow();
-        _ = new OverlayWindowAdapter(controller, overlayWindow);
+        try
+        {
+            controller = new DrawingSessionController();
+            overlayWindow = new OverlayWindow();
+            _ = new OverlayWindowAdapter(controller, overlayWindow);
 
-        keyboardHookSource = new Win32KeyboardHookSource();
-        _ = new GlobalShortcutAdapter(keyboardHookSource, controller, action => Dispatcher.BeginInvoke(action));
+            keyboardHookSource = new Win32KeyboardHookSource();
+            _ = new GlobalShortcutAdapter(keyboardHookSource, controller, action => Dispatcher.BeginInvoke(action));
 
-        overlayWindow.Show();
+            overlayWindow.Show();
+            trayApplication = new TrayApplication(
+                new NotifyIconTrayHost(),
+                keyboardHookSource,
+                overlayWindow,
+                new WpfApplicationLifetime(this),
+                action => Dispatcher.BeginInvoke(action));
+            trayApplication.Start();
+        }
+        catch (Exception exception)
+        {
+            if (trayApplication is not null)
+            {
+                trayApplication.Dispose();
+            }
+            else
+            {
+                keyboardHookSource?.Dispose();
+                overlayWindow?.Close();
+            }
+
+            MessageBox.Show(exception.Message, "drawEM", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown();
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
-        keyboardHookSource?.Dispose();
+        trayApplication?.Dispose();
         base.OnExit(e);
     }
 }
