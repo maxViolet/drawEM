@@ -3,7 +3,8 @@
 ## Goal
 
 Deliver a hidden Windows tray application whose `Exit` command reliably stops
-drawEM and a self-contained x64 executable that can be manually smoke-tested.
+drawEM and a self-contained x64 publish directory that can be manually
+smoke-tested.
 
 This plan implements only roadmap step 6. Mixed-DPI rendering belongs to step
 3; the complete business acceptance pass belongs to step 7.
@@ -14,7 +15,8 @@ This plan implements only roadmap step 6. Mixed-DPI rendering belongs to step
 - Establish one ownership path for shortcut registration, overlay, tray icon,
   and application shutdown.
 - Add lifecycle tests using fake adapters.
-- Add a self-contained `win-x64` publish profile.
+- Add a self-contained `win-x64` publish profile that keeps runtime files next
+  to the executable.
 - Add a short manual smoke-test document for the published executable.
 
 ## Out of scope
@@ -61,7 +63,8 @@ This plan implements only roadmap step 6. Mixed-DPI rendering belongs to step
 6. Add packaging and smoke-test artifacts.
 
    Create `Properties/PublishProfiles/win-x64.pubxml` with Release,
-   `win-x64`, self-contained, single-file publishing, and trimming disabled.
+   `win-x64`, self-contained publishing, single-file disabled, and trimming
+   disabled.
    Add `../SMOKE-TEST.md` with the command and manual checks below.
 
 ## Files expected to change

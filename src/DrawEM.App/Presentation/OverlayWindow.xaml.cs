@@ -1,5 +1,4 @@
 using System.Windows;
-using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -28,7 +27,10 @@ public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
         Height = SystemParameters.VirtualScreenHeight;
 
         Content = renderElement;
-        SourceInitialized += (_, _) => SetClickThrough(true);
+        SourceInitialized += (_, _) =>
+        {
+            ((HwndSource)PresentationSource.FromVisual(this)!).AddHook(WindowProcedure);
+        };
         MouseMove += OnMouseMove;
     }
 
@@ -66,13 +68,7 @@ public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
 
     public void SetInputCapture(bool captureInput)
     {
-        if (!CheckAccess())
-        {
-            Dispatcher.BeginInvoke(DispatcherPriority.Send, () => SetInputCapture(captureInput));
-            return;
-        }
-
-        SetClickThrough(!captureInput);
+        // The global mouse hook owns pointer delivery and click suppression.
     }
 
     private void FlushPendingRender()
@@ -100,15 +96,19 @@ public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
         return new PhysicalToLocalTransform(windowRect.Left, windowRect.Top, matrix);
     }
 
-    private void SetClickThrough(bool clickThrough)
+    private IntPtr WindowProcedure(
+        IntPtr hwnd,
+        int message,
+        IntPtr wParam,
+        IntPtr lParam,
+        ref bool handled)
     {
-        var handle = new WindowInteropHelper(this).Handle;
-        var style = NativeMethods.GetWindowLong(handle, NativeMethods.GWL_EXSTYLE);
+        if (message == NativeMethods.WM_NCHITTEST)
+        {
+            handled = true;
+            return new IntPtr(NativeMethods.HTTRANSPARENT);
+        }
 
-        style = clickThrough
-            ? style | NativeMethods.WS_EX_TRANSPARENT | NativeMethods.WS_EX_LAYERED
-            : style & ~NativeMethods.WS_EX_TRANSPARENT;
-
-        NativeMethods.SetWindowLong(handle, NativeMethods.GWL_EXSTYLE, style);
+        return IntPtr.Zero;
     }
 }

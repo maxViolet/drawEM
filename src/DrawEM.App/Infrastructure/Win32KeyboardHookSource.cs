@@ -4,7 +4,7 @@ namespace DrawEM.App.Infrastructure;
 
 public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
 {
-    private readonly NativeMethods.LowLevelKeyboardProc proc;
+    private readonly NativeMethods.LowLevelHookProc proc;
     private IntPtr hookHandle;
 
     public event Action<int>? KeyDown;

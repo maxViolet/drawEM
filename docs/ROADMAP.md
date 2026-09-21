@@ -20,7 +20,7 @@ Drawing session controller ----> Stroke store ----> WPF transparent overlay
 ```
 
 The domain/controller must not depend on WPF or Windows hooks. WPF, global
-keyboard registration, mouse capture, and the tray icon are adapters around it.
+keyboard and mouse hooks, and the tray icon are adapters around it.
 
 ## Test seams
 
@@ -30,7 +30,8 @@ These are proposed public seams. Confirm them before writing tests or code.
 | --- | --- | --- |
 | `DrawingSessionController` | starts/extends/ends a stroke and clears stored strokes | WPF controls and event handlers |
 | `GlobalShortcutAdapter` | translates registered Windows shortcut events into controller commands | Win32 API calls themselves |
-| `OverlayWindowAdapter` | displays the controller's stroke state and switches input mode | private rendering helpers |
+| `GlobalMouseInputAdapter` | forwards pointer movement and suppresses pointer buttons while drawing | Win32 API calls themselves |
+| `OverlayWindowAdapter` | displays the controller's stroke state | private rendering helpers |
 | `TrayApplication` | starts hidden and exits cleanly | individual menu/control implementation |
 
 ## Ordered work
@@ -84,13 +85,15 @@ on every monitor configuration available.
 
 ### 4. TDD slice: draw-mode input blocking — 45 minutes
 
-Write the controller-facing test:
+Write tests through `GlobalMouseInputAdapter` with a fake mouse-hook source:
 
-> Given draw mode is inactive, when it is entered, then the overlay requests
-> input capture; when it is exited, it releases input capture.
+> Given draw mode is active, pointer movement becomes a stroke and pointer
+> buttons are suppressed. Given draw mode is inactive, pointer buttons are not
+> suppressed.
 
-Implement the overlay's Windows input mode switching. Normal state is
-click-through; draw state receives mouse movement and suppresses clicks below.
+Implement a low-level Windows mouse hook. It reports physical pointer
+coordinates to the controller and suppresses pointer-button messages during
+draw mode. The overlay remains click-through and only renders state.
 
 **Done when:** a manual test proves a click passes through normally, but is not
 delivered to the underlying app while `Ctrl+Alt+Z` is held.
@@ -144,4 +147,3 @@ passing unit test.
 - DPI and monitor hot-plug must be manually checked on available hardware.
 - Shortcut configuration is intentionally deferred; do not introduce a settings
   model in this version.
-

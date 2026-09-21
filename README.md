@@ -22,7 +22,9 @@ monitor.
 
 ## Delivery target
 
-One self-contained WPF `.exe`, built with C#, with no installer required.
+One self-contained WPF application, launched through `DrawEM.App.exe`, with no
+installer required. The publish directory contains the executable and its
+runtime files.
 
 ## Development method
 

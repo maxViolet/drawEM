@@ -11,6 +11,7 @@ public partial class App : System.Windows.Application
     private DrawingSessionController? controller;
     private OverlayWindow? overlayWindow;
     private Win32KeyboardHookSource? keyboardHookSource;
+    private Win32MouseHookSource? mouseHookSource;
     private TrayApplication? trayApplication;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -27,10 +28,13 @@ public partial class App : System.Windows.Application
             keyboardHookSource = new Win32KeyboardHookSource();
             _ = new GlobalShortcutAdapter(keyboardHookSource, controller, action => Dispatcher.BeginInvoke(action));
 
+            mouseHookSource = new Win32MouseHookSource();
+            _ = new GlobalMouseInputAdapter(mouseHookSource, controller, action => Dispatcher.BeginInvoke(action));
+
             overlayWindow.Show();
             trayApplication = new TrayApplication(
                 new NotifyIconTrayHost(),
-                keyboardHookSource,
+                new CompositeDisposable(keyboardHookSource, mouseHookSource),
                 overlayWindow,
                 new WpfApplicationLifetime(this),
                 action => Dispatcher.BeginInvoke(action));
@@ -45,6 +49,7 @@ public partial class App : System.Windows.Application
             else
             {
                 keyboardHookSource?.Dispose();
+                mouseHookSource?.Dispose();
                 overlayWindow?.Close();
             }
 
