@@ -11,15 +11,9 @@ public class GlobalShortcutAdapterTests
     {
         var source = new FakeKeyboardHookSource();
         var controller = new DrawingSessionController();
-        var enterCount = 0;
-        controller.InputCaptureRequested += captured =>
-        {
-            if (captured)
-            {
-                enterCount++;
-            }
-        };
-        _ = new GlobalShortcutAdapter(source, controller);
+        var states = new List<DrawingState>();
+        controller.StateChanged += states.Add;
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), action => action());
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -27,7 +21,7 @@ public class GlobalShortcutAdapterTests
         source.PressKey(VirtualKeys.Z);
         source.PressKey(VirtualKeys.Z);
 
-        Assert.Equal(1, enterCount);
+        Assert.Single(states.Where(state => state.IsDrawModeActive));
     }
 
     [Fact]
@@ -35,16 +29,16 @@ public class GlobalShortcutAdapterTests
     {
         var source = new FakeKeyboardHookSource();
         var controller = new DrawingSessionController();
-        var captureStates = new List<bool>();
-        controller.InputCaptureRequested += captureStates.Add;
-        _ = new GlobalShortcutAdapter(source, controller);
+        var states = new List<DrawingState>();
+        controller.StateChanged += states.Add;
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), action => action());
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
         source.PressKey(VirtualKeys.Z);
         source.ReleaseKey(VirtualKeys.Z);
 
-        Assert.Equal([true, false], captureStates);
+        Assert.Equal([true, false], states.Select(state => state.IsDrawModeActive));
     }
 
     [Fact]
@@ -55,7 +49,7 @@ public class GlobalShortcutAdapterTests
         controller.Start(new ScreenPoint(1, 1));
         controller.Move(new ScreenPoint(2, 2));
         controller.End();
-        _ = new GlobalShortcutAdapter(source, controller);
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), action => action());
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -72,7 +66,7 @@ public class GlobalShortcutAdapterTests
         var states = new List<DrawingState>();
         var queuedActions = new Queue<Action>();
         controller.StateChanged += states.Add;
-        _ = new GlobalShortcutAdapter(source, controller, queuedActions.Enqueue);
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), queuedActions.Enqueue);
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -91,7 +85,7 @@ public class GlobalShortcutAdapterTests
     {
         var source = new FakeKeyboardHookSource();
         var controller = new DrawingSessionController();
-        _ = new GlobalShortcutAdapter(source, controller);
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), action => action());
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -114,7 +108,7 @@ public class GlobalShortcutAdapterTests
         var controller = new DrawingSessionController();
         var states = new List<DrawingState>();
         controller.StateChanged += states.Add;
-        _ = new GlobalShortcutAdapter(source, controller);
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), action => action());
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -137,7 +131,7 @@ public class GlobalShortcutAdapterTests
 
         public event Action<int>? KeyUp;
 
-        public event Func<int, bool>? KeyActivity;
+        public event Func<int, bool>? KeySuppressionRequested;
 
         public bool PressKey(int vkCode)
         {
@@ -148,7 +142,7 @@ public class GlobalShortcutAdapterTests
         public void ReleaseKey(int vkCode) => KeyUp?.Invoke(vkCode);
 
         public bool ShouldSuppressKey(int vkCode) =>
-            KeyActivity?
+            KeySuppressionRequested?
                 .GetInvocationList()
                 .Cast<Func<int, bool>>()
                 .Any(handler => handler(vkCode))

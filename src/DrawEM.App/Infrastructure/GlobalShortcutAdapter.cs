@@ -5,24 +5,24 @@ namespace DrawEM.App.Infrastructure;
 public sealed class GlobalShortcutAdapter
 {
     private readonly DrawingSessionController controller;
+    private readonly DrawingModeInputGate inputGate;
     private readonly Action<Action> dispatch;
     private readonly HashSet<int> pressedKeys = [];
-    private bool drawModeActive;
     private bool drawShortcutBlockedUntilReleased;
     private bool clearShortcutActive;
 
-    public GlobalShortcutAdapter(IKeyboardHookSource source, DrawingSessionController controller)
-        : this(source, controller, action => action())
-    {
-    }
-
-    public GlobalShortcutAdapter(IKeyboardHookSource source, DrawingSessionController controller, Action<Action> dispatch)
+    public GlobalShortcutAdapter(
+        IKeyboardHookSource source,
+        DrawingSessionController controller,
+        DrawingModeInputGate inputGate,
+        Action<Action> dispatch)
     {
         this.controller = controller;
+        this.inputGate = inputGate;
         this.dispatch = dispatch;
         source.KeyDown += OnKeyChanged;
         source.KeyUp += OnKeyUp;
-        source.KeyActivity += ShouldSuppressKey;
+        source.KeySuppressionRequested += ShouldSuppressKey;
     }
 
     private void OnKeyChanged(int vkCode)
@@ -42,14 +42,14 @@ public sealed class GlobalShortcutAdapter
         var modifiersDown = IsCtrlDown() && IsAltDown();
 
         var drawShortcutDown = modifiersDown && pressedKeys.Contains(VirtualKeys.Z);
-        if (drawShortcutDown && !drawModeActive && !drawShortcutBlockedUntilReleased)
+        if (drawShortcutDown && !inputGate.IsActive && !drawShortcutBlockedUntilReleased)
         {
-            drawModeActive = true;
+            inputGate.SetActive(true);
             dispatch(controller.EnterDrawMode);
         }
-        else if (!drawShortcutDown && drawModeActive)
+        else if (!drawShortcutDown && inputGate.IsActive)
         {
-            drawModeActive = false;
+            inputGate.SetActive(false);
             dispatch(controller.ExitDrawMode);
         }
 
@@ -62,7 +62,7 @@ public sealed class GlobalShortcutAdapter
         if (clearShortcutDown && !clearShortcutActive)
         {
             clearShortcutActive = true;
-            drawModeActive = false;
+            inputGate.SetActive(false);
             drawShortcutBlockedUntilReleased = true;
             dispatch(controller.ClearAndExitDrawMode);
         }
@@ -79,7 +79,7 @@ public sealed class GlobalShortcutAdapter
         pressedKeys.Contains(VirtualKeys.LeftMenu) || pressedKeys.Contains(VirtualKeys.RightMenu);
 
     private bool ShouldSuppressKey(int vkCode) =>
-        (drawModeActive && vkCode is not (
+        (inputGate.IsActive && vkCode is not (
             VirtualKeys.LeftControl or
             VirtualKeys.RightControl or
             VirtualKeys.LeftMenu or

@@ -46,7 +46,7 @@ App.xaml.cs  (composition root)
 | --- | --- | --- |
 | `Domain` | points, strokes, active drawing state, colour and thickness rules | WPF types, Win32 calls, tray behavior |
 | `Application` | drawing-session commands and immutable state publication | window handles, event callbacks, rendering |
-| `Infrastructure` | low-level keyboard and mouse hooks, tray icon, process lifecycle integration | stroke storage or drawing rules |
+| `Infrastructure` | low-level keyboard and mouse hooks, synchronous input gate, tray icon, process lifecycle integration | stroke storage or drawing rules |
 | `Presentation` | transparent WPF overlay and rendering | the authoritative stroke list or global input |
 | `App.xaml.cs` | object creation, startup and orderly shutdown | business logic |
 
@@ -60,19 +60,23 @@ list itself.
 
 ```text
 Ctrl+Alt+Z pressed
-  → Win32KeyboardHookAdapter starts a drawing session
-  → Win32MouseHookAdapter forwards physical pointer movement
+  → Win32KeyboardHookAdapter opens DrawingModeInputGate synchronously
+  → DrawingSessionController starts a drawing session on the WPF Dispatcher
+  → Win32MouseHookAdapter reads the gate and forwards physical pointer movement
   → DrawingSessionController appends ScreenPoint values to the active stroke
   → immutable DrawingState is published on the WPF Dispatcher
   → OverlayWindow redraws the current state through one DrawingVisual
 ```
 
-The `Win32MouseHookAdapter` forwards physical mouse movement to the controller.
-When `Ctrl+Alt+Z` is released, the controller completes the active stroke. The
-mouse hook suppresses pointer-button and wheel messages, and the keyboard hook
-suppresses non-chord keys during draw mode, so clicks, scrolling, and typed
-symbols do not reach the application underneath. The overlay is always
-click-through.
+`DrawingModeInputGate` is the shared, atomic decision point for keyboard and
+mouse hooks. It changes synchronously in the keyboard callback, before the
+controller action is queued on the WPF Dispatcher. The `Win32MouseHookAdapter`
+forwards physical mouse movement to the controller only when this gate is open.
+When `Ctrl+Alt+Z` is released, the gate closes and the controller completes the
+active stroke. The mouse hook suppresses pointer-button and wheel messages, and
+the keyboard hook suppresses non-chord keys during draw mode, so clicks,
+scrolling, and typed symbols do not reach the application underneath. The
+overlay is always click-through and is not an input source.
 
 ### Clear
 

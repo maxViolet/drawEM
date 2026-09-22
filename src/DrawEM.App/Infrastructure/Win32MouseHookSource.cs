@@ -59,17 +59,7 @@ public sealed class Win32MouseHookSource : IMouseHookSource, IDisposable
         }
     }
 
-    private bool ShouldSuppressPointerButton() =>
-        PointerButtonActivity?
-            .GetInvocationList()
-            .Cast<Func<bool>>()
-            .Any(handler => handler())
-        ?? false;
+    private bool ShouldSuppressPointerButton() => PointerButtonActivity?.Invoke() ?? false;
 
-    private bool ShouldSuppressPointerWheel() =>
-        PointerWheelActivity?
-            .GetInvocationList()
-            .Cast<Func<bool>>()
-            .Any(handler => handler())
-        ?? false;
+    private bool ShouldSuppressPointerWheel() => PointerWheelActivity?.Invoke() ?? false;
 }

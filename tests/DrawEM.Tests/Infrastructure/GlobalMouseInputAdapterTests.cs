@@ -11,11 +11,14 @@ public class GlobalMouseInputAdapterTests
     {
         var source = new FakeMouseHookSource();
         var controller = new DrawingSessionController();
-        _ = new GlobalMouseInputAdapter(source, controller);
+        var inputGate = new DrawingModeInputGate();
+        _ = new GlobalMouseInputAdapter(source, controller, inputGate, action => action());
 
+        inputGate.SetActive(true);
         controller.EnterDrawMode();
         source.Move(new ScreenPoint(10, 20));
         source.Move(new ScreenPoint(15, 25));
+        inputGate.SetActive(false);
         controller.ExitDrawMode();
 
         var stroke = Assert.Single(controller.CompletedStrokes);
@@ -27,15 +30,16 @@ public class GlobalMouseInputAdapterTests
     {
         var source = new FakeMouseHookSource();
         var controller = new DrawingSessionController();
-        _ = new GlobalMouseInputAdapter(source, controller);
+        var inputGate = new DrawingModeInputGate();
+        _ = new GlobalMouseInputAdapter(source, controller, inputGate, action => action());
 
         Assert.False(source.ShouldSuppressPointerButton());
 
-        controller.EnterDrawMode();
+        inputGate.SetActive(true);
 
         Assert.True(source.ShouldSuppressPointerButton());
 
-        controller.ExitDrawMode();
+        inputGate.SetActive(false);
 
         Assert.False(source.ShouldSuppressPointerButton());
     }
@@ -45,17 +49,43 @@ public class GlobalMouseInputAdapterTests
     {
         var source = new FakeMouseHookSource();
         var controller = new DrawingSessionController();
-        _ = new GlobalMouseInputAdapter(source, controller);
+        var inputGate = new DrawingModeInputGate();
+        _ = new GlobalMouseInputAdapter(source, controller, inputGate, action => action());
 
         Assert.False(source.ShouldSuppressPointerWheel());
 
-        controller.EnterDrawMode();
+        inputGate.SetActive(true);
 
         Assert.True(source.ShouldSuppressPointerWheel());
 
-        controller.ExitDrawMode();
+        inputGate.SetActive(false);
 
         Assert.False(source.ShouldSuppressPointerWheel());
+    }
+
+    [Fact]
+    public void CtrlAltX_StopsMouseSuppressionBeforeQueuedControllerActionsRun()
+    {
+        var keyboardSource = new FakeKeyboardHookSource();
+        var mouseSource = new FakeMouseHookSource();
+        var controller = new DrawingSessionController();
+        var inputGate = new DrawingModeInputGate();
+        var queuedActions = new Queue<Action>();
+        _ = new GlobalShortcutAdapter(keyboardSource, controller, inputGate, queuedActions.Enqueue);
+        _ = new GlobalMouseInputAdapter(mouseSource, controller, inputGate, queuedActions.Enqueue);
+
+        keyboardSource.PressKey(VirtualKeys.LeftControl);
+        keyboardSource.PressKey(VirtualKeys.LeftMenu);
+        keyboardSource.PressKey(VirtualKeys.Z);
+
+        Assert.True(mouseSource.ShouldSuppressPointerButton());
+        Assert.True(mouseSource.ShouldSuppressPointerWheel());
+
+        keyboardSource.PressKey(VirtualKeys.X);
+
+        Assert.False(mouseSource.ShouldSuppressPointerButton());
+        Assert.False(mouseSource.ShouldSuppressPointerWheel());
+        Assert.Equal(2, queuedActions.Count);
     }
 
     private sealed class FakeMouseHookSource : IMouseHookSource
@@ -81,5 +111,20 @@ public class GlobalMouseInputAdapterTests
                 .Cast<Func<bool>>()
                 .Any(handler => handler())
             ?? false;
+    }
+
+    private sealed class FakeKeyboardHookSource : IKeyboardHookSource
+    {
+        public event Action<int>? KeyDown;
+
+        public event Action<int>? KeyUp;
+
+        public event Func<int, bool>? KeySuppressionRequested;
+
+        public void PressKey(int vkCode) => KeyDown?.Invoke(vkCode);
+
+        public void ReleaseKey(int vkCode) => KeyUp?.Invoke(vkCode);
+
+        public bool ShouldSuppressKey(int vkCode) => KeySuppressionRequested?.Invoke(vkCode) ?? false;
     }
 }

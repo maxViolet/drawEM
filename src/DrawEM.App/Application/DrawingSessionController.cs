@@ -13,19 +13,15 @@ public sealed class DrawingSessionController
     public IReadOnlyList<Stroke> CompletedStrokes => completedStrokes.AsReadOnly();
 
     public event Action<DrawingState>? StateChanged;
-    public event Action<bool>? InputCaptureRequested;
-
     public void EnterDrawMode()
     {
         drawModeActive = true;
-        InputCaptureRequested?.Invoke(true);
         PublishState();
     }
 
     public void ExitDrawMode()
     {
         drawModeActive = false;
-        InputCaptureRequested?.Invoke(false);
         End();
     }
 
@@ -72,17 +68,9 @@ public sealed class DrawingSessionController
         PublishState();
     }
 
-    public void Clear()
-    {
-        completedStrokes.Clear();
-        activePoints = null;
-        PublishState();
-    }
-
     public void ClearAndExitDrawMode()
     {
         drawModeActive = false;
-        InputCaptureRequested?.Invoke(false);
         completedStrokes.Clear();
         activePoints = null;
         PublishState();

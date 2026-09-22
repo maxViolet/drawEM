@@ -4,7 +4,6 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using DrawEM.App.Domain;
 using DrawEM.App.Infrastructure;
-using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 
 namespace DrawEM.App.Presentation;
 
@@ -14,8 +13,6 @@ public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
     private readonly object renderLock = new();
     private DrawingState? pendingState;
     private bool renderScheduled;
-
-    public event Action<ScreenPoint>? PointerMoved;
 
     public OverlayWindow()
     {
@@ -31,17 +28,6 @@ public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
         {
             ((HwndSource)PresentationSource.FromVisual(this)!).AddHook(WindowProcedure);
         };
-        MouseMove += OnMouseMove;
-    }
-
-    private void OnMouseMove(object sender, MouseEventArgs e)
-    {
-        if (!NativeMethods.GetCursorPos(out var cursor))
-        {
-            return;
-        }
-
-        PointerMoved?.Invoke(new ScreenPoint(cursor.X, cursor.Y));
     }
 
     public void Render(DrawingState state)
@@ -64,11 +50,6 @@ public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
         }
 
         Dispatcher.BeginInvoke(DispatcherPriority.Render, FlushPendingRender);
-    }
-
-    public void SetInputCapture(bool captureInput)
-    {
-        // The global mouse hook owns pointer delivery and click suppression.
     }
 
     private void FlushPendingRender()

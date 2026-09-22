@@ -11,7 +11,7 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
 
     public event Action<int>? KeyUp;
 
-    public event Func<int, bool>? KeyActivity;
+    public event Func<int, bool>? KeySuppressionRequested;
 
     public Win32KeyboardHookSource()
     {
@@ -64,10 +64,5 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
         }
     }
 
-    private bool ShouldSuppressKey(int vkCode) =>
-        KeyActivity?
-            .GetInvocationList()
-            .Cast<Func<int, bool>>()
-            .Any(handler => handler(vkCode))
-        ?? false;
+    private bool ShouldSuppressKey(int vkCode) => KeySuppressionRequested?.Invoke(vkCode) ?? false;
 }

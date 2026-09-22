@@ -6,5 +6,5 @@ public interface IKeyboardHookSource
 
     event Action<int>? KeyUp;
 
-    event Func<int, bool>? KeyActivity;
+    event Func<int, bool>? KeySuppressionRequested;
 }

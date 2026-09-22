@@ -40,7 +40,7 @@ public class OverlayWindowAdapterTests
     }
 
     [Fact]
-    public void Clear_ForwardsEmptyState()
+    public void ClearAndExitDrawMode_ForwardsEmptyState()
     {
         var controller = new DrawingSessionController();
         var view = new FakeOverlayView();
@@ -51,58 +51,21 @@ public class OverlayWindowAdapterTests
         controller.End();
         controller.Start(new ScreenPoint(3, 3));
 
-        controller.Clear();
+        controller.ClearAndExitDrawMode();
 
         var state = view.LastRenderedState!;
         Assert.Empty(state.CompletedStrokes);
         Assert.Null(state.ActiveStroke);
     }
 
-    [Fact]
-    public void PointerMovement_DuringDrawMode_BecomesCompletedStroke()
-    {
-        var controller = new DrawingSessionController();
-        var view = new FakeOverlayView();
-        _ = new OverlayWindowAdapter(controller, view);
-
-        controller.EnterDrawMode();
-        view.SimulateMove(new ScreenPoint(10, 20));
-        view.SimulateMove(new ScreenPoint(15, 25));
-        controller.ExitDrawMode();
-
-        var stroke = Assert.Single(controller.CompletedStrokes);
-        Assert.Equal(
-            [new ScreenPoint(10, 20), new ScreenPoint(15, 25)],
-            stroke.Points);
-    }
-
-    [Fact]
-    public void PointerMovement_OutsideDrawMode_IsIgnored()
-    {
-        var controller = new DrawingSessionController();
-        var view = new FakeOverlayView();
-        _ = new OverlayWindowAdapter(controller, view);
-
-        view.SimulateMove(new ScreenPoint(10, 20));
-
-        Assert.Empty(controller.CompletedStrokes);
-    }
-
     private sealed class FakeOverlayView : IOverlayView
     {
         public DrawingState? LastRenderedState { get; private set; }
-
-        public event Action<ScreenPoint>? PointerMoved;
 
         public void Render(DrawingState state)
         {
             LastRenderedState = state;
         }
 
-        public void SetInputCapture(bool captureInput)
-        {
-        }
-
-        public void SimulateMove(ScreenPoint point) => PointerMoved?.Invoke(point);
     }
 }
