@@ -24,7 +24,8 @@ public class StrokeRenderElementTests
                 new DrawingState(
                     [],
                     new Stroke([new ScreenPoint(10, 10)], DrawingColor.Orange, 4),
-                    true),
+                    true,
+                    0),
                 new PhysicalToLocalTransform(0, 0, Matrix.Identity));
 
             var bitmap = new RenderTargetBitmap(20, 20, 96, 96, PixelFormats.Pbgra32);
@@ -51,16 +52,17 @@ public class StrokeRenderElementTests
             var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
 
             element.UpdateState(
-                new DrawingState([], new Stroke([new ScreenPoint(2, 10)], DrawingColor.Orange, 4), true),
+                new DrawingState([], new Stroke([new ScreenPoint(2, 10)], DrawingColor.Orange, 4), true, 0),
                 transform);
             element.UpdateState(
-                new DrawingState([], new Stroke([new ScreenPoint(2, 10), new ScreenPoint(10, 10)], DrawingColor.Orange, 4), true),
+                new DrawingState([], new Stroke([new ScreenPoint(2, 10), new ScreenPoint(10, 10)], DrawingColor.Orange, 4), true, 0),
                 transform);
             element.UpdateState(
                 new DrawingState(
                     [],
                     new Stroke([new ScreenPoint(2, 10), new ScreenPoint(10, 10), new ScreenPoint(17, 10)], DrawingColor.Orange, 4),
-                    true),
+                    true,
+                    0),
                 transform);
 
             Assert.Equal((byte)255, PixelAlphaAt(element, 17, 10));
@@ -79,10 +81,10 @@ public class StrokeRenderElementTests
             var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
             var completed = new Stroke([new ScreenPoint(1, 1), new ScreenPoint(5, 1)], DrawingColor.Orange, 4);
 
-            element.UpdateState(new DrawingState([], completed, true), transform);
-            element.UpdateState(new DrawingState([completed], null, false), transform);
+            element.UpdateState(new DrawingState([], completed, true, 0), transform);
+            element.UpdateState(new DrawingState([completed], null, false, 0), transform);
             element.UpdateState(
-                new DrawingState([completed], new Stroke([new ScreenPoint(15, 15)], DrawingColor.Orange, 4), true),
+                new DrawingState([completed], new Stroke([new ScreenPoint(15, 15)], DrawingColor.Orange, 4), true, 0),
                 transform);
 
             Assert.Equal((byte)255, PixelAlphaAt(element, 5, 1));
@@ -101,14 +103,86 @@ public class StrokeRenderElementTests
             var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
             var completed = new Stroke([new ScreenPoint(1, 1), new ScreenPoint(5, 1)], DrawingColor.Orange, 4);
 
-            element.UpdateState(new DrawingState([], completed, true), transform);
-            element.UpdateState(new DrawingState([completed], null, false), transform);
+            element.UpdateState(new DrawingState([], completed, true, 0), transform);
+            element.UpdateState(new DrawingState([completed], null, false, 0), transform);
 
             Assert.Equal((byte)255, PixelAlphaAt(element, 5, 1));
 
-            element.UpdateState(new DrawingState([], null, false), transform);
+            element.UpdateState(new DrawingState([], null, false, 1), transform);
 
             Assert.Equal((byte)0, PixelAlphaAt(element, 5, 1));
+        });
+    }
+
+    [Fact]
+    public void UpdateState_CoalescedClearThenNewStrokeOfSameLength_DropsOldAndDrawsNew()
+    {
+        // Regression for a coalesced pendingState update that folds clear -> new
+        // stroke -> end into one call: CompletedStrokes.Count is unchanged (1 -> 1),
+        // so only Generation distinguishes this from "nothing happened".
+        RunOnStaThread(() =>
+        {
+            var element = new StrokeRenderElement { Width = 20, Height = 20 };
+            element.Measure(new Size(20, 20));
+            element.Arrange(new Rect(0, 0, 20, 20));
+            var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
+            var oldStroke = new Stroke([new ScreenPoint(1, 1), new ScreenPoint(5, 1)], DrawingColor.Orange, 4);
+            var newStroke = new Stroke([new ScreenPoint(12, 12), new ScreenPoint(16, 12)], DrawingColor.Orange, 4);
+
+            element.UpdateState(new DrawingState([oldStroke], null, false, 0), transform);
+            Assert.Equal((byte)255, PixelAlphaAt(element, 5, 1));
+
+            element.UpdateState(new DrawingState([newStroke], null, false, 1), transform);
+
+            Assert.Equal((byte)0, PixelAlphaAt(element, 5, 1));
+            Assert.Equal((byte)255, PixelAlphaAt(element, 16, 12));
+        });
+    }
+
+    [Fact]
+    public void UpdateState_StrokeEndsWithUnseenPoint_DropsStalePartialVisualAndDrawsFullStroke()
+    {
+        // Regression for a coalesced update where the active stroke gained a point the
+        // renderer never saw as "active" (e.g. a move batched together with the End),
+        // so the match heuristic in UpdateState cannot recognize the completed stroke
+        // as a continuation of what it already drew.
+        RunOnStaThread(() =>
+        {
+            var element = new StrokeRenderElement { Width = 20, Height = 20 };
+            element.Measure(new Size(20, 20));
+            element.Arrange(new Rect(0, 0, 20, 20));
+            var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
+
+            element.UpdateState(
+                new DrawingState([], new Stroke([new ScreenPoint(2, 2), new ScreenPoint(6, 2)], DrawingColor.Orange, 4), true, 0),
+                transform);
+
+            var completedWithExtraPoint = new Stroke(
+                [new ScreenPoint(2, 2), new ScreenPoint(6, 2), new ScreenPoint(10, 2)],
+                DrawingColor.Orange,
+                4);
+            element.UpdateState(new DrawingState([completedWithExtraPoint], null, false, 0), transform);
+
+            Assert.Equal((byte)255, PixelAlphaAt(element, 10, 2));
+
+            // A brand-new stroke starting at the same first point must not be treated
+            // as a continuation of the stale (and now removed) tracking above.
+            element.UpdateState(
+                new DrawingState(
+                    [completedWithExtraPoint],
+                    new Stroke([new ScreenPoint(2, 2)], DrawingColor.Orange, 4),
+                    true,
+                    0),
+                transform);
+            element.UpdateState(
+                new DrawingState(
+                    [completedWithExtraPoint],
+                    new Stroke([new ScreenPoint(2, 2), new ScreenPoint(2, 15)], DrawingColor.Orange, 4),
+                    true,
+                    0),
+                transform);
+
+            Assert.Equal((byte)255, PixelAlphaAt(element, 2, 15));
         });
     }
 

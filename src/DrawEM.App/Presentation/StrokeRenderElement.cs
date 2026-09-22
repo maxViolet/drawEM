@@ -21,6 +21,7 @@ public sealed class StrokeRenderElement : FrameworkElement
     private int completedRendered;
     private int activePointCount;
     private ScreenPoint? activeFirstPoint;
+    private int renderedGeneration = -1;
 
     public StrokeRenderElement()
     {
@@ -33,18 +34,45 @@ public sealed class StrokeRenderElement : FrameworkElement
 
     public void UpdateState(DrawingState state, PhysicalToLocalTransform transform)
     {
-        if (state.CompletedStrokes.Count < completedRendered)
+        // Generation is the authoritative reset signal, not CompletedStrokes.Count: a
+        // coalesced clear followed by a new stroke of the same length leaves the count
+        // unchanged, which would otherwise hide the reset entirely.
+        if (state.Generation != renderedGeneration || state.CompletedStrokes.Count < completedRendered)
         {
             ResetAll();
+            renderedGeneration = state.Generation;
         }
+
+        var hadNewCompletedStrokes = state.CompletedStrokes.Count > completedRendered;
+        var reclassifiedActiveStroke = false;
 
         for (var i = completedRendered; i < state.CompletedStrokes.Count; i++)
         {
             var stroke = state.CompletedStrokes[i];
             if (i == completedRendered && IsCurrentlyTrackedActiveStroke(stroke))
             {
-                // Already drawn incrementally while it was the active stroke; the
-                // visuals stay, only the "active" tracking retires.
+                // Already drawn incrementally while it was the active stroke; visuals
+                // stay as-is and become permanent, only the tracking below retires.
+                reclassifiedActiveStroke = true;
+                continue;
+            }
+
+            DrawFullStroke(stroke, transform);
+        }
+
+        completedRendered = state.CompletedStrokes.Count;
+
+        if (hadNewCompletedStrokes)
+        {
+            // Exactly one active stroke exists at a time, and it must have ended
+            // (End/ClearAndExitDrawMode) for CompletedStrokes to grow. Whatever this
+            // renderer was tracking as "active" is stale regardless of outcome: if it
+            // matched, its visuals are now part of the completed picture (keep them,
+            // just retire the tracking); if it did not match (e.g. a move was skipped
+            // before the stroke ended), the partial visuals are a stale duplicate of
+            // what DrawFullStroke just drew and must be removed, not just forgotten.
+            if (reclassifiedActiveStroke)
+            {
                 activeSegmentVisuals.Clear();
                 activeDotVisual = null;
                 activePointCount = 0;
@@ -52,11 +80,9 @@ public sealed class StrokeRenderElement : FrameworkElement
             }
             else
             {
-                DrawFullStroke(stroke, transform);
+                RemoveActiveVisuals();
             }
         }
-
-        completedRendered = state.CompletedStrokes.Count;
 
         if (state.ActiveStroke is not { Points.Count: > 0 } active)
         {

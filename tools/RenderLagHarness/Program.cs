@@ -47,11 +47,11 @@ internal static class Program
             foreach (var rate in rates)
             {
                 var eventCount = rate; // ~1 nominal second of events per run, budget-capped below
-                var (result, sampleList) = RunScenario(name, seed(), rate, eventCount, warmup: true);
+                var (result, sampleList) = RunScenario(name, seed(), rate, eventCount);
                 results.Add(result);
                 Console.WriteLine(result.Summarize());
 
-                if (result.QueueAgeMax > worst.QueueAgeMax)
+                if (result.ProcessingP99 > worst.ProcessingP99)
                 {
                     worst = result;
                     worstSamples = sampleList;
@@ -59,28 +59,30 @@ internal static class Program
             }
         }
 
-        WriteMarkdownReport(results, worst);
-        if (worstSamples is not null)
-        {
-            WriteTraceCsv(worst, worstSamples);
-        }
+        var reportPath = WriteMarkdownReport(results, worst);
+        var tracePath = worstSamples is not null ? WriteTraceCsv(worst, worstSamples) : null;
 
         Console.WriteLine();
-        Console.WriteLine("Report: docs/steps/F03-render-lag-harness-results.md");
-        Console.WriteLine("Worst-case trace: docs/steps/F03-render-lag-harness-trace.csv");
+        Console.WriteLine($"Raw report (overwritten every run): {reportPath}");
+        if (tracePath is not null)
+        {
+            Console.WriteLine($"Worst-case trace (overwritten every run): {tracePath}");
+        }
+
+        Console.WriteLine("The curated, hand-written comparison lives at " +
+                           "docs/steps/F03-render-lag-harness-results.md and is never touched by this tool.");
     }
 
     private static (RunResult Result, List<Sample> Samples) RunScenario(
         string name,
         ScenarioSeed seed,
         int rate,
-        int eventCount,
-        bool warmup = false)
+        int eventCount)
     {
         (RunResult Result, List<Sample> Samples)? outcome = null;
         var thread = new Thread(() =>
         {
-            outcome = RunOnDispatcherThread(name, seed, rate, eventCount, warmup);
+            outcome = RunOnDispatcherThread(name, seed, rate, eventCount);
         });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
@@ -92,8 +94,7 @@ internal static class Program
         string name,
         ScenarioSeed seed,
         int rate,
-        int eventCount,
-        bool warmup)
+        int eventCount)
     {
         var dispatcher = Dispatcher.CurrentDispatcher;
         var controller = new DrawingSessionController();
@@ -167,7 +168,10 @@ internal static class Program
 
         // Let remaining queued Normal-priority work finish; a single Background-priority
         // Invoke waits for everything queued ahead of it to drain first. Bounded so a
-        // pathological backlog (see hypothesis 1/2) cannot hang the harness itself.
+        // pathological backlog (see hypothesis 1/2) cannot hang the harness itself. If
+        // this fires, `samples.Count < eventCount` and Duration is a lower bound on how
+        // long draining the backlog actually takes, not the true total - see DrainTimedOut.
+        var drainTimedOut = false;
         using (var drainTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(8)))
         {
             try
@@ -176,13 +180,13 @@ internal static class Program
             }
             catch (OperationCanceledException)
             {
-                // Backlog did not drain within budget; samples collected so far still stand.
+                drainTimedOut = true;
             }
         }
 
         var runEnd = Stopwatch.GetTimestamp();
 
-        var result = BuildResult(name, rate, eventCount, samples, maxPendingNormalOps, runStart, runEnd, warmup);
+        var result = BuildResult(name, rate, eventCount, samples, maxPendingNormalOps, runStart, runEnd, drainTimedOut);
         return (result, samples);
     }
 
@@ -208,7 +212,7 @@ internal static class Program
         int maxPendingNormalOps,
         long runStart,
         long runEnd,
-        bool warmup)
+        bool drainTimedOut)
     {
         var tickToMs = 1000.0 / Stopwatch.Frequency;
         var queueAges = samples.Select(s => (s.StartedAt - s.PostedAt) * tickToMs).OrderBy(v => v).ToArray();
@@ -241,7 +245,7 @@ internal static class Program
             maxPendingNormalOps,
             firstTenthAvg,
             lastTenthAvg,
-            warmup);
+            drainTimedOut);
     }
 
     private static double Percentile(double[] sorted, double p)
@@ -255,30 +259,43 @@ internal static class Program
         return sorted[Math.Clamp(index, 0, sorted.Length - 1)];
     }
 
-    private static void WriteMarkdownReport(List<RunResult> results, RunResult? worst)
+    // Auto-generated output lives under harness-raw/ and is overwritten on every run.
+    // The curated docs/steps/F03-render-lag-harness-results.md comparison is hand-written
+    // and must never be a write target here (reviewer finding: a harness re-run silently
+    // destroyed the curated before/after report and its explanatory notes).
+    private static string WriteMarkdownReport(List<RunResult> results, RunResult? worst)
     {
-        var directory = FindDocsStepsDirectory();
-        var path = Path.Combine(directory, "F03-render-lag-harness-results.md");
+        var directory = FindRawOutputDirectory();
+        var path = Path.Combine(directory, "F03-render-lag-harness-latest.md");
 
         var lines = new List<string>
         {
-            "# F03: результаты синтетического harness",
+            "# F03: сырой вывод последнего прогона harness",
             "",
             $"Сгенерировано: {DateTime.Now:yyyy-MM-dd HH:mm:ss}. Инструмент: tools/RenderLagHarness.",
             "Запуск: `dotnet run --project tools/RenderLagHarness -c Release`.",
+            "Этот файл перезаписывается при каждом запуске. Курируемое сравнение до/после — " +
+            "docs/steps/F03-render-lag-harness-results.md, его нужно обновлять вручную.",
             "",
             "Ограничение: harness воспроизводит цепочку adapter -> Dispatcher -> controller -> " +
             "renderer синтетически, без реального Win32-хука и композиции окна. Он не заменяет " +
             "измерение на реальной сборке (план, шаг 1/3).",
             "",
-            "| Сценарий | Rate (ev/s) | События | Длительность (мс) | Queue age p50/p95/p99/max (мс) | Обработка p50/p95/p99/max (мс) | Max pending ops | Рост обработки (первые 10% -> последние 10%, мс) |",
+            "Queue age / Max pending ops не показательны (пейсер шлёт события с приоритетом " +
+            "Send, очередь Normal не дренируется параллельно) — см. пояснение в курируемом отчёте.",
+            "Duration для строк с TIMEOUT — не полное время обработки потока, а время до " +
+            "срабатывания 8-секундного предохранителя дренажа; Completed < Requested показывает, " +
+            "что поток не был обработан целиком.",
+            "",
+            "| Сценарий | Rate (ev/s) | Completed/Requested | Duration (мс) | Queue age p50/p95/p99/max (мс) | Обработка p50/p95/p99/max (мс) | Max pending ops | Рост обработки (первые 10% -> последние 10%, мс) |",
             "| --- | --- | --- | --- | --- | --- | --- | --- |",
         };
 
         foreach (var r in results)
         {
+            var timeoutMarker = r.DrainTimedOut ? " TIMEOUT" : "";
             lines.Add(
-                $"| {r.Scenario}{(r.Warmup ? "" : " [cold]")} | {r.Rate} | {r.Completed}/{r.Requested} | " +
+                $"| {r.Scenario} | {r.Rate} | {r.Completed}/{r.Requested}{timeoutMarker} | " +
                 $"{r.DurationMs:F1} | {r.QueueAgeP50:F2}/{r.QueueAgeP95:F2}/{r.QueueAgeP99:F2}/{r.QueueAgeMax:F2} | " +
                 $"{r.ProcessingP50:F2}/{r.ProcessingP95:F2}/{r.ProcessingP99:F2}/{r.ProcessingMax:F2} | " +
                 $"{r.MaxPendingOps} | {r.FirstTenthAvgMs:F3} -> {r.LastTenthAvgMs:F3} |");
@@ -287,18 +304,20 @@ internal static class Program
         lines.Add("");
         if (worst is not null)
         {
-            lines.Add($"Худший случай по max queue age: `{worst.Scenario}` @ {worst.Rate} ev/s, " +
-                      $"max queue age {worst.QueueAgeMax:F2} мс, max pending ops {worst.MaxPendingOps}. " +
-                      "Полная трасса: F03-render-lag-harness-trace.csv.");
+            lines.Add($"Худший случай по стоимости обработки (p99): `{worst.Scenario}` @ {worst.Rate} ev/s, " +
+                      $"processing p99 {worst.ProcessingP99:F2} мс, max {worst.ProcessingMax:F2} мс" +
+                      (worst.DrainTimedOut ? ", drain TIMEOUT (неполный прогон)" : "") +
+                      ". Полная трасса: F03-render-lag-harness-latest-trace.csv.");
         }
 
         File.WriteAllLines(path, lines);
+        return path;
     }
 
-    private static void WriteTraceCsv(RunResult worst, List<Sample> samples)
+    private static string WriteTraceCsv(RunResult worst, List<Sample> samples)
     {
-        var directory = FindDocsStepsDirectory();
-        var path = Path.Combine(directory, "F03-render-lag-harness-trace.csv");
+        var directory = FindRawOutputDirectory();
+        var path = Path.Combine(directory, "F03-render-lag-harness-latest-trace.csv");
 
         var tickToMs = 1000.0 / Stopwatch.Frequency;
         var lines = new List<string> { "index,queue_age_ms,processing_ms" };
@@ -307,10 +326,11 @@ internal static class Program
             .Select(s => $"{s.Index},{(s.StartedAt - s.PostedAt) * tickToMs:F4},{(s.FinishedAt - s.StartedAt) * tickToMs:F4}"));
 
         File.WriteAllLines(path, lines);
-        Console.WriteLine($"Worst-case run: {worst.Scenario} @ {worst.Rate} ev/s ({samples.Count} samples).");
+        Console.WriteLine($"Worst-case run (by processing p99): {worst.Scenario} @ {worst.Rate} ev/s ({samples.Count} samples).");
+        return path;
     }
 
-    private static string FindDocsStepsDirectory()
+    private static string FindRawOutputDirectory()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "DrawEM.sln")))
@@ -323,9 +343,9 @@ internal static class Program
             throw new InvalidOperationException("Could not locate repository root (DrawEM.sln) from harness output directory.");
         }
 
-        var docsSteps = Path.Combine(dir.FullName, "docs", "steps");
-        Directory.CreateDirectory(docsSteps);
-        return docsSteps;
+        var rawDir = Path.Combine(dir.FullName, "docs", "steps", "harness-raw");
+        Directory.CreateDirectory(rawDir);
+        return rawDir;
     }
 
     private sealed class FakeMouseHookSource : IMouseHookSource
@@ -360,12 +380,12 @@ internal static class Program
         int MaxPendingOps,
         double FirstTenthAvgMs,
         double LastTenthAvgMs,
-        bool Warmup)
+        bool DrainTimedOut)
     {
         public string Summarize() =>
             string.Format(
                 CultureInfo.InvariantCulture,
-                "{0,-24} rate={1,5} ev/s completed={2}/{3} queueAge(p50/p95/p99/max)={4:F2}/{5:F2}/{6:F2}/{7:F2}ms " +
+                "{0,-24} rate={1,5} ev/s completed={2}/{3}{15} queueAge(p50/p95/p99/max)={4:F2}/{5:F2}/{6:F2}/{7:F2}ms " +
                 "processing(p50/p95/p99/max)={8:F2}/{9:F2}/{10:F2}/{11:F2}ms maxPending={12} growth(first10%->last10%)={13:F3}->{14:F3}ms",
                 Scenario,
                 Rate,
@@ -381,6 +401,7 @@ internal static class Program
                 ProcessingMax,
                 MaxPendingOps,
                 FirstTenthAvgMs,
-                LastTenthAvgMs);
+                LastTenthAvgMs,
+                DrainTimedOut ? " [DRAIN TIMEOUT]" : "");
     }
 }

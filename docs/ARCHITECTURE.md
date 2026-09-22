@@ -37,7 +37,7 @@ App.xaml.cs  (composition root)
 │
 └── Presentation
     └── OverlayWindow
-        └── DrawingVisual / DrawingContext
+        └── StrokeRenderElement (VisualCollection of DrawingVisual)
 ```
 
 ## Modules and responsibilities
@@ -65,7 +65,7 @@ Ctrl+Alt+Z pressed
   → Win32MouseHookAdapter reads the gate and forwards physical pointer movement
   → DrawingSessionController appends ScreenPoint values to the active stroke
   → immutable DrawingState is published on the WPF Dispatcher
-  → OverlayWindow redraws the current state through one DrawingVisual
+  → OverlayWindow redraws only the new points since the last update
 ```
 
 `DrawingModeInputGate` is the shared, atomic decision point for keyboard and
@@ -116,8 +116,12 @@ This keeps input responsive and prevents cross-thread access to WPF objects.
 - The process uses Per-Monitor V2 DPI awareness.
 - Domain coordinates are physical pixels in the virtual desktop coordinate
   space, so monitors with different scaling factors do not shift lines.
-- A single `DrawingVisual`/`DrawingContext` renders the overlay. The app does
-  not create a WPF `Polyline` control for every mouse movement.
+- `StrokeRenderElement` renders through a `VisualCollection` of small
+  `DrawingVisual`s: completed strokes are drawn once and never reopened, and
+  the active stroke only gets a new `DrawingVisual` for its newest segments
+  each update, so redraw cost does not grow with total accumulated points
+  (see `docs/steps/F03-render-lag-investigation-plan.md`). The app does not
+  create a WPF `Polyline` control for every mouse movement.
 - The overlay covers every connected monitor as one virtual desktop surface.
 
 ## Test seams
