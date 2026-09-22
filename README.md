@@ -8,9 +8,10 @@ monitor.
 - Starts hidden in the system tray and has an `Exit` command.
 - Shows a transparent overlay across the virtual desktop.
 - While `Ctrl+Alt+Z` is held, mouse movement draws a 4 px orange stroke.
-  The overlay intercepts mouse input during drawing, so the application below
-  it receives no clicks.
-- `Ctrl+Alt+X` clears every stroke.
+  Global hooks suppress pointer buttons, scrolling, and other keyboard input
+  during drawing, so the application below receives neither clicks, scrolling,
+  nor typed symbols.
+- `Ctrl+Alt+X` clears every stroke and exits draw mode.
 - Strokes remain visible while switching windows and monitors, until cleared.
 
 ## Deliberately out of scope
@@ -22,7 +23,9 @@ monitor.
 
 ## Delivery target
 
-One self-contained WPF `.exe`, built with C#, with no installer required.
+One self-contained WPF application, launched through `DrawEM.App.exe`, with no
+installer required. The publish directory contains the executable and its
+runtime files.
 
 ## Development method
 

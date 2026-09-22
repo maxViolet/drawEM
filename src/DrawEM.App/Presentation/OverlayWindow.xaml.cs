@@ -1,11 +1,9 @@
 using System.Windows;
-using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 using DrawEM.App.Domain;
 using DrawEM.App.Infrastructure;
-using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 
 namespace DrawEM.App.Presentation;
 
@@ -15,8 +13,6 @@ public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
     private readonly object renderLock = new();
     private DrawingState? pendingState;
     private bool renderScheduled;
-
-    public event Action<ScreenPoint>? PointerMoved;
 
     public OverlayWindow()
     {
@@ -28,18 +24,10 @@ public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
         Height = SystemParameters.VirtualScreenHeight;
 
         Content = renderElement;
-        SourceInitialized += (_, _) => SetClickThrough(true);
-        MouseMove += OnMouseMove;
-    }
-
-    private void OnMouseMove(object sender, MouseEventArgs e)
-    {
-        if (!NativeMethods.GetCursorPos(out var cursor))
+        SourceInitialized += (_, _) =>
         {
-            return;
-        }
-
-        PointerMoved?.Invoke(new ScreenPoint(cursor.X, cursor.Y));
+            ((HwndSource)PresentationSource.FromVisual(this)!).AddHook(WindowProcedure);
+        };
     }
 
     public void Render(DrawingState state)
@@ -62,17 +50,6 @@ public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
         }
 
         Dispatcher.BeginInvoke(DispatcherPriority.Render, FlushPendingRender);
-    }
-
-    public void SetInputCapture(bool captureInput)
-    {
-        if (!CheckAccess())
-        {
-            Dispatcher.BeginInvoke(DispatcherPriority.Send, () => SetInputCapture(captureInput));
-            return;
-        }
-
-        SetClickThrough(!captureInput);
     }
 
     private void FlushPendingRender()
@@ -100,15 +77,19 @@ public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
         return new PhysicalToLocalTransform(windowRect.Left, windowRect.Top, matrix);
     }
 
-    private void SetClickThrough(bool clickThrough)
+    private IntPtr WindowProcedure(
+        IntPtr hwnd,
+        int message,
+        IntPtr wParam,
+        IntPtr lParam,
+        ref bool handled)
     {
-        var handle = new WindowInteropHelper(this).Handle;
-        var style = NativeMethods.GetWindowLong(handle, NativeMethods.GWL_EXSTYLE);
+        if (message == NativeMethods.WM_NCHITTEST)
+        {
+            handled = true;
+            return new IntPtr(NativeMethods.HTTRANSPARENT);
+        }
 
-        style = clickThrough
-            ? style | NativeMethods.WS_EX_TRANSPARENT | NativeMethods.WS_EX_LAYERED
-            : style & ~NativeMethods.WS_EX_TRANSPARENT;
-
-        NativeMethods.SetWindowLong(handle, NativeMethods.GWL_EXSTYLE, style);
+        return IntPtr.Zero;
     }
 }

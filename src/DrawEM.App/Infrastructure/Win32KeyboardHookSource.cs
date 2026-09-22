@@ -4,12 +4,14 @@ namespace DrawEM.App.Infrastructure;
 
 public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
 {
-    private readonly NativeMethods.LowLevelKeyboardProc proc;
+    private readonly NativeMethods.LowLevelHookProc proc;
     private IntPtr hookHandle;
 
     public event Action<int>? KeyDown;
 
     public event Action<int>? KeyUp;
+
+    public event Func<int, bool>? KeySuppressionRequested;
 
     public Win32KeyboardHookSource()
     {
@@ -34,10 +36,19 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
             if (message is NativeMethods.WM_KEYDOWN or NativeMethods.WM_SYSKEYDOWN)
             {
                 KeyDown?.Invoke(vkCode);
+                if (ShouldSuppressKey(vkCode))
+                {
+                    return new IntPtr(1);
+                }
             }
             else if (message is NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP)
             {
+                var suppress = ShouldSuppressKey(vkCode);
                 KeyUp?.Invoke(vkCode);
+                if (suppress)
+                {
+                    return new IntPtr(1);
+                }
             }
         }
 
@@ -52,4 +63,6 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
             hookHandle = IntPtr.Zero;
         }
     }
+
+    private bool ShouldSuppressKey(int vkCode) => KeySuppressionRequested?.Invoke(vkCode) ?? false;
 }

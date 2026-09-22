@@ -7,7 +7,8 @@
 
 drawEM is a small Windows 10/11 x64 utility that draws persistent orange 4 px
 annotations over all monitors while `Ctrl+Alt+Z` is held. `Ctrl+Alt+X` clears
-every annotation. It normally stays hidden in the system tray.
+every annotation and exits draw mode. It normally stays hidden in the system
+tray.
 
 The architecture keeps drawing rules testable without WPF or Win32, while
 isolating the operating-system-specific behavior needed for an overlay and
@@ -45,8 +46,8 @@ App.xaml.cs  (composition root)
 | --- | --- | --- |
 | `Domain` | points, strokes, active drawing state, colour and thickness rules | WPF types, Win32 calls, tray behavior |
 | `Application` | drawing-session commands and immutable state publication | window handles, event callbacks, rendering |
-| `Infrastructure` | low-level keyboard hook, tray icon, process lifecycle integration | stroke storage or drawing rules |
-| `Presentation` | transparent WPF overlay, rendering and input-mode switching | the authoritative stroke list |
+| `Infrastructure` | low-level keyboard and mouse hooks, synchronous input gate, tray icon, process lifecycle integration | stroke storage or drawing rules |
+| `Presentation` | transparent WPF overlay and rendering | the authoritative stroke list or global input |
 | `App.xaml.cs` | object creation, startup and orderly shutdown | business logic |
 
 `DrawingSessionController` is the only authoritative owner of the drawing
@@ -59,24 +60,30 @@ list itself.
 
 ```text
 Ctrl+Alt+Z pressed
-  → Win32KeyboardHookAdapter
-  → DrawingSessionController starts a drawing session
+  → Win32KeyboardHookAdapter opens DrawingModeInputGate synchronously
+  → DrawingSessionController starts a drawing session on the WPF Dispatcher
+  → Win32MouseHookAdapter reads the gate and forwards physical pointer movement
+  → DrawingSessionController appends ScreenPoint values to the active stroke
   → immutable DrawingState is published on the WPF Dispatcher
-  → OverlayWindow turns off click-through and receives mouse movement
-  → controller appends ScreenPoint values to the active stroke
   → OverlayWindow redraws the current state through one DrawingVisual
 ```
 
-When `Ctrl+Alt+Z` is released, the controller completes the active stroke and
-the overlay returns to click-through mode. Mouse clicks during draw mode are
-handled by the overlay and do not reach the application underneath.
+`DrawingModeInputGate` is the shared, atomic decision point for keyboard and
+mouse hooks. It changes synchronously in the keyboard callback, before the
+controller action is queued on the WPF Dispatcher. The `Win32MouseHookAdapter`
+forwards physical mouse movement to the controller only when this gate is open.
+When `Ctrl+Alt+Z` is released, the gate closes and the controller completes the
+active stroke. The mouse hook suppresses pointer-button and wheel messages, and
+the keyboard hook suppresses non-chord keys during draw mode, so clicks,
+scrolling, and typed symbols do not reach the application underneath. The
+overlay is always click-through and is not an input source.
 
 ### Clear
 
 ```text
 Ctrl+Alt+X pressed
   → Win32KeyboardHookAdapter
-  → DrawingSessionController.Clear()
+  → DrawingSessionController.ClearAndExitDrawMode()
   → empty DrawingState
   → OverlayWindow redraws with no strokes
 ```
@@ -85,20 +92,22 @@ Ctrl+Alt+X pressed
 
 ```text
 Tray Exit
-  → unregister keyboard hook
+  → unregister keyboard and mouse hooks
   → close overlay
   → dispose tray icon
   → terminate application
 ```
 
-If the keyboard hook cannot be registered at startup, drawEM reports the error
+If either global hook cannot be registered at startup, drawEM reports the error
 and exits rather than leaving a partially working overlay.
 
 ## Threading
 
-Win32 hook callbacks are not WPF UI callbacks. The hook adapter does no
-rendering and no expensive work. It forwards a small command to the controller;
-state delivery to `OverlayWindow` is marshalled to the WPF `Dispatcher`.
+Win32 hook callbacks are not WPF UI callbacks. The hook adapters do no
+rendering and no expensive work. Keyboard commands and mouse coordinates are
+forwarded to the controller through the WPF `Dispatcher`; pointer-button
+suppression is decided synchronously from the active drawing state. State
+delivery to `OverlayWindow` is also marshalled to the WPF `Dispatcher`.
 
 This keeps input responsive and prevents cross-thread access to WPF objects.
 
@@ -117,7 +126,8 @@ This keeps input responsive and prevents cross-thread access to WPF objects.
 | --- | --- | --- |
 | `DrawingSessionController` | stroke lifetime, point collection, clear behavior | WPF controls or private collections |
 | `Win32KeyboardHookAdapter` | shortcut events become controller commands | the OS hook implementation itself |
-| `OverlayWindow` adapter | state is rendered and input mode changes | pixel-perfect WPF internals |
+| `Win32MouseHookAdapter` | pointer movement becomes controller input; pointer buttons and wheel input are suppressed only while drawing | the OS hook implementation itself |
+| `OverlayWindow` adapter | state is rendered | pixel-perfect WPF internals |
 | `TrayAdapter` | startup is hidden and `Exit` releases resources | individual menu/control implementation |
 
 TDD proceeds in vertical slices: one behavior-level failing test, the smallest

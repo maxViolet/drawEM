@@ -45,10 +45,11 @@ public class DrawingSessionControllerTests
     }
 
     [Fact]
-    public void Clear_RemovesCompletedAndActiveStrokes()
+    public void ClearAndExitDrawMode_RemovesCompletedAndActiveStrokes()
     {
         var session = new DrawingSessionController();
 
+        session.EnterDrawMode();
         session.Start(new ScreenPoint(0, 0));
         session.Move(new ScreenPoint(10, 10));
         session.End();
@@ -56,8 +57,11 @@ public class DrawingSessionControllerTests
         session.Start(new ScreenPoint(20, 20));
         session.Move(new ScreenPoint(30, 30));
 
-        session.Clear();
+        session.ClearAndExitDrawMode();
 
+        Assert.Empty(session.CompletedStrokes);
+
+        session.ReportPointer(new ScreenPoint(40, 40));
         Assert.Empty(session.CompletedStrokes);
 
         session.End();

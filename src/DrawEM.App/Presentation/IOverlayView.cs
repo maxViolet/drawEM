@@ -6,7 +6,4 @@ public interface IOverlayView
 {
     void Render(DrawingState state);
 
-    void SetInputCapture(bool captureInput);
-
-    event Action<ScreenPoint>? PointerMoved;
 }
