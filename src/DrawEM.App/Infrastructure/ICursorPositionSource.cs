@@ -4,5 +4,5 @@ namespace DrawEM.App.Infrastructure;
 
 public interface ICursorPositionSource
 {
-    ScreenPoint GetCurrentPosition();
+    bool TryGetCurrentPosition(out ScreenPoint position);
 }

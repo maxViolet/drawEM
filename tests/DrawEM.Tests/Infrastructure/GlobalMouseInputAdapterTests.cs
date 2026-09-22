@@ -71,7 +71,7 @@ public class GlobalMouseInputAdapterTests
         var controller = new DrawingSessionController();
         var inputGate = new DrawingModeInputGate();
         var queuedActions = new Queue<Action>();
-        _ = new GlobalShortcutAdapter(keyboardSource, controller, inputGate, queuedActions.Enqueue);
+        _ = new GlobalShortcutAdapter(keyboardSource, controller, inputGate, new FakeCursorPositionSource(), queuedActions.Enqueue);
         _ = new GlobalMouseInputAdapter(mouseSource, controller, inputGate, queuedActions.Enqueue);
 
         keyboardSource.PressKey(VirtualKeys.LeftControl);
@@ -126,5 +126,14 @@ public class GlobalMouseInputAdapterTests
         public void ReleaseKey(int vkCode) => KeyUp?.Invoke(vkCode);
 
         public bool ShouldSuppressKey(int vkCode) => KeySuppressionRequested?.Invoke(vkCode) ?? false;
+    }
+
+    private sealed class FakeCursorPositionSource : ICursorPositionSource
+    {
+        public bool TryGetCurrentPosition(out ScreenPoint position)
+        {
+            position = default;
+            return true;
+        }
     }
 }

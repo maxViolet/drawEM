@@ -6,7 +6,7 @@ public sealed class GlobalShortcutAdapter
 {
     private readonly DrawingSessionController controller;
     private readonly DrawingModeInputGate inputGate;
-    private readonly ICursorPositionSource? cursorPositionSource;
+    private readonly ICursorPositionSource cursorPositionSource;
     private readonly Action<Action> dispatch;
     private readonly HashSet<int> pressedKeys = [];
     private bool drawShortcutBlockedUntilReleased;
@@ -16,16 +16,7 @@ public sealed class GlobalShortcutAdapter
         IKeyboardHookSource source,
         DrawingSessionController controller,
         DrawingModeInputGate inputGate,
-        Action<Action> dispatch)
-        : this(source, controller, inputGate, null, dispatch)
-    {
-    }
-
-    public GlobalShortcutAdapter(
-        IKeyboardHookSource source,
-        DrawingSessionController controller,
-        DrawingModeInputGate inputGate,
-        ICursorPositionSource? cursorPositionSource,
+        ICursorPositionSource cursorPositionSource,
         Action<Action> dispatch)
     {
         this.controller = controller;
@@ -57,14 +48,13 @@ public sealed class GlobalShortcutAdapter
         if (drawShortcutDown && !inputGate.IsActive && !drawShortcutBlockedUntilReleased)
         {
             inputGate.SetActive(true);
-            if (cursorPositionSource is null)
+            if (cursorPositionSource.TryGetCurrentPosition(out var startingPoint))
             {
-                dispatch(controller.EnterDrawMode);
+                dispatch(() => controller.EnterDrawMode(startingPoint));
             }
             else
             {
-                var startingPoint = cursorPositionSource.GetCurrentPosition();
-                dispatch(() => controller.EnterDrawMode(startingPoint));
+                dispatch(controller.EnterDrawMode);
             }
         }
         else if (!drawShortcutDown && inputGate.IsActive)

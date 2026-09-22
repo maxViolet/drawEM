@@ -4,13 +4,15 @@ namespace DrawEM.App.Infrastructure;
 
 public sealed class Win32CursorPositionSource : ICursorPositionSource
 {
-    public ScreenPoint GetCurrentPosition()
+    public bool TryGetCurrentPosition(out ScreenPoint position)
     {
         if (!NativeMethods.GetCursorPos(out var point))
         {
-            throw new InvalidOperationException("Failed to read the cursor position.");
+            position = default;
+            return false;
         }
 
-        return new ScreenPoint(point.X, point.Y);
+        position = new ScreenPoint(point.X, point.Y);
+        return true;
     }
 }
