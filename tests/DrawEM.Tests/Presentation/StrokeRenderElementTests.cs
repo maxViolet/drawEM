@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using DrawEM.App.Application;
 using DrawEM.App.Domain;
 using DrawEM.App.Presentation;
 
@@ -183,6 +184,36 @@ public class StrokeRenderElementTests
                 transform);
 
             Assert.Equal((byte)255, PixelAlphaAt(element, 2, 15));
+        });
+    }
+
+    [Fact]
+    public void ClearDuringFirstActiveStroke_DropsPixelsThroughRealController()
+    {
+        // Regression: CompletedStrokes.Count stays 0 -> 0 when a clear happens before the
+        // first stroke ever completes, so only DrawingState.Generation can signal the
+        // reset. Wires a real DrawingSessionController to a real StrokeRenderElement, the
+        // same way OverlayWindowAdapter/OverlayWindow.Render do, instead of hand-built
+        // DrawingState values.
+        RunOnStaThread(() =>
+        {
+            var element = new StrokeRenderElement { Width = 20, Height = 20 };
+            element.Measure(new Size(20, 20));
+            element.Arrange(new Rect(0, 0, 20, 20));
+            var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
+            var controller = new DrawingSessionController();
+            controller.StateChanged += state => element.UpdateState(state, transform);
+
+            controller.EnterDrawMode(new ScreenPoint(5, 5));
+            controller.Move(new ScreenPoint(15, 5));
+
+            Assert.Equal((byte)255, PixelAlphaAt(element, 15, 5));
+            Assert.Empty(controller.CompletedStrokes);
+
+            controller.ClearAndExitDrawMode();
+
+            Assert.Equal((byte)0, PixelAlphaAt(element, 15, 5));
+            Assert.Empty(controller.CompletedStrokes);
         });
     }
 
