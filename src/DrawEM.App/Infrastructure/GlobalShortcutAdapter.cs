@@ -6,6 +6,7 @@ public sealed class GlobalShortcutAdapter
 {
     private readonly DrawingSessionController controller;
     private readonly DrawingModeInputGate inputGate;
+    private readonly ICursorPositionSource cursorPositionSource;
     private readonly Action<Action> dispatch;
     private readonly HashSet<int> pressedKeys = [];
     private bool drawShortcutBlockedUntilReleased;
@@ -15,10 +16,12 @@ public sealed class GlobalShortcutAdapter
         IKeyboardHookSource source,
         DrawingSessionController controller,
         DrawingModeInputGate inputGate,
+        ICursorPositionSource cursorPositionSource,
         Action<Action> dispatch)
     {
         this.controller = controller;
         this.inputGate = inputGate;
+        this.cursorPositionSource = cursorPositionSource;
         this.dispatch = dispatch;
         source.KeyDown += OnKeyChanged;
         source.KeyUp += OnKeyUp;
@@ -42,10 +45,11 @@ public sealed class GlobalShortcutAdapter
         var modifiersDown = IsCtrlDown() && IsAltDown();
 
         var drawShortcutDown = modifiersDown && pressedKeys.Contains(VirtualKeys.Z);
-        if (drawShortcutDown && !inputGate.IsActive && !drawShortcutBlockedUntilReleased)
+        if (drawShortcutDown && !inputGate.IsActive && !drawShortcutBlockedUntilReleased
+            && cursorPositionSource.TryGetCurrentPosition(out var startingPoint))
         {
             inputGate.SetActive(true);
-            dispatch(controller.EnterDrawMode);
+            dispatch(() => controller.EnterDrawMode(startingPoint));
         }
         else if (!drawShortcutDown && inputGate.IsActive)
         {
@@ -86,4 +90,5 @@ public sealed class GlobalShortcutAdapter
             VirtualKeys.RightMenu or
             VirtualKeys.Z)) ||
         (clearShortcutActive && vkCode == VirtualKeys.X);
+
 }

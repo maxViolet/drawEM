@@ -27,7 +27,12 @@ public partial class App : System.Windows.Application
 
             var inputGate = new DrawingModeInputGate();
             keyboardHookSource = new Win32KeyboardHookSource();
-            _ = new GlobalShortcutAdapter(keyboardHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action));
+            _ = new GlobalShortcutAdapter(
+                keyboardHookSource,
+                controller,
+                inputGate,
+                new Win32CursorPositionSource(),
+                action => Dispatcher.BeginInvoke(action));
 
             mouseHookSource = new Win32MouseHookSource();
             _ = new GlobalMouseInputAdapter(mouseHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action));
