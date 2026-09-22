@@ -9,6 +9,7 @@ public sealed class DrawingSessionController
     private readonly List<Stroke> completedStrokes = [];
     private List<ScreenPoint>? activePoints;
     private bool drawModeActive;
+    private int generation;
 
     public IReadOnlyList<Stroke> CompletedStrokes => completedStrokes.AsReadOnly();
 
@@ -80,6 +81,7 @@ public sealed class DrawingSessionController
         drawModeActive = false;
         completedStrokes.Clear();
         activePoints = null;
+        generation++;
         PublishState();
     }
 
@@ -89,7 +91,7 @@ public sealed class DrawingSessionController
             ? null
             : new Stroke(Snapshot(activePoints), DrawingColor.Orange, StrokeThickness);
 
-        StateChanged?.Invoke(new DrawingState(Snapshot(completedStrokes), active, drawModeActive));
+        StateChanged?.Invoke(new DrawingState(Snapshot(completedStrokes), active, drawModeActive, generation));
     }
 
     private static ReadOnlyCollection<T> Snapshot<T>(List<T> source) => new(source.ToArray());

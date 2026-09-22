@@ -11,6 +11,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{27108C36
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DrawEM.Tests", "tests\DrawEM.Tests\DrawEM.Tests.csproj", "{0DADDDFF-BE7E-420F-BC61-5956FD2C85E0}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{625BFDC6-D557-46C5-8C42-E41982A0EE02}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RenderLagHarness", "tools\RenderLagHarness\RenderLagHarness.csproj", "{3912F333-76F2-484F-9252-DFE103860C37}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,9 +32,14 @@ Global
 		{0DADDDFF-BE7E-420F-BC61-5956FD2C85E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0DADDDFF-BE7E-420F-BC61-5956FD2C85E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0DADDDFF-BE7E-420F-BC61-5956FD2C85E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3912F333-76F2-484F-9252-DFE103860C37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3912F333-76F2-484F-9252-DFE103860C37}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3912F333-76F2-484F-9252-DFE103860C37}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3912F333-76F2-484F-9252-DFE103860C37}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{AB844FF6-8535-479B-B789-1348DBC876AF} = {85B88022-EEC1-4634-9BA2-5300A1F7FA92}
 		{0DADDDFF-BE7E-420F-BC61-5956FD2C85E0} = {27108C36-FC73-46DE-8D2A-C00323173A31}
+		{3912F333-76F2-484F-9252-DFE103860C37} = {625BFDC6-D557-46C5-8C42-E41982A0EE02}
 	EndGlobalSection
 EndGlobal
