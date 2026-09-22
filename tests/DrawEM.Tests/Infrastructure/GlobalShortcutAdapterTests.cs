@@ -125,6 +125,28 @@ public class GlobalShortcutAdapterTests
         Assert.Null(state.ActiveStroke);
     }
 
+    [Fact]
+    public void CtrlAltZ_Pressed_StartsActiveStrokeAtCurrentCursorPosition()
+    {
+        var source = new FakeKeyboardHookSource();
+        var controller = new DrawingSessionController();
+        var states = new List<DrawingState>();
+        var cursorPosition = new ScreenPoint(120, 240);
+        controller.StateChanged += states.Add;
+        _ = new GlobalShortcutAdapter(
+            source,
+            controller,
+            new DrawingModeInputGate(),
+            new FakeCursorPositionSource(cursorPosition),
+            action => action());
+
+        source.PressKey(VirtualKeys.LeftControl);
+        source.PressKey(VirtualKeys.LeftMenu);
+        source.PressKey(VirtualKeys.Z);
+
+        Assert.Equal([cursorPosition], Assert.Single(states).ActiveStroke!.Points);
+    }
+
     private sealed class FakeKeyboardHookSource : IKeyboardHookSource
     {
         public event Action<int>? KeyDown;
@@ -147,5 +169,10 @@ public class GlobalShortcutAdapterTests
                 .Cast<Func<int, bool>>()
                 .Any(handler => handler(vkCode))
             ?? false;
+    }
+
+    private sealed class FakeCursorPositionSource(ScreenPoint point) : ICursorPositionSource
+    {
+        public ScreenPoint GetCurrentPosition() => point;
     }
 }

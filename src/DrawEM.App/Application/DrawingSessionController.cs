@@ -19,6 +19,13 @@ public sealed class DrawingSessionController
         PublishState();
     }
 
+    public void EnterDrawMode(ScreenPoint startingPoint)
+    {
+        drawModeActive = true;
+        activePoints = [startingPoint];
+        PublishState();
+    }
+
     public void ExitDrawMode()
     {
         drawModeActive = false;

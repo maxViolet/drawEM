@@ -37,8 +37,19 @@ public sealed class StrokeRenderElement : FrameworkElement
 
     private static void DrawStroke(DrawingContext drawingContext, Stroke stroke, PhysicalToLocalTransform transform)
     {
-        if (stroke.Points.Count < 2)
+        if (stroke.Points.Count == 0)
         {
+            return;
+        }
+
+        if (stroke.Points.Count == 1)
+        {
+            drawingContext.DrawEllipse(
+                ToBrush(stroke.Color),
+                null,
+                transform.ToLocalPoint(stroke.Points[0]),
+                stroke.Thickness / 2d,
+                stroke.Thickness / 2d);
             return;
         }
 
