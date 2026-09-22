@@ -45,17 +45,11 @@ public sealed class GlobalShortcutAdapter
         var modifiersDown = IsCtrlDown() && IsAltDown();
 
         var drawShortcutDown = modifiersDown && pressedKeys.Contains(VirtualKeys.Z);
-        if (drawShortcutDown && !inputGate.IsActive && !drawShortcutBlockedUntilReleased)
+        if (drawShortcutDown && !inputGate.IsActive && !drawShortcutBlockedUntilReleased
+            && cursorPositionSource.TryGetCurrentPosition(out var startingPoint))
         {
             inputGate.SetActive(true);
-            if (cursorPositionSource.TryGetCurrentPosition(out var startingPoint))
-            {
-                dispatch(() => controller.EnterDrawMode(startingPoint));
-            }
-            else
-            {
-                dispatch(controller.EnterDrawMode);
-            }
+            dispatch(() => controller.EnterDrawMode(startingPoint));
         }
         else if (!drawShortcutDown && inputGate.IsActive)
         {
