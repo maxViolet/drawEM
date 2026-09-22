@@ -14,11 +14,15 @@ Run `src\DrawEM.App\bin\Release\net8.0-windows\win-x64\publish\DrawEM.App.exe`.
 2. Hold `Ctrl+Alt+Z`, move the pointer, and confirm an orange 4 px line remains visible after release.
 3. While holding `Ctrl+Alt+Z`, click a button in an underlying application; confirm it does not activate.
 4. While holding `Ctrl+Alt+Z`, type a character in an underlying text field; confirm it does not appear.
-5. Release `Ctrl+Alt+Z`, click the same button and type in the same text field; confirm both actions work.
+5. Release `Ctrl+Alt+Z`, click the same button, type in the same text field,
+   and scroll; confirm all actions work.
 6. Switch windows; when more than one monitor is available, move between
    monitors and confirm existing strokes remain visible.
-7. Press `Ctrl+Alt+X` and confirm every line disappears.
-8. Choose `Exit` from the tray icon menu and confirm the overlay disappears,
+7. While holding `Ctrl+Alt+Z`, scroll in an application underneath and confirm
+   it does not scroll.
+8. Press `Ctrl+Alt+X` and confirm every line disappears, draw mode exits, and
+   no new stroke starts until `Ctrl+Alt+Z` is released and held again.
+9. Choose `Exit` from the tray icon menu and confirm the overlay disappears,
    the shortcuts stop, and `DrawEM.App.exe` is no longer in Task Manager.
 
 Record results as manual verification: Win32 hooks, the notification area, input suppression, DPI, and multi-monitor behavior cannot be proven by the unit tests.
@@ -51,9 +55,10 @@ Copy this section to `docs/S07-ACCEPTANCE-RESULTS.md` for each acceptance run.
 | Persistent orange 4 px stroke |  |  |
 | Click blocked while drawing |  |  |
 | Keyboard input blocked while drawing |  |  |
-| Click and keyboard input pass through after release |  |  |
+| Scrolling blocked while drawing |  |  |
+| Click, scrolling, and keyboard input pass through after release |  |  |
 | Stroke persists across windows and monitors |  |  |
-| Clear shortcut removes all strokes |  |  |
+| Clear shortcut removes all strokes and exits draw mode |  |  |
 | Tray Exit stops overlay, shortcuts, and process |  |  |
 
 ## Boundaries observed

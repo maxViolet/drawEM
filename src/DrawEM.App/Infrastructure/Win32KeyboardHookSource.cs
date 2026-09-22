@@ -36,15 +36,19 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
             if (message is NativeMethods.WM_KEYDOWN or NativeMethods.WM_SYSKEYDOWN)
             {
                 KeyDown?.Invoke(vkCode);
+                if (ShouldSuppressKey(vkCode))
+                {
+                    return new IntPtr(1);
+                }
             }
             else if (message is NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP)
             {
+                var suppress = ShouldSuppressKey(vkCode);
                 KeyUp?.Invoke(vkCode);
-            }
-
-            if (ShouldSuppressKey(vkCode))
-            {
-                return new IntPtr(1);
+                if (suppress)
+                {
+                    return new IntPtr(1);
+                }
             }
         }
 

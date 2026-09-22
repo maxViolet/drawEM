@@ -19,6 +19,8 @@ internal static class NativeMethods
     internal const int WM_MBUTTONUP = 0x0208;
     internal const int WM_XBUTTONDOWN = 0x020B;
     internal const int WM_XBUTTONUP = 0x020C;
+    internal const int WM_MOUSEWHEEL = 0x020A;
+    internal const int WM_MOUSEHWHEEL = 0x020E;
 
     internal delegate IntPtr LowLevelHookProc(int nCode, IntPtr wParam, IntPtr lParam);
 
@@ -54,6 +56,9 @@ internal static class NativeMethods
         WM_RBUTTONDOWN or WM_RBUTTONUP or
         WM_MBUTTONDOWN or WM_MBUTTONUP or
         WM_XBUTTONDOWN or WM_XBUTTONUP;
+
+    internal static bool IsPointerWheelMessage(int message) =>
+        message is WM_MOUSEWHEEL or WM_MOUSEHWHEEL;
 
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern IntPtr SetWindowsHookEx(

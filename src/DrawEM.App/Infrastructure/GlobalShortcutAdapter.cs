@@ -8,6 +8,7 @@ public sealed class GlobalShortcutAdapter
     private readonly Action<Action> dispatch;
     private readonly HashSet<int> pressedKeys = [];
     private bool drawModeActive;
+    private bool drawShortcutBlockedUntilReleased;
     private bool clearShortcutActive;
 
     public GlobalShortcutAdapter(IKeyboardHookSource source, DrawingSessionController controller)
@@ -41,7 +42,7 @@ public sealed class GlobalShortcutAdapter
         var modifiersDown = IsCtrlDown() && IsAltDown();
 
         var drawShortcutDown = modifiersDown && pressedKeys.Contains(VirtualKeys.Z);
-        if (drawShortcutDown && !drawModeActive)
+        if (drawShortcutDown && !drawModeActive && !drawShortcutBlockedUntilReleased)
         {
             drawModeActive = true;
             dispatch(controller.EnterDrawMode);
@@ -52,11 +53,18 @@ public sealed class GlobalShortcutAdapter
             dispatch(controller.ExitDrawMode);
         }
 
+        if (!drawShortcutDown)
+        {
+            drawShortcutBlockedUntilReleased = false;
+        }
+
         var clearShortcutDown = modifiersDown && pressedKeys.Contains(VirtualKeys.X);
         if (clearShortcutDown && !clearShortcutActive)
         {
             clearShortcutActive = true;
-            dispatch(controller.Clear);
+            drawModeActive = false;
+            drawShortcutBlockedUntilReleased = true;
+            dispatch(controller.ClearAndExitDrawMode);
         }
         else if (!clearShortcutDown)
         {
@@ -71,10 +79,11 @@ public sealed class GlobalShortcutAdapter
         pressedKeys.Contains(VirtualKeys.LeftMenu) || pressedKeys.Contains(VirtualKeys.RightMenu);
 
     private bool ShouldSuppressKey(int vkCode) =>
-        drawModeActive && vkCode is not (
+        (drawModeActive && vkCode is not (
             VirtualKeys.LeftControl or
             VirtualKeys.RightControl or
             VirtualKeys.LeftMenu or
             VirtualKeys.RightMenu or
-            VirtualKeys.Z);
+            VirtualKeys.Z)) ||
+        (clearShortcutActive && vkCode == VirtualKeys.X);
 }

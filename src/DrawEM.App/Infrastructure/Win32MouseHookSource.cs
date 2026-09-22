@@ -24,6 +24,8 @@ public sealed class Win32MouseHookSource : IMouseHookSource, IDisposable
 
     public event Func<bool>? PointerButtonActivity;
 
+    public event Func<bool>? PointerWheelActivity;
+
     private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {
         if (nCode >= 0)
@@ -36,6 +38,10 @@ public sealed class Win32MouseHookSource : IMouseHookSource, IDisposable
                 PointerMoved?.Invoke(new ScreenPoint(data.pt.X, data.pt.Y));
             }
             else if (NativeMethods.IsPointerButtonMessage(message) && ShouldSuppressPointerButton())
+            {
+                return new IntPtr(1);
+            }
+            else if (NativeMethods.IsPointerWheelMessage(message) && ShouldSuppressPointerWheel())
             {
                 return new IntPtr(1);
             }
@@ -55,6 +61,13 @@ public sealed class Win32MouseHookSource : IMouseHookSource, IDisposable
 
     private bool ShouldSuppressPointerButton() =>
         PointerButtonActivity?
+            .GetInvocationList()
+            .Cast<Func<bool>>()
+            .Any(handler => handler())
+        ?? false;
+
+    private bool ShouldSuppressPointerWheel() =>
+        PointerWheelActivity?
             .GetInvocationList()
             .Cast<Func<bool>>()
             .Any(handler => handler())

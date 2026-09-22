@@ -107,6 +107,30 @@ public class GlobalShortcutAdapterTests
         Assert.False(source.ShouldSuppressKey(VirtualKeys.A));
     }
 
+    [Fact]
+    public void CtrlAltX_SuppressesXAndClearsThenExitsDrawMode()
+    {
+        var source = new FakeKeyboardHookSource();
+        var controller = new DrawingSessionController();
+        var states = new List<DrawingState>();
+        controller.StateChanged += states.Add;
+        _ = new GlobalShortcutAdapter(source, controller);
+
+        source.PressKey(VirtualKeys.LeftControl);
+        source.PressKey(VirtualKeys.LeftMenu);
+        source.PressKey(VirtualKeys.Z);
+        controller.Start(new ScreenPoint(1, 1));
+        controller.Move(new ScreenPoint(2, 2));
+
+        var xWasSuppressed = source.PressKey(VirtualKeys.X);
+
+        var state = states.Last();
+        Assert.True(xWasSuppressed);
+        Assert.False(state.IsDrawModeActive);
+        Assert.Empty(state.CompletedStrokes);
+        Assert.Null(state.ActiveStroke);
+    }
+
     private sealed class FakeKeyboardHookSource : IKeyboardHookSource
     {
         public event Action<int>? KeyDown;
@@ -115,7 +139,11 @@ public class GlobalShortcutAdapterTests
 
         public event Func<int, bool>? KeyActivity;
 
-        public void PressKey(int vkCode) => KeyDown?.Invoke(vkCode);
+        public bool PressKey(int vkCode)
+        {
+            KeyDown?.Invoke(vkCode);
+            return ShouldSuppressKey(vkCode);
+        }
 
         public void ReleaseKey(int vkCode) => KeyUp?.Invoke(vkCode);
 

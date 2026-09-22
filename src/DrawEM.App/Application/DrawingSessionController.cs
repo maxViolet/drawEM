@@ -79,6 +79,15 @@ public sealed class DrawingSessionController
         PublishState();
     }
 
+    public void ClearAndExitDrawMode()
+    {
+        drawModeActive = false;
+        InputCaptureRequested?.Invoke(false);
+        completedStrokes.Clear();
+        activePoints = null;
+        PublishState();
+    }
+
     private void PublishState()
     {
         var active = activePoints is null

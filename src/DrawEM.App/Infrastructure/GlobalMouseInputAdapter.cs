@@ -25,6 +25,7 @@ public sealed class GlobalMouseInputAdapter
         controller.InputCaptureRequested += SetDrawMode;
         source.PointerMoved += OnPointerMoved;
         source.PointerButtonActivity += ShouldSuppressPointerButton;
+        source.PointerWheelActivity += ShouldSuppressPointerButton;
     }
 
     private void SetDrawMode(bool active) => Interlocked.Exchange(ref drawModeActive, active ? 1 : 0);

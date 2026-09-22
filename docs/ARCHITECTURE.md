@@ -7,7 +7,8 @@
 
 drawEM is a small Windows 10/11 x64 utility that draws persistent orange 4 px
 annotations over all monitors while `Ctrl+Alt+Z` is held. `Ctrl+Alt+X` clears
-every annotation. It normally stays hidden in the system tray.
+every annotation and exits draw mode. It normally stays hidden in the system
+tray.
 
 The architecture keeps drawing rules testable without WPF or Win32, while
 isolating the operating-system-specific behavior needed for an overlay and
@@ -68,16 +69,17 @@ Ctrl+Alt+Z pressed
 
 The `Win32MouseHookAdapter` forwards physical mouse movement to the controller.
 When `Ctrl+Alt+Z` is released, the controller completes the active stroke. The
-mouse hook suppresses pointer-button messages and the keyboard hook suppresses
-non-chord keys during draw mode, so clicks and typed symbols do not reach the
-application underneath. The overlay is always click-through.
+mouse hook suppresses pointer-button and wheel messages, and the keyboard hook
+suppresses non-chord keys during draw mode, so clicks, scrolling, and typed
+symbols do not reach the application underneath. The overlay is always
+click-through.
 
 ### Clear
 
 ```text
 Ctrl+Alt+X pressed
   → Win32KeyboardHookAdapter
-  → DrawingSessionController.Clear()
+  → DrawingSessionController.ClearAndExitDrawMode()
   → empty DrawingState
   → OverlayWindow redraws with no strokes
 ```
@@ -120,7 +122,7 @@ This keeps input responsive and prevents cross-thread access to WPF objects.
 | --- | --- | --- |
 | `DrawingSessionController` | stroke lifetime, point collection, clear behavior | WPF controls or private collections |
 | `Win32KeyboardHookAdapter` | shortcut events become controller commands | the OS hook implementation itself |
-| `Win32MouseHookAdapter` | pointer movement becomes controller input and pointer buttons are suppressed only while drawing | the OS hook implementation itself |
+| `Win32MouseHookAdapter` | pointer movement becomes controller input; pointer buttons and wheel input are suppressed only while drawing | the OS hook implementation itself |
 | `OverlayWindow` adapter | state is rendered | pixel-perfect WPF internals |
 | `TrayAdapter` | startup is hidden and `Exit` releases resources | individual menu/control implementation |
 

@@ -40,16 +40,43 @@ public class GlobalMouseInputAdapterTests
         Assert.False(source.ShouldSuppressPointerButton());
     }
 
+    [Fact]
+    public void PointerWheel_IsSuppressedOnlyDuringDrawMode()
+    {
+        var source = new FakeMouseHookSource();
+        var controller = new DrawingSessionController();
+        _ = new GlobalMouseInputAdapter(source, controller);
+
+        Assert.False(source.ShouldSuppressPointerWheel());
+
+        controller.EnterDrawMode();
+
+        Assert.True(source.ShouldSuppressPointerWheel());
+
+        controller.ExitDrawMode();
+
+        Assert.False(source.ShouldSuppressPointerWheel());
+    }
+
     private sealed class FakeMouseHookSource : IMouseHookSource
     {
         public event Action<ScreenPoint>? PointerMoved;
 
         public event Func<bool>? PointerButtonActivity;
 
+        public event Func<bool>? PointerWheelActivity;
+
         public void Move(ScreenPoint point) => PointerMoved?.Invoke(point);
 
         public bool ShouldSuppressPointerButton() =>
             PointerButtonActivity?
+                .GetInvocationList()
+                .Cast<Func<bool>>()
+                .Any(handler => handler())
+            ?? false;
+
+        public bool ShouldSuppressPointerWheel() =>
+            PointerWheelActivity?
                 .GetInvocationList()
                 .Cast<Func<bool>>()
                 .Any(handler => handler())
