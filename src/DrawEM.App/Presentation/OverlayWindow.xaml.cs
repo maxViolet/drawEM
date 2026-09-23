@@ -9,6 +9,12 @@ namespace DrawEM.App.Presentation;
 
 public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
 {
+    /// <summary>
+    /// Window origin in physical pixels used when GetWindowRect fails: points are then
+    /// mapped as if the window started at the screen origin.
+    /// </summary>
+    private const int FallbackWindowOrigin = 0;
+
     private readonly StrokeRenderElement renderElement = new();
     private readonly object renderLock = new();
     private DrawingState? pendingState;
@@ -72,7 +78,7 @@ public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
 
         if (!NativeMethods.GetWindowRect(new WindowInteropHelper(this).Handle, out var windowRect))
         {
-            return new PhysicalToLocalTransform(0, 0, matrix);
+            return new PhysicalToLocalTransform(FallbackWindowOrigin, FallbackWindowOrigin, matrix);
         }
 
         return new PhysicalToLocalTransform(windowRect.Left, windowRect.Top, matrix);

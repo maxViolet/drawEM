@@ -5,7 +5,9 @@ namespace DrawEM.App.Application;
 
 public sealed class DrawingSessionController
 {
+    /// <summary>Stroke width in physical pixels. A single-point stroke renders as a dot of this diameter.</summary>
     private const int StrokeThickness = 4;
+
     private readonly List<Stroke> completedStrokes = [];
     private List<ScreenPoint>? activePoints;
     private bool drawModeActive;

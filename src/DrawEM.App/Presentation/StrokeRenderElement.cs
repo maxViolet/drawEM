@@ -14,6 +14,15 @@ namespace DrawEM.App.Presentation;
 /// </summary>
 public sealed class StrokeRenderElement : FrameworkElement
 {
+    /// <summary>
+    /// Initial value of renderedGeneration. DrawingState.Generation starts at 0, so the
+    /// first UpdateState always sees a new generation and does a full reset.
+    /// </summary>
+    private const int NoGenerationRendered = -1;
+
+    /// <summary>Divides a diameter to get a radius.</summary>
+    private const double DiameterToRadius = 2d;
+
     private readonly VisualCollection children;
     private readonly List<DrawingVisual> activeSegmentVisuals = [];
     private readonly Dictionary<(DrawingColor Color, int Thickness), Pen> penCache = [];
@@ -21,7 +30,7 @@ public sealed class StrokeRenderElement : FrameworkElement
     private int completedRendered;
     private int activePointCount;
     private ScreenPoint? activeFirstPoint;
-    private int renderedGeneration = -1;
+    private int renderedGeneration = NoGenerationRendered;
 
     public StrokeRenderElement()
     {
@@ -140,8 +149,8 @@ public sealed class StrokeRenderElement : FrameworkElement
                     ToBrush(stroke.Color),
                     null,
                     transform.ToLocalPoint(stroke.Points[0]),
-                    stroke.Thickness / 2d,
-                    stroke.Thickness / 2d);
+                    DotRadius(stroke.Thickness),
+                    DotRadius(stroke.Thickness));
             }
             else
             {
@@ -168,8 +177,8 @@ public sealed class StrokeRenderElement : FrameworkElement
                 ToBrush(active.Color),
                 null,
                 transform.ToLocalPoint(active.Points[0]),
-                active.Thickness / 2d,
-                active.Thickness / 2d);
+                DotRadius(active.Thickness),
+                DotRadius(active.Thickness));
         }
 
         children.Add(visual);
@@ -241,6 +250,9 @@ public sealed class StrokeRenderElement : FrameworkElement
         penCache[key] = pen;
         return pen;
     }
+
+    /// <summary>A single-point stroke is a dot whose diameter equals the stroke thickness.</summary>
+    private static double DotRadius(int thickness) => thickness / DiameterToRadius;
 
     private static Brush ToBrush(DrawingColor color) => color switch
     {

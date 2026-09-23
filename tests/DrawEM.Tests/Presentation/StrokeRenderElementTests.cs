@@ -9,6 +9,18 @@ namespace DrawEM.Tests.Presentation;
 
 public class StrokeRenderElementTests
 {
+    /// <summary>Blue channel of OrangeRed #FF4500 (Pbgra32 byte 0).</summary>
+    private const byte OrangeRedBlue = 0x00;
+
+    /// <summary>Green channel of OrangeRed #FF4500 (Pbgra32 byte 1).</summary>
+    private const byte OrangeRedGreen = 0x45;
+
+    /// <summary>Red channel of OrangeRed #FF4500 (Pbgra32 byte 2).</summary>
+    private const byte OrangeRedRed = 0xFF;
+
+    /// <summary>Alpha of a fully opaque pixel (Pbgra32 byte 3).</summary>
+    private const byte OpaqueAlpha = 0xFF;
+
     [Fact]
     public void UpdateState_RendersSinglePointStroke()
     {
@@ -35,10 +47,10 @@ public class StrokeRenderElementTests
             bitmap.CopyPixels(pixels, 20 * 4, 0);
 
             var offset = ((10 * 20) + 10) * 4;
-            Assert.Equal((byte)0, pixels[offset]);
-            Assert.Equal((byte)69, pixels[offset + 1]);
-            Assert.Equal((byte)255, pixels[offset + 2]);
-            Assert.Equal((byte)255, pixels[offset + 3]);
+            Assert.Equal(OrangeRedBlue, pixels[offset]);
+            Assert.Equal(OrangeRedGreen, pixels[offset + 1]);
+            Assert.Equal(OrangeRedRed, pixels[offset + 2]);
+            Assert.Equal(OpaqueAlpha, pixels[offset + 3]);
         });
     }
 

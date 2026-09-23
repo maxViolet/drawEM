@@ -12,7 +12,7 @@ public sealed class Win32MouseHookSource : IMouseHookSource, IDisposable
     {
         proc = HookCallback;
         hookHandle = NativeMethods.SetWindowsHookEx(
-            NativeMethods.WH_MOUSE_LL, proc, NativeMethods.GetModuleHandle(null), 0);
+            NativeMethods.WH_MOUSE_LL, proc, NativeMethods.GetModuleHandle(null), NativeMethods.AllThreads);
 
         if (hookHandle == IntPtr.Zero)
         {
@@ -28,7 +28,7 @@ public sealed class Win32MouseHookSource : IMouseHookSource, IDisposable
 
     private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {
-        if (nCode >= 0)
+        if (nCode >= NativeMethods.HC_ACTION)
         {
             var data = Marshal.PtrToStructure<NativeMethods.MSLLHOOKSTRUCT>(lParam);
             var message = wParam.ToInt32();
@@ -39,11 +39,11 @@ public sealed class Win32MouseHookSource : IMouseHookSource, IDisposable
             }
             else if (NativeMethods.IsPointerButtonMessage(message) && ShouldSuppressPointerButton())
             {
-                return new IntPtr(1);
+                return NativeMethods.SuppressMessage;
             }
             else if (NativeMethods.IsPointerWheelMessage(message) && ShouldSuppressPointerWheel())
             {
-                return new IntPtr(1);
+                return NativeMethods.SuppressMessage;
             }
         }
 
