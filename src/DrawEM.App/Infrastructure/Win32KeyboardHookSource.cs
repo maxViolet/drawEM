@@ -17,7 +17,7 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
     {
         proc = HookCallback;
         hookHandle = NativeMethods.SetWindowsHookEx(
-            NativeMethods.WH_KEYBOARD_LL, proc, NativeMethods.GetModuleHandle(null), 0);
+            NativeMethods.WH_KEYBOARD_LL, proc, NativeMethods.GetModuleHandle(null), NativeMethods.AllThreads);
 
         if (hookHandle == IntPtr.Zero)
         {
@@ -27,7 +27,7 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
 
     private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {
-        if (nCode >= 0)
+        if (nCode >= NativeMethods.HC_ACTION)
         {
             var data = Marshal.PtrToStructure<NativeMethods.KBDLLHOOKSTRUCT>(lParam);
             var vkCode = (int)data.vkCode;
@@ -38,7 +38,7 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
                 KeyDown?.Invoke(vkCode);
                 if (ShouldSuppressKey(vkCode))
                 {
-                    return new IntPtr(1);
+                    return NativeMethods.SuppressMessage;
                 }
             }
             else if (message is NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP)
@@ -47,7 +47,7 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
                 KeyUp?.Invoke(vkCode);
                 if (suppress)
                 {
-                    return new IntPtr(1);
+                    return NativeMethods.SuppressMessage;
                 }
             }
         }

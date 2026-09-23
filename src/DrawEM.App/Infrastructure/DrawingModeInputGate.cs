@@ -5,12 +5,18 @@ namespace DrawEM.App.Infrastructure;
 
 public sealed class DrawingModeInputGate
 {
+    /// <summary>Flag value for an inactive gate. The shared flag uses int for volatile access.</summary>
+    private const int Inactive = 0;
+
+    /// <summary>Flag value for an active gate.</summary>
+    private const int Active = 1;
+
     private readonly object sync = new();
-    private int active;
+    private int active = Inactive;
     private MonitorBounds? activeBounds;
     private bool blockedUntilReleased;
 
-    public bool IsActive => Volatile.Read(ref active) == 1;
+    public bool IsActive => Volatile.Read(ref active) == Active;
 
     public bool IsBlockedUntilReleased
     {
@@ -22,7 +28,7 @@ public sealed class DrawingModeInputGate
         lock (sync)
         {
             activeBounds = null;
-            Volatile.Write(ref active, isActive ? 1 : 0);
+            Volatile.Write(ref active, isActive ? Active : Inactive);
         }
     }
 
@@ -31,7 +37,7 @@ public sealed class DrawingModeInputGate
         lock (sync)
         {
             activeBounds = bounds;
-            Volatile.Write(ref active, 1);
+            Volatile.Write(ref active, Active);
         }
     }
 
@@ -39,14 +45,14 @@ public sealed class DrawingModeInputGate
     {
         lock (sync)
         {
-            if (active == 0 || activeBounds is not { } bounds || bounds.Contains(point))
+            if (active == Inactive || activeBounds is not { } bounds || bounds.Contains(point))
             {
                 return false;
             }
 
             activeBounds = null;
             blockedUntilReleased = true;
-            Volatile.Write(ref active, 0);
+            Volatile.Write(ref active, Inactive);
             return true;
         }
     }

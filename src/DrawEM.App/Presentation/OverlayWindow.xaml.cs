@@ -9,6 +9,12 @@ namespace DrawEM.App.Presentation;
 
 public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
 {
+    /// <summary>
+    /// Window origin in physical pixels used when GetWindowRect fails: points are then
+    /// mapped as if the window started at the screen origin.
+    /// </summary>
+    private const int FallbackWindowOrigin = 0;
+
     private readonly StrokeRenderElement renderElement = new();
     private readonly object renderLock = new();
     private DrawingState? pendingState;
@@ -26,6 +32,7 @@ public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
         Content = renderElement;
         SourceInitialized += (_, _) =>
         {
+            HideFromAltTab();
             ((HwndSource)PresentationSource.FromVisual(this)!).AddHook(WindowProcedure);
         };
     }
@@ -71,10 +78,20 @@ public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
 
         if (!NativeMethods.GetWindowRect(new WindowInteropHelper(this).Handle, out var windowRect))
         {
-            return new PhysicalToLocalTransform(0, 0, matrix);
+            return new PhysicalToLocalTransform(FallbackWindowOrigin, FallbackWindowOrigin, matrix);
         }
 
         return new PhysicalToLocalTransform(windowRect.Left, windowRect.Top, matrix);
+    }
+
+    // ShowInTaskbar="False" removes only the taskbar button; a borderless top-level
+    // window still shows in Alt+Tab and Win+Tab unless it is marked as a tool window.
+    private void HideFromAltTab()
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        var exStyle = NativeMethods.GetWindowLong(hwnd, NativeMethods.GWL_EXSTYLE);
+        exStyle = (exStyle | NativeMethods.WS_EX_TOOLWINDOW) & ~NativeMethods.WS_EX_APPWINDOW;
+        NativeMethods.SetWindowLong(hwnd, NativeMethods.GWL_EXSTYLE, exStyle);
     }
 
     private IntPtr WindowProcedure(

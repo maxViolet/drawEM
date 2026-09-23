@@ -6,7 +6,7 @@ public sealed class Win32MonitorBoundsSource : IMonitorBoundsSource
 {
     public bool TryGetBounds(ScreenPoint point, out MonitorBounds bounds)
     {
-        var monitor = NativeMethods.MonitorFromPoint(new NativeMethods.POINT { X = point.X, Y = point.Y }, 0);
+        var monitor = NativeMethods.MonitorFromPoint(new NativeMethods.POINT { X = point.X, Y = point.Y }, NativeMethods.MONITOR_DEFAULTTONULL);
         var info = new NativeMethods.MONITORINFO { cbSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<NativeMethods.MONITORINFO>() };
         if (monitor == IntPtr.Zero || !NativeMethods.GetMonitorInfo(monitor, ref info))
         {

@@ -5,7 +5,6 @@ namespace DrawEM.App.Application;
 
 public sealed class DrawingSessionController
 {
-    private const int StrokeThickness = 4;
     private readonly List<Stroke> completedStrokes = [];
     private List<ScreenPoint>? activePoints;
     private MonitorBounds? activeBounds;
@@ -92,8 +91,8 @@ public sealed class DrawingSessionController
         {
             completedStrokes.Add(new Stroke(
                 Snapshot(activePoints),
-                DrawingColor.Orange,
-                StrokeThickness,
+                DrawingDefaults.StrokeColor,
+                DrawingDefaults.StrokeThickness,
                 activeBounds));
             activePoints = null;
         }
@@ -123,7 +122,8 @@ public sealed class DrawingSessionController
     {
         var active = activePoints is null
             ? null
-            : new Stroke(Snapshot(activePoints), DrawingColor.Orange, StrokeThickness, activeBounds);
+            : new Stroke(Snapshot(activePoints), DrawingDefaults.StrokeColor,
+                DrawingDefaults.StrokeThickness, activeBounds);
 
         StateChanged?.Invoke(new DrawingState(Snapshot(completedStrokes), active, drawModeActive, generation));
     }
