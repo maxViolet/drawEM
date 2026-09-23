@@ -17,11 +17,14 @@ Run `src\DrawEM.App\bin\Release\net8.0-windows\win-x64\publish\DrawEM.App.exe`.
 5. Release `Ctrl+Alt+Z`, click the same button, type in the same text field,
    and scroll; confirm all actions work.
 6. Switch windows; when more than one monitor is available, move between
-   monitors and confirm existing strokes remain visible.
+   monitors and confirm existing strokes remain visible. While holding the draw
+   shortcut, cross a monitor boundary: the stroke must stop on its starting
+   monitor and must not resume until the shortcut is released and pressed again.
 7. While holding `Ctrl+Alt+Z`, scroll in an application underneath and confirm
    it does not scroll.
-8. Press `Ctrl+Alt+X` and confirm every line disappears, draw mode exits, and
-   no new stroke starts until `Ctrl+Alt+Z` is released and held again.
+8. With strokes on two monitors, press `Ctrl+Alt+X` and confirm only strokes on
+   the monitor under the cursor disappear. Draw mode exits, and no new stroke
+   starts until `Ctrl+Alt+Z` is released and held again.
 9. Choose `Exit` from the tray icon menu and confirm the overlay disappears,
    the shortcuts stop, and `DrawEM.App.exe` is no longer in Task Manager.
 
@@ -58,7 +61,8 @@ Copy this section to `docs/S07-ACCEPTANCE-RESULTS.md` for each acceptance run.
 | Scrolling blocked while drawing |  |  |
 | Click, scrolling, and keyboard input pass through after release |  |  |
 | Stroke persists across windows and monitors |  |  |
-| Clear shortcut removes all strokes and exits draw mode |  |  |
+| Stroke stops at monitor boundary and stays within starting monitor |  |  |
+| Clear shortcut removes only strokes on cursor monitor and exits draw mode |  |  |
 | Tray Exit stops overlay, shortcuts, and process |  |  |
 
 ## Boundaries observed

@@ -7,7 +7,7 @@
 
 drawEM is a small Windows 10/11 x64 utility that draws persistent orange 4 px
 annotations over all monitors while `Ctrl+Alt+Z` is held. `Ctrl+Alt+X` clears
-every annotation and exits draw mode. It normally stays hidden in the system
+annotations on the monitor under the cursor and exits draw mode. It normally stays hidden in the system
 tray.
 
 The architecture keeps drawing rules testable without WPF or Win32, while
@@ -73,7 +73,9 @@ mouse hooks. It changes synchronously in the keyboard callback, before the
 controller action is queued on the WPF Dispatcher. The `Win32MouseHookAdapter`
 forwards physical mouse movement to the controller only when this gate is open.
 When `Ctrl+Alt+Z` is released, the gate closes and the controller completes the
-active stroke. The mouse hook suppresses pointer-button and wheel messages, and
+active stroke. If the cursor crosses to another monitor first, the gate closes
+synchronously and drawing stays blocked until the shortcut is released and
+pressed again. The mouse hook suppresses pointer-button and wheel messages, and
 the keyboard hook suppresses non-chord keys during draw mode, so clicks,
 scrolling, and typed symbols do not reach the application underneath. The
 overlay is always click-through and is not an input source.
@@ -83,9 +85,10 @@ overlay is always click-through and is not an input source.
 ```text
 Ctrl+Alt+X pressed
   → Win32KeyboardHookAdapter
-  → DrawingSessionController.ClearAndExitDrawMode()
-  → empty DrawingState
-  → OverlayWindow redraws with no strokes
+  → resolve the monitor under the cursor
+  → DrawingSessionController.ClearMonitorAndExitDrawMode(bounds)
+  → DrawingState without strokes from that monitor
+  → OverlayWindow redraws, retaining strokes on other monitors
 ```
 
 ### Exit
@@ -123,6 +126,8 @@ This keeps input responsive and prevents cross-thread access to WPF objects.
   (see `docs/steps/F03-render-lag-investigation-plan.md`). The app does not
   create a WPF `Polyline` control for every mouse movement.
 - The overlay covers every connected monitor as one virtual desktop surface.
+- Each stroke stores its starting monitor bounds. The renderer clips the whole
+  stroke, including its thickness, to those bounds.
 
 ## Test seams
 
