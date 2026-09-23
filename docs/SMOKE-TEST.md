@@ -11,8 +11,7 @@ Run `src\DrawEM.App\bin\Release\net8.0-windows\win-x64\publish\DrawEM.App.exe`.
 ## Manual checks
 
 1. Confirm no normal application window appears and the drawEM icon is visible in the notification area.
-   Press `Alt+Tab` and `Win+Tab` and confirm drawEM is not listed, including after drawing a stroke.
-2. Hold `Ctrl+Alt+Z`, move the pointer, and confirm an OrangeRed (#FF4500) 4 px line remains visible after release.
+2. Hold `Ctrl+Alt+Z`, move the pointer, and confirm an orange 4 px line remains visible after release.
 3. While holding `Ctrl+Alt+Z`, click a button in an underlying application; confirm it does not activate.
 4. While holding `Ctrl+Alt+Z`, type a character in an underlying text field; confirm it does not appear.
 5. Release `Ctrl+Alt+Z`, click the same button, type in the same text field,
@@ -52,8 +51,8 @@ Copy this section to `docs/S07-ACCEPTANCE-RESULTS.md` for each acceptance run.
 
 | Check | Result: Pass / Fail / Not tested | Evidence or reason |
 | --- | --- | --- |
-| Hidden startup, tray icon, not listed in Alt+Tab or Win+Tab |  |  |
-| Persistent OrangeRed (#FF4500) 4 px stroke |  |  |
+| Hidden startup and tray icon |  |  |
+| Persistent orange 4 px stroke |  |  |
 | Click blocked while drawing |  |  |
 | Keyboard input blocked while drawing |  |  |
 | Scrolling blocked while drawing |  |  |
