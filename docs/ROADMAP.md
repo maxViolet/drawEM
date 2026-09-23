@@ -80,8 +80,8 @@ Implement the WPF transparent, topmost window and bind it to the controller's
 observable drawing state. It spans the virtual desktop, not merely the primary
 monitor.
 
-**Done when:** manually moving a test cursor path produces an OrangeRed 4 px line
-on every monitor configuration available.
+**Done when:** manually moving a test cursor path produces an OrangeRed 4 px
+line on every monitor configuration available.
 
 ### 4. TDD slice: draw-mode input blocking — 45 minutes
 
