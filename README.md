@@ -7,7 +7,7 @@ monitor.
 
 - Starts hidden in the system tray and has an `Exit` command.
 - Shows a transparent overlay across the virtual desktop.
-- While `Ctrl+Alt+Z` is held, mouse movement draws a 4 px OrangeRed (#FF4500) stroke.
+- While `Ctrl+Alt+Z` is held, mouse movement draws a 4 px orange stroke.
   Global hooks suppress pointer buttons, scrolling, and other keyboard input
   during drawing, so the application below receives neither clicks, scrolling,
   nor typed symbols.
