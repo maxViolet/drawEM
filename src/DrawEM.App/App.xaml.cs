@@ -32,7 +32,8 @@ public partial class App : System.Windows.Application
                 controller,
                 inputGate,
                 new Win32CursorPositionSource(),
-                action => Dispatcher.BeginInvoke(action));
+                action => Dispatcher.BeginInvoke(action),
+                new Win32MonitorBoundsSource());
 
             mouseHookSource = new Win32MouseHookSource();
             _ = new GlobalMouseInputAdapter(mouseHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action));

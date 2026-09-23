@@ -7,9 +7,9 @@ public sealed class GlobalShortcutAdapter
     private readonly DrawingSessionController controller;
     private readonly DrawingModeInputGate inputGate;
     private readonly ICursorPositionSource cursorPositionSource;
+    private readonly IMonitorBoundsSource monitorBoundsSource;
     private readonly Action<Action> dispatch;
     private readonly HashSet<int> pressedKeys = [];
-    private bool drawShortcutBlockedUntilReleased;
     private bool clearShortcutActive;
 
     public GlobalShortcutAdapter(
@@ -17,11 +17,13 @@ public sealed class GlobalShortcutAdapter
         DrawingSessionController controller,
         DrawingModeInputGate inputGate,
         ICursorPositionSource cursorPositionSource,
-        Action<Action> dispatch)
+        Action<Action> dispatch,
+        IMonitorBoundsSource monitorBoundsSource)
     {
         this.controller = controller;
         this.inputGate = inputGate;
         this.cursorPositionSource = cursorPositionSource;
+        this.monitorBoundsSource = monitorBoundsSource;
         this.dispatch = dispatch;
         source.KeyDown += OnKeyChanged;
         source.KeyUp += OnKeyUp;
@@ -45,11 +47,15 @@ public sealed class GlobalShortcutAdapter
         var modifiersDown = IsCtrlDown() && IsAltDown();
 
         var drawShortcutDown = modifiersDown && pressedKeys.Contains(VirtualKeys.Z);
-        if (drawShortcutDown && !inputGate.IsActive && !drawShortcutBlockedUntilReleased
+        var clearShortcutDown = modifiersDown && pressedKeys.Contains(VirtualKeys.X);
+        if (drawShortcutDown && !inputGate.IsActive && !inputGate.IsBlockedUntilReleased
             && cursorPositionSource.TryGetCurrentPosition(out var startingPoint))
         {
-            inputGate.SetActive(true);
-            dispatch(() => controller.EnterDrawMode(startingPoint));
+            if (monitorBoundsSource.TryGetBounds(startingPoint, out var bounds))
+            {
+                inputGate.Begin(bounds);
+                dispatch(() => controller.EnterDrawMode(startingPoint, bounds));
+            }
         }
         else if (!drawShortcutDown && inputGate.IsActive)
         {
@@ -57,18 +63,25 @@ public sealed class GlobalShortcutAdapter
             dispatch(controller.ExitDrawMode);
         }
 
-        if (!drawShortcutDown)
+        if (!drawShortcutDown && !clearShortcutDown)
         {
-            drawShortcutBlockedUntilReleased = false;
+            inputGate.ReleaseBlock();
         }
 
-        var clearShortcutDown = modifiersDown && pressedKeys.Contains(VirtualKeys.X);
         if (clearShortcutDown && !clearShortcutActive)
         {
             clearShortcutActive = true;
             inputGate.SetActive(false);
-            drawShortcutBlockedUntilReleased = true;
-            dispatch(controller.ClearAndExitDrawMode);
+            inputGate.BlockUntilReleased();
+            if (cursorPositionSource.TryGetCurrentPosition(out var clearPoint)
+                && monitorBoundsSource.TryGetBounds(clearPoint, out var clearBounds))
+            {
+                dispatch(() => controller.ClearMonitorAndExitDrawMode(clearBounds));
+            }
+            else
+            {
+                dispatch(controller.ExitDrawMode);
+            }
         }
         else if (!clearShortcutDown)
         {

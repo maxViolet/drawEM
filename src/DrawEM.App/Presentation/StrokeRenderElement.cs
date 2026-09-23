@@ -134,6 +134,7 @@ public sealed class StrokeRenderElement : FrameworkElement
         var visual = new DrawingVisual();
         using (var drawingContext = visual.RenderOpen())
         {
+            var clipped = PushMonitorClip(drawingContext, stroke, transform);
             if (stroke.Points.Count == 1)
             {
                 drawingContext.DrawEllipse(
@@ -154,6 +155,7 @@ public sealed class StrokeRenderElement : FrameworkElement
                         transform.ToLocalPoint(stroke.Points[i]));
                 }
             }
+            if (clipped) drawingContext.Pop();
         }
 
         children.Add(visual);
@@ -164,12 +166,14 @@ public sealed class StrokeRenderElement : FrameworkElement
         var visual = new DrawingVisual();
         using (var drawingContext = visual.RenderOpen())
         {
+            var clipped = PushMonitorClip(drawingContext, active, transform);
             drawingContext.DrawEllipse(
                 ToBrush(active.Color),
                 null,
                 transform.ToLocalPoint(active.Points[0]),
                 active.Thickness / 2d,
                 active.Thickness / 2d);
+            if (clipped) drawingContext.Pop();
         }
 
         children.Add(visual);
@@ -181,6 +185,7 @@ public sealed class StrokeRenderElement : FrameworkElement
         var visual = new DrawingVisual();
         using (var drawingContext = visual.RenderOpen())
         {
+            var clipped = PushMonitorClip(drawingContext, active, transform);
             var pen = GetPen(active.Color, active.Thickness);
             for (var i = fromIndex; i < active.Points.Count; i++)
             {
@@ -189,6 +194,7 @@ public sealed class StrokeRenderElement : FrameworkElement
                     transform.ToLocalPoint(active.Points[i - 1]),
                     transform.ToLocalPoint(active.Points[i]));
             }
+            if (clipped) drawingContext.Pop();
         }
 
         children.Add(visual);
@@ -240,6 +246,20 @@ public sealed class StrokeRenderElement : FrameworkElement
         pen.Freeze();
         penCache[key] = pen;
         return pen;
+    }
+
+    private static bool PushMonitorClip(
+        DrawingContext context, Stroke stroke, PhysicalToLocalTransform transform)
+    {
+        if (stroke.Bounds is not { } bounds)
+        {
+            return false;
+        }
+
+        var topLeft = transform.ToLocalPoint(new ScreenPoint(bounds.Left, bounds.Top));
+        var bottomRight = transform.ToLocalPoint(new ScreenPoint(bounds.Right, bounds.Bottom));
+        context.PushClip(new RectangleGeometry(new Rect(topLeft, bottomRight)));
+        return true;
     }
 
     private static Brush ToBrush(DrawingColor color) => color switch

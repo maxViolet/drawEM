@@ -7,6 +7,28 @@ namespace DrawEM.Tests.Infrastructure;
 public class GlobalMouseInputAdapterTests
 {
     [Fact]
+    public void BoundaryCrossing_ClosesInputGateBeforeQueuedControllerAction()
+    {
+        var source = new FakeMouseHookSource();
+        var controller = new DrawingSessionController();
+        var gate = new DrawingModeInputGate();
+        var queued = new Queue<Action>();
+        _ = new GlobalMouseInputAdapter(source, controller, gate, queued.Enqueue);
+        var left = new MonitorBounds(0, 0, 100, 100);
+
+        gate.Begin(left);
+        controller.EnterDrawMode(new ScreenPoint(90, 50), left);
+        source.Move(new ScreenPoint(101, 50));
+
+        Assert.False(gate.IsActive);
+        Assert.True(gate.IsBlockedUntilReleased);
+        Assert.False(source.ShouldSuppressPointerButton());
+        Assert.Single(queued);
+        queued.Dequeue().Invoke();
+        Assert.Equal([new ScreenPoint(90, 50)], Assert.Single(controller.CompletedStrokes).Points);
+    }
+
+    [Fact]
     public void PointerMovement_DuringDrawMode_BecomesCompletedStroke()
     {
         var source = new FakeMouseHookSource();
@@ -71,7 +93,8 @@ public class GlobalMouseInputAdapterTests
         var controller = new DrawingSessionController();
         var inputGate = new DrawingModeInputGate();
         var queuedActions = new Queue<Action>();
-        _ = new GlobalShortcutAdapter(keyboardSource, controller, inputGate, new FakeCursorPositionSource(), queuedActions.Enqueue);
+        _ = new GlobalShortcutAdapter(keyboardSource, controller, inputGate, new FakeCursorPositionSource(), queuedActions.Enqueue,
+            new FakeMonitorBoundsSource());
         _ = new GlobalMouseInputAdapter(mouseSource, controller, inputGate, queuedActions.Enqueue);
 
         keyboardSource.PressKey(VirtualKeys.LeftControl);
@@ -133,6 +156,15 @@ public class GlobalMouseInputAdapterTests
         public bool TryGetCurrentPosition(out ScreenPoint position)
         {
             position = default;
+            return true;
+        }
+    }
+
+    private sealed class FakeMonitorBoundsSource : IMonitorBoundsSource
+    {
+        public bool TryGetBounds(ScreenPoint point, out MonitorBounds bounds)
+        {
+            bounds = new MonitorBounds(-1000, -1000, 1000, 1000);
             return true;
         }
     }

@@ -6,6 +6,46 @@ namespace DrawEM.Tests.Application;
 public class DrawingSessionControllerTests
 {
     [Fact]
+    public void CrossingMonitorBoundary_CompletesStrokeAndIgnoresMovementUntilNewPress()
+    {
+        var left = new MonitorBounds(0, 0, 100, 100);
+        var right = new MonitorBounds(100, 0, 200, 100);
+        var session = new DrawingSessionController();
+        DrawingState lastState = default!;
+        session.StateChanged += state => lastState = state;
+
+        session.EnterDrawMode(new ScreenPoint(90, 50), left);
+        session.ReportPointer(new ScreenPoint(95, 50));
+        session.ReportPointer(new ScreenPoint(105, 50));
+        session.ReportPointer(new ScreenPoint(90, 50));
+
+        Assert.False(lastState.IsDrawModeActive);
+        var stroke = Assert.Single(session.CompletedStrokes);
+        Assert.Equal(left, stroke.Bounds);
+        Assert.Equal([new ScreenPoint(90, 50), new ScreenPoint(95, 50)], stroke.Points);
+
+        session.EnterDrawMode(new ScreenPoint(105, 50), right);
+        session.ExitDrawMode();
+        Assert.Equal(right, session.CompletedStrokes[1].Bounds);
+    }
+
+    [Fact]
+    public void ClearMonitor_PreservesStrokesOnOtherMonitor()
+    {
+        var left = new MonitorBounds(0, 0, 100, 100);
+        var right = new MonitorBounds(100, 0, 200, 100);
+        var session = new DrawingSessionController();
+        session.EnterDrawMode(new ScreenPoint(10, 10), left);
+        session.ExitDrawMode();
+        session.EnterDrawMode(new ScreenPoint(110, 10), right);
+        session.ExitDrawMode();
+
+        session.ClearMonitorAndExitDrawMode(right);
+
+        Assert.Equal(left, Assert.Single(session.CompletedStrokes).Bounds);
+    }
+
+    [Fact]
     public void CompletedStroke_ContainsStartAndMovedPoints()
     {
         var session = new DrawingSessionController();
