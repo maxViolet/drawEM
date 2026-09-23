@@ -3,15 +3,18 @@
 Windows 10/11 x64 desktop utility for drawing temporary annotations over every
 monitor.
 
-## First-version behavior
+## Current behavior
 
 - Starts hidden in the system tray and has an `Exit` command.
 - Shows a transparent overlay across the virtual desktop.
 - While `Ctrl+Alt+Z` is held, mouse movement draws a 4 px orange stroke.
+  The stroke is confined to the monitor under the cursor when drawing starts.
+  Moving to another monitor ends the stroke; release and press the shortcut
+  again to draw on the other monitor.
   Global hooks suppress pointer buttons, scrolling, and other keyboard input
   during drawing, so the application below receives neither clicks, scrolling,
   nor typed symbols.
-- `Ctrl+Alt+X` clears every stroke and exits draw mode.
+- `Ctrl+Alt+X` clears strokes only on the monitor under the cursor and exits draw mode.
 - Strokes remain visible while switching windows and monitors, until cleared.
 
 ## Deliberately out of scope
