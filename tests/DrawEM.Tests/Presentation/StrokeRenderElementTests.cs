@@ -24,7 +24,7 @@ public class StrokeRenderElementTests
             element.UpdateState(
                 new DrawingState(
                     [],
-                    new Stroke([new ScreenPoint(10, 10)], DrawingColor.Orange, 4),
+                    new Stroke([new ScreenPoint(10, 10)], DrawingColor.OrangeRed, 4),
                     true,
                     0),
                 new PhysicalToLocalTransform(0, 0, Matrix.Identity));
@@ -36,7 +36,7 @@ public class StrokeRenderElementTests
 
             var offset = ((10 * 20) + 10) * 4;
             Assert.Equal((byte)0, pixels[offset]);
-            Assert.Equal((byte)165, pixels[offset + 1]);
+            Assert.Equal((byte)69, pixels[offset + 1]);
             Assert.Equal((byte)255, pixels[offset + 2]);
             Assert.Equal((byte)255, pixels[offset + 3]);
         });
@@ -53,15 +53,15 @@ public class StrokeRenderElementTests
             var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
 
             element.UpdateState(
-                new DrawingState([], new Stroke([new ScreenPoint(2, 10)], DrawingColor.Orange, 4), true, 0),
+                new DrawingState([], new Stroke([new ScreenPoint(2, 10)], DrawingColor.OrangeRed, 4), true, 0),
                 transform);
             element.UpdateState(
-                new DrawingState([], new Stroke([new ScreenPoint(2, 10), new ScreenPoint(10, 10)], DrawingColor.Orange, 4), true, 0),
+                new DrawingState([], new Stroke([new ScreenPoint(2, 10), new ScreenPoint(10, 10)], DrawingColor.OrangeRed, 4), true, 0),
                 transform);
             element.UpdateState(
                 new DrawingState(
                     [],
-                    new Stroke([new ScreenPoint(2, 10), new ScreenPoint(10, 10), new ScreenPoint(17, 10)], DrawingColor.Orange, 4),
+                    new Stroke([new ScreenPoint(2, 10), new ScreenPoint(10, 10), new ScreenPoint(17, 10)], DrawingColor.OrangeRed, 4),
                     true,
                     0),
                 transform);
@@ -80,12 +80,12 @@ public class StrokeRenderElementTests
             element.Measure(new Size(20, 20));
             element.Arrange(new Rect(0, 0, 20, 20));
             var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
-            var completed = new Stroke([new ScreenPoint(1, 1), new ScreenPoint(5, 1)], DrawingColor.Orange, 4);
+            var completed = new Stroke([new ScreenPoint(1, 1), new ScreenPoint(5, 1)], DrawingColor.OrangeRed, 4);
 
             element.UpdateState(new DrawingState([], completed, true, 0), transform);
             element.UpdateState(new DrawingState([completed], null, false, 0), transform);
             element.UpdateState(
-                new DrawingState([completed], new Stroke([new ScreenPoint(15, 15)], DrawingColor.Orange, 4), true, 0),
+                new DrawingState([completed], new Stroke([new ScreenPoint(15, 15)], DrawingColor.OrangeRed, 4), true, 0),
                 transform);
 
             Assert.Equal((byte)255, PixelAlphaAt(element, 5, 1));
@@ -102,7 +102,7 @@ public class StrokeRenderElementTests
             element.Measure(new Size(20, 20));
             element.Arrange(new Rect(0, 0, 20, 20));
             var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
-            var completed = new Stroke([new ScreenPoint(1, 1), new ScreenPoint(5, 1)], DrawingColor.Orange, 4);
+            var completed = new Stroke([new ScreenPoint(1, 1), new ScreenPoint(5, 1)], DrawingColor.OrangeRed, 4);
 
             element.UpdateState(new DrawingState([], completed, true, 0), transform);
             element.UpdateState(new DrawingState([completed], null, false, 0), transform);
@@ -127,8 +127,8 @@ public class StrokeRenderElementTests
             element.Measure(new Size(20, 20));
             element.Arrange(new Rect(0, 0, 20, 20));
             var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
-            var oldStroke = new Stroke([new ScreenPoint(1, 1), new ScreenPoint(5, 1)], DrawingColor.Orange, 4);
-            var newStroke = new Stroke([new ScreenPoint(12, 12), new ScreenPoint(16, 12)], DrawingColor.Orange, 4);
+            var oldStroke = new Stroke([new ScreenPoint(1, 1), new ScreenPoint(5, 1)], DrawingColor.OrangeRed, 4);
+            var newStroke = new Stroke([new ScreenPoint(12, 12), new ScreenPoint(16, 12)], DrawingColor.OrangeRed, 4);
 
             element.UpdateState(new DrawingState([oldStroke], null, false, 0), transform);
             Assert.Equal((byte)255, PixelAlphaAt(element, 5, 1));
@@ -155,12 +155,12 @@ public class StrokeRenderElementTests
             var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
 
             element.UpdateState(
-                new DrawingState([], new Stroke([new ScreenPoint(2, 2), new ScreenPoint(6, 2)], DrawingColor.Orange, 4), true, 0),
+                new DrawingState([], new Stroke([new ScreenPoint(2, 2), new ScreenPoint(6, 2)], DrawingColor.OrangeRed, 4), true, 0),
                 transform);
 
             var completedWithExtraPoint = new Stroke(
                 [new ScreenPoint(2, 2), new ScreenPoint(6, 2), new ScreenPoint(10, 2)],
-                DrawingColor.Orange,
+                DrawingColor.OrangeRed,
                 4);
             element.UpdateState(new DrawingState([completedWithExtraPoint], null, false, 0), transform);
 
@@ -171,14 +171,14 @@ public class StrokeRenderElementTests
             element.UpdateState(
                 new DrawingState(
                     [completedWithExtraPoint],
-                    new Stroke([new ScreenPoint(2, 2)], DrawingColor.Orange, 4),
+                    new Stroke([new ScreenPoint(2, 2)], DrawingColor.OrangeRed, 4),
                     true,
                     0),
                 transform);
             element.UpdateState(
                 new DrawingState(
                     [completedWithExtraPoint],
-                    new Stroke([new ScreenPoint(2, 2), new ScreenPoint(2, 15)], DrawingColor.Orange, 4),
+                    new Stroke([new ScreenPoint(2, 2), new ScreenPoint(2, 15)], DrawingColor.OrangeRed, 4),
                     true,
                     0),
                 transform);

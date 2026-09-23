@@ -15,7 +15,7 @@ public class DrawingSessionControllerTests
         session.End();
 
         var stroke = Assert.Single(session.CompletedStrokes);
-        Assert.Equal(DrawingColor.Orange, stroke.Color);
+        Assert.Equal(DrawingColor.OrangeRed, stroke.Color);
         Assert.Equal(4, stroke.Thickness);
         Assert.Equal(
             [new ScreenPoint(100, 200), new ScreenPoint(120, 215)],

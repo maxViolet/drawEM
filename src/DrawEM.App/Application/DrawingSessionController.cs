@@ -68,7 +68,7 @@ public sealed class DrawingSessionController
         {
             completedStrokes.Add(new Stroke(
                 Snapshot(activePoints),
-                DrawingColor.Orange,
+                DrawingColor.OrangeRed,
                 StrokeThickness));
             activePoints = null;
         }
@@ -89,7 +89,7 @@ public sealed class DrawingSessionController
     {
         var active = activePoints is null
             ? null
-            : new Stroke(Snapshot(activePoints), DrawingColor.Orange, StrokeThickness);
+            : new Stroke(Snapshot(activePoints), DrawingColor.OrangeRed, StrokeThickness);
 
         StateChanged?.Invoke(new DrawingState(Snapshot(completedStrokes), active, drawModeActive, generation));
     }

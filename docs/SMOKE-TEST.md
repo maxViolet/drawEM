@@ -11,7 +11,7 @@ Run `src\DrawEM.App\bin\Release\net8.0-windows\win-x64\publish\DrawEM.App.exe`.
 ## Manual checks
 
 1. Confirm no normal application window appears and the drawEM icon is visible in the notification area.
-2. Hold `Ctrl+Alt+Z`, move the pointer, and confirm an orange 4 px line remains visible after release.
+2. Hold `Ctrl+Alt+Z`, move the pointer, and confirm an OrangeRed (#FF4500) 4 px line remains visible after release.
 3. While holding `Ctrl+Alt+Z`, click a button in an underlying application; confirm it does not activate.
 4. While holding `Ctrl+Alt+Z`, type a character in an underlying text field; confirm it does not appear.
 5. Release `Ctrl+Alt+Z`, click the same button, type in the same text field,

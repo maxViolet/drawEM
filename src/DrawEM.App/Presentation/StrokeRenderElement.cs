@@ -244,7 +244,7 @@ public sealed class StrokeRenderElement : FrameworkElement
 
     private static Brush ToBrush(DrawingColor color) => color switch
     {
-        DrawingColor.Orange => Brushes.Orange,
-        _ => Brushes.Orange,
+        DrawingColor.OrangeRed => Brushes.OrangeRed,
+        _ => Brushes.OrangeRed,
     };
 }

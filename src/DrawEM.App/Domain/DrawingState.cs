@@ -4,7 +4,7 @@ public readonly record struct ScreenPoint(int X, int Y);
 
 public enum DrawingColor
 {
-    Orange,
+    OrangeRed,
 }
 
 public sealed record Stroke(
