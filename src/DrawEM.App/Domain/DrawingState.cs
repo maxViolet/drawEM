@@ -10,7 +10,8 @@ public enum DrawingColor
 public sealed record Stroke(
     IReadOnlyList<ScreenPoint> Points,
     DrawingColor Color,
-    int Thickness);
+    int Thickness,
+    MonitorBounds? Bounds = null);
 
 // Generation increments on ClearAndExitDrawMode. A renderer that caches per-stroke
 // visuals cannot rely on CompletedStrokes.Count alone to detect a reset: a coalesced

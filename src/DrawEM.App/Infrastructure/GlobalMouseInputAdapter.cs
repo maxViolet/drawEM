@@ -25,6 +25,12 @@ public sealed class GlobalMouseInputAdapter
 
     private void OnPointerMoved(ScreenPoint point)
     {
+        if (inputGate.StopAtBoundary(point))
+        {
+            dispatch(controller.ExitDrawMode);
+            return;
+        }
+
         if (inputGate.IsActive)
         {
             dispatch(() => controller.ReportPointer(point));

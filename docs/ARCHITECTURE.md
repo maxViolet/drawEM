@@ -5,10 +5,10 @@
 
 ## Purpose
 
-drawEM is a small Windows 10/11 x64 utility that draws persistent orange 4 px
-annotations over all monitors while `Ctrl+Alt+Z` is held. `Ctrl+Alt+X` clears
-every annotation and exits draw mode. It normally stays hidden in the system
-tray.
+drawEM is a small Windows 10/11 x64 utility that draws persistent 4 px
+OrangeRed (#FF4500) annotations over all monitors while `Ctrl+Alt+Z` is held.
+`Ctrl+Alt+X` clears annotations on the monitor under the cursor and exits draw
+mode. It normally stays hidden in the system tray.
 
 The architecture keeps drawing rules testable without WPF or Win32, while
 isolating the operating-system-specific behavior needed for an overlay and
@@ -73,7 +73,9 @@ mouse hooks. It changes synchronously in the keyboard callback, before the
 controller action is queued on the WPF Dispatcher. The `Win32MouseHookAdapter`
 forwards physical mouse movement to the controller only when this gate is open.
 When `Ctrl+Alt+Z` is released, the gate closes and the controller completes the
-active stroke. The mouse hook suppresses pointer-button and wheel messages, and
+active stroke. If the cursor crosses to another monitor first, the gate closes
+synchronously and drawing stays blocked until the shortcut is released and
+pressed again. The mouse hook suppresses pointer-button and wheel messages, and
 the keyboard hook suppresses non-chord keys during draw mode, so clicks,
 scrolling, and typed symbols do not reach the application underneath. The
 overlay is always click-through and is not an input source.
@@ -83,9 +85,10 @@ overlay is always click-through and is not an input source.
 ```text
 Ctrl+Alt+X pressed
   → Win32KeyboardHookAdapter
-  → DrawingSessionController.ClearAndExitDrawMode()
-  → empty DrawingState
-  → OverlayWindow redraws with no strokes
+  → resolve the monitor under the cursor
+  → DrawingSessionController.ClearMonitorAndExitDrawMode(bounds)
+  → DrawingState without strokes from that monitor
+  → OverlayWindow redraws, retaining strokes on other monitors
 ```
 
 ### Exit
@@ -123,6 +126,8 @@ This keeps input responsive and prevents cross-thread access to WPF objects.
   (see `docs/steps/F03-render-lag-investigation-plan.md`). The app does not
   create a WPF `Polyline` control for every mouse movement.
 - The overlay covers every connected monitor as one virtual desktop surface.
+- Each stroke stores its starting monitor bounds. The renderer clips the whole
+  stroke, including its thickness, to those bounds.
 
 ## Test seams
 
@@ -155,3 +160,85 @@ implementation that makes it pass, then the next behavior.
   overlay or input behavior.
 - Shortcut customization, colour controls, undo, export and autostart are out
   of scope for the first version.
+
+## Differences from the first version
+
+- A stroke formerly continued across monitor boundaries while the shortcut
+  remained held. It is now confined to the monitor where drawing started;
+  crossing the boundary ends it, and drawing resumes only after release and
+  another press. The stroke thickness is clipped at the monitor edge.
+- `Ctrl+Alt+X` formerly cleared strokes on every monitor. It now clears only
+  the monitor under the cursor, preserving drawings on other monitors.
+
+## Proposed evolution: screen actions
+
+**Status:** under discussion; not implemented except for the monitor-scoped
+drawing and clearing behavior above. This section describes a future extension
+of the accepted architecture.
+
+### Vocabulary
+
+- **Action** is an option selectable in the UI: drawing, a specific video, a
+  specific screen effect, or a specific sound. Drawing has two commands: draw
+  while held and clear the drawing.
+- **Command** is one operation of an action triggered by one shortcut. Drawing
+  needs two distinct commands and two shortcuts.
+- **Shortcut binding** maps one shortcut to one command; a shortcut never
+  starts several commands at once.
+- **Shortcut slot** is one of ten predefined key combinations. The UI assigns
+  a command to a slot but cannot change the combination itself. Drawing uses
+  two slots when both of its commands are assigned.
+- **Sample** starts a selected sound, video, or effect from the UI without a
+  shortcut.
+
+### Screen mode
+
+```text
+GLOBAL_SCREEN_MODE = SINGLE_SCREEN
+MULTIPLE_SCREEN = TODO
+```
+
+The rules below apply only to `SINGLE_SCREEN`. `MULTIPLE_SCREEN` behavior,
+including cursor movement between monitors, remains to be designed.
+
+In `SINGLE_SCREEN`, the active screen is the monitor containing the cursor,
+regardless of the focused window. Moving the cursor to another monitor
+interrupts the active drawing, video, and effect on the previous monitor, but
+does not interrupt the global sound channel. Existing drawings on other
+monitors remain visible. A new screen action starts on the monitor containing
+the cursor when its shortcut is pressed.
+
+### Channels
+
+Each monitor has one drawing channel, one video channel, and one effect channel.
+The application has one global sound channel, independent of any monitor.
+Each channel has at most one active action. Starting a new video interrupts the
+current video; starting a new sound interrupts the current sound globally.
+Embedded video audio and the separate sound channel may play at the same time.
+Stopping a video also stops its embedded audio, without stopping the global
+sound channel. An effect has its own channel and may appear over video.
+
+Drawing is active while its assigned shortcut is held, but each stroke belongs
+to the monitor containing the cursor at the start of that stroke. Stroke
+rendering is clipped to that monitor's bounds. Crossing to another monitor
+interrupts drawing; the shortcut must be released and pressed again to start a
+new stroke. Clear affects only the monitor containing the cursor and preserves
+drawings on other monitors.
+
+### Shortcuts, media, and UI
+
+The ten predefined shortcut slots are `Ctrl+Alt+Z`, `Ctrl+Alt+X`, and
+`Ctrl+Alt+1` through `Ctrl+Alt+8`. The UI assigns one command to each slot;
+the combinations themselves are fixed. By default, `Ctrl+Alt+Z` draws and
+`Ctrl+Alt+X` clears. Both bindings may be changed. The UI presents these as
+one Drawing option with two assignable commands.
+
+Video, sound, and effects start once on shortcut key-down; holding the keys
+does not retrigger them. Users add sound and video files through the UI; the
+app copies each imported file into its managed library. Effects are written in
+code and shown in the UI for assignment. The `Sample` button starts the
+selected sound, video, or effect without a shortcut. Sampled video and effects
+cover the full active monitor, just as they do when started by a shortcut.
+
+The media library and shortcut bindings are stored in the current Windows
+user profile, separately from the executable directory.

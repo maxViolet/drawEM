@@ -102,6 +102,24 @@ internal static class NativeMethods
         public int Y;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct RECT
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MONITORINFO
+    {
+        public uint cbSize;
+        public RECT rcMonitor;
+        public RECT rcWork;
+        public uint dwFlags;
+    }
+
     internal static bool IsPointerButtonMessage(int message) => message is
         WM_LBUTTONDOWN or WM_LBUTTONUP or
         WM_RBUTTONDOWN or WM_RBUTTONUP or
@@ -128,4 +146,11 @@ internal static class NativeMethods
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static extern bool GetCursorPos(out POINT point);
+
+    [DllImport("user32.dll")]
+    internal static extern IntPtr MonitorFromPoint(POINT point, uint flags);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool GetMonitorInfo(IntPtr monitor, ref MONITORINFO info);
 }

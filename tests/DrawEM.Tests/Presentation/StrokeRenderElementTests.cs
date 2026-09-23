@@ -22,6 +22,24 @@ public class StrokeRenderElementTests
     private const byte OpaqueAlpha = 0xFF;
 
     [Fact]
+    public void UpdateState_ClipsStrokeThicknessToItsStartingMonitor()
+    {
+        RunOnStaThread(() =>
+        {
+            var element = new StrokeRenderElement { Width = 20, Height = 20 };
+            element.Measure(new Size(20, 20));
+            element.Arrange(new Rect(0, 0, 20, 20));
+            var bounds = new MonitorBounds(0, 0, 10, 20);
+            element.UpdateState(
+                new DrawingState([], new Stroke([new ScreenPoint(9, 10)], DrawingColor.OrangeRed, 4, bounds), true, 0),
+                new PhysicalToLocalTransform(0, 0, Matrix.Identity));
+
+            Assert.True(PixelAlphaAt(element, 9, 10) > 0);
+            Assert.Equal((byte)0, PixelAlphaAt(element, 10, 10));
+        });
+    }
+
+    [Fact]
     public void UpdateState_RendersSinglePointStroke()
     {
         RunOnStaThread(() =>

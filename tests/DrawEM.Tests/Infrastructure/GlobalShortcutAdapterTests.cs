@@ -6,6 +6,60 @@ namespace DrawEM.Tests.Infrastructure;
 
 public class GlobalShortcutAdapterTests
 {
+    private static readonly MonitorBounds DefaultMonitor = new(-1000, -1000, 1000, 1000);
+    private static readonly IMonitorBoundsSource DefaultMonitorSource = new FakeMonitorBoundsSource(DefaultMonitor);
+
+    [Fact]
+    public void CtrlAltX_ClearsOnlyMonitorUnderCursor()
+    {
+        var left = new MonitorBounds(0, 0, 100, 100);
+        var right = new MonitorBounds(100, 0, 200, 100);
+        var controller = new DrawingSessionController();
+        controller.EnterDrawMode(new ScreenPoint(10, 10), left);
+        controller.ExitDrawMode();
+        controller.EnterDrawMode(new ScreenPoint(110, 10), right);
+        controller.ExitDrawMode();
+        var source = new FakeKeyboardHookSource();
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(),
+            new FakeCursorPositionSource(new ScreenPoint(110, 10)), action => action(),
+            new FakeMonitorBoundsSource(left, right));
+
+        source.PressKey(VirtualKeys.LeftControl);
+        source.PressKey(VirtualKeys.LeftMenu);
+        source.PressKey(VirtualKeys.X);
+
+        Assert.Equal(left, Assert.Single(controller.CompletedStrokes).Bounds);
+    }
+
+    [Fact]
+    public void BoundaryCrossing_RequiresShortcutReleaseBeforeDrawingAgain()
+    {
+        var left = new MonitorBounds(0, 0, 100, 100);
+        var right = new MonitorBounds(100, 0, 200, 100);
+        var source = new FakeKeyboardHookSource();
+        var cursor = new MutableCursorPositionSource(new ScreenPoint(90, 50));
+        var gate = new DrawingModeInputGate();
+        var controller = new DrawingSessionController();
+        var states = new List<DrawingState>();
+        controller.StateChanged += states.Add;
+        _ = new GlobalShortcutAdapter(source, controller, gate, cursor, action => action(),
+            new FakeMonitorBoundsSource(left, right));
+
+        source.PressKey(VirtualKeys.LeftControl);
+        source.PressKey(VirtualKeys.LeftMenu);
+        source.PressKey(VirtualKeys.Z);
+        Assert.True(gate.StopAtBoundary(new ScreenPoint(101, 50)));
+        controller.ExitDrawMode();
+        cursor.Position = new ScreenPoint(110, 50);
+        var countAfterCrossing = states.Count;
+
+        source.PressKey(VirtualKeys.Z);
+        Assert.Equal(countAfterCrossing, states.Count);
+        source.ReleaseKey(VirtualKeys.Z);
+        source.PressKey(VirtualKeys.Z);
+        Assert.Equal(right, states[^1].ActiveStroke!.Bounds);
+    }
+
     [Fact]
     public void CtrlAltZ_Pressed_EntersDrawModeOnce_DespiteAutoRepeat()
     {
@@ -13,7 +67,7 @@ public class GlobalShortcutAdapterTests
         var controller = new DrawingSessionController();
         var states = new List<DrawingState>();
         controller.StateChanged += states.Add;
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action());
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource);
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -31,7 +85,7 @@ public class GlobalShortcutAdapterTests
         var controller = new DrawingSessionController();
         var states = new List<DrawingState>();
         controller.StateChanged += states.Add;
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action());
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource);
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -46,10 +100,10 @@ public class GlobalShortcutAdapterTests
     {
         var source = new FakeKeyboardHookSource();
         var controller = new DrawingSessionController();
-        controller.Start(new ScreenPoint(1, 1));
-        controller.Move(new ScreenPoint(2, 2));
-        controller.End();
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action());
+        controller.EnterDrawMode(new ScreenPoint(1, 1), DefaultMonitor);
+        controller.ReportPointer(new ScreenPoint(2, 2));
+        controller.ExitDrawMode();
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource);
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -66,7 +120,7 @@ public class GlobalShortcutAdapterTests
         var states = new List<DrawingState>();
         var queuedActions = new Queue<Action>();
         controller.StateChanged += states.Add;
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), queuedActions.Enqueue);
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), queuedActions.Enqueue, DefaultMonitorSource);
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -85,7 +139,7 @@ public class GlobalShortcutAdapterTests
     {
         var source = new FakeKeyboardHookSource();
         var controller = new DrawingSessionController();
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action());
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource);
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -108,7 +162,7 @@ public class GlobalShortcutAdapterTests
         var controller = new DrawingSessionController();
         var states = new List<DrawingState>();
         controller.StateChanged += states.Add;
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action());
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource);
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -138,7 +192,8 @@ public class GlobalShortcutAdapterTests
             controller,
             new DrawingModeInputGate(),
             new FakeCursorPositionSource(cursorPosition),
-            action => action());
+            action => action(),
+            DefaultMonitorSource);
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -160,7 +215,8 @@ public class GlobalShortcutAdapterTests
             controller,
             inputGate,
             new FailingCursorPositionSource(),
-            action => action());
+            action => action(),
+            DefaultMonitorSource);
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -183,7 +239,8 @@ public class GlobalShortcutAdapterTests
             controller,
             new DrawingModeInputGate(),
             cursorSource,
-            action => action());
+            action => action(),
+            DefaultMonitorSource);
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -229,6 +286,35 @@ public class GlobalShortcutAdapterTests
         {
             position = point;
             return true;
+        }
+    }
+
+    private sealed class MutableCursorPositionSource(ScreenPoint position) : ICursorPositionSource
+    {
+        public ScreenPoint Position { get; set; } = position;
+
+        public bool TryGetCurrentPosition(out ScreenPoint position)
+        {
+            position = Position;
+            return true;
+        }
+    }
+
+    private sealed class FakeMonitorBoundsSource(params MonitorBounds[] monitors) : IMonitorBoundsSource
+    {
+        public bool TryGetBounds(ScreenPoint point, out MonitorBounds bounds)
+        {
+            foreach (var monitor in monitors)
+            {
+                if (monitor.Contains(point))
+                {
+                    bounds = monitor;
+                    return true;
+                }
+            }
+
+            bounds = default;
+            return false;
         }
     }
 
