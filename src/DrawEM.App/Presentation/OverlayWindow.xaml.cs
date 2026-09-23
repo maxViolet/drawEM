@@ -26,6 +26,7 @@ public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
         Content = renderElement;
         SourceInitialized += (_, _) =>
         {
+            HideFromAltTab();
             ((HwndSource)PresentationSource.FromVisual(this)!).AddHook(WindowProcedure);
         };
     }
@@ -75,6 +76,16 @@ public partial class OverlayWindow : Window, IOverlayView, IOverlayLifetime
         }
 
         return new PhysicalToLocalTransform(windowRect.Left, windowRect.Top, matrix);
+    }
+
+    // ShowInTaskbar="False" removes only the taskbar button; a borderless top-level
+    // window still shows in Alt+Tab and Win+Tab unless it is marked as a tool window.
+    private void HideFromAltTab()
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        var exStyle = NativeMethods.GetWindowLong(hwnd, NativeMethods.GWL_EXSTYLE);
+        exStyle = (exStyle | NativeMethods.WS_EX_TOOLWINDOW) & ~NativeMethods.WS_EX_APPWINDOW;
+        NativeMethods.SetWindowLong(hwnd, NativeMethods.GWL_EXSTYLE, exStyle);
     }
 
     private IntPtr WindowProcedure(
