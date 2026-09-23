@@ -2,9 +2,9 @@
 
 ## Goal
 
-Deliver a small Windows 10/11 x64 tray application that draws an orange 4 px
-annotation over the virtual desktop while `Ctrl+Alt+Z` is held, and clears all
-annotations on `Ctrl+Alt+X`.
+Deliver a small Windows 10/11 x64 tray application that draws an OrangeRed 4 px
+annotation over the virtual desktop while `Ctrl+Alt+Z` is held, and clears
+annotations only on the monitor under the cursor with `Ctrl+Alt+X`.
 
 ## Architecture at a glance
 
@@ -50,7 +50,7 @@ These are proposed public seams. Confirm them before writing tests or code.
 Write a failing business-level test through `DrawingSessionController`:
 
 > Given no active stroke, when drawing starts at `(100, 200)`, moves to
-> `(120, 215)`, and ends, then one orange 4 px stroke contains those points.
+> `(120, 215)`, and ends, then one OrangeRed 4 px stroke contains those points.
 
 Implement only the immutable stroke model and controller behavior needed to
 pass it. Add the next test for a second stroke; do not add UI yet.
@@ -80,8 +80,8 @@ Implement the WPF transparent, topmost window and bind it to the controller's
 observable drawing state. It spans the virtual desktop, not merely the primary
 monitor.
 
-**Done when:** manually moving a test cursor path produces an orange 4 px line
-on every monitor configuration available.
+**Done when:** manually moving a test cursor path produces an OrangeRed 4 px
+line on every monitor configuration available.
 
 ### 4. TDD slice: draw-mode input blocking — 45 minutes
 
@@ -128,11 +128,12 @@ background process.
 
 Run all automated tests and execute these business checks:
 
-1. Hold `Ctrl+Alt+Z`, move the mouse, and see a persistent orange line.
+1. Hold `Ctrl+Alt+Z`, move the mouse, and see a persistent OrangeRed line.
 2. While drawing, click a button underneath; its action must not execute.
 3. Release `Ctrl+Alt+Z`; clicking underneath must work again.
 4. Switch windows and monitors; existing strokes remain visible.
-5. Press `Ctrl+Alt+X`; all strokes disappear and draw mode exits.
+5. Press `Ctrl+Alt+X`; strokes only on the monitor under the cursor disappear,
+   and draw mode exits.
 6. Exit from the tray; overlay and shortcuts stop.
 
 Record any untestable Win32 interaction as a manual verification result, not a
