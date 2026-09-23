@@ -5,9 +5,6 @@ namespace DrawEM.App.Application;
 
 public sealed class DrawingSessionController
 {
-    /// <summary>Stroke width in physical pixels. A single-point stroke renders as a dot of this diameter.</summary>
-    private const int StrokeThickness = 4;
-
     private readonly List<Stroke> completedStrokes = [];
     private List<ScreenPoint>? activePoints;
     private bool drawModeActive;
@@ -70,8 +67,8 @@ public sealed class DrawingSessionController
         {
             completedStrokes.Add(new Stroke(
                 Snapshot(activePoints),
-                DrawingColor.OrangeRed,
-                StrokeThickness));
+                DrawingDefaults.StrokeColor,
+                DrawingDefaults.StrokeThickness));
             activePoints = null;
         }
 
@@ -91,7 +88,7 @@ public sealed class DrawingSessionController
     {
         var active = activePoints is null
             ? null
-            : new Stroke(Snapshot(activePoints), DrawingColor.OrangeRed, StrokeThickness);
+            : new Stroke(Snapshot(activePoints), DrawingDefaults.StrokeColor, DrawingDefaults.StrokeThickness);
 
         StateChanged?.Invoke(new DrawingState(Snapshot(completedStrokes), active, drawModeActive, generation));
     }
