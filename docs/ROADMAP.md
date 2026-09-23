@@ -3,8 +3,8 @@
 ## Goal
 
 Deliver a small Windows 10/11 x64 tray application that draws an OrangeRed 4 px
-annotation over the virtual desktop while `Ctrl+Alt+Z` is held, and clears all
-annotations on `Ctrl+Alt+X`.
+annotation over the virtual desktop while `Ctrl+Alt+Z` is held, and clears
+annotations only on the monitor under the cursor with `Ctrl+Alt+X`.
 
 ## Architecture at a glance
 
@@ -132,7 +132,8 @@ Run all automated tests and execute these business checks:
 2. While drawing, click a button underneath; its action must not execute.
 3. Release `Ctrl+Alt+Z`; clicking underneath must work again.
 4. Switch windows and monitors; existing strokes remain visible.
-5. Press `Ctrl+Alt+X`; all strokes disappear and draw mode exits.
+5. Press `Ctrl+Alt+X`; strokes only on the monitor under the cursor disappear,
+   and draw mode exits.
 6. Exit from the tray; overlay and shortcuts stop.
 
 Record any untestable Win32 interaction as a manual verification result, not a
