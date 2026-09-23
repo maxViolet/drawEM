@@ -7,7 +7,8 @@ monitor.
 
 - Starts hidden in the system tray and has an `Exit` command.
 - Shows a transparent overlay across the virtual desktop.
-- While `Ctrl+Alt+Z` is held, mouse movement draws a 4 px orange stroke.
+- While `Ctrl+Alt+Z` is held, mouse movement draws a 4 px OrangeRed
+  (#FF4500) stroke.
   The stroke is confined to the monitor under the cursor when drawing starts.
   Moving to another monitor ends the stroke; release and press the shortcut
   again to draw on the other monitor.

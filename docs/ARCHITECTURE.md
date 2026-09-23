@@ -5,10 +5,10 @@
 
 ## Purpose
 
-drawEM is a small Windows 10/11 x64 utility that draws persistent orange 4 px
-annotations over all monitors while `Ctrl+Alt+Z` is held. `Ctrl+Alt+X` clears
-annotations on the monitor under the cursor and exits draw mode. It normally
-stays hidden in the system tray.
+drawEM is a small Windows 10/11 x64 utility that draws persistent 4 px
+OrangeRed (#FF4500) annotations over all monitors while `Ctrl+Alt+Z` is held.
+`Ctrl+Alt+X` clears annotations on the monitor under the cursor and exits draw
+mode. It normally stays hidden in the system tray.
 
 The architecture keeps drawing rules testable without WPF or Win32, while
 isolating the operating-system-specific behavior needed for an overlay and
