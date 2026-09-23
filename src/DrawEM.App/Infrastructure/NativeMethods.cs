@@ -22,6 +22,9 @@ internal static class NativeMethods
     /// </summary>
     internal const int HC_ACTION = 0;
 
+    /// <summary>Return a null monitor handle when the point lies outside every monitor.</summary>
+    internal const uint MONITOR_DEFAULTTONULL = 0;
+
     /// <summary>
     /// Any non-zero value returned from a low-level hook callback stops the message:
     /// the system does not pass it to the rest of the hook chain or to the target window.
