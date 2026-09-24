@@ -35,7 +35,8 @@ runtime files.
 
 Work in small vertical TDD slices: define one business behavior at a public
 seam, write its failing test, implement the smallest change that passes it,
-then continue. The ordered plan is in [docs/ROADMAP.md](docs/ROADMAP.md).
+then continue. The drawing plan is in [docs/ROADMAP-v1.md](docs/ROADMAP-v1.md).
+The sound extension plan is in [docs/ROADMAP-v2.md](docs/ROADMAP-v2.md).
 The module boundaries and runtime data flow are in
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -54,14 +55,16 @@ published executable.
 
 ```text
 src/DrawEM.App/
-  Application/     # drawing-session use cases
-  Domain/          # strokes, points, and drawing state
-  Infrastructure/  # Windows shortcuts and tray adapters
-  Presentation/    # WPF overlay and rendering adapters
+  Application/{Drawing,Sound}/     # use cases and sound placeholder
+  Domain/{Drawing,Sound}/          # drawing rules and sound placeholder
+  Infrastructure/{Drawing,Sound}/  # drawing adapters and sound placeholder
+  Infrastructure/                 # shared keyboard hook and tray lifecycle
+  Presentation/{Drawing,Sound}/    # drawing overlay and sound UI placeholder
 tests/DrawEM.Tests/
-  Application/     # controller behavior tests
-  Infrastructure/  # adapter contract tests
-  Presentation/    # overlay behavior tests
+  Application/Drawing/             # drawing-controller behavior tests
+  Infrastructure/Drawing/          # drawing input adapter tests
+  Presentation/Drawing/            # drawing overlay tests
+  Infrastructure/                  # shared lifecycle tests
 ```
 
-The folders are intentionally empty until the test seams are confirmed.
+`App.xaml.cs` remains the composition root. Sound has no implementation yet.

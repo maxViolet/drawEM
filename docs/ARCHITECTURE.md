@@ -24,20 +24,21 @@ dependency-injection container.
 App.xaml.cs  (composition root)
 │
 ├── Infrastructure
-│   ├── Win32KeyboardHookAdapter
-│   └── TrayAdapter
+│   ├── shared keyboard hook and tray lifecycle
+│   ├── Drawing (mouse input, shortcut adapter, input gate)
+│   └── Sound (placeholder)
 │
 ├── Application
-│   └── DrawingSessionController
+│   ├── Drawing (DrawingSessionController)
+│   └── Sound (placeholder)
 │
 ├── Domain
-│   ├── DrawingState
-│   ├── Stroke
-│   └── ScreenPoint
+│   ├── Drawing (DrawingState, Stroke, ScreenPoint)
+│   └── Sound (placeholder)
 │
 └── Presentation
-    └── OverlayWindow
-        └── StrokeRenderElement (VisualCollection of DrawingVisual)
+    ├── Drawing (OverlayWindow, StrokeRenderElement)
+    └── Sound (placeholder for the later settings UI)
 ```
 
 ## Modules and responsibilities
@@ -49,6 +50,11 @@ App.xaml.cs  (composition root)
 | `Infrastructure` | low-level keyboard and mouse hooks, synchronous input gate, tray icon, process lifecycle integration | stroke storage or drawing rules |
 | `Presentation` | transparent WPF overlay and rendering | the authoritative stroke list or global input |
 | `App.xaml.cs` | object creation, startup and orderly shutdown | business logic |
+
+The four modules remain in one WPF project. Each has a `Drawing` folder for
+the drawing implementation and a `Sound` placeholder beside it. Shared
+keyboard-hook and tray code stays at the `Infrastructure` root; the composition
+root stays in `App.xaml.cs`. The placeholders do not implement playback.
 
 `DrawingSessionController` is the only authoritative owner of the drawing
 state. The overlay receives read-only snapshots and never modifies a stroke
