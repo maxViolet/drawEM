@@ -1,7 +1,8 @@
 using System.Windows;
 using DrawEM.App.Infrastructure;
-using DrawEM.App.Presentation;
-using DrawingSessionController = DrawEM.App.Application.DrawingSessionController;
+using DrawEM.App.Infrastructure.Drawing;
+using DrawEM.App.Presentation.Drawing;
+using DrawingSessionController = DrawEM.App.Application.Drawing.DrawingSessionController;
 using MessageBox = System.Windows.MessageBox;
 
 namespace DrawEM.App;
