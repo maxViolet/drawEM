@@ -2,7 +2,7 @@ namespace DrawEM.App.Domain.Drawing;
 
 /// <summary>
 /// Stroke style applied to every stroke. Single source of truth for color and thickness;
-/// not user-configurable in this version (see docs/ROADMAP-v1.md).
+/// not user-configurable in this version (see docs/v1/ROADMAP-v1.md).
 /// </summary>
 public static class DrawingDefaults
 {

@@ -219,7 +219,9 @@ the cursor when its shortcut is pressed.
 Each monitor has one drawing channel, one video channel, and one effect channel.
 The application has one global sound channel, independent of any monitor.
 Each channel has at most one active action. Starting a new video interrupts the
-current video; starting a new sound interrupts the current sound globally.
+current video. Every new sound command first stops the current sound action
+globally, then immediately starts the requested sound. Requesting the same
+sound restarts it from the beginning.
 Embedded video audio and the separate sound channel may play at the same time.
 Stopping a video also stops its embedded audio, without stopping the global
 sound channel. An effect has its own channel and may appear over video.

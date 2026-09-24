@@ -63,8 +63,8 @@ interactions as unit-test coverage.
    shortcuts no longer affect the underlying application, and
    `DrawEM.App.exe` is absent from Task Manager.
 
-8. Copy the results template in `../SMOKE-TEST.md` into
-   `docs/S07-ACCEPTANCE-RESULTS.md` and complete every field. Use `Not tested`
+8. Copy the results template in `../v1/SMOKE-TEST.md` into
+   `S07-ACCEPTANCE-RESULTS.md` and complete every field. Use `Not tested`
    when hardware or an environment constraint prevents a check; do not record
    it as a pass.
 
@@ -88,8 +88,8 @@ games, protected surfaces, and monitor hot-plug is not guaranteed.
 | File | Change |
 | --- | --- |
 | `S07-acceptance-pass-plan.md` | Add this procedure and evidence criteria. |
-| `../SMOKE-TEST.md` | Add the window and multi-monitor persistence check and a reusable results template. |
-| `../S07-ACCEPTANCE-RESULTS.md` | Create only when the acceptance run is executed. |
+| `../v1/SMOKE-TEST.md` | Add the window and multi-monitor persistence check and a reusable results template. |
+| `S07-ACCEPTANCE-RESULTS.md` | Create only when the acceptance run is executed. |
 
 No application or test source file is expected to change in Step 7.
 

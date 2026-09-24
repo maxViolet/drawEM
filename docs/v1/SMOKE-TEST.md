@@ -35,7 +35,7 @@ Record results as manual verification: Win32 hooks, the notification area, input
 
 ## Results template
 
-Copy this section to `docs/S07-ACCEPTANCE-RESULTS.md` for each acceptance run.
+Copy this section to `../steps/S07-ACCEPTANCE-RESULTS.md` for each acceptance run.
 
 ```markdown
 # Step 7 acceptance results
