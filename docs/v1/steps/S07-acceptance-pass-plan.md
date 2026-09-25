@@ -64,7 +64,7 @@ interactions as unit-test coverage.
    `DrawEM.App.exe` is absent from Task Manager.
 
 8. Copy the results template in `../SMOKE-TEST.md` into
-   `docs/S07-ACCEPTANCE-RESULTS.md` and complete every field. Use `Not tested`
+   `../S07-ACCEPTANCE-RESULTS.md` and complete every field. Use `Not tested`
    when hardware or an environment constraint prevents a check; do not record
    it as a pass.
 

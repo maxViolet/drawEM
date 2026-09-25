@@ -1,12 +1,12 @@
 # F03: результаты синтетического harness (до/после фикса)
 
-Инструмент: `tools/RenderLagHarness` (`dotnet run --project tools/RenderLagHarness -c Release`).
+Инструмент: `../../../tools/RenderLagHarness` (`dotnet run --project tools/RenderLagHarness -c Release`).
 Воспроизводит цепочку adapter → Dispatcher → controller → renderer синтетически, с fake
 mouse source вместо реального Win32-хука и без композиции окна (без реального экрана).
 Не заменяет измерение на реальной сборке (план, шаг 1/3) — тех данных пока нет.
 
-Этот файл — курируемый, рукописный. `tools/RenderLagHarness` его не трогает: каждый
-запуск пишет сырой вывод в `docs/steps/harness-raw/` (не в git, см. `.gitignore`),
+Этот файл — курируемый, рукописный. `../../../tools/RenderLagHarness` его не трогает: каждый
+запуск пишет сырой вывод в `w` (не в git, см. `../../../.gitignore`),
 перезаписывая только эти файлы. Обновлять этот файл нужно вручную после прогона.
 
 ДО-числа ниже получены прогоном harness против кода `StrokeRenderElement` из коммита
