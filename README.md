@@ -41,8 +41,8 @@ To run the automated tests:
 dotnet test DrawEM.sln
 ```
 
-The [manual smoke test](docs/v1/SMOKE-TEST.md) covers tray, input blocking,
-and multi-monitor behavior that unit tests cannot establish.
+The [manual smoke test](docs/v1/SMOKE-TEST.md) covers tray, input blocking, and
+multi-monitor behavior that unit tests cannot establish.
 
 ## Current limits and plans
 
@@ -53,7 +53,6 @@ and multi-monitor behavior that unit tests cannot establish.
 - Sound playback, settings UI, video, and screen effects are planned; none is
   implemented yet. See the [v2 roadmap](docs/v2/ROADMAP-v2.md).
 
-The [v1 drawing roadmap](docs/v1/ROADMAP-v1.md) records the original work
-plan.
+The [v1 drawing roadmap](docs/v1/ROADMAP-v1.md) records the original work plan.
 For contributors, the [architecture](docs/ARCHITECTURE.md) describes the
 modules, test seams, and proposed screen-action model.

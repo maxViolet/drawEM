@@ -1,10 +1,10 @@
 # drawEM v2 roadmap: screen actions
 
-**Status:** proposed; the sound command is not implemented.
+**Status:** proposed; Step 1 defines the sound command and configuration, while playback remains unimplemented.
 
 ## Delivery order
 
-1. Sound playback through code, with global shortcuts configured in code.
+1. [Sound playback through code, with global shortcuts configured in code](STAGE-1-SOUND-IMPLEMENTATION-PLAN.md).
 2. Settings UI and media library — TODO.
 3. Video — TODO.
 4. Screen effects — TODO.
@@ -16,6 +16,8 @@ file import, shortcut assignment, and `Sample`. Video and effects do not need
 to be designed or implemented for the sound stage.
 
 ## Stage 1: sound command
+
+Implementation: [Stage 1 sound plan](STAGE-1-SOUND-IMPLEMENTATION-PLAN.md).
 
 Use TDD in vertical slices. The expected behaviors are listed in
 [SOUND-BUSINESS-TESTS.md](SOUND-BUSINESS-TESTS.md); add one failing automated
@@ -49,7 +51,7 @@ are confirmed.
   unplayable file is logged locally and does not terminate drawEM or affect
   drawing. Exit stops playback and releases its resources.
 
-### 1. Define the command and code configuration
+### 1. [Define the command and code configuration](stage-1/step-1/task.md)
 
 - Define a playback command that identifies a configured sound without
   depending on WPF, Win32 hooks, or the future settings UI.
@@ -62,7 +64,7 @@ are confirmed.
 **Done when:** the mapping and playback command have one clear owner and can be
 tested without real audio hardware or a settings window.
 
-### 2. Implement the global sound channel
+### 2. [Implement the global sound channel](stage-1/step-2/task.md)
 
 - Add a playback adapter for WAV and MP3 and a controller that owns at most
   one active sound. For every request, stop the active sound action before
@@ -79,7 +81,7 @@ tested without real audio hardware or a settings window.
 ten-second timeout, stale callbacks, and recoverable failure using a fake
 playback adapter.
 
-### 3. Connect the sound shortcuts
+### 3. [Connect the sound shortcuts](stage-1/step-3/task.md)
 
 - Extend the existing global keyboard path to recognize the configured
   `Ctrl+Alt+1` through `Ctrl+Alt+8` commands on the first key-down of a press.
@@ -95,7 +97,7 @@ playback adapter.
 repress, assigned-slot suppression, unassigned-slot pass-through, and sound
 invocation during an active stroke.
 
-### 4. Publish and verify
+### 4. [Publish and verify](stage-1/step-4/task.md)
 
 - Run the automated tests and publish the self-contained Windows x64 app.
 - Manually play configured WAV and MP3 files through shortcuts while another

@@ -65,22 +65,22 @@ This plan implements only roadmap step 6. Mixed-DPI rendering belongs to step
    Create `Properties/PublishProfiles/win-x64.pubxml` with Release,
    `win-x64`, self-contained publishing, single-file disabled, and trimming
    disabled.
-   Add `../v1/SMOKE-TEST.md` with the command and manual checks below.
+   Add `../SMOKE-TEST.md` with the command and manual checks below.
 
 ## Files expected to change
 
 | File | Change |
 | --- | --- |
-| `../../src/DrawEM.App/App.xaml.cs` | Compose lifecycle and startup rollback. |
-| `../../src/DrawEM.App/DrawEM.App.csproj` | Enable Windows Forms for `NotifyIcon`. |
-| `../../src/DrawEM.App/Infrastructure/TrayApplication.cs` | Add lifecycle owner and test seams. |
-| `../../src/DrawEM.App/Infrastructure/NotifyIconTrayHost.cs` | Add tray implementation. |
-| `../../src/DrawEM.App/Infrastructure/WpfApplicationLifetime.cs` | Adapt WPF application shutdown. |
+| `../../../src/DrawEM.App/App.xaml.cs` | Compose lifecycle and startup rollback. |
+| `../../../src/DrawEM.App/DrawEM.App.csproj` | Enable Windows Forms for `NotifyIcon`. |
+| `../../../src/DrawEM.App/Infrastructure/TrayApplication.cs` | Add lifecycle owner and test seams. |
+| `../../../src/DrawEM.App/Infrastructure/NotifyIconTrayHost.cs` | Add tray implementation. |
+| `../../../src/DrawEM.App/Infrastructure/WpfApplicationLifetime.cs` | Adapt WPF application shutdown. |
 | `../../src/DrawEM.App/Presentation/OverlayWindow.xaml.cs` | Expose overlay close lifecycle seam. |
-| `../../tests/DrawEM.Tests/Infrastructure/TrayApplicationTests.cs` | Add lifecycle behavior tests. |
-| `../../src/DrawEM.App/Properties/PublishProfiles/win-x64.pubxml` | Add self-contained publish settings. |
-| `../v1/SMOKE-TEST.md` | Add manual executable checks. |
-| `../../README.md` | Link publish command and smoke test. |
+| `../../../tests/DrawEM.Tests/Infrastructure/TrayApplicationTests.cs` | Add lifecycle behavior tests. |
+| `../../../src/DrawEM.App/Properties/PublishProfiles/win-x64.pubxml` | Add self-contained publish settings. |
+| `../SMOKE-TEST.md` | Add manual executable checks. |
+| `../../../README.md` | Link publish command and smoke test. |
 
 ## Acceptance criteria
 
@@ -99,7 +99,7 @@ This plan implements only roadmap step 6. Mixed-DPI rendering belongs to step
 4. Choose tray `Exit` and confirm the overlay disappears.
 5. Confirm `DrawEM.App.exe` is absent from Task Manager after exit.
 
-Record these results in `../v1/SMOKE-TEST.md`. They are manual verification,
+Record these results in `../SMOKE-TEST.md`. They are manual verification,
 not unit-test evidence.
 
 ## Verification order
