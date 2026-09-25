@@ -2,7 +2,7 @@
 
 Сгенерировано: 2026-09-22 22:35:45. Инструмент: tools/RenderLagHarness.
 Запуск: `dotnet run --project tools/RenderLagHarness -c Release`.
-Этот файл перезаписывается при каждом запуске. Курируемое сравнение до/после — docs/steps/F03-render-lag-harness-results.md, его нужно обновлять вручную.
+Этот файл перезаписывается при каждом запуске. Курируемое сравнение до/после — docs/v1/steps/F03-render-lag-harness-results.md, его нужно обновлять вручную.
 
 Ограничение: harness воспроизводит цепочку adapter -> Dispatcher -> controller -> renderer синтетически, без реального Win32-хука и композиции окна. Он не заменяет измерение на реальной сборке (план, шаг 1/3).
 

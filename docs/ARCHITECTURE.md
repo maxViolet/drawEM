@@ -26,11 +26,11 @@ App.xaml.cs  (composition root)
 ├── Infrastructure
 │   ├── shared keyboard hook and tray lifecycle
 │   ├── Drawing (mouse input, shortcut adapter, input gate)
-│   └── Sound (placeholder)
+│   └── Sound (code assignments and failure log; playback planned)
 │
 ├── Application
 │   ├── Drawing (DrawingSessionController)
-│   └── Sound (placeholder)
+│   └── Sound (sound identifier and play command; controller planned)
 │
 ├── Domain
 │   ├── Drawing (DrawingState, Stroke, ScreenPoint)
@@ -51,10 +51,12 @@ App.xaml.cs  (composition root)
 | `Presentation` | transparent WPF overlay and rendering | the authoritative stroke list or global input |
 | `App.xaml.cs` | object creation, startup and orderly shutdown | business logic |
 
-The four modules remain in one WPF project. Each has a `Drawing` folder for
-the drawing implementation and a `Sound` placeholder beside it. Shared
+The four modules remain in one WPF project. Each has a `Drawing` and a `Sound`
+folder. `Application/Sound` defines the sound identifier and play command;
+`Infrastructure/Sound` defines code assignments and failure logging. Playback,
+sound shortcut routing, and the settings UI remain unimplemented. Shared
 keyboard-hook and tray code stays at the `Infrastructure` root; the composition
-root stays in `App.xaml.cs`. The placeholders do not implement playback.
+root stays in `App.xaml.cs`.
 
 `DrawingSessionController` is the only authoritative owner of the drawing
 state. The overlay receives read-only snapshots and never modifies a stroke
@@ -129,7 +131,7 @@ This keeps input responsive and prevents cross-thread access to WPF objects.
   `DrawingVisual`s: completed strokes are drawn once and never reopened, and
   the active stroke only gets a new `DrawingVisual` for its newest segments
   each update, so redraw cost does not grow with total accumulated points
-  (see `docs/steps/F03-render-lag-investigation-plan.md`). The app does not
+  (see `v1/steps/F03-render-lag-investigation-plan.md`). The app does not
   create a WPF `Polyline` control for every mouse movement.
 - The overlay covers every connected monitor as one virtual desktop surface.
 - Each stroke stores its starting monitor bounds. The renderer clips the whole
