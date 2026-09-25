@@ -26,11 +26,11 @@ App.xaml.cs  (composition root)
 ├── Infrastructure
 │   ├── shared keyboard hook and tray lifecycle
 │   ├── Drawing (mouse input, shortcut adapter, input gate)
-│   └── Sound (code assignments and failure log; playback planned)
+│   └── Sound (code assignments, failure log, MediaPlayer adapter)
 │
 ├── Application
 │   ├── Drawing (DrawingSessionController)
-│   └── Sound (sound identifier and play command; controller planned)
+│   └── Sound (play command, playback ports, SoundChannelController)
 │
 ├── Domain
 │   ├── Drawing (DrawingState, Stroke, ScreenPoint)
@@ -52,9 +52,10 @@ App.xaml.cs  (composition root)
 | `App.xaml.cs` | object creation, startup and orderly shutdown | business logic |
 
 The four modules remain in one WPF project. Each has a `Drawing` and a `Sound`
-folder. `Application/Sound` defines the sound identifier and play command;
-`Infrastructure/Sound` defines code assignments and failure logging. Playback,
-sound shortcut routing, and the settings UI remain unimplemented. Shared
+folder. `Application/Sound` defines the play command, the playback ports, and the
+global sound channel controller; `Infrastructure/Sound` defines code
+assignments, failure logging, and WAV/MP3 playback through WPF `MediaPlayer`.
+Sound shortcut routing and the settings UI remain unimplemented. Shared
 keyboard-hook and tray code stays at the `Infrastructure` root; the composition
 root stays in `App.xaml.cs`.
 

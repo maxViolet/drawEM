@@ -1,9 +1,11 @@
 using System.Windows;
 using DrawEM.App.Infrastructure;
 using DrawEM.App.Infrastructure.Drawing;
+using DrawEM.App.Infrastructure.Sound;
 using DrawEM.App.Presentation.Drawing;
 using DrawingSessionController = DrawEM.App.Application.Drawing.DrawingSessionController;
 using MessageBox = System.Windows.MessageBox;
+using SoundChannelController = DrawEM.App.Application.Sound.SoundChannelController;
 
 namespace DrawEM.App;
 
@@ -13,6 +15,7 @@ public partial class App : System.Windows.Application
     private OverlayWindow? overlayWindow;
     private Win32KeyboardHookSource? keyboardHookSource;
     private Win32MouseHookSource? mouseHookSource;
+    private SoundChannelController? soundChannel;
     private TrayApplication? trayApplication;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -39,10 +42,18 @@ public partial class App : System.Windows.Application
             mouseHookSource = new Win32MouseHookSource();
             _ = new GlobalMouseInputAdapter(mouseHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action));
 
+            var soundConfiguration = SoundConfiguration.Default;
+            soundChannel = new SoundChannelController(
+                new MediaSoundPlayerFactory(soundConfiguration),
+                new LoggingSoundFailureReporter(
+                    new SoundFailureLog(SoundFailureLog.DefaultPath), soundConfiguration, TimeProvider.System),
+                TimeProvider.System,
+                action => Dispatcher.BeginInvoke(action));
+
             overlayWindow.Show();
             trayApplication = new TrayApplication(
                 new NotifyIconTrayHost(),
-                new CompositeDisposable(keyboardHookSource, mouseHookSource),
+                new CompositeDisposable(keyboardHookSource, mouseHookSource, soundChannel),
                 overlayWindow,
                 new WpfApplicationLifetime(this),
                 action => Dispatcher.BeginInvoke(action));
@@ -58,6 +69,7 @@ public partial class App : System.Windows.Application
             {
                 keyboardHookSource?.Dispose();
                 mouseHookSource?.Dispose();
+                soundChannel?.Dispose();
                 overlayWindow?.Close();
             }
 

@@ -8,6 +8,12 @@
 - `SoundFailureLog` appends failures to `%LOCALAPPDATA%\drawEM\logs\sound.log`:
   time, slot, sound identifier, configured path, and reason. Write errors are
   swallowed so logging cannot end the tray app.
+- `MediaSoundPlayerFactory` looks up a sound's path and opens a
+  `MediaSoundPlayer` (WPF `MediaPlayer`, WAV and MP3). An unassigned sound, a
+  relative path, a missing file, or a media-engine error becomes a
+  `SoundPlaybackException`.
+- `LoggingSoundFailureReporter` writes channel failures to `SoundFailureLog`
+  with the configured path.
 
-TODO (Stage 1, Step 2): add the Windows playback adapter. See
+TODO (Stage 1, Step 3): add sound slots to the keyboard shortcut adapter. See
 `../../../../docs/v2/ROADMAP-v2.md`.
