@@ -10,7 +10,7 @@ namespace DrawEM.App.Presentation.Drawing;
 /// <summary>
 /// Renders drawing state incrementally: completed strokes and already-drawn active
 /// segments are never reopened, so cost per update is proportional to new points only,
-/// not to total accumulated points. See docs/steps/F03-render-lag-investigation-plan.md.
+/// not to total accumulated points. See docs/v1/steps/F03-render-lag-investigation-plan.md.
 /// </summary>
 public sealed class StrokeRenderElement : FrameworkElement
 {
