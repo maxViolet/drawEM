@@ -13,5 +13,5 @@ Ports: `ISoundPlayerFactory` opens an `ISoundPlayer` for a sound;
 `SoundPlaybackException` marks a recoverable failure. Time comes from
 `TimeProvider`, so tests control the deadline.
 
-TODO (Stage 1, Step 3): route `Ctrl+Alt+1` through `Ctrl+Alt+8` to `Play`. See
+TODO (Stage 1, Step 3): route `Ctrl+Alt+1` through `Ctrl+Alt+8` to `SoundChannelHost.Play`. See
 `../../../../docs/v2/ROADMAP-v2.md`.

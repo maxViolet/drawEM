@@ -2,7 +2,9 @@ namespace DrawEM.App.Application.Sound;
 
 /// <summary>
 /// One playback of one sound file. Created stopped; <see cref="Play"/> starts it from the beginning.
-/// Events are raised on the thread that owns the controller.
+/// Events are raised on the thread that owns the controller. Every member reports an engine error as
+/// <see cref="SoundPlaybackException"/>, including <see cref="IDisposable.Dispose"/>; after a failed
+/// dispose the player is still unusable.
 /// </summary>
 public interface ISoundPlayer : IDisposable
 {
@@ -15,5 +17,6 @@ public interface ISoundPlayer : IDisposable
     /// <exception cref="SoundPlaybackException">Playback cannot start.</exception>
     void Play();
 
+    /// <exception cref="SoundPlaybackException">The engine failed to stop.</exception>
     void Stop();
 }

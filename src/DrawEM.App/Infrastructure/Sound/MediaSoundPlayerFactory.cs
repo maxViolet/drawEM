@@ -24,14 +24,6 @@ public sealed class MediaSoundPlayerFactory(SoundConfiguration configuration) : 
             throw new SoundPlaybackException("File not found.");
         }
 
-        try
-        {
-            return new MediaSoundPlayer(path);
-        }
-        catch (Exception exception)
-        {
-            // The media engine can reject a file or be missing on the machine; neither may end drawEM.
-            throw new SoundPlaybackException(exception.Message, exception);
-        }
+        return new MediaSoundPlayer(path);
     }
 }

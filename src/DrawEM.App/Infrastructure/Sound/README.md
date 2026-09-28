@@ -14,6 +14,9 @@
   `SoundPlaybackException`.
 - `LoggingSoundFailureReporter` writes channel failures to `SoundFailureLog`
   with the configured path.
+- `SoundChannelHost` runs `SoundChannelController` on a dedicated STA
+  dispatcher thread, so `MediaPlayer` can be stopped at the deadline even when
+  the UI thread is busy. Call `SoundChannelHost.Play` from any thread.
 
 TODO (Stage 1, Step 3): add sound slots to the keyboard shortcut adapter. See
 `../../../../docs/v2/ROADMAP-v2.md`.

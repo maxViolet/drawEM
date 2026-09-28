@@ -104,8 +104,22 @@ public sealed class SoundChannelController : IDisposable
         attempt.Player.Completed -= attempt.OnCompleted;
         attempt.Player.Failed -= attempt.OnFailed;
         attempt.Deadline?.Dispose();
-        attempt.Player.Stop();
-        attempt.Player.Dispose();
+
+        // Dispose even when Stop fails, so a broken player never keeps the device open.
+        Release(attempt, attempt.Player.Stop);
+        Release(attempt, attempt.Player.Dispose);
+    }
+
+    private void Release(Attempt attempt, Action step)
+    {
+        try
+        {
+            step();
+        }
+        catch (SoundPlaybackException exception)
+        {
+            failures.Report(attempt.Sound, exception.Message);
+        }
     }
 
     private void Fail(Attempt attempt, string reason)
@@ -115,8 +129,8 @@ public sealed class SoundChannelController : IDisposable
             return;
         }
 
-        End(attempt);
         failures.Report(attempt.Sound, reason);
+        End(attempt);
     }
 
     private sealed class Attempt(SoundId sound, ISoundPlayer player)

@@ -15,7 +15,7 @@ public partial class App : System.Windows.Application
     private OverlayWindow? overlayWindow;
     private Win32KeyboardHookSource? keyboardHookSource;
     private Win32MouseHookSource? mouseHookSource;
-    private SoundChannelController? soundChannel;
+    private SoundChannelHost? soundChannel;
     private TrayApplication? trayApplication;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -43,12 +43,12 @@ public partial class App : System.Windows.Application
             _ = new GlobalMouseInputAdapter(mouseHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action));
 
             var soundConfiguration = SoundConfiguration.Default;
-            soundChannel = new SoundChannelController(
+            soundChannel = new SoundChannelHost(dispatch => new SoundChannelController(
                 new MediaSoundPlayerFactory(soundConfiguration),
                 new LoggingSoundFailureReporter(
                     new SoundFailureLog(SoundFailureLog.DefaultPath), soundConfiguration, TimeProvider.System),
                 TimeProvider.System,
-                action => Dispatcher.BeginInvoke(action));
+                dispatch));
 
             overlayWindow.Show();
             trayApplication = new TrayApplication(

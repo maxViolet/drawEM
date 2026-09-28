@@ -157,6 +157,48 @@ public class SoundChannelControllerTests
     }
 
     [Fact]
+    public void PlayerThatThrowsOnStop_IsStillDisposedAndReported()
+    {
+        var fixture = new Fixture();
+        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Players[0].StopFailure = "Stop failed.";
+
+        fixture.Controller.Play(new PlaySoundCommand(Drumroll));
+
+        Assert.True(fixture.Players[0].IsDisposed);
+        Assert.Equal([(Applause, "Stop failed.")], fixture.Failures);
+        Assert.Equal(Drumroll, fixture.Controller.ActiveSound);
+    }
+
+    [Fact]
+    public void PlayerThatThrowsOnDispose_IsReportedAndChannelStaysUsable()
+    {
+        var fixture = new Fixture();
+        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Players[0].DisposeFailure = "Close failed.";
+
+        fixture.Players[0].Complete();
+        fixture.Controller.Play(new PlaySoundCommand(Drumroll));
+
+        Assert.Equal([(Applause, "Close failed.")], fixture.Failures);
+        Assert.Equal(Drumroll, fixture.Controller.ActiveSound);
+    }
+
+    [Fact]
+    public void PlayerFailure_WhenStopAlsoThrows_ReportsBothInOrder()
+    {
+        var fixture = new Fixture();
+        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Players[0].StopFailure = "Stop failed.";
+
+        fixture.Players[0].Fail("No output device.");
+
+        Assert.Equal([(Applause, "No output device."), (Applause, "Stop failed.")], fixture.Failures);
+        Assert.True(fixture.Players[0].IsDisposed);
+        Assert.Null(fixture.Controller.ActiveSound);
+    }
+
+    [Fact]
     public void Dispose_StopsPlaybackCancelsDeadlineAndIgnoresLaterRequests()
     {
         var fixture = new Fixture();
@@ -224,21 +266,35 @@ public class SoundChannelControllerTests
 
         public bool IsDisposed { get; private set; }
 
+        public string? StopFailure { get; set; }
+
+        public string? DisposeFailure { get; set; }
+
         public void Play()
         {
             Record("play");
-            if (playFailure is not null)
-            {
-                throw new SoundPlaybackException(playFailure);
-            }
+            ThrowIf(playFailure);
         }
 
-        public void Stop() => Record("stop");
+        public void Stop()
+        {
+            Record("stop");
+            ThrowIf(StopFailure);
+        }
 
         public void Dispose()
         {
             Record("dispose");
             IsDisposed = true;
+            ThrowIf(DisposeFailure);
+        }
+
+        private static void ThrowIf(string? failure)
+        {
+            if (failure is not null)
+            {
+                throw new SoundPlaybackException(failure);
+            }
         }
 
         public void Complete() => Completed?.Invoke();
