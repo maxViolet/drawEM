@@ -1,6 +1,6 @@
 # Stage 1 / Step 3: sound shortcuts
 
-**Status:** proposed. **Source:** [Stage 1 roadmap](../../ROADMAP-v2.md#3-connect-the-sound-shortcuts).
+**Status:** implemented; manual checks in Step 4. **Source:** [Stage 1 roadmap](../../ROADMAP-v2.md#3-connect-the-sound-shortcuts).
 
 ## Task
 

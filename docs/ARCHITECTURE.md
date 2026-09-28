@@ -25,7 +25,7 @@ App.xaml.cs  (composition root)
 │
 ├── Infrastructure
 │   ├── shared keyboard hook and tray lifecycle
-│   ├── Drawing (mouse input, shortcut adapter, input gate)
+│   ├── Drawing (mouse input, shared drawing/sound shortcut adapter, input gate)
 │   └── Sound (code assignments, failure log, MediaPlayer adapter)
 │
 ├── Application
@@ -55,7 +55,10 @@ The four modules remain in one WPF project. Each has a `Drawing` and a `Sound`
 folder. `Application/Sound` defines the play command, the playback ports, and the
 global sound channel controller; `Infrastructure/Sound` defines code
 assignments, failure logging, and WAV/MP3 playback through WPF `MediaPlayer`.
-Sound shortcut routing and the settings UI remain unimplemented. Shared
+`Infrastructure/Drawing/GlobalShortcutAdapter` owns the shared pressed-key and
+suppression state for drawing and sound shortcuts. It routes `Ctrl+Alt+1`
+through `Ctrl+Alt+8` to the sound channel without changing the drawing gate.
+The settings UI remains unimplemented. Shared
 keyboard-hook and tray code stays at the `Infrastructure` root; the composition
 root stays in `App.xaml.cs`.
 
@@ -100,6 +103,30 @@ Ctrl+Alt+X pressed
   → OverlayWindow redraws, retaining strokes on other monitors
 ```
 
+### Play sound
+
+```text
+Assigned Ctrl+Alt+1 through Ctrl+Alt+8 chord becomes active
+  → Win32KeyboardHookSource forwards the key event to GlobalShortcutAdapter
+  → resolve the slot's command in memory and mark it started for this press
+  → call SoundChannelHost.Play directly inside the hook callback
+  → SoundChannelHost queues SoundChannelController.Play on the sound Dispatcher
+  → stop the current player, then create and start the requested player
+```
+
+An unassigned slot queues nothing. Auto-repeat cannot start another command;
+the digit must be released before it can start again. Playback work runs on
+the sound thread, outside the hook callback. Sound does not wait for queued
+drawing commands and may start before the UI processes the beginning of a
+stroke; the drawing input gate has already changed synchronously.
+
+`IKeyboardHookSource.KeySuppressionRequested` includes `KeyDirection`: it is
+queried after `KeyDown` handlers and before `KeyUp` handlers. An assigned sound
+digit's later key-downs are suppressed until release. Its key-up is suppressed
+only if its initial key-down started the sound; a digit held before Ctrl+Alt
+receives its matching key-up outside draw mode. Existing drawing suppression
+still applies in both directions.
+
 ### Exit
 
 ```text
@@ -117,9 +144,11 @@ and exits rather than leaving a partially working overlay.
 
 ## Threading
 
-Win32 hook callbacks are not WPF UI callbacks. The hook adapters do no
-rendering and no expensive work. Keyboard commands and mouse coordinates are
-forwarded to the controller through the WPF `Dispatcher`; pointer-button
+Win32 keyboard and mouse hooks are installed on the WPF UI thread, where their
+native callbacks run. The hook adapters do no rendering and no expensive work.
+Drawing commands and mouse coordinates are forwarded to the drawing controller
+through the WPF `Dispatcher`; sound commands are queued directly on the sound
+Dispatcher through `SoundChannelHost.Play`. Pointer-button
 suppression is decided synchronously from the active drawing state. State
 delivery to `OverlayWindow` is also marshalled to the WPF `Dispatcher`.
 
@@ -131,7 +160,7 @@ drawEM runs three kinds of thread:
 
 | Thread | Owner | Runs |
 | --- | --- | --- |
-| WPF UI thread | `App` | hooks' queued commands, drawing controller, overlay |
+| WPF UI thread | `App` | keyboard/mouse hook callbacks (including direct sound enqueue), queued drawing commands, drawing controller, overlay |
 | Sound thread (`drawEM sound`, STA, own `Dispatcher`) | `SoundChannelHost` | `SoundChannelController`, every WPF `MediaPlayer`, deadline callbacks |
 | Log writer (thread-pool task) | `LoggingSoundFailureReporter` | file writes to `sound.log` |
 
@@ -141,6 +170,11 @@ ten-second stop. The deadline timer fires on the thread pool and queues the
 stop on the sound thread. Only sound work runs there, so the stop waits only
 for earlier sound work. This removes UI delays; it does not prove an exact
 cutoff. Step 4 measures the cutoff manually.
+
+The shortcut path calls `SoundChannelHost.Play` directly from the hook callback,
+without adding a UI Dispatcher queue. A busy UI thread can still delay the hook
+callback itself, because the hook is installed on that thread. The dedicated
+sound thread keeps an already playing sound's deadline independent of that delay.
 
 `SoundChannelHost.Play` may be called from any thread and returns at once.
 The controller reports a failure only after it has released the player, and
