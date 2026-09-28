@@ -1,6 +1,6 @@
 # drawEM v2 roadmap: screen actions
 
-**Status:** proposed; Steps 1 and 2 define the sound command, configuration, and global sound channel, while sound shortcuts remain unimplemented.
+**Status:** proposed; Steps 1 to 3 define the sound command, configuration, global sound channel, and sound shortcuts; Step 4 publish and manual checks remain.
 
 ## Delivery order
 

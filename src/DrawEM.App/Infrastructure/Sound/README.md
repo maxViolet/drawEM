@@ -21,5 +21,10 @@
   `Dispose` from any thread except the sound thread. See
   `docs/ARCHITECTURE.md`, "Sound thread", for the shutdown order.
 
-TODO (Stage 1, Step 3): add sound slots to the keyboard shortcut adapter. See
-`../../../../docs/v2/ROADMAP-v2.md`.
+`GlobalShortcutAdapter` (in `Infrastructure/Drawing`) resolves `Ctrl+Alt+1`
+through `Ctrl+Alt+8` with `SoundConfiguration.Resolve` inside the keyboard hook
+and calls `SoundChannelHost.Play` directly to queue playback on the sound
+dispatcher without waiting for queued drawing commands. An assigned slot
+key is suppressed until released, including auto-repeat. If the digit was held
+before `Ctrl+Alt`, its first key-down already reached the application, so its
+key-up passes through too. An unassigned slot passes through.
