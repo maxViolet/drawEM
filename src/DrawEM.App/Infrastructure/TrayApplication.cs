@@ -1,3 +1,5 @@
+using System.Runtime.ExceptionServices;
+
 namespace DrawEM.App.Infrastructure;
 
 public interface ITrayHost : IDisposable
@@ -24,6 +26,7 @@ public sealed class TrayApplication : IDisposable
     private readonly IOverlayLifetime overlay;
     private readonly IApplicationLifetime application;
     private readonly Action<Action> scheduleExit;
+    private readonly Action<Exception> reportCleanupFailure;
     private bool exited;
 
     public TrayApplication(
@@ -41,12 +44,27 @@ public sealed class TrayApplication : IDisposable
         IOverlayLifetime overlay,
         IApplicationLifetime application,
         Action<Action> scheduleExit)
+        : this(trayHost, shortcutRegistration, overlay, application, scheduleExit, ExceptionDispatchInfo.Throw)
+    {
+    }
+
+    /// <param name="reportCleanupFailure">
+    /// Receives cleanup failures after every exit step has run, instead of the caller.
+    /// </param>
+    public TrayApplication(
+        ITrayHost trayHost,
+        IDisposable shortcutRegistration,
+        IOverlayLifetime overlay,
+        IApplicationLifetime application,
+        Action<Action> scheduleExit,
+        Action<Exception> reportCleanupFailure)
     {
         this.trayHost = trayHost;
         this.shortcutRegistration = shortcutRegistration;
         this.overlay = overlay;
         this.application = application;
         this.scheduleExit = scheduleExit;
+        this.reportCleanupFailure = reportCleanupFailure;
         trayHost.ExitRequested += OnExitRequested;
     }
 
@@ -75,6 +93,13 @@ public sealed class TrayApplication : IDisposable
             steps.Add(application.Shutdown);
         }
 
-        CleanupSteps.RunAll(steps);
+        try
+        {
+            CleanupSteps.RunAll(steps);
+        }
+        catch (Exception exception)
+        {
+            reportCleanupFailure(exception);
+        }
     }
 }

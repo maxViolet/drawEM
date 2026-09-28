@@ -23,6 +23,7 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        var appLog = new AppFailureLog(AppFailureLog.DefaultPath);
 
         try
         {
@@ -62,26 +63,17 @@ public partial class App : System.Windows.Application
                 new CompositeDisposable(keyboardHookSource, mouseHookSource, soundChannel, soundFailures),
                 overlayWindow,
                 new WpfApplicationLifetime(this),
-                action => Dispatcher.BeginInvoke(action));
+                action => Dispatcher.BeginInvoke(action),
+                failure => appLog.Append("exit", failure));
             trayApplication.Start();
         }
         catch (Exception exception)
         {
-            if (trayApplication is not null)
-            {
-                trayApplication.Dispose();
-            }
-            else
-            {
-                keyboardHookSource?.Dispose();
-                mouseHookSource?.Dispose();
-                soundChannel?.Dispose();
-                soundFailures?.Dispose();
-                overlayWindow?.Close();
-            }
-
-            MessageBox.Show(exception.Message, "drawEM", MessageBoxButton.OK, MessageBoxImage.Error);
-            Shutdown();
+            StartupFailure.Handle(
+                ReleaseStartedResources,
+                failure => appLog.Append("startup cleanup", failure),
+                () => MessageBox.Show(exception.Message, "drawEM", MessageBoxButton.OK, MessageBoxImage.Error),
+                Shutdown);
         }
     }
 
@@ -89,5 +81,23 @@ public partial class App : System.Windows.Application
     {
         trayApplication?.Dispose();
         base.OnExit(e);
+    }
+
+    private void ReleaseStartedResources()
+    {
+        if (trayApplication is not null)
+        {
+            trayApplication.Dispose();
+            return;
+        }
+
+        CleanupSteps.RunAll(
+        [
+            () => keyboardHookSource?.Dispose(),
+            () => mouseHookSource?.Dispose(),
+            () => soundChannel?.Dispose(),
+            () => soundFailures?.Dispose(),
+            () => overlayWindow?.Close(),
+        ]);
     }
 }

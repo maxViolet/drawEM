@@ -106,6 +106,50 @@ public class TrayApplicationTests
         Assert.Equal(["shortcuts", "overlay", "tray disposed", "shutdown"], calls);
     }
 
+    [Fact]
+    public void TrayExit_WhenResourceReleaseThrows_ReportsFailureAndStillShutsDown()
+    {
+        var calls = new List<string>();
+        var reported = new List<Exception>();
+        var scheduledActions = new Queue<Action>();
+        var tray = new FakeTrayHost(calls);
+        _ = new TrayApplication(
+            tray,
+            new ThrowingDisposable(calls),
+            new FakeOverlay(calls),
+            new FakeApplicationLifetime(calls),
+            scheduledActions.Enqueue,
+            reported.Add);
+
+        tray.RequestExit();
+        var exit = scheduledActions.Dequeue();
+        var exception = Record.Exception(exit);
+
+        Assert.Null(exception);
+        Assert.IsType<InvalidOperationException>(Assert.Single(reported));
+        Assert.Equal(["shortcuts", "overlay", "tray disposed", "shutdown"], calls);
+    }
+
+    [Fact]
+    public void Dispose_WhenResourceReleaseThrows_ReportsFailureWithoutThrowing()
+    {
+        var calls = new List<string>();
+        var reported = new List<Exception>();
+        var application = new TrayApplication(
+            new FakeTrayHost(calls),
+            new ThrowingDisposable(calls),
+            new FakeOverlay(calls),
+            new FakeApplicationLifetime(calls),
+            action => action(),
+            reported.Add);
+
+        var exception = Record.Exception(application.Dispose);
+
+        Assert.Null(exception);
+        Assert.Single(reported);
+        Assert.Equal(["shortcuts", "overlay", "tray disposed"], calls);
+    }
+
     private sealed class ThrowingDisposable(List<string> calls) : IDisposable
     {
         public void Dispose()
