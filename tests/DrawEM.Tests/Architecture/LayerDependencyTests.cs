@@ -74,4 +74,34 @@ public class LayerDependencyTests
         Assert.True(violations.Length == 0,
             $"{layer} must not declare native imports. Violating methods: {string.Join(", ", violations)}");
     }
+
+    [Theory]
+    [InlineData(Domain)]
+    [InlineData(Application)]
+    public void InnerLayers_DoNotLoadNativeLibraries(string layer)
+    {
+        var result = Types.InAssembly(typeof(DrawingState).Assembly)
+            .That().ResideInNamespaceStartingWith(layer)
+            .ShouldNot().HaveDependencyOn("System.Runtime.InteropServices.NativeLibrary")
+            .GetResult();
+
+        Assert.True(result.IsSuccessful,
+            $"{layer} must not load native libraries. " +
+            $"Violating types: {string.Join(", ", result.FailingTypeNames ?? [])}");
+    }
+
+    [Theory]
+    [InlineData(Domain)]
+    [InlineData(Application)]
+    public void InnerLayers_DoNotConvertNativeFunctionPointers(string layer)
+    {
+        var result = Types.InAssembly(typeof(DrawingState).Assembly)
+            .That().ResideInNamespaceStartingWith(layer)
+            .Should().MeetCustomRule(new NativeFunctionBridgeRule())
+            .GetResult();
+
+        Assert.True(result.IsSuccessful,
+            $"{layer} must not convert native function pointers to or from delegates. " +
+            $"Violating types: {string.Join(", ", result.FailingTypeNames ?? [])}");
+    }
 }

@@ -156,7 +156,11 @@ is outside the four layer namespaces and composes all layers.
 
 Framework dependencies under `System` and `Microsoft` are allowed, but
 `Domain` and `Application` must not depend on Windows UI/platform namespaces
-or declare native imports (`DllImport` or `LibraryImport`). Managed helpers
+or declare native imports (`DllImport` or `LibraryImport`). They also must not
+reference `NativeLibrary` or call `Marshal.GetDelegateForFunctionPointer` or
+`Marshal.GetFunctionPointerForDelegate`, including inside compiler-generated
+closures and state machines. This prevents dynamic native calls from bypassing
+the import-declaration checks. Managed helpers
 such as `CollectionsMarshal` remain allowed. Failures name the violating
 types or native methods. These checks enforce static dependencies; resource
 lifetime, thread behavior, and dependencies loaded by name at runtime require
