@@ -1,9 +1,11 @@
 using System.Windows;
 using DrawEM.App.Infrastructure;
 using DrawEM.App.Infrastructure.Drawing;
+using DrawEM.App.Infrastructure.Sound;
 using DrawEM.App.Presentation.Drawing;
 using DrawingSessionController = DrawEM.App.Application.Drawing.DrawingSessionController;
 using MessageBox = System.Windows.MessageBox;
+using SoundChannelController = DrawEM.App.Application.Sound.SoundChannelController;
 
 namespace DrawEM.App;
 
@@ -13,6 +15,8 @@ public partial class App : System.Windows.Application
     private OverlayWindow? overlayWindow;
     private Win32KeyboardHookSource? keyboardHookSource;
     private Win32MouseHookSource? mouseHookSource;
+    private SoundChannelHost? soundChannel;
+    private LoggingSoundFailureReporter? soundFailures;
     private TrayApplication? trayApplication;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -39,10 +43,21 @@ public partial class App : System.Windows.Application
             mouseHookSource = new Win32MouseHookSource();
             _ = new GlobalMouseInputAdapter(mouseHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action));
 
+            var soundConfiguration = SoundConfiguration.Default;
+            soundFailures = new LoggingSoundFailureReporter(
+                new SoundFailureLog(SoundFailureLog.DefaultPath).Append, soundConfiguration, TimeProvider.System);
+            var failures = soundFailures;
+            soundChannel = new SoundChannelHost(dispatch => new SoundChannelController(
+                new MediaSoundPlayerFactory(soundConfiguration),
+                failures,
+                TimeProvider.System,
+                dispatch));
+
             overlayWindow.Show();
             trayApplication = new TrayApplication(
                 new NotifyIconTrayHost(),
-                new CompositeDisposable(keyboardHookSource, mouseHookSource),
+                // The sound channel reports its last failures while it stops, so the log drains after it.
+                new CompositeDisposable(keyboardHookSource, mouseHookSource, soundChannel, soundFailures),
                 overlayWindow,
                 new WpfApplicationLifetime(this),
                 action => Dispatcher.BeginInvoke(action));
@@ -58,6 +73,8 @@ public partial class App : System.Windows.Application
             {
                 keyboardHookSource?.Dispose();
                 mouseHookSource?.Dispose();
+                soundChannel?.Dispose();
+                soundFailures?.Dispose();
                 overlayWindow?.Close();
             }
 

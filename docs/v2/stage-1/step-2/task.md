@@ -1,6 +1,6 @@
 # Stage 1 / Step 2: global sound channel
 
-**Status:** proposed. **Source:** [Stage 1 roadmap](../../ROADMAP-v2.md#2-implement-the-global-sound-channel).
+**Status:** implemented; see [review](review.md). **Source:** [Stage 1 roadmap](../../ROADMAP-v2.md#2-implement-the-global-sound-channel).
 
 ## Task
 

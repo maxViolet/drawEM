@@ -1,6 +1,6 @@
 # Stage 1 implementation plan: sound command
 
-**Status:** Step 1 implemented; Steps 2 through 4 not started.
+**Status:** Steps 1 and 2 implemented; Steps 3 and 4 not started.
 
 **Source:** [ROADMAP-v2.md](ROADMAP-v2.md), Stage 1, and the proposed screen-action model in [ARCHITECTURE.md](../ARCHITECTURE.md).
 
