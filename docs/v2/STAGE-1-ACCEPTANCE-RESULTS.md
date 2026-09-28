@@ -8,7 +8,7 @@
 
 - Date: 2026-09-28, UTC+05:00
 - Windows version: Windows 11 Pro 10.0.26200.9457
-- Branch and commit: `S1-04-publish-and-verify`, `ef36abe` plus the local test assignments below
+- Branch and commit: `S1-04-publish-and-verify`, `c971623` plus the local test assignments below
 - Executable: `src\DrawEM.App\bin\Release\net8.0-windows\win-x64\publish\DrawEM.App.exe`
 - Monitor count and scaling: one monitor detected (`\\.\DISPLAY1`, primary); scaling not recorded yet
 - Underlying application used for input checks: not recorded yet
@@ -31,7 +31,7 @@ The assignments are a local, uncommitted edit of `src/DrawEM.App/Infrastructure/
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| `dotnet test DrawEM.sln` | Pass | 121 passed, 0 failed. New lifecycle tests in `CompositeDisposableTests` and `TrayApplicationTests` fail without commit `ef36abe` and pass with it. |
+| `dotnet test DrawEM.sln` | Pass | 122 passed, 0 failed. New lifecycle tests in `CompositeDisposableTests` and `TrayApplicationTests` fail without commits `ef36abe` and `c971623` and pass with them. |
 | `dotnet publish .\src\DrawEM.App\DrawEM.App.csproj -c Release -p:PublishProfile=win-x64` | Pass | Self-contained win-x64 output in `publish\`, `PublishSingleFile=false`. No drawEM process was running before publish. |
 
 ## Manual gate
