@@ -1,3 +1,5 @@
+using System.Runtime.ExceptionServices;
+
 namespace DrawEM.App.Infrastructure;
 
 public interface ITrayHost : IDisposable
@@ -67,19 +69,37 @@ public sealed class TrayApplication : IDisposable
 
         exited = true;
         trayHost.ExitRequested -= OnExitRequested;
+
+        // A failed step must not skip the later ones, so the process still shuts down.
+        List<Exception>? failures = null;
+        Attempt(shortcutRegistration.Dispose, ref failures);
+        Attempt(overlay.Close, ref failures);
+        Attempt(trayHost.Dispose, ref failures);
+        if (shutDownApplication)
+        {
+            Attempt(application.Shutdown, ref failures);
+        }
+
+        if (failures is [var failure])
+        {
+            ExceptionDispatchInfo.Throw(failure);
+        }
+
+        if (failures is not null)
+        {
+            throw new AggregateException(failures);
+        }
+    }
+
+    private static void Attempt(Action step, ref List<Exception>? failures)
+    {
         try
         {
-            shortcutRegistration.Dispose();
+            step();
         }
-        finally
+        catch (Exception exception)
         {
-            // A failed release must not leave the overlay open or the process running.
-            overlay.Close();
-            trayHost.Dispose();
-            if (shutDownApplication)
-            {
-                application.Shutdown();
-            }
+            (failures ??= []).Add(exception);
         }
     }
 }

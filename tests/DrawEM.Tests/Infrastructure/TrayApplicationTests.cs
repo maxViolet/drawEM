@@ -90,6 +90,22 @@ public class TrayApplicationTests
         Assert.Equal(["shortcuts", "overlay", "tray disposed", "shutdown"], calls);
     }
 
+    [Fact]
+    public void Exit_WhenOverlayAndTrayCloseThrow_StillShutsDown()
+    {
+        var calls = new List<string>();
+        var application = new TrayApplication(
+            new FakeTrayHost(calls, throwOnDispose: true),
+            new FakeDisposable(calls, "shortcuts"),
+            new FakeOverlay(calls, throwOnClose: true),
+            new FakeApplicationLifetime(calls));
+
+        var thrown = Assert.Throws<AggregateException>(application.Exit);
+
+        Assert.Equal(2, thrown.InnerExceptions.Count);
+        Assert.Equal(["shortcuts", "overlay", "tray disposed", "shutdown"], calls);
+    }
+
     private sealed class ThrowingDisposable(List<string> calls) : IDisposable
     {
         public void Dispose()
@@ -99,13 +115,20 @@ public class TrayApplicationTests
         }
     }
 
-    private sealed class FakeTrayHost(List<string> calls) : ITrayHost
+    private sealed class FakeTrayHost(List<string> calls, bool throwOnDispose = false) : ITrayHost
     {
         public event Action? ExitRequested;
 
         public void Show() => calls.Add("tray shown");
 
-        public void Dispose() => calls.Add("tray disposed");
+        public void Dispose()
+        {
+            calls.Add("tray disposed");
+            if (throwOnDispose)
+            {
+                throw new InvalidOperationException("Tray icon removal failed.");
+            }
+        }
 
         public void RequestExit() => ExitRequested?.Invoke();
     }
@@ -115,9 +138,16 @@ public class TrayApplicationTests
         public void Dispose() => calls.Add(name);
     }
 
-    private sealed class FakeOverlay(List<string> calls) : IOverlayLifetime
+    private sealed class FakeOverlay(List<string> calls, bool throwOnClose = false) : IOverlayLifetime
     {
-        public void Close() => calls.Add("overlay");
+        public void Close()
+        {
+            calls.Add("overlay");
+            if (throwOnClose)
+            {
+                throw new InvalidOperationException("Overlay close failed.");
+            }
+        }
     }
 
     private sealed class FakeApplicationLifetime(List<string> calls) : IApplicationLifetime
