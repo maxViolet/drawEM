@@ -137,6 +137,31 @@ This keeps input responsive and prevents cross-thread access to WPF objects.
 - Each stroke stores its starting monitor bounds. The renderer clips the whole
   stroke, including its thickness, to those bounds.
 
+## Layer dependency rules
+
+`tests/DrawEM.Tests/Architecture/LayerDependencyTests.cs` checks the compiled
+application assembly through NetArchTest. The rules run with the normal xUnit
+suite; run only these checks with `dotnet test DrawEM.sln --filter Category=Architecture`.
+
+| Layer | Allowed project dependencies |
+| --- | --- |
+| `Domain` | `Domain` |
+| `Application` | `Domain`, `Application` |
+| `Infrastructure` | `Domain`, `Application`, `Infrastructure` |
+| `Presentation` | `Domain`, `Application`, `Presentation`, the existing `Infrastructure.IOverlayLifetime` port |
+
+The `IOverlayLifetime` exception preserves `OverlayWindow`'s tray-exit contract;
+it does not permit dependencies on other Infrastructure types. `App.xaml.cs`
+is outside the four layer namespaces and composes all layers.
+
+Framework dependencies under `System` and `Microsoft` are allowed, but
+`Domain` and `Application` must not depend on Windows UI/platform namespaces
+or declare native imports (`DllImport` or `LibraryImport`). Managed helpers
+such as `CollectionsMarshal` remain allowed. Failures name the violating
+types or native methods. These checks enforce static dependencies; resource
+lifetime, thread behavior, and dependencies loaded by name at runtime require
+separate tests or review.
+
 ## Test seams
 
 | Seam | Tests verify | Tests do not verify |
