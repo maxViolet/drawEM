@@ -1,5 +1,3 @@
-using System.Runtime.ExceptionServices;
-
 namespace DrawEM.App.Infrastructure;
 
 public interface ITrayHost : IDisposable
@@ -71,35 +69,12 @@ public sealed class TrayApplication : IDisposable
         trayHost.ExitRequested -= OnExitRequested;
 
         // A failed step must not skip the later ones, so the process still shuts down.
-        List<Exception>? failures = null;
-        Attempt(shortcutRegistration.Dispose, ref failures);
-        Attempt(overlay.Close, ref failures);
-        Attempt(trayHost.Dispose, ref failures);
+        List<Action> steps = [shortcutRegistration.Dispose, overlay.Close, trayHost.Dispose];
         if (shutDownApplication)
         {
-            Attempt(application.Shutdown, ref failures);
+            steps.Add(application.Shutdown);
         }
 
-        if (failures is [var failure])
-        {
-            ExceptionDispatchInfo.Throw(failure);
-        }
-
-        if (failures is not null)
-        {
-            throw new AggregateException(failures);
-        }
-    }
-
-    private static void Attempt(Action step, ref List<Exception>? failures)
-    {
-        try
-        {
-            step();
-        }
-        catch (Exception exception)
-        {
-            (failures ??= []).Add(exception);
-        }
+        CleanupSteps.RunAll(steps);
     }
 }
