@@ -96,7 +96,7 @@ public sealed class GlobalShortcutAdapter
     private bool IsAltDown() =>
         pressedKeys.Contains(VirtualKeys.LeftMenu) || pressedKeys.Contains(VirtualKeys.RightMenu);
 
-    private bool ShouldSuppressKey(int vkCode) =>
+    private bool ShouldSuppressKey(int vkCode, KeyDirection direction) =>
         (inputGate.IsActive && vkCode is not (
             VirtualKeys.LeftControl or
             VirtualKeys.RightControl or

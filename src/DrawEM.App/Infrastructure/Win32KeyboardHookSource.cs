@@ -11,7 +11,7 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
 
     public event Action<int>? KeyUp;
 
-    public event Func<int, bool>? KeySuppressionRequested;
+    public event Func<int, KeyDirection, bool>? KeySuppressionRequested;
 
     public Win32KeyboardHookSource()
     {
@@ -36,14 +36,14 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
             if (message is NativeMethods.WM_KEYDOWN or NativeMethods.WM_SYSKEYDOWN)
             {
                 KeyDown?.Invoke(vkCode);
-                if (ShouldSuppressKey(vkCode))
+                if (ShouldSuppressKey(vkCode, KeyDirection.Down))
                 {
                     return NativeMethods.SuppressMessage;
                 }
             }
             else if (message is NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP)
             {
-                var suppress = ShouldSuppressKey(vkCode);
+                var suppress = ShouldSuppressKey(vkCode, KeyDirection.Up);
                 KeyUp?.Invoke(vkCode);
                 if (suppress)
                 {
@@ -64,5 +64,6 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
         }
     }
 
-    private bool ShouldSuppressKey(int vkCode) => KeySuppressionRequested?.Invoke(vkCode) ?? false;
+    private bool ShouldSuppressKey(int vkCode, KeyDirection direction) =>
+        KeySuppressionRequested?.Invoke(vkCode, direction) ?? false;
 }

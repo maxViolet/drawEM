@@ -143,13 +143,14 @@ public class GlobalMouseInputAdapterTests
 
         public event Action<int>? KeyUp;
 
-        public event Func<int, bool>? KeySuppressionRequested;
+        public event Func<int, KeyDirection, bool>? KeySuppressionRequested;
 
         public void PressKey(int vkCode) => KeyDown?.Invoke(vkCode);
 
         public void ReleaseKey(int vkCode) => KeyUp?.Invoke(vkCode);
 
-        public bool ShouldSuppressKey(int vkCode) => KeySuppressionRequested?.Invoke(vkCode) ?? false;
+        public bool ShouldSuppressKey(int vkCode, KeyDirection direction = KeyDirection.Down) =>
+            KeySuppressionRequested?.Invoke(vkCode, direction) ?? false;
     }
 
     private sealed class FakeCursorPositionSource : ICursorPositionSource

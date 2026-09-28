@@ -263,7 +263,7 @@ public class GlobalShortcutAdapterTests
 
         public event Action<int>? KeyUp;
 
-        public event Func<int, bool>? KeySuppressionRequested;
+        public event Func<int, KeyDirection, bool>? KeySuppressionRequested;
 
         public bool PressKey(int vkCode)
         {
@@ -271,13 +271,19 @@ public class GlobalShortcutAdapterTests
             return ShouldSuppressKey(vkCode);
         }
 
-        public void ReleaseKey(int vkCode) => KeyUp?.Invoke(vkCode);
+        /// <summary>Asks for suppression before raising KeyUp, as the Win32 hook does.</summary>
+        public bool ReleaseKey(int vkCode)
+        {
+            var suppress = ShouldSuppressKey(vkCode, KeyDirection.Up);
+            KeyUp?.Invoke(vkCode);
+            return suppress;
+        }
 
-        public bool ShouldSuppressKey(int vkCode) =>
+        public bool ShouldSuppressKey(int vkCode, KeyDirection direction = KeyDirection.Down) =>
             KeySuppressionRequested?
                 .GetInvocationList()
-                .Cast<Func<int, bool>>()
-                .Any(handler => handler(vkCode))
+                .Cast<Func<int, KeyDirection, bool>>()
+                .Any(handler => handler(vkCode, direction))
             ?? false;
     }
 
