@@ -56,7 +56,7 @@ public sealed class SoundChannelController : IDisposable
         // The attempt object is the generation token: callbacks act only while it is still active.
         var attempt = new Attempt(sound, player);
         attempt.OnCompleted = () => End(attempt);
-        attempt.OnFailed = reason => Fail(attempt, reason);
+        attempt.OnFailed = reason => End(attempt, reason);
         player.Completed += attempt.OnCompleted;
         player.Failed += attempt.OnFailed;
         active = attempt;
@@ -70,7 +70,7 @@ public sealed class SoundChannelController : IDisposable
         }
         catch (SoundPlaybackException exception)
         {
-            Fail(attempt, exception.Message);
+            End(attempt, exception.Message);
         }
     }
 
@@ -93,7 +93,7 @@ public sealed class SoundChannelController : IDisposable
         }
     }
 
-    private void End(Attempt attempt)
+    private void End(Attempt attempt, string? failureReason = null)
     {
         if (attempt != active)
         {
@@ -106,31 +106,30 @@ public sealed class SoundChannelController : IDisposable
         attempt.Deadline?.Dispose();
 
         // Dispose even when Stop fails, so a broken player never keeps the device open.
-        Release(attempt, attempt.Player.Stop);
-        Release(attempt, attempt.Player.Dispose);
+        var stopFailure = Release(attempt.Player.Stop);
+        var disposeFailure = Release(attempt.Player.Dispose);
+
+        // Report only after the player is released, so logging never delays the release.
+        foreach (var reason in new[] { failureReason, stopFailure, disposeFailure })
+        {
+            if (reason is not null)
+            {
+                failures.Report(attempt.Sound, reason);
+            }
+        }
     }
 
-    private void Release(Attempt attempt, Action step)
+    private static string? Release(Action step)
     {
         try
         {
             step();
+            return null;
         }
         catch (SoundPlaybackException exception)
         {
-            failures.Report(attempt.Sound, exception.Message);
+            return exception.Message;
         }
-    }
-
-    private void Fail(Attempt attempt, string reason)
-    {
-        if (attempt != active)
-        {
-            return;
-        }
-
-        failures.Report(attempt.Sound, reason);
-        End(attempt);
     }
 
     private sealed class Attempt(SoundId sound, ISoundPlayer player)

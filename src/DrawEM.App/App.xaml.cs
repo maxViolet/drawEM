@@ -16,6 +16,7 @@ public partial class App : System.Windows.Application
     private Win32KeyboardHookSource? keyboardHookSource;
     private Win32MouseHookSource? mouseHookSource;
     private SoundChannelHost? soundChannel;
+    private LoggingSoundFailureReporter? soundFailures;
     private TrayApplication? trayApplication;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -43,17 +44,20 @@ public partial class App : System.Windows.Application
             _ = new GlobalMouseInputAdapter(mouseHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action));
 
             var soundConfiguration = SoundConfiguration.Default;
+            soundFailures = new LoggingSoundFailureReporter(
+                new SoundFailureLog(SoundFailureLog.DefaultPath).Append, soundConfiguration, TimeProvider.System);
+            var failures = soundFailures;
             soundChannel = new SoundChannelHost(dispatch => new SoundChannelController(
                 new MediaSoundPlayerFactory(soundConfiguration),
-                new LoggingSoundFailureReporter(
-                    new SoundFailureLog(SoundFailureLog.DefaultPath), soundConfiguration, TimeProvider.System),
+                failures,
                 TimeProvider.System,
                 dispatch));
 
             overlayWindow.Show();
             trayApplication = new TrayApplication(
                 new NotifyIconTrayHost(),
-                new CompositeDisposable(keyboardHookSource, mouseHookSource, soundChannel),
+                // The sound channel reports its last failures while it stops, so the log drains after it.
+                new CompositeDisposable(keyboardHookSource, mouseHookSource, soundChannel, soundFailures),
                 overlayWindow,
                 new WpfApplicationLifetime(this),
                 action => Dispatcher.BeginInvoke(action));
@@ -70,6 +74,7 @@ public partial class App : System.Windows.Application
                 keyboardHookSource?.Dispose();
                 mouseHookSource?.Dispose();
                 soundChannel?.Dispose();
+                soundFailures?.Dispose();
                 overlayWindow?.Close();
             }
 

@@ -10,11 +10,11 @@
 | One active attempt, replacement, same-sound restart | `src/DrawEM.App/Application/Sound/SoundChannelController.cs` (`Play`) |
 | Ten-second deadline per attempt | `SoundChannelController.MaxDuration`; one `TimeProvider` timer per attempt, marshalled to the sound thread |
 | Stale callbacks ignored | Each attempt object is its generation token; completion, failure, and deadline act only while that attempt is active |
-| Recoverable failures logged | `SoundPlaybackException` from create or play, and `ISoundPlayer.Failed`, go to `LoggingSoundFailureReporter`, which writes the Step 1 `sound.log` record |
+| Recoverable failures logged | `SoundPlaybackException` from create, play, stop, or dispose, and `ISoundPlayer.Failed`, go to `LoggingSoundFailureReporter` after the player is released; it queues the Step 1 `sound.log` record for a background writer |
 | WAV and MP3 playback | `src/DrawEM.App/Infrastructure/Sound/MediaSoundPlayer.cs` (WPF `MediaPlayer`, volume 1.0), `MediaSoundPlayerFactory.cs` |
 | Deadline independent of a busy UI thread | `src/DrawEM.App/Infrastructure/Sound/SoundChannelHost.cs`: the channel and every `MediaPlayer` live on a dedicated STA dispatcher thread |
 | Engine errors never escape | `MediaSoundPlayer` wraps every WPF exception, including from `Stop` and `Close`, in `SoundPlaybackException`; the controller still disposes a player whose `Stop` failed and logs both; a failed `Open` closes the half-built player |
-| Exit releases playback | `SoundChannelHost.Dispose` runs `SoundChannelController.Dispose` on the sound thread, then ends the thread; `App.xaml.cs` adds the host to the `TrayApplication` disposal list |
+| Exit releases playback | `SoundChannelHost.Dispose` runs `SoundChannelController.Dispose` on the sound thread, then ends the thread even if that throws; the log then drains for at most one second. Order and thread ownership: [ARCHITECTURE.md, Sound thread](../../../ARCHITECTURE.md#sound-thread) |
 
 Failure reasons from the factory: `Sound is not assigned to a file.`,
 `Path is not absolute.`, `File not found.`, or the media engine's message.
@@ -41,7 +41,7 @@ Command, run on 2026-09-28 with .NET SDK 8.0.425 on Windows 11:
 dotnet test DrawEM.sln
 ```
 
-Result: `Passed! - Failed: 0, Passed: 73, Skipped: 0, Total: 73`. The tests
+Result: `Passed! - Failed: 0, Passed: 80, Skipped: 0, Total: 80`. The tests
 need no audio device. The run used an alternate `BaseOutputPath` because a
 running Debug `DrawEM.App` locked `bin\Debug`.
 
@@ -53,6 +53,8 @@ audible WAV/MP3 output and the exact ten-second cutoff need
 [Step 4 manual checks](../step-4/acceptance.md).
 
 ## Review fixes
+
+### First review
 
 A code review of the first version found three defects:
 
@@ -70,3 +72,23 @@ Each fix started with a failing test: three controller tests for stop and
 dispose failures, three `SoundChannelHostTests` for the sound thread. No
 automated test forces `MediaPlayer.Open` to throw; fix 3 is covered by review
 only.
+
+### Second review
+
+1. `SoundChannelHost` left the sound thread running when `createChannel`
+   threw, and skipped the dispatcher shutdown when `channel.Dispose` threw.
+   The constructor now ends the thread before rethrowing; `Dispose` ends it in
+   `finally`. `Dispose` on the sound thread throws `InvalidOperationException`,
+   because it would join itself.
+2. The controller logged before it released the player, and the log wrote to
+   disk on the sound thread. The controller now releases first and reports
+   afterwards. `LoggingSoundFailureReporter` queues records for a background
+   writer, keeps the report time, and drains for at most one second at exit.
+3. `MediaSoundPlayer` set `Volume` outside the cleanup block. Creation,
+   subscription, `Volume`, and `Open` now share one cleanup block.
+
+New tests: release-before-report order in the controller; three host tests
+(failed channel creation, throwing channel disposal, `Dispose` from the sound
+thread); three reporter tests (slow log does not block `Report`, stuck log
+bounds `Dispose`, a throwing write does not stop later records). Fix 3 is
+covered by review only, for the same reason as before.

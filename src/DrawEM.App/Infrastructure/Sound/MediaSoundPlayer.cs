@@ -14,23 +14,30 @@ public sealed class MediaSoundPlayer : ISoundPlayer
     private bool disposed;
 
     /// <param name="path">Absolute path to an existing file.</param>
-    /// <exception cref="SoundPlaybackException">The media engine cannot open the file.</exception>
+    /// <exception cref="SoundPlaybackException">The media engine cannot create, configure, or open the player.</exception>
     public MediaSoundPlayer(string path)
     {
-        player = Engine(() => new MediaPlayer { Volume = 1.0 });
-        player.MediaEnded += OnMediaEnded;
-        player.MediaFailed += OnMediaFailed;
-
+        MediaPlayer? created = null;
         try
         {
-            Engine(() => player.Open(new Uri(path, UriKind.Absolute)));
+            created = new MediaPlayer();
+            created.MediaEnded += OnMediaEnded;
+            created.MediaFailed += OnMediaFailed;
+            created.Volume = 1.0;
+            created.Open(new Uri(path, UriKind.Absolute));
         }
-        catch (SoundPlaybackException)
+        catch (Exception exception)
         {
-            // Nobody else holds this player yet, so release it here.
-            Release();
-            throw;
+            // Nobody else holds this player yet, so release whatever part of it was built.
+            if (created is not null)
+            {
+                Release(created);
+            }
+
+            throw new SoundPlaybackException(exception.Message, exception);
         }
+
+        player = created;
     }
 
     public event Action? Completed;
@@ -48,47 +55,41 @@ public sealed class MediaSoundPlayer : ISoundPlayer
             return;
         }
 
-        Unsubscribe();
+        disposed = true;
+        Unsubscribe(player);
         Engine(player.Close);
     }
 
-    private void Release()
+    private void Release(MediaPlayer partial)
     {
-        Unsubscribe();
+        Unsubscribe(partial);
         try
         {
-            player.Close();
+            partial.Close();
         }
         catch (Exception)
         {
-            // The open failure is the error worth reporting; a failed close adds nothing.
+            // The construction failure is the error worth reporting; a failed close adds nothing.
         }
     }
 
-    private void Unsubscribe()
+    private void Unsubscribe(MediaPlayer target)
     {
-        disposed = true;
-        player.MediaEnded -= OnMediaEnded;
-        player.MediaFailed -= OnMediaFailed;
+        target.MediaEnded -= OnMediaEnded;
+        target.MediaFailed -= OnMediaFailed;
     }
 
     private void OnMediaEnded(object? sender, EventArgs e) => Completed?.Invoke();
 
     private void OnMediaFailed(object? sender, ExceptionEventArgs e) => Failed?.Invoke(e.ErrorException.Message);
 
-    private static void Engine(Action call) => Engine(() =>
-    {
-        call();
-        return 0;
-    });
-
-    private static T Engine<T>(Func<T> call)
+    private static void Engine(Action call)
     {
         try
         {
-            return call();
+            call();
         }
-        catch (Exception exception) when (exception is not SoundPlaybackException)
+        catch (Exception exception)
         {
             throw new SoundPlaybackException(exception.Message, exception);
         }

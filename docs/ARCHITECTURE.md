@@ -105,6 +105,8 @@ Ctrl+Alt+X pressed
 ```text
 Tray Exit
   → unregister keyboard and mouse hooks
+  → stop sound: release the player on the sound thread, then end that thread
+  → drain the sound failure log (at most one second)
   → close overlay
   → dispose tray icon
   → terminate application
@@ -122,6 +124,41 @@ suppression is decided synchronously from the active drawing state. State
 delivery to `OverlayWindow` is also marshalled to the WPF `Dispatcher`.
 
 This keeps input responsive and prevents cross-thread access to WPF objects.
+
+### Sound thread
+
+drawEM runs three kinds of thread:
+
+| Thread | Owner | Runs |
+| --- | --- | --- |
+| WPF UI thread | `App` | hooks' queued commands, drawing controller, overlay |
+| Sound thread (`drawEM sound`, STA, own `Dispatcher`) | `SoundChannelHost` | `SoundChannelController`, every WPF `MediaPlayer`, deadline callbacks |
+| Log writer (thread-pool task) | `LoggingSoundFailureReporter` | file writes to `sound.log` |
+
+WPF `MediaPlayer` can be stopped only on the thread that created it. The sound
+thread therefore owns every player, and a busy UI thread cannot delay the
+ten-second stop. The deadline timer fires on the thread pool and queues the
+stop on the sound thread. Only sound work runs there, so the stop waits only
+for earlier sound work. This removes UI delays; it does not prove an exact
+cutoff. Step 4 measures the cutoff manually.
+
+`SoundChannelHost.Play` may be called from any thread and returns at once.
+The controller reports a failure only after it has released the player, and
+the reporter only queues the record. No file I/O runs on the sound thread.
+
+Shutdown order:
+
+1. `SoundChannelHost.Dispose` runs on a thread other than the sound thread;
+   the sound thread rejects it, because it would wait for itself.
+2. On the sound thread, the controller stops and releases the active player
+   and cancels its deadline.
+3. The host shuts down the sound `Dispatcher` and joins the thread. This step
+   runs even if step 2 throws; the exception is rethrown afterwards.
+4. `LoggingSoundFailureReporter.Dispose` stops accepting records and waits at
+   most one second for queued records, so a slow disk cannot hold exit.
+
+If the channel cannot be created at startup, the host ends the sound thread
+before rethrowing.
 
 ## Rendering and display coordinates
 

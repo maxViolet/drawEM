@@ -199,6 +199,20 @@ public class SoundChannelControllerTests
     }
 
     [Fact]
+    public void Failures_AreReportedOnlyAfterPlayerIsReleased()
+    {
+        var fixture = new Fixture();
+        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Players[0].StopFailure = "Stop failed.";
+
+        fixture.Players[0].Fail("No output device.");
+
+        Assert.Equal(
+            ["create applause", "play applause", "stop applause", "dispose applause", "report applause", "report applause"],
+            fixture.Log);
+    }
+
+    [Fact]
     public void Dispose_StopsPlaybackCancelsDeadlineAndIgnoresLaterRequests()
     {
         var fixture = new Fixture();
@@ -251,7 +265,11 @@ public class SoundChannelControllerTests
             return player;
         }
 
-        public void Report(SoundId sound, string reason) => Failures.Add((sound, reason));
+        public void Report(SoundId sound, string reason)
+        {
+            Log.Add("report " + sound.Value);
+            Failures.Add((sound, reason));
+        }
     }
 
     private sealed class FakePlayer(SoundId sound, List<string> log, string? playFailure) : ISoundPlayer

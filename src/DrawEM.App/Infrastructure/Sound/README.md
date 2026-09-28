@@ -12,11 +12,14 @@
   `MediaSoundPlayer` (WPF `MediaPlayer`, WAV and MP3). An unassigned sound, a
   relative path, a missing file, or a media-engine error becomes a
   `SoundPlaybackException`.
-- `LoggingSoundFailureReporter` writes channel failures to `SoundFailureLog`
-  with the configured path.
+- `LoggingSoundFailureReporter` queues channel failures with the configured
+  path and writes them to `SoundFailureLog` on a background task. Disposing it
+  waits at most one second for queued records.
 - `SoundChannelHost` runs `SoundChannelController` on a dedicated STA
   dispatcher thread, so `MediaPlayer` can be stopped at the deadline even when
-  the UI thread is busy. Call `SoundChannelHost.Play` from any thread.
+  the UI thread is busy. Call `SoundChannelHost.Play` from any thread; call
+  `Dispose` from any thread except the sound thread. See
+  `docs/ARCHITECTURE.md`, "Sound thread", for the shutdown order.
 
 TODO (Stage 1, Step 3): add sound slots to the keyboard shortcut adapter. See
 `../../../../docs/v2/ROADMAP-v2.md`.
