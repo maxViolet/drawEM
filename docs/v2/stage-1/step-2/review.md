@@ -92,3 +92,15 @@ New tests: release-before-report order in the controller; three host tests
 thread); three reporter tests (slow log does not block `Report`, stuck log
 bounds `Dispose`, a throwing write does not stop later records). Fix 3 is
 covered by review only, for the same reason as before.
+
+### Third review
+
+`MediaSoundPlayer` removed its event handlers outside any protected block. In
+WPF, removing a `MediaPlayer` handler can re-enter the lazy native engine
+setup. If that setup failed during construction, it can throw again, which
+skipped `Close` and let a raw WPF exception escape. The same gap existed in
+`Dispose`. Both paths now use one `Release` method: it runs each handler
+removal and `Close` in its own `try`, so every step runs. The constructor
+ignores release failures and reports the construction error. `Dispose`
+reports the first release failure as `SoundPlaybackException`. The scenario
+was not reproduced on this machine, and no automated test forces it.

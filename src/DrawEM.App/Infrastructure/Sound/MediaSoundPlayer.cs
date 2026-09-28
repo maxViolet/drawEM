@@ -28,10 +28,11 @@ public sealed class MediaSoundPlayer : ISoundPlayer
         }
         catch (Exception exception)
         {
-            // Nobody else holds this player yet, so release whatever part of it was built.
+            // Nobody else holds this player yet, so release whatever part of it was built. The
+            // construction failure is the error worth reporting; a release failure adds nothing.
             if (created is not null)
             {
-                Release(created);
+                _ = Release(created);
             }
 
             throw new SoundPlaybackException(exception.Message, exception);
@@ -56,27 +57,40 @@ public sealed class MediaSoundPlayer : ISoundPlayer
         }
 
         disposed = true;
-        Unsubscribe(player);
-        Engine(player.Close);
-    }
-
-    private void Release(MediaPlayer partial)
-    {
-        Unsubscribe(partial);
-        try
+        if (Release(player) is { } failure)
         {
-            partial.Close();
-        }
-        catch (Exception)
-        {
-            // The construction failure is the error worth reporting; a failed close adds nothing.
+            throw new SoundPlaybackException(failure.Message, failure);
         }
     }
 
-    private void Unsubscribe(MediaPlayer target)
+    /// <summary>
+    /// Detaches both handlers and closes <paramref name="target"/>. Every step runs even if an earlier one
+    /// throws: removing a handler can re-enter WPF's lazy engine setup and fail again. Returns the first
+    /// failure, or <c>null</c>.
+    /// </summary>
+    private Exception? Release(MediaPlayer target)
     {
-        target.MediaEnded -= OnMediaEnded;
-        target.MediaFailed -= OnMediaFailed;
+        Exception? first = null;
+        Action[] steps =
+        [
+            () => target.MediaEnded -= OnMediaEnded,
+            () => target.MediaFailed -= OnMediaFailed,
+            target.Close,
+        ];
+
+        foreach (var step in steps)
+        {
+            try
+            {
+                step();
+            }
+            catch (Exception exception)
+            {
+                first ??= exception;
+            }
+        }
+
+        return first;
     }
 
     private void OnMediaEnded(object? sender, EventArgs e) => Completed?.Invoke();
