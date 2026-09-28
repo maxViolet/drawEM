@@ -30,19 +30,6 @@ public partial class App : System.Windows.Application
             overlayWindow = new OverlayWindow();
             _ = new OverlayWindowAdapter(controller, overlayWindow);
 
-            var inputGate = new DrawingModeInputGate();
-            keyboardHookSource = new Win32KeyboardHookSource();
-            _ = new GlobalShortcutAdapter(
-                keyboardHookSource,
-                controller,
-                inputGate,
-                new Win32CursorPositionSource(),
-                action => Dispatcher.BeginInvoke(action),
-                new Win32MonitorBoundsSource());
-
-            mouseHookSource = new Win32MouseHookSource();
-            _ = new GlobalMouseInputAdapter(mouseHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action));
-
             var soundConfiguration = SoundConfiguration.Default;
             soundFailures = new LoggingSoundFailureReporter(
                 new SoundFailureLog(SoundFailureLog.DefaultPath).Append, soundConfiguration, TimeProvider.System);
@@ -52,6 +39,21 @@ public partial class App : System.Windows.Application
                 failures,
                 TimeProvider.System,
                 dispatch));
+
+            var inputGate = new DrawingModeInputGate();
+            keyboardHookSource = new Win32KeyboardHookSource();
+            _ = new GlobalShortcutAdapter(
+                keyboardHookSource,
+                controller,
+                inputGate,
+                new Win32CursorPositionSource(),
+                action => Dispatcher.BeginInvoke(action),
+                new Win32MonitorBoundsSource(),
+                soundConfiguration.Resolve,
+                soundChannel.Play);
+
+            mouseHookSource = new Win32MouseHookSource();
+            _ = new GlobalMouseInputAdapter(mouseHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action));
 
             overlayWindow.Show();
             trayApplication = new TrayApplication(

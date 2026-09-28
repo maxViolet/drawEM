@@ -95,7 +95,7 @@ public class GlobalMouseInputAdapterTests
         var inputGate = new DrawingModeInputGate();
         var queuedActions = new Queue<Action>();
         _ = new GlobalShortcutAdapter(keyboardSource, controller, inputGate, new FakeCursorPositionSource(), queuedActions.Enqueue,
-            new FakeMonitorBoundsSource());
+            new FakeMonitorBoundsSource(), _ => null, _ => { });
         _ = new GlobalMouseInputAdapter(mouseSource, controller, inputGate, queuedActions.Enqueue);
 
         keyboardSource.PressKey(VirtualKeys.LeftControl);

@@ -23,4 +23,28 @@ public static class VirtualKeys
 
     /// <summary>X key.</summary>
     public const int X = 0x58;
+
+    /// <summary>1 key on the main row (sound slot 1).</summary>
+    public const int D1 = 0x31;
+
+    /// <summary>2 key on the main row (sound slot 2).</summary>
+    public const int D2 = 0x32;
+
+    /// <summary>3 key on the main row (sound slot 3).</summary>
+    public const int D3 = 0x33;
+
+    /// <summary>4 key on the main row (sound slot 4).</summary>
+    public const int D4 = 0x34;
+
+    /// <summary>5 key on the main row (sound slot 5).</summary>
+    public const int D5 = 0x35;
+
+    /// <summary>6 key on the main row (sound slot 6).</summary>
+    public const int D6 = 0x36;
+
+    /// <summary>7 key on the main row (sound slot 7).</summary>
+    public const int D7 = 0x37;
+
+    /// <summary>8 key on the main row (sound slot 8).</summary>
+    public const int D8 = 0x38;
 }
