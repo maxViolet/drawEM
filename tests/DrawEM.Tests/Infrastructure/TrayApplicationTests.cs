@@ -75,6 +75,30 @@ public class TrayApplicationTests
         Assert.Equal(["shortcuts", "overlay", "tray disposed", "shutdown"], calls);
     }
 
+    [Fact]
+    public void Exit_WhenResourceReleaseThrows_StillClosesOverlayAndShutsDown()
+    {
+        var calls = new List<string>();
+        var application = new TrayApplication(
+            new FakeTrayHost(calls),
+            new ThrowingDisposable(calls),
+            new FakeOverlay(calls),
+            new FakeApplicationLifetime(calls));
+
+        Assert.Throws<InvalidOperationException>(application.Exit);
+
+        Assert.Equal(["shortcuts", "overlay", "tray disposed", "shutdown"], calls);
+    }
+
+    private sealed class ThrowingDisposable(List<string> calls) : IDisposable
+    {
+        public void Dispose()
+        {
+            calls.Add("shortcuts");
+            throw new InvalidOperationException("Sound stop failed.");
+        }
+    }
+
     private sealed class FakeTrayHost(List<string> calls) : ITrayHost
     {
         public event Action? ExitRequested;

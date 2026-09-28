@@ -67,12 +67,19 @@ public sealed class TrayApplication : IDisposable
 
         exited = true;
         trayHost.ExitRequested -= OnExitRequested;
-        shortcutRegistration.Dispose();
-        overlay.Close();
-        trayHost.Dispose();
-        if (shutDownApplication)
+        try
         {
-            application.Shutdown();
+            shortcutRegistration.Dispose();
+        }
+        finally
+        {
+            // A failed release must not leave the overlay open or the process running.
+            overlay.Close();
+            trayHost.Dispose();
+            if (shutDownApplication)
+            {
+                application.Shutdown();
+            }
         }
     }
 }
