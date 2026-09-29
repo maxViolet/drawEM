@@ -1,4 +1,3 @@
-using System.Threading.Channels;
 using DrawEM.App.Application.Sound;
 
 namespace DrawEM.App.Infrastructure.Sound;
@@ -10,14 +9,10 @@ namespace DrawEM.App.Infrastructure.Sound;
 public sealed class LoggingSoundFailureReporter : ISoundFailureReporter, IDisposable
 {
     /// <summary>Longest time <see cref="Dispose"/> waits for queued records at exit.</summary>
-    public static readonly TimeSpan DrainTimeout = TimeSpan.FromSeconds(1);
-
-    private readonly Channel<SoundFailure> queue =
-        Channel.CreateUnbounded<SoundFailure>(new UnboundedChannelOptions { SingleReader = true });
-    private readonly Action<SoundFailure> append;
+    public static readonly TimeSpan DrainTimeout = BackgroundLogWriter<SoundFailure>.DrainTimeout;
     private readonly SoundConfiguration configuration;
     private readonly TimeProvider time;
-    private readonly Task writer;
+    private readonly BackgroundLogWriter<SoundFailure> writer;
 
     /// <param name="append">Writes one record, for example <see cref="SoundFailureLog.Append"/>.</param>
     public LoggingSoundFailureReporter(
@@ -25,35 +20,15 @@ public sealed class LoggingSoundFailureReporter : ISoundFailureReporter, IDispos
         SoundConfiguration configuration,
         TimeProvider time)
     {
-        this.append = append;
         this.configuration = configuration;
         this.time = time;
-        writer = Task.Run(WriteQueuedAsync);
+        writer = new BackgroundLogWriter<SoundFailure>(append);
     }
 
     /// <summary>Queues the record and returns at once. Records reported after <see cref="Dispose"/> are dropped.</summary>
     public void Report(SoundId sound, string reason) =>
-        queue.Writer.TryWrite(new SoundFailure(time.GetLocalNow(), null, sound, configuration.PathOf(sound), reason));
+        writer.Enqueue(new SoundFailure(time.GetLocalNow(), null, sound, configuration.PathOf(sound), reason));
 
     /// <summary>Stops accepting records and waits up to <see cref="DrainTimeout"/> for queued ones.</summary>
-    public void Dispose()
-    {
-        queue.Writer.TryComplete();
-        writer.Wait(DrainTimeout);
-    }
-
-    private async Task WriteQueuedAsync()
-    {
-        await foreach (var failure in queue.Reader.ReadAllAsync())
-        {
-            try
-            {
-                append(failure);
-            }
-            catch (Exception)
-            {
-                // Logging is best effort; one bad write must not stop later records.
-            }
-        }
-    }
+    public void Dispose() => writer.Dispose();
 }

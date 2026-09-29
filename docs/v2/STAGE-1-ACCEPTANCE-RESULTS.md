@@ -34,7 +34,35 @@ The assignments are a local, uncommitted edit of `src/DrawEM.App/Infrastructure/
 | `dotnet test DrawEM.sln` | Pass | 132 passed, 0 failed. Lifecycle tests in `CompositeDisposableTests`, `TrayApplicationTests`, `StartupFailureTests` and `AppFailureLogTests` failed before their fixes (`ef36abe`, `c971623`, `a4e8bf3`) and pass with them. |
 | `dotnet publish .\src\DrawEM.App\DrawEM.App.csproj -c Release -p:PublishProfile=win-x64` | Pass | Self-contained win-x64 output in `publish\`, `PublishSingleFile=false`. The previous drawEM process was stopped before publish. |
 
-Cleanup failures at tray Exit or after a startup error are written to `%LOCALAPPDATA%\drawEM\logs\app.log`; they no longer stop shutdown or hide the startup error.
+Cleanup failures at tray Exit or after a startup error are queued for
+`%LOCALAPPDATA%\drawEM\logs\app.log`. Ordinary cleanup errors no longer hide
+the startup error; a sound shutdown timeout follows the forced-exit policy below.
+
+### Bounded-exit recheck: 2026-09-29
+
+Tested checkout: `d2cdf3e` plus uncommitted bounded-exit fixes and the existing
+local sound assignments. The earlier desktop evidence above remains tied to
+its original executable; the new publish has not been checked manually.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| `dotnet test DrawEM.sln --no-restore -m:1 -p:BaseOutputPath=C:/Users/max/drawEM/artifacts/s1-04-bounded-exit/bin/` | Pass | 138 passed, 0 failed. Blocked writer, blocked sound thread, forced-exit cleanup order, retained startup error and startup timeout without a modal dialog are covered. |
+| `dotnet publish .\src\DrawEM.App\DrawEM.App.csproj -c Release -p:PublishProfile=win-x64 -p:BaseOutputPath=C:/Users/max/drawEM/artifacts/s1-04-bounded-exit/bin/ -p:PublishDir=C:/Users/max/drawEM/src/DrawEM.App/bin/s1-04-bounded-exit/publish/ -m:1` | Pass | Separate self-contained win-x64 output; existing desktop executable was not replaced. `PublishSingleFile=false`; existing WFAC010 warning remains. |
+| `git diff --check` | Pass | No whitespace errors. |
+
+The application log writes on a background task and drains for at most one
+second. Sound cleanup and thread termination share a two-second budget. A
+sound timeout continues remaining cleanup, drains the application log, and
+terminates the process with exit code 1. On startup this path bypasses a modal
+dialog. Unwritten logs may be lost. The tests observe an injected process-exit
+callback; they do not establish audible stop or actual Windows process exit.
+
+The same test and publish commands were rerun after extracting shared queue,
+drain and file-append code and making tray failure policy explicit: 138 passed,
+0 failed; publish passed. The isolated executable above was rebuilt with these
+changes. The running desktop copy was still the original
+`bin\Release\net8.0-windows\win-x64\publish\DrawEM.App.exe` when checked; no new
+manual result is claimed.
 
 ## Manual gate
 

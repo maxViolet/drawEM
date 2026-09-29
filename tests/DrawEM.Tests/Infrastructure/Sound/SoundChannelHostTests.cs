@@ -9,6 +9,77 @@ public class SoundChannelHostTests
     private static readonly SoundId Applause = new("applause");
 
     [Fact]
+    public void StartupFailure_WithStuckSoundThread_PreservesOriginalErrorAndShutdownTimeout()
+    {
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        Thread? soundThread = null;
+        var original = new InvalidOperationException("Channel setup failed.");
+        try
+        {
+            var failure = Assert.Throws<AggregateException>(() => new SoundChannelHost(dispatch =>
+            {
+                dispatch(() =>
+                {
+                    soundThread = Thread.CurrentThread;
+                    entered.Set();
+                    release.Wait();
+                });
+                Assert.True(entered.Wait(Wait));
+                throw original;
+            }));
+
+            Assert.Contains(original, failure.InnerExceptions);
+            Assert.Contains(failure.InnerExceptions, error => error is SoundChannelShutdownTimeoutException);
+        }
+        finally
+        {
+            release.Set();
+            Assert.True(soundThread!.Join(Wait));
+        }
+    }
+
+    [Fact]
+    public async Task Dispose_WhenSoundThreadIsStuck_ReturnsTimeoutWithinTwoSeconds()
+    {
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        Thread? soundThread = null;
+        var players = new ThreadRecordingFactory
+        {
+            OnCreate = () =>
+            {
+                soundThread = Thread.CurrentThread;
+                entered.Set();
+                release.Wait();
+            },
+        };
+        var host = new SoundChannelHost(dispatch => NewChannel(players, new ManualTimeProvider(), dispatch));
+        host.Play(new PlaySoundCommand(Applause));
+        Task<Exception>? disposal = null;
+        try
+        {
+            Assert.True(entered.Wait(Wait));
+            disposal = Task.Run(() => Record.Exception(host.Dispose));
+            var failure = await disposal.WaitAsync(TimeSpan.FromMilliseconds(2500));
+            Assert.IsAssignableFrom<TimeoutException>(failure);
+        }
+        finally
+        {
+            release.Set();
+            if (disposal is not null)
+            {
+                await disposal.WaitAsync(Wait);
+            }
+            else
+            {
+                host.Dispose();
+            }
+            Assert.True(soundThread!.Join(Wait));
+        }
+    }
+
+    [Fact]
     public void Play_RunsChannelOnDedicatedStaThread()
     {
         var players = new ThreadRecordingFactory();

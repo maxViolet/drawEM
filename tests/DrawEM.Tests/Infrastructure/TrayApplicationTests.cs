@@ -1,9 +1,47 @@
 using DrawEM.App.Infrastructure;
+using DrawEM.App.Infrastructure.Sound;
+using System.Collections.Concurrent;
+using System.Runtime.ExceptionServices;
 
 namespace DrawEM.Tests.Infrastructure;
 
 public class TrayApplicationTests
 {
+    [Fact]
+    public void SoundTimeout_CleansRemainingResourcesAndDrainsLogBeforeForcedExit()
+    {
+        var calls = new List<string>();
+        var records = new ConcurrentQueue<string>();
+        var log = new AppFailureLog(records.Enqueue);
+        var policy = new ApplicationExitPolicy(log, code =>
+        {
+            Assert.Contains(records, line => line.Contains("sound thread did not stop"));
+            Assert.Equal(1, code);
+            calls.Add("forced exit");
+        });
+        var application = new TrayApplication(
+            new FakeTrayHost(calls),
+            new CompositeDisposable(new TimedOutSound(calls), new FakeDisposable(calls, "sound log")),
+            new FakeOverlay(calls),
+            new FakeApplicationLifetime(calls),
+            action => action(),
+            failure => policy.Report("exit", failure));
+
+        application.Exit();
+        policy.Complete();
+
+        Assert.Equal(["sound", "sound log", "overlay", "tray disposed", "shutdown", "forced exit"], calls);
+    }
+
+    private sealed class TimedOutSound(List<string> calls) : IDisposable
+    {
+        public void Dispose()
+        {
+            calls.Add("sound");
+            throw new SoundChannelShutdownTimeoutException();
+        }
+    }
+
     [Fact]
     public void Start_ExposesTrayExit_WhichUnregistersShortcutsClosesOverlayAndShutsDown()
     {
@@ -13,7 +51,9 @@ public class TrayApplicationTests
             tray,
             new FakeDisposable(calls, "shortcuts"),
             new FakeOverlay(calls),
-            new FakeApplicationLifetime(calls));
+            new FakeApplicationLifetime(calls),
+            action => action(),
+            ExceptionDispatchInfo.Throw);
 
         application.Start();
         tray.RequestExit();
@@ -29,7 +69,9 @@ public class TrayApplicationTests
             new FakeTrayHost(calls),
             new FakeDisposable(calls, "shortcuts"),
             new FakeOverlay(calls),
-            new FakeApplicationLifetime(calls));
+            new FakeApplicationLifetime(calls),
+            action => action(),
+            ExceptionDispatchInfo.Throw);
 
         application.Exit();
         application.Exit();
@@ -45,7 +87,9 @@ public class TrayApplicationTests
             new FakeTrayHost(calls),
             new FakeDisposable(calls, "shortcuts"),
             new FakeOverlay(calls),
-            new FakeApplicationLifetime(calls));
+            new FakeApplicationLifetime(calls),
+            action => action(),
+            ExceptionDispatchInfo.Throw);
 
         application.Dispose();
 
@@ -63,7 +107,8 @@ public class TrayApplicationTests
             new FakeDisposable(calls, "shortcuts"),
             new FakeOverlay(calls),
             new FakeApplicationLifetime(calls),
-            scheduledActions.Enqueue);
+            scheduledActions.Enqueue,
+            ExceptionDispatchInfo.Throw);
 
         tray.RequestExit();
 
@@ -83,7 +128,9 @@ public class TrayApplicationTests
             new FakeTrayHost(calls),
             new ThrowingDisposable(calls),
             new FakeOverlay(calls),
-            new FakeApplicationLifetime(calls));
+            new FakeApplicationLifetime(calls),
+            action => action(),
+            ExceptionDispatchInfo.Throw);
 
         Assert.Throws<InvalidOperationException>(application.Exit);
 
@@ -98,7 +145,9 @@ public class TrayApplicationTests
             new FakeTrayHost(calls, throwOnDispose: true),
             new FakeDisposable(calls, "shortcuts"),
             new FakeOverlay(calls, throwOnClose: true),
-            new FakeApplicationLifetime(calls));
+            new FakeApplicationLifetime(calls),
+            action => action(),
+            ExceptionDispatchInfo.Throw);
 
         var thrown = Assert.Throws<AggregateException>(application.Exit);
 

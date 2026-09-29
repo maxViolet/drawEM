@@ -6,6 +6,9 @@
 
 - [ ] `dotnet test DrawEM.sln` passes, including Step 1–3 behavior and lifecycle tests.
 - [ ] The self-contained Windows x64 publish succeeds with the existing profile and `PublishSingleFile=false`.
+- [ ] A blocked application-log writer does not block `Append`; disposal waits at most one second.
+- [ ] Sound cleanup and thread termination share one two-second wait budget; timeout does not skip remaining cleanup.
+- [ ] A sound timeout causes forced process exit after remaining cleanup and bounded application-log drain, including startup failure without waiting for a modal dialog. Ordinary cleanup errors do not force process exit.
 
 ## Manual gate on the user's Windows desktop
 

@@ -10,3 +10,16 @@
 6. Write a separate Stage 1 results file in `docs/v2/` with date, Windows version, executable path, monitor count and scaling, test media duration, automated command/results, manual pass/fail evidence, and any untested cases. Do not mark manual checks passed from unit-test output.
 
 If a manual check fails, record the failure, fix the behavior, and repeat the affected check before acceptance.
+
+## Bounded exit after architecture review
+
+- `AppFailureLog` queues records for a background writer; exit waits at most
+  one second for its drain. Unwritten records may be lost.
+- Sound controller cleanup and thread termination share a two-second budget.
+  A timeout must not skip the remaining sound-log, overlay, and tray cleanup.
+- After remaining cleanup and application-log drain, a sound timeout requires
+  process termination with exit code 1. On startup, this path bypasses a modal
+  error dialog; ordinary startup errors retain the dialog and normal shutdown.
+- Cover stuck disk writes, a blocked sound thread, retained startup errors,
+  and normal versus forced exit at the existing public lifecycle seams. Keep
+  audible playback and real process-exit evidence in the manual gate.

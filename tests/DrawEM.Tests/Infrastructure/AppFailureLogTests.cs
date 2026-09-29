@@ -7,6 +7,40 @@ public class AppFailureLogTests
     private static readonly DateTimeOffset FailureTime = new(2026, 9, 28, 20, 30, 5, TimeSpan.Zero);
 
     [Fact]
+    public async Task StuckWriter_DoesNotBlockAppendOrHoldDisposeBeyondOneSecond()
+    {
+        using var writing = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        using var finished = new ManualResetEventSlim();
+        var log = new AppFailureLog(_ =>
+        {
+            writing.Set();
+            release.Wait();
+            finished.Set();
+        });
+        var append = Task.Run(() => log.Append("exit", new InvalidOperationException("Failed.")));
+        Task? dispose = null;
+
+        try
+        {
+            Assert.True(writing.Wait(TimeSpan.FromSeconds(5)));
+            await append.WaitAsync(TimeSpan.FromMilliseconds(500));
+            dispose = Task.Run(log.Dispose);
+            await dispose.WaitAsync(TimeSpan.FromMilliseconds(1500));
+        }
+        finally
+        {
+            release.Set();
+            await append.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.True(finished.Wait(TimeSpan.FromSeconds(5)));
+            if (dispose is not null)
+            {
+                await dispose.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+        }
+    }
+
+    [Fact]
     public void DefaultPath_IsDrawEMAppLogUnderCurrentUserLocalAppData()
     {
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -47,6 +81,7 @@ public class AppFailureLogTests
         {
             log.Append("exit", new InvalidOperationException("Sound stop failed."));
             log.Append("startup cleanup", new InvalidOperationException("Hook release failed."));
+            log.Dispose();
 
             var lines = File.ReadAllLines(Path.Combine(directory, "logs", "app.log"));
             Assert.Equal(2, lines.Length);
@@ -70,6 +105,7 @@ public class AppFailureLogTests
             var exception = Record.Exception(() => log.Append("exit", new InvalidOperationException("Failed.")));
 
             Assert.Null(exception);
+            log.Dispose();
         }
         finally
         {

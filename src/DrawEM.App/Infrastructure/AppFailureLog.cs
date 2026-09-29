@@ -4,23 +4,21 @@ using System.IO;
 namespace DrawEM.App.Infrastructure;
 
 /// <summary>
-/// Appends application lifecycle failures, such as cleanup errors at exit, to a local text log,
-/// one tab-separated line per failure. <see cref="Append"/> never throws: a log that cannot be
-/// written must not stop the application from exiting.
+/// Queues lifecycle failures for a background writer. File I/O never holds the caller;
+/// disposal drains for at most one second and may leave unwritten records behind.
 /// </summary>
-public sealed class AppFailureLog
+public sealed class AppFailureLog : IDisposable
 {
-    private readonly object gate = new();
-    private readonly string path;
-    private readonly string directory;
+    public static readonly TimeSpan DrainTimeout = BackgroundLogWriter<string>.DrainTimeout;
+    private readonly BackgroundLogWriter<string> writer;
 
     /// <exception cref="ArgumentException"><paramref name="path"/> has no parent directory.</exception>
-    public AppFailureLog(string path)
+    public AppFailureLog(string path) : this(new TextFileLogSink(path).Append)
     {
-        this.path = Path.GetFullPath(path);
-        directory = Path.GetDirectoryName(this.path)
-            ?? throw new ArgumentException("Log path must name a file inside a directory.", nameof(path));
     }
+
+    /// <param name="writeLine">Appends a formatted line on the background writer.</param>
+    public AppFailureLog(Action<string> writeLine) => writer = new BackgroundLogWriter<string>(writeLine);
 
     /// <summary><c>%LOCALAPPDATA%\drawEM\logs\app.log</c> for the current Windows user.</summary>
     public static string DefaultPath { get; } = Path.Combine(
@@ -34,21 +32,10 @@ public sealed class AppFailureLog
 
     public void Append(string operation, Exception exception)
     {
-        var line = FormatLine(DateTimeOffset.Now, operation, exception) + Environment.NewLine;
-
-        try
-        {
-            lock (gate)
-            {
-                Directory.CreateDirectory(directory);
-                File.AppendAllText(path, line);
-            }
-        }
-        catch (Exception writeFailure) when (writeFailure is IOException or UnauthorizedAccessException)
-        {
-            // Logging is best effort; the application is already on its way out.
-        }
+        writer.Enqueue(FormatLine(DateTimeOffset.Now, operation, exception));
     }
+
+    public void Dispose() => writer.Dispose();
 
     private static IEnumerable<Exception> Errors(Exception exception) =>
         exception is AggregateException aggregate ? aggregate.Flatten().InnerExceptions : [exception];

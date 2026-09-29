@@ -1,4 +1,5 @@
 using System.Windows.Threading;
+using System.Diagnostics;
 using DrawEM.App.Application.Sound;
 
 namespace DrawEM.App.Infrastructure.Sound;
@@ -14,10 +15,11 @@ namespace DrawEM.App.Infrastructure.Sound;
 /// </remarks>
 public sealed class SoundChannelHost : IDisposable
 {
+    public static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(2);
     private readonly Thread thread;
     private readonly Dispatcher dispatcher;
     private readonly SoundChannelController channel;
-    private bool disposed;
+    private int disposed;
 
     /// <param name="createChannel">Builds the channel from a delegate that queues work on the sound thread.</param>
     public SoundChannelHost(Func<Action<Action>, SoundChannelController> createChannel)
@@ -46,10 +48,17 @@ public sealed class SoundChannelHost : IDisposable
         {
             channel = createChannel(Post);
         }
-        catch
+        catch (Exception startupFailure)
         {
-            disposed = true;
-            EndThread();
+            disposed = 1;
+            try
+            {
+                EndThread(Stopwatch.StartNew());
+            }
+            catch (Exception shutdownFailure)
+            {
+                throw new AggregateException("Sound channel startup and shutdown failed.", startupFailure, shutdownFailure);
+            }
             throw;
         }
     }
@@ -59,7 +68,8 @@ public sealed class SoundChannelHost : IDisposable
 
     /// <summary>
     /// Stops playback and releases the player on the sound thread, then ends the thread. The thread
-    /// ends even if releasing the player throws; that exception is rethrown afterwards.
+    /// ends even if releasing the player throws. Cleanup and thread termination share a two-second
+    /// budget; a timeout leaves cleanup queued and requires process exit to stop a stuck player.
     /// </summary>
     /// <exception cref="InvalidOperationException">Called on the sound thread.</exception>
     public void Dispose()
@@ -69,31 +79,50 @@ public sealed class SoundChannelHost : IDisposable
             throw new InvalidOperationException("Dispose the sound channel host from outside the sound thread.");
         }
 
-        if (disposed)
+        if (Interlocked.Exchange(ref disposed, 1) != 0)
         {
             return;
         }
 
-        disposed = true;
+        var elapsed = Stopwatch.StartNew();
         try
         {
-            dispatcher.Invoke(channel.Dispose, DispatcherPriority.Normal);
+            var cleanup = dispatcher.InvokeAsync(channel.Dispose, DispatcherPriority.Normal);
+            try
+            {
+                cleanup.Task.WaitAsync(Remaining(elapsed)).GetAwaiter().GetResult();
+            }
+            catch (TimeoutException) when (!cleanup.Task.IsCompleted)
+            {
+                throw new SoundChannelShutdownTimeoutException();
+            }
         }
         finally
         {
-            EndThread();
+            EndThread(elapsed);
         }
     }
 
-    private void EndThread()
+    private void EndThread(Stopwatch elapsed)
     {
-        dispatcher.InvokeShutdown();
-        thread.Join();
+        // This request does not wait for a stuck callback. Background priority lets queued cleanup
+        // run first if that callback returns after the caller has timed out.
+        dispatcher.BeginInvokeShutdown(DispatcherPriority.Background);
+        if (!thread.Join(Remaining(elapsed)))
+        {
+            throw new SoundChannelShutdownTimeoutException();
+        }
+    }
+
+    private static TimeSpan Remaining(Stopwatch elapsed)
+    {
+        var remaining = ShutdownTimeout - elapsed.Elapsed;
+        return remaining > TimeSpan.Zero ? remaining : TimeSpan.Zero;
     }
 
     private void Post(Action action)
     {
-        if (!disposed)
+        if (Volatile.Read(ref disposed) == 0)
         {
             dispatcher.BeginInvoke(action, DispatcherPriority.Normal);
         }

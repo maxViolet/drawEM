@@ -18,12 +18,13 @@ public partial class App : System.Windows.Application
     private SoundChannelHost? soundChannel;
     private LoggingSoundFailureReporter? soundFailures;
     private TrayApplication? trayApplication;
+    private ApplicationExitPolicy? exitPolicy;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
-        var appLog = new AppFailureLog(AppFailureLog.DefaultPath);
+        exitPolicy = new ApplicationExitPolicy(new AppFailureLog(AppFailureLog.DefaultPath), Environment.Exit);
 
         try
         {
@@ -64,23 +65,34 @@ public partial class App : System.Windows.Application
                 overlayWindow,
                 new WpfApplicationLifetime(this),
                 action => Dispatcher.BeginInvoke(action),
-                failure => appLog.Append("exit", failure));
+                failure => exitPolicy.Report("exit", failure));
             trayApplication.Start();
         }
         catch (Exception exception)
         {
+            // Construction of the sound host can itself time out before it is assigned to a field.
+            exitPolicy.Report("startup", exception);
             StartupFailure.Handle(
                 ReleaseStartedResources,
-                failure => appLog.Append("startup cleanup", failure),
-                () => MessageBox.Show(exception.Message, "drawEM", MessageBoxButton.OK, MessageBoxImage.Error),
+                failure => exitPolicy.Report("startup cleanup", failure),
+                () => exitPolicy.ShowStartupError(
+                    () => MessageBox.Show(exception.Message, "drawEM", MessageBoxButton.OK, MessageBoxImage.Error)),
                 Shutdown);
         }
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
-        trayApplication?.Dispose();
-        base.OnExit(e);
+        try
+        {
+            trayApplication?.Dispose();
+            base.OnExit(e);
+        }
+        finally
+        {
+            // All resource cleanup has been attempted before a timed-out sound thread forces exit.
+            exitPolicy?.Complete();
+        }
     }
 
     private void ReleaseStartedResources()
