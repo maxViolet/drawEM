@@ -18,11 +18,13 @@ public partial class App : System.Windows.Application
     private SoundChannelHost? soundChannel;
     private LoggingSoundFailureReporter? soundFailures;
     private TrayApplication? trayApplication;
+    private ApplicationExitPolicy? exitPolicy;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        exitPolicy = new ApplicationExitPolicy(new AppFailureLog(AppFailureLog.DefaultPath), Environment.Exit);
 
         try
         {
@@ -62,32 +64,52 @@ public partial class App : System.Windows.Application
                 new CompositeDisposable(keyboardHookSource, mouseHookSource, soundChannel, soundFailures),
                 overlayWindow,
                 new WpfApplicationLifetime(this),
-                action => Dispatcher.BeginInvoke(action));
+                action => Dispatcher.BeginInvoke(action),
+                failure => exitPolicy.Report("exit", failure));
             trayApplication.Start();
         }
         catch (Exception exception)
         {
-            if (trayApplication is not null)
-            {
-                trayApplication.Dispose();
-            }
-            else
-            {
-                keyboardHookSource?.Dispose();
-                mouseHookSource?.Dispose();
-                soundChannel?.Dispose();
-                soundFailures?.Dispose();
-                overlayWindow?.Close();
-            }
-
-            MessageBox.Show(exception.Message, "drawEM", MessageBoxButton.OK, MessageBoxImage.Error);
-            Shutdown();
+            // Construction of the sound host can itself time out before it is assigned to a field.
+            exitPolicy.Report("startup", exception);
+            StartupFailure.Handle(
+                ReleaseStartedResources,
+                failure => exitPolicy.Report("startup cleanup", failure),
+                () => exitPolicy.ShowStartupError(
+                    () => MessageBox.Show(exception.Message, "drawEM", MessageBoxButton.OK, MessageBoxImage.Error)),
+                Shutdown);
         }
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
-        trayApplication?.Dispose();
-        base.OnExit(e);
+        try
+        {
+            trayApplication?.Dispose();
+            base.OnExit(e);
+        }
+        finally
+        {
+            // All resource cleanup has been attempted before a timed-out sound thread forces exit.
+            exitPolicy?.Complete();
+        }
+    }
+
+    private void ReleaseStartedResources()
+    {
+        if (trayApplication is not null)
+        {
+            trayApplication.Dispose();
+            return;
+        }
+
+        CleanupSteps.RunAll(
+        [
+            () => keyboardHookSource?.Dispose(),
+            () => mouseHookSource?.Dispose(),
+            () => soundChannel?.Dispose(),
+            () => soundFailures?.Dispose(),
+            () => overlayWindow?.Close(),
+        ]);
     }
 }

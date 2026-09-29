@@ -1,10 +1,10 @@
 # drawEM v2 roadmap: screen actions
 
-**Status:** proposed; Steps 1 to 3 define the sound command, configuration, global sound channel, and sound shortcuts; Step 4 publish and manual checks remain.
+**Status:** Steps 1 to 3 implemented; Step 4 manual checks remain open; Step 5 external microphone routing is planned.
 
 ## Delivery order
 
-1. [Sound playback through code, with global shortcuts configured in code](STAGE-1-SOUND-IMPLEMENTATION-PLAN.md).
+1. [Sound playback through code, with global shortcuts configured in code, and external call microphone routing](STAGE-1-SOUND-IMPLEMENTATION-PLAN.md).
 2. Settings UI and media library — TODO.
 3. Video — TODO.
 4. Screen effects — TODO.
@@ -113,6 +113,21 @@ invocation during an active stroke.
 **Done when:** the published app passes the sound checks and the v1 drawing
 checks on the tested Windows setup. Unit tests alone cannot establish audible
 output or global input behavior.
+
+### 5. [Route sound into the call microphone](stage-1/step-5/task.md)
+
+- Use Voicemeeter Standard to mix physical microphone voice and drawEM into
+  a virtual microphone selected in Google Meet. No custom driver is planned.
+- Monitor drawEM in headphones without returning the user's own voice.
+  Exclude other apps, system sounds, and received call audio from the mix.
+- Keep Meet noise cancellation enabled. Verify the mixed signal before Meet
+  processing and record remote effect filtering as an accepted limitation.
+- Verify Meet mute/unmute for the shared input and record manual evidence
+  separately from step 4.
+
+**Done when:** the upstream mix, monitoring, and routing isolation pass and
+the Meet call and mute behavior are documented. Meet may suppress effects;
+remote audibility of every non-speech sound is not guaranteed.
 
 ## Stage 2: settings UI and media library — TODO
 

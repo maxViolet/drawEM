@@ -11,16 +11,12 @@ public sealed class SoundFailureLog
 {
     private const string Unknown = "-";
 
-    private readonly object gate = new();
-    private readonly string path;
-    private readonly string directory;
+    private readonly TextFileLogSink sink;
 
     /// <exception cref="ArgumentException"><paramref name="path"/> has no parent directory.</exception>
     public SoundFailureLog(string path)
     {
-        this.path = Path.GetFullPath(path);
-        directory = Path.GetDirectoryName(this.path)
-            ?? throw new ArgumentException("Log path must name a file inside a directory.", nameof(path));
+        sink = new TextFileLogSink(path);
     }
 
     /// <summary><c>%LOCALAPPDATA%\drawEM\logs\sound.log</c> for the current Windows user.</summary>
@@ -35,23 +31,7 @@ public sealed class SoundFailureLog
         "path=" + FieldValue(failure.Path),
         "reason=" + FieldValue(failure.Reason));
 
-    public void Append(SoundFailure failure)
-    {
-        var line = FormatLine(failure) + Environment.NewLine;
-
-        try
-        {
-            lock (gate)
-            {
-                Directory.CreateDirectory(directory);
-                File.AppendAllText(path, line);
-            }
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-        {
-            // Logging is best effort; the failed sound request is already recoverable.
-        }
-    }
+    public void Append(SoundFailure failure) => sink.Append(FormatLine(failure));
 
     private static string FieldValue(string? value) =>
         string.IsNullOrEmpty(value) ? Unknown : value.ReplaceLineEndings(" ").Replace('\t', ' ');

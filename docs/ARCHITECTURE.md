@@ -136,6 +136,7 @@ Tray Exit
   → drain the sound failure log (at most one second)
   → close overlay
   → dispose tray icon
+  → drain the application failure log (at most one second)
   → terminate application
 ```
 
@@ -186,13 +187,49 @@ Shutdown order:
    the sound thread rejects it, because it would wait for itself.
 2. On the sound thread, the controller stops and releases the active player
    and cancels its deadline.
-3. The host shuts down the sound `Dispatcher` and joins the thread. This step
-   runs even if step 2 throws; the exception is rethrown afterwards.
+3. The host requests shutdown of the sound `Dispatcher` and joins the thread.
+   Controller cleanup and thread termination share one two-second budget. The
+   shutdown request runs even if cleanup throws or times out. A timeout raises
+   `SoundChannelShutdownTimeoutException`; queued cleanup may finish later,
+   but the caller does not wait any longer.
 4. `LoggingSoundFailureReporter.Dispose` stops accepting records and waits at
    most one second for queued records, so a slow disk cannot hold exit.
 
-If the channel cannot be created at startup, the host ends the sound thread
-before rethrowing.
+`CleanupSteps` attempts the remaining cleanup after a sound timeout: drain the
+sound log, close the overlay, and dispose the tray icon. `ApplicationExitPolicy`
+records lifecycle failures in the background application log. At `OnExit`, it
+drains that log for at most one second, then calls `Environment.Exit(1)` only
+if a sound shutdown timeout was recorded. The sound thread is already a
+background thread: it cannot keep the managed process alive once foreground
+threads have ended ([.NET thread semantics](https://learn.microsoft.com/en-us/dotnet/standard/threading/foreground-and-background-threads)).
+`Environment.Exit` is a deliberate timeout policy to leave
+the still-running UI thread immediately after attempted cleanup and log drain,
+without continuing WPF callbacks or waiting for a startup dialog. It is not
+required merely because the sound thread is blocked. Ordinary cleanup failures
+retain normal WPF shutdown. Process termination stops any remaining playback.
+These are individual wait budgets, not a deadline for every possible UI or
+native operation during application exit.
+
+`AppFailureLog.Append` queues a timestamped record without file I/O on the
+caller. A stuck writer cannot delay its disposal beyond one second; unwritten
+records may be lost when the process exits.
+
+`AppFailureLog` and `LoggingSoundFailureReporter` share `BackgroundLogWriter<T>`
+for queueing and bounded drain. `TextFileLogSink` owns synchronized file append,
+directory creation, and recoverable write failures for both log files. Each
+log retains its own record format. App logging accepts either a file path or
+an append delegate; supplying a delegate requires no unused path.
+
+`TrayApplication` has one constructor: the composition root explicitly supplies
+both exit scheduling and cleanup-failure reporting. There is no overload that
+silently selects a different failure policy.
+
+If the channel cannot be created at startup, the host requests sound-thread
+shutdown with the same two-second budget. If that also fails, both the original
+startup error and shutdown error are preserved in an aggregate. Startup cleanup
+still attempts the remaining resources. A sound timeout exits after log drain
+without waiting for a modal error dialog; ordinary startup failures show their
+error before normal shutdown.
 
 ## Rendering and display coordinates
 

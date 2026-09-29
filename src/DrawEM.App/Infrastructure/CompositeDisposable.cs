@@ -5,6 +5,7 @@ public sealed class CompositeDisposable(params IDisposable[] disposables) : IDis
     private readonly IDisposable[] disposables = disposables;
     private bool disposed;
 
+    /// <summary>Disposes every resource in order, even if one throws. See <see cref="CleanupSteps.RunAll"/>.</summary>
     public void Dispose()
     {
         if (disposed)
@@ -13,9 +14,6 @@ public sealed class CompositeDisposable(params IDisposable[] disposables) : IDis
         }
 
         disposed = true;
-        foreach (var disposable in disposables)
-        {
-            disposable.Dispose();
-        }
+        CleanupSteps.RunAll(disposables.Select(disposable => (Action)disposable.Dispose));
     }
 }

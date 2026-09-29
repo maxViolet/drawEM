@@ -15,6 +15,9 @@
 - `LoggingSoundFailureReporter` queues channel failures with the configured
   path and writes them to `SoundFailureLog` on a background task. Disposing it
   waits at most one second for queued records.
+- Sound and application logs share `BackgroundLogWriter<T>` for queueing and
+  bounded drain, and `TextFileLogSink` for file append. Their record formats
+  remain separate.
 - `SoundChannelHost` runs `SoundChannelController` on a dedicated STA
   dispatcher thread, so `MediaPlayer` can be stopped at the deadline even when
   the UI thread is busy. Call `SoundChannelHost.Play` from any thread; call
