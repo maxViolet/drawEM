@@ -1,6 +1,6 @@
 # Stage 1 implementation plan: sound command
 
-**Status:** Steps 1 and 2 implemented; Steps 3 and 4 not started.
+**Status:** Steps 1 through 3 implemented; Step 4 manual acceptance remains open; Step 5 external microphone routing is planned.
 
 **Source:** [ROADMAP-v2.md](ROADMAP-v2.md), Stage 1, and the proposed screen-action model in [ARCHITECTURE.md](../ARCHITECTURE.md).
 
@@ -12,6 +12,7 @@ Each step has a task description, implementation plan, and acceptance criteria:
 | 2. Global sound channel | [Task](stage-1/step-2/task.md) | [Plan](stage-1/step-2/plan.md) | [Acceptance](stage-1/step-2/acceptance.md) |
 | 3. Sound shortcuts | [Task](stage-1/step-3/task.md) | [Plan](stage-1/step-3/plan.md) | [Acceptance](stage-1/step-3/acceptance.md) |
 | 4. Publish and verify | [Task](stage-1/step-4/task.md) | [Plan](stage-1/step-4/plan.md) | [Acceptance](stage-1/step-4/acceptance.md) |
+| 5. Call microphone routing | [Task](stage-1/step-5/task.md) | [Plan](stage-1/step-5/plan.md) | [Acceptance](stage-1/step-5/acceptance.md) |
 
 Use a red-to-green TDD cycle for testable behavior in steps 1 through 3: one failing behavior test, the minimum implementation, then the next behavior. Step 4 records automated results and separate manual acceptance evidence. Passing unit tests does not complete manual acceptance.
 
@@ -22,6 +23,12 @@ Play a code-configured WAV or MP3 file through one global sound channel when an 
 Each sound plays once, ending at the file's natural end or ten seconds after playback starts, whichever comes first. A new request stops and replaces the active sound; requesting the same sound again restarts it. A held shortcut starts only once and can start again after release and another press.
 
 Settings UI, media import and library, `Sample`, video, effects, and editable drawing shortcuts belong to later stages.
+
+Step 5 adds an external Voicemeeter Standard setup for physical microphone
+voice plus drawEM in the call input, with local headphone monitoring. No
+custom virtual driver or internal mixer is planned. Meet noise cancellation
+stays enabled; its filtering of effects is an accepted limitation after
+verification of the upstream mix.
 
 ## 1. Define the command and configuration
 
@@ -61,6 +68,21 @@ Settings UI, media import and library, `Sample`, video, effects, and editable dr
 6. Record the tested executable, Windows setup, sound files, automated results, manual pass/fail results, and any limitations in a separate Stage 1 acceptance-results document.
 
 **Done when:** the published app passes the sound checks and v1 drawing checks on the tested Windows setup. Unit tests do not establish audible output, global hook behavior, input suppression, or multi-monitor behavior.
+
+## 5. Route sound into the call microphone
+
+1. Follow the [external mixer setup plan](stage-1/step-5/plan.md) to route only
+   physical microphone voice and drawEM to the virtual recording output.
+2. Monitor drawEM in headphones without returning the user's own voice.
+   Keep other app audio and received call audio outside the outgoing mix.
+3. Verify the signal before Meet processing, then test a Meet call with
+   noise cancellation enabled and microphone mute/unmute.
+4. Record upstream results, remote observations, and filtering limitations
+   against [step 5 acceptance](stage-1/step-5/acceptance.md).
+
+**Done when:** mixing, monitoring, and routing isolation pass, and the Meet
+call and mute behavior are documented under the agreed filtering limitation.
+Step 4 remains a separate manual gate.
 
 ## Expected file scope
 
