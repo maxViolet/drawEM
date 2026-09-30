@@ -44,6 +44,24 @@ dotnet test DrawEM.sln
 The [manual smoke test](docs/v1/SMOKE-TEST.md) covers tray, input blocking, and
 multi-monitor behavior that unit tests cannot establish.
 
+## Continuous integration and releases
+
+GitHub Actions builds the solution with warnings as errors, runs the tests, and
+publishes the win-x64 app for every pull request to `main` and every push to
+`main`. Changes that touch only `docs/` or Markdown files skip this run. A
+separate check verifies branch names and pull request titles against
+[AGENTS.md](AGENTS.md). The .NET SDK version is pinned in `global.json`.
+
+To publish a release, push a version tag:
+
+```powershell
+git tag v0.3.0
+git push origin v0.3.0
+```
+
+The release workflow runs the tests, publishes the app with the tag's version,
+and attaches `drawEM-<version>-win-x64.zip` to a new GitHub Release.
+
 ## Current limits and plans
 
 - Shortcuts, stroke color, and thickness are fixed. There is no eraser, undo,

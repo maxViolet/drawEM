@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Test
+        run: dotnet test DrawEM.sln -c Release
+
+      - name: Publish
+        shell: pwsh
+        run: |
+          $version = "$env:GITHUB_REF_NAME".TrimStart('v')
+          dotnet publish src/DrawEM.App/DrawEM.App.csproj -c Release -p:PublishProfile=win-x64 -p:Version=$version -warnaserror
+          Compress-Archive -Path src/DrawEM.App/bin/Release/net8.0-windows/win-x64/publish/* -DestinationPath "drawEM-$version-win-x64.zip"
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = "$env:GITHUB_REF_NAME".TrimStart('v')
+          gh release create "$env:GITHUB_REF_NAME" "drawEM-$version-win-x64.zip" --title "drawEM $version" --generate-notes
