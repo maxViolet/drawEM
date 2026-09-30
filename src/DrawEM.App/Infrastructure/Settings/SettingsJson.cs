@@ -60,7 +60,7 @@ public static class SettingsJson
                     case SoundAction sound:
                         json.WriteStartObject("action");
                         json.WriteString("type", "sound");
-                        json.WriteString("file", sound.Sound.LibraryFileName);
+                        json.WriteString("id", sound.Sound.Id.Value);
                         json.WriteString("name", sound.Sound.DisplayName);
                         json.WriteString("shortcut", sound.Shortcut!.ToString());
                         json.WriteEndObject();
@@ -160,7 +160,7 @@ public static class SettingsJson
         SoundReference sound;
         try
         {
-            sound = new SoundReference(String(action, "file"), String(action, "name"));
+            sound = new SoundReference(new ManagedSoundId(String(action, "id")), String(action, "name"));
         }
         catch (ArgumentException failure)
         {

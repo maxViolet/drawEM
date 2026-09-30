@@ -16,7 +16,7 @@
     "clearShortcut": "Ctrl+Alt+X"
   },
   "slots": [
-    { "slot": 1, "action": { "type": "sound", "file": "<library file>", "name": "applause.wav", "shortcut": "Ctrl+Alt+1" } },
+    { "slot": 1, "action": { "type": "sound", "id": "<library id>", "name": "applause.wav", "shortcut": "Ctrl+Alt+1" } },
     { "slot": 2, "action": null }
   ]
 }
@@ -25,7 +25,8 @@
 - `slots` lists slots 1–8 in order. `"action": null` is an empty slot.
 - `type` selects the action. v3 defines only `sound`; later versions add types
   without changing the slot entry.
-- `file` names the managed library copy (a file name, never a path). `name` is
+- `id` is the opaque managed-library identity. Only the media adapter maps it
+  to a file; settings code never interprets it. `name` is
   the original file name shown to the user.
 - A shortcut is at least two of `Ctrl`, `Alt`, `Shift`, then one key `A`–`Z`,
   `0`–`9`, or `F1`–`F12`. `Alt` means Left Alt; Right Alt is reserved for AltGr

@@ -68,7 +68,7 @@ public class SettingsSnapshotTests
     public void Validate_RequiresShortcutForEveryFilledSoundSlot()
     {
         var slots = EmptySlots();
-        slots[2] = new ActionSlot(3, new SoundAction(new SoundReference("a.wav", "a.wav"), null));
+        slots[2] = new ActionSlot(3, new SoundAction(new SoundReference(new ManagedSoundId("a.wav"), "a.wav"), null));
 
         var result = SettingsSnapshot.Validate(Style, Draw, Clear, slots);
 
@@ -111,7 +111,7 @@ public class SettingsSnapshotTests
     public void Validate_RejectsFilledSlotWithoutSound()
     {
         var slots = EmptySlots();
-        var filled = new SoundAction(new SoundReference("a.wav", "a.wav"), Keys("Ctrl+Alt+1"));
+        var filled = new SoundAction(new SoundReference(new ManagedSoundId("a.wav"), "a.wav"), Keys("Ctrl+Alt+1"));
         slots[0] = new ActionSlot(1, filled with { Sound = null! });
 
         var result = SettingsSnapshot.Validate(Style, Draw, Clear, slots);
@@ -202,21 +202,32 @@ public class SettingsSnapshotTests
     }
 
     [Theory]
-    [InlineData(@"..\a.wav")]
-    [InlineData("C:a.wav")]
-    [InlineData("sub/a.wav")]
-    [InlineData("..")]
+    [InlineData("")]
     [InlineData(" ")]
-    public void SoundReference_RejectsPathsAndBlankNames(string libraryFileName)
+    public void ManagedSoundId_RejectsBlankValues(string value)
     {
-        Assert.ThrowsAny<ArgumentException>(() => new SoundReference(libraryFileName, "a.wav"));
+        Assert.ThrowsAny<ArgumentException>(() => new ManagedSoundId(value));
+    }
+
+    [Fact]
+    public void ManagedSoundId_IsOpaqueToDomain_LibraryRulesLiveInTheMediaAdapter()
+    {
+        // Domain does not interpret the identity; ManagedSoundLocator rejects non-library names.
+        Assert.Equal(@"..\a.wav", new ManagedSoundId(@"..\a.wav").Value);
+    }
+
+    [Fact]
+    public void SoundReference_RequiresIdAndDisplayName()
+    {
+        Assert.Throws<ArgumentNullException>(() => new SoundReference(null!, "a.wav"));
+        Assert.ThrowsAny<ArgumentException>(() => new SoundReference(new ManagedSoundId("a"), " "));
     }
 
     private static Shortcut Keys(string text) =>
         Shortcut.TryParse(text, out var shortcut, out _) ? shortcut : throw new ArgumentException(text);
 
     private static ActionSlot Sound(int number, string shortcut, string file = "a.wav") =>
-        new(number, new SoundAction(new SoundReference(file, file), Keys(shortcut)));
+        new(number, new SoundAction(new SoundReference(new ManagedSoundId(file), file), Keys(shortcut)));
 
     private static ActionSlot[] EmptySlots() => Enumerable.Range(1, 8).Select(ActionSlot.Empty).ToArray();
 }

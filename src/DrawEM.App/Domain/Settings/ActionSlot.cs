@@ -1,26 +1,39 @@
 namespace DrawEM.App.Domain.Settings;
 
 /// <summary>
-/// A managed library copy of a WAV or MP3 file. <see cref="LibraryFileName"/> names the copy inside the
-/// library (never a path); <see cref="DisplayName"/> is the original file name shown to the user.
+/// Opaque identity of one sound in drawEM's managed library. Only the media adapter knows how an identity
+/// maps to a stored file; Domain compares and stores it as text.
+/// </summary>
+public sealed record ManagedSoundId
+{
+    /// <exception cref="ArgumentException"><paramref name="value"/> is blank.</exception>
+    public ManagedSoundId(string value)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        Value = value;
+    }
+
+    public string Value { get; }
+
+    public override string ToString() => Value;
+}
+
+/// <summary>
+/// A sound selected for a slot: its library identity and the original file name shown to the user.
 /// </summary>
 public sealed record SoundReference
 {
-    /// <exception cref="ArgumentException">A name is blank, or the library name contains a path.</exception>
-    public SoundReference(string libraryFileName, string displayName)
+    /// <exception cref="ArgumentNullException"><paramref name="id"/> is <c>null</c>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="displayName"/> is blank.</exception>
+    public SoundReference(ManagedSoundId id, string displayName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(libraryFileName);
+        ArgumentNullException.ThrowIfNull(id);
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
-        if (libraryFileName.Contains('\\') || libraryFileName.Contains('/') || libraryFileName.Contains(':') || libraryFileName is "." or "..")
-        {
-            throw new ArgumentException("Library file name must not contain a path.", nameof(libraryFileName));
-        }
-
-        LibraryFileName = libraryFileName;
+        Id = id;
         DisplayName = displayName;
     }
 
-    public string LibraryFileName { get; }
+    public ManagedSoundId Id { get; }
 
     public string DisplayName { get; }
 }

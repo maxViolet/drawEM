@@ -129,7 +129,8 @@ public sealed class JsonSettingsStoreTests : IDisposable
     [InlineData("\"Ctrl+Alt+X\"", "\"Win+Ctrl+X\"", "clearShortcut 'Win+Ctrl+X'")]
     [InlineData("\"Ctrl+Alt+X\"", "\"Ctrl+Alt+Z\"", "same shortcut")]
     [InlineData("\"type\": \"sound\"", "\"type\": \"video\"", "'video' is not supported")]
-    [InlineData("\"file\": \"abc.wav\"", "\"file\": \"..\\\\abc.wav\"", "Slot 1 sound is invalid")]
+    [InlineData("\"id\": \"abc.wav\"", "\"id\": \" \"", "Slot 1 sound is invalid")]
+    [InlineData("\"name\": \"applause.wav\"", "\"name\": \"\"", "Slot 1 sound is invalid")]
     [InlineData("{ \"slot\": 8, \"action\": null }", "{ \"slot\": 7, \"action\": null }", "slots 1–8")]
     public void Load_InvalidSettings_IsUnreadableWithReason(string find, string replace, string reason)
     {
@@ -150,7 +151,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
         var snapshot = Loaded(Store().Load());
 
         var sound = Assert.IsType<SoundAction>(snapshot.Slots[0].Action);
-        Assert.Equal(new SoundReference("abc.wav", "applause.wav"), sound.Sound);
+        Assert.Equal(new SoundReference(new ManagedSoundId("abc.wav"), "applause.wav"), sound.Sound);
         Assert.Equal("Ctrl+Alt+1", sound.Shortcut!.ToString());
     }
 
@@ -264,8 +265,8 @@ public sealed class JsonSettingsStoreTests : IDisposable
     private static SettingsSnapshot Custom()
     {
         var slots = Enumerable.Range(1, 8).Select(ActionSlot.Empty).ToArray();
-        slots[0] = new ActionSlot(1, new SoundAction(new SoundReference("abc.wav", "applause.wav"), Keys("Ctrl+Alt+1")));
-        slots[2] = new ActionSlot(3, new SoundAction(new SoundReference("abc.wav", "applause.wav"), Keys("Alt+Shift+F3")));
+        slots[0] = new ActionSlot(1, new SoundAction(new SoundReference(new ManagedSoundId("abc.wav"), "applause.wav"), Keys("Ctrl+Alt+1")));
+        slots[2] = new ActionSlot(3, new SoundAction(new SoundReference(new ManagedSoundId("abc.wav"), "applause.wav"), Keys("Alt+Shift+F3")));
         return SettingsSnapshot.Validate(
             new DrawingStyle(new HexColor(0x00, 0xFF, 0x7F), new StrokeWidth(12)),
             Keys("Ctrl+Shift+D"),
@@ -286,7 +287,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
             "clearShortcut": "Ctrl+Alt+X"
           },
           "slots": [
-            { "slot": 1, "action": { "type": "sound", "file": "abc.wav", "name": "applause.wav", "shortcut": "Ctrl+Alt+1" } },
+            { "slot": 1, "action": { "type": "sound", "id": "abc.wav", "name": "applause.wav", "shortcut": "Ctrl+Alt+1" } },
             { "slot": 2, "action": null },
             { "slot": 3, "action": null },
             { "slot": 4, "action": null },

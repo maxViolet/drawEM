@@ -16,7 +16,7 @@
 
 ## Validation
 
-- `dotnet test` (2026-09-30): 255 passed, 0 failed. Covers shortcut, color,
+- `dotnet test` (2026-09-30): 273 passed, 0 failed. Covers shortcut, color,
   width, slot, and snapshot validation (`Domain/Settings`), startup fallback
   (`Application/Settings`), JSON storage in a temporary directory
   (`Infrastructure/Settings`), and the no-filesystem rule for Domain and
