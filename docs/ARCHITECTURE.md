@@ -3,6 +3,8 @@
 **Status:** accepted  
 **Date:** 2026-09-16
 
+Later decisions about individual seams are recorded in [decisions](decisions/README.md).
+
 ## Purpose
 
 drawEM is a small Windows 10/11 x64 utility that draws persistent 4 DIP
