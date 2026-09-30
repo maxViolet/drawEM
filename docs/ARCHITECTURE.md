@@ -388,9 +388,11 @@ sound only; selecting a file proposes `Ctrl+Alt+1` through `Ctrl+Alt+8` by
 slot number, but the combination can be changed. An empty slot has no active
 binding. A binding requires at least two of Ctrl, Alt, and Shift (`Ctrl+Alt`,
 `Ctrl+Shift`, `Alt+Shift`, or all three), plus one letter, digit, or F1–F12 key.
-Single-modifier and Win combinations are excluded. Right Alt is reserved for
-AltGr: while it is held, no action is dispatched or captured, even if Windows
-also reports Left Ctrl. Its input passes through outside draw mode. Physical
+Single-modifier and Win combinations are excluded. This is a v3 behavior
+change: the current hook counts Right Alt as Alt, so AltGr can trigger a
+`Ctrl+Alt` action. Right Alt is reserved for AltGr in v3: while it is held,
+no action is dispatched or captured, even if Windows also reports Left Ctrl.
+Its input passes through outside draw mode. Physical
 `Ctrl+RightAlt` is unsupported; Alt bindings use Left Alt. Duplicate active
 combinations block saving. Drawing and clearing cannot be unbound; an
 occupied action slot also requires a binding.
@@ -398,12 +400,18 @@ occupied action slot also requires a binding.
 When a shortcut capture field has focus, the global keyboard hook stays
 installed but enters capture mode. It routes key activity to the settings draft
 through the composition root rather than resolving or dispatching drawing,
-clear, or sound commands. Captured key-down and key-up events are suppressed
-at the hook. Capture waits for any keys held on entry to be released, retaining
-their prior key-up pass-through/suppression decision, then records one chord;
-Escape or loss of field focus before completion cancels it. After recording,
-action dispatch remains paused until the captured keys are released, and a
-fresh press is required for an action. The hook keeps its pressed-key and
+clear, or sound commands. Modifier events pass through; only the down/up of a
+candidate letter, digit, or F1–F12 key evaluated for capture and Escape used to
+cancel it are suppressed.
+Tab, Alt+Tab, Alt+F4, and Win chords pass through and are not captured. A
+candidate key also passes through with Right Alt. Capture waits for any keys
+held on entry to be released, retaining their prior key-up
+pass-through/suppression decision, then records one chord. An invalid chord
+displays the reason without changing the draft; after its keys are released,
+capture waits for a new attempt. Escape cancels capture, and Tab or loss of
+field focus leaves it. After a valid recording, action dispatch remains
+paused until the captured keys are released, and a fresh press is required for
+an action. The hook keeps its pressed-key and
 suppression state consistent across entry, cancellation, and exit. Other
 settings controls use ordinary keyboard input when no capture field has focus.
 

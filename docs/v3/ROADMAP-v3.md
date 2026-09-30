@@ -42,7 +42,9 @@ Video, effects, and their channel behavior need a separate future roadmap.
 - A shortcut requires at least two modifiers from Ctrl, Alt, and Shift:
   `Ctrl+Alt`, `Ctrl+Shift`, `Alt+Shift`, or all three, plus exactly one letter,
   digit, or F1–F12 key. Single-modifier, Win, and modifier-only combinations
-  are invalid. Treat Right Alt as reserved for AltGr: while Right Alt is down,
+  are invalid. **V3 behavior change:** the current hook counts Right Alt as Alt,
+  so an AltGr chord can trigger a configured `Ctrl+Alt` action (including draw
+  on `AltGr+Z`). Treat Right Alt as reserved for AltGr: while Right Alt is down,
   do not dispatch or capture any shortcut, even if Windows also reports Left
   Ctrl. Let those keys pass through outside draw mode. A physical
   `Ctrl+RightAlt` chord is deliberately unsupported; use Left Alt for an Alt
@@ -55,14 +57,21 @@ Video, effects, and their channel behavior need a separate future roadmap.
 - Focusing a shortcut capture field enters capture mode in the global keyboard
   hook. The hook remains installed and sends key events to that field through
   the application composition root; it does not dispatch drawing, clear, or
-  sound actions while capturing. It suppresses captured key-down and key-up
-  events, so an existing binding such as `Ctrl+Alt+1` can be recorded without
-  playing its sound or sending the keys to another app. Wait for keys already
-  held when capture starts to be released, preserving their prior key-up
-  pass-through/suppression decision, then record one complete chord. Escape or
-  leaving the field before completion cancels capture. After a chord is
-  recorded, keep action dispatch paused until its keys are released; require a
-  fresh press to trigger an action. Capture only changes the draft until Save.
+  sound actions while capturing. Modifier key events pass through; suppress
+  only the down/up of a candidate letter, digit, or F1–F12 key that is being
+  evaluated for capture. This lets an existing binding such as `Ctrl+Alt+1`
+  be recorded without playing its sound. Tab, Alt+Tab, Alt+F4, and chords
+  containing Win pass through and are never captured; a candidate key also
+  passes through when Right Alt is held. Wait for keys already held when capture
+  starts to be released, preserving their prior key-up
+  pass-through/suppression decision, then record one complete chord. A candidate
+  with too few modifiers (for example `Ctrl+C`) displays an invalid-shortcut
+  error; a Right Alt chord (for example `Ctrl+RightAlt+1`) also displays the
+  reason but passes through. Neither changes the draft. Keep capture armed for
+  a fresh chord after all keys of an invalid attempt are released. Escape is
+  consumed to cancel capture; Tab or another focus change leaves it. After a valid chord
+  is recorded, keep action dispatch paused until its keys are released; require
+  a fresh press to trigger an action. Capture only changes the draft until Save.
 - Save applies the complete validated configuration without restarting drawEM.
   It stops current sound, exits draw mode, and clears all drawn strokes on all
   monitors, including when the saved change is unrelated to drawing. A new
@@ -131,7 +140,8 @@ becomes usable.
 **Done when:** automated tests cover remapping, conflict rejection, key
 repeat/release, pass-through for Right Alt with Windows-reported Left Ctrl and
 for physical `Ctrl+RightAlt`, Left Alt activation, cross-monitor behavior,
-capture of an already-bound chord without dispatch, cancel/blur, held-key transitions,
+capture of an already-bound chord without dispatch, Tab/Alt+Tab/Win
+pass-through, invalid-chord feedback and retry, cancel/blur, held-key transitions,
 physical line and dot width at 100%, 150%, and mixed monitor DPI, and saving
 during an active stroke or sound. No test may infer global-hook or audible
 behavior from fakes alone.
@@ -154,8 +164,10 @@ replacement, and last-reference cleanup work without touching original files.
 Run the automated suite and publish the self-contained Windows x64 app. Record
 manual results separately: tray Settings access, draft/Save/Cancel/defaults,
 real keyboard combinations with another app focused, recording an already-bound
-chord without playback or drawing, ordinary one-modifier shortcuts such as
-`Ctrl+C` and `Alt+F4` remaining usable, Right Alt/AltGr typing on German
+chord without playback or drawing, Tab, Alt+Tab, Alt+F4 and Win behavior while
+capturing, invalid capture feedback for `Ctrl+C` and `Ctrl+RightAlt+1`, ordinary
+one-modifier shortcuts such as `Ctrl+C` and `Alt+F4` remaining usable outside
+capture, Right Alt/AltGr typing on German
 (Germany) and Polish (Programmers) layouts, Left Alt bindings on those
 layouts, drawing color and measured physical width of lines and dots across
 DPI/monitors, all-monitor clear on Save, audible WAV/MP3 preview and shortcut
