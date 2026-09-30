@@ -54,6 +54,21 @@ Video, effects, and their channel behavior need a separate future roadmap.
   No two active commands may use the same combination; show conflicts and
   block Save rather than silently reassigning another command. Drawing and
   clear cannot be left unbound. A sound cannot be saved without a shortcut.
+- When a bound `Alt+Shift` or `Ctrl+Shift` action suppresses its letter, digit,
+  or F-key, Windows may see only the modifier pair and switch the input layout
+  on release. While the modifiers are still held, emit one neutral key down/up
+  (`VK 0xE8`, listed as unassigned by
+  [Windows](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes))
+  after suppressing the candidate and before the first modifier key-up. Apply
+  the same rule when capture suppresses a candidate with either pair, including
+  an invalid chord. Tag the two injected events and ignore only those tagged
+  events in shortcut resolution and capture so they cannot trigger or record
+  an action. Do not inject for a bare
+  `Alt+Shift` or `Ctrl+Shift` press without a suppressed candidate; users must
+  still be able to switch layouts intentionally. `Ctrl+Alt` needs no neutral
+  key. Treat failure to prevent an unintended layout switch as a release
+  blocker for these bindings; do not assume injection is reliable without the
+  published-app manual check.
 - Focusing a shortcut capture field enters capture mode in the global keyboard
   hook. The hook remains installed and sends key events to that field through
   the application composition root; it does not dispatch drawing, clear, or
@@ -130,7 +145,10 @@ the settings draft through the composition root instead of resolving actions.
 Keep suppression and pressed-key bookkeeping correct through focus changes,
 cancel, chord completion, and release. Preserve hold/release drawing,
 single-fire sound actions, input suppression, and monitor-scoped clear outside
-capture. Apply the chosen color and physical-pixel width when a new stroke
+capture. Add a narrow platform adapter for the neutral key injection; keep
+injected events out of capture and action dispatch, and verify that injection
+precedes modifier release for both normal actions and capture. Apply the chosen
+color and physical-pixel width when a new stroke
 starts. Convert that width to WPF units using the DPI of the stroke's monitor
 for both line pens and single-point dots; the overlay's one
 `TransformFromDevice` matrix is not sufficient evidence for mixed-DPI monitors.
@@ -142,6 +160,8 @@ repeat/release, pass-through for Right Alt with Windows-reported Left Ctrl and
 for physical `Ctrl+RightAlt`, Left Alt activation, cross-monitor behavior,
 capture of an already-bound chord without dispatch, Tab/Alt+Tab/Win
 pass-through, invalid-chord feedback and retry, cancel/blur, held-key transitions,
+neutral-key ordering for suppressed `Alt+Shift` and `Ctrl+Shift` candidates in
+action and capture modes, and no injection for bare layout-switch pairs,
 physical line and dot width at 100%, 150%, and mixed monitor DPI, and saving
 during an active stroke or sound. No test may infer global-hook or audible
 behavior from fakes alone.
@@ -174,7 +194,10 @@ DPI/monitors, all-monitor clear on Save, audible WAV/MP3 preview and shortcut
 playback, replacement and cutoff, restart
 persistence, corrupt settings recovery, startup orphan cleanup (including a
 draft import left by forced exit), and media preservation with corrupt
-settings. Recheck existing v1 drawing and v2 sound manual scenarios.
+settings. Enable the Windows `Alt+Shift` and `Ctrl+Shift` input-language hotkeys
+and verify that bound actions and captured chords containing those pairs do not
+switch layouts, while pressing either bare pair still does. Recheck existing
+v1 drawing and v2 sound manual scenarios.
 
 **Done when:** the published app passes the recorded desktop checks on the
 tested Windows setup. Automated tests alone do not establish sound output,

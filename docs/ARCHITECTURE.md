@@ -397,6 +397,16 @@ Its input passes through outside draw mode. Physical
 combinations block saving. Drawing and clearing cannot be unbound; an
 occupied action slot also requires a binding.
 
+`Alt+Shift` and `Ctrl+Shift` may be Windows input-language hotkeys. When the
+hook suppresses a bound or captured candidate key with either modifier pair,
+it injects a neutral `VK 0xE8` down/up while the modifiers remain held and
+before their first key-up, intending to prevent a bare layout-switch gesture
+on release. The hook tags and ignores only its own injected events. A bare pair
+without a suppressed candidate is untouched and can still switch layouts.
+This behavior must be verified on the published app with both Windows layout
+hotkeys enabled; if layout switching still occurs, these bindings are not
+ready for release.
+
 When a shortcut capture field has focus, the global keyboard hook stays
 installed but enters capture mode. It routes key activity to the settings draft
 through the composition root rather than resolving or dispatching drawing,
