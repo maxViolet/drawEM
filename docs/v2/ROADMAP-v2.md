@@ -2,18 +2,14 @@
 
 **Status:** Steps 1 to 3 implemented; Step 4 manual checks remain open; Step 5 external microphone routing is planned.
 
-## Delivery order
+## Delivery scope
 
-1. [Sound playback through code, with global shortcuts configured in code, and external call microphone routing](STAGE-1-SOUND-IMPLEMENTATION-PLAN.md).
-2. Settings UI and media library — TODO.
-3. Video — TODO.
-4. Screen effects — TODO.
-
-This order stages the proposed screen-action model in
-[ARCHITECTURE.md](../ARCHITECTURE.md). Only the sound stage is planned in detail
-below. The settings UI will later replace code-based sound configuration with
-file import, shortcut assignment, and `Sample`. Video and effects do not need
-to be designed or implemented for the sound stage.
+This version delivers [sound playback through code, with global shortcuts
+configured in code, and external call microphone routing](STAGE-1-SOUND-IMPLEMENTATION-PLAN.md).
+The [v3 roadmap](../v3/ROADMAP-v3.md) covers the settings UI, media library,
+editable shortcuts, and drawing style. Video and screen effects are deferred
+to a separate future roadmap. The proposed screen-action model is recorded in
+[ARCHITECTURE.md](../ARCHITECTURE.md).
 
 ## Stage 1: sound command
 
@@ -128,22 +124,3 @@ output or global input behavior.
 **Done when:** the upstream mix, monitoring, and routing isolation pass and
 the Meet call and mute behavior are documented. Meet may suppress effects;
 remote audibility of every non-speech sound is not guaranteed.
-
-## Stage 2: settings UI and media library — TODO
-
-Replace code-based file paths and slot assignments with the architecture's
-user-profile media library and settings UI. Plan file import and copying,
-persistent assignments, reassignment of the ten predefined slots including
-the drawing commands, and `Sample` here. Preserve the independent sound and
-drawing channels. Detail this stage in its own plan before implementation.
-
-## Stage 3: video — TODO
-
-Plan the monitor-scoped video channel, its media import, shortcut and sample
-behavior, and interaction with the separate global sound channel after the
-settings UI exists.
-
-## Stage 4: screen effects — TODO
-
-Plan code-defined effects, their monitor-scoped channel, shortcut and sample
-behavior, and interaction with drawing and video after video is planned.
