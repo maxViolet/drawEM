@@ -5,9 +5,13 @@ using System.Threading;
 using System.Windows.Media;
 using System.Windows.Threading;
 using DrawEM.App.Application;
+using DrawEM.App.Application.Drawing;
 using DrawEM.App.Domain;
+using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Infrastructure;
+using DrawEM.App.Infrastructure.Drawing;
 using DrawEM.App.Presentation;
+using DrawEM.App.Presentation.Drawing;
 
 namespace RenderLagHarness;
 
@@ -352,9 +356,9 @@ internal static class Program
     {
         public event Action<ScreenPoint>? PointerMoved;
 
-        public event Func<bool>? PointerButtonActivity;
+        public event Func<bool>? PointerButtonActivity { add { } remove { } }
 
-        public event Func<bool>? PointerWheelActivity;
+        public event Func<bool>? PointerWheelActivity { add { } remove { } }
 
         public void RaiseMove(ScreenPoint point) => PointerMoved?.Invoke(point);
     }
