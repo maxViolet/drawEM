@@ -5,6 +5,8 @@
 1. Implement the media port from Step 1 in `Infrastructure/Sound`. Accept WAV
    and MP3, copy into a user-profile library, give each managed copy a stable
    reference, and safely reuse a copy when slots select the same content.
+   Sharing matches content and extension: identical bytes selected as `.wav`
+   and as `.mp3` make two copies, so each copy keeps the type the user chose.
 2. Track draft imports separately from saved references. Cancel removes only
    unreferenced draft copies; replacing or clearing a slot removes a copy only
    after a successful settings Save and only if no saved slot references it.
