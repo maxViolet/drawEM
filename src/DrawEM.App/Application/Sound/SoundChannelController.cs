@@ -74,6 +74,9 @@ public sealed class SoundChannelController : IDisposable
         }
     }
 
+    /// <summary>Stops and releases the active attempt, if any. The channel accepts new requests afterwards.</summary>
+    public void Stop() => StopActive();
+
     public void Dispose()
     {
         if (disposed)

@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using DrawEM.App.Application.Input;
 
 namespace DrawEM.App.Infrastructure;
 
@@ -7,11 +8,7 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
     private readonly NativeMethods.LowLevelHookProc proc;
     private IntPtr hookHandle;
 
-    public event Action<int>? KeyDown;
-
-    public event Action<int>? KeyUp;
-
-    public event Func<int, KeyDirection, bool>? KeySuppressionRequested;
+    public event Func<int, KeyDirection, bool>? KeyEvent;
 
     public Win32KeyboardHookSource()
     {
@@ -33,22 +30,16 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
             var vkCode = (int)data.vkCode;
             var message = wParam.ToInt32();
 
-            if (message is NativeMethods.WM_KEYDOWN or NativeMethods.WM_SYSKEYDOWN)
+            KeyDirection? direction = message switch
             {
-                KeyDown?.Invoke(vkCode);
-                if (ShouldSuppressKey(vkCode, KeyDirection.Down))
-                {
-                    return NativeMethods.SuppressMessage;
-                }
-            }
-            else if (message is NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP)
+                NativeMethods.WM_KEYDOWN or NativeMethods.WM_SYSKEYDOWN => KeyDirection.Down,
+                NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP => KeyDirection.Up,
+                _ => null,
+            };
+
+            if (direction is { } keyDirection && (KeyEvent?.Invoke(vkCode, keyDirection) ?? false))
             {
-                var suppress = ShouldSuppressKey(vkCode, KeyDirection.Up);
-                KeyUp?.Invoke(vkCode);
-                if (suppress)
-                {
-                    return NativeMethods.SuppressMessage;
-                }
+                return NativeMethods.SuppressMessage;
             }
         }
 
@@ -63,7 +54,4 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
             hookHandle = IntPtr.Zero;
         }
     }
-
-    private bool ShouldSuppressKey(int vkCode, KeyDirection direction) =>
-        KeySuppressionRequested?.Invoke(vkCode, direction) ?? false;
 }

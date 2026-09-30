@@ -1,5 +1,6 @@
 using System.Windows.Threading;
 using System.Diagnostics;
+using DrawEM.App.Application.Settings;
 using DrawEM.App.Application.Sound;
 
 namespace DrawEM.App.Infrastructure.Sound;
@@ -10,10 +11,10 @@ namespace DrawEM.App.Infrastructure.Sound;
 /// a dedicated thread keeps the ten-second deadline independent of a busy UI thread.
 /// </summary>
 /// <remarks>
-/// <see cref="Play"/> may be called from any thread. <see cref="Dispose"/> may be called from any thread
+/// <see cref="Play"/> and <see cref="StopSound"/> may be called from any thread. <see cref="Dispose"/> may be called from any thread
 /// except the sound thread, because it waits for that thread to end.
 /// </remarks>
-public sealed class SoundChannelHost : IDisposable
+public sealed class SoundChannelHost : ISoundStopper, IDisposable
 {
     public static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(2);
     private readonly Thread thread;
@@ -65,6 +66,9 @@ public sealed class SoundChannelHost : IDisposable
 
     /// <summary>Queues <paramref name="command"/> on the sound thread. Returns at once.</summary>
     public void Play(PlaySoundCommand command) => Post(() => channel.Play(command));
+
+    /// <summary>Queues a stop of the current playback on the sound thread. Returns at once.</summary>
+    public void StopSound() => Post(channel.Stop);
 
     /// <summary>
     /// Stops playback and releases the player on the sound thread, then ends the thread. The thread

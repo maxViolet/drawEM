@@ -1,3 +1,4 @@
+using DrawEM.App.Application.Settings;
 using DrawEM.App.Application.Sound;
 using DrawEM.App.Infrastructure.Sound;
 
@@ -103,6 +104,21 @@ public class SoundChannelHostTests
 
         // The deadline callback fires on this thread, which never yields to a dispatcher.
         time.Advance(SoundChannelController.MaxDuration);
+
+        Assert.True(players.Player!.Stopped.Wait(Wait));
+        Assert.Equal(players.Player.PlayThreadId, players.Player.StopThreadId);
+    }
+
+    [Fact]
+    public void StopSound_StopsActivePlayerOnSoundThread()
+    {
+        var players = new ThreadRecordingFactory();
+        using var host = new SoundChannelHost(dispatch => NewChannel(players, new ManualTimeProvider(), dispatch));
+        host.Play(new PlaySoundCommand(Applause));
+        Assert.True(players.Played.Wait(Wait));
+        ISoundStopper stopper = host;
+
+        stopper.StopSound();
 
         Assert.True(players.Player!.Stopped.Wait(Wait));
         Assert.Equal(players.Player.PlayThreadId, players.Player.StopThreadId);

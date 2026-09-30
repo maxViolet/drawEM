@@ -1,4 +1,5 @@
 using DrawEM.App.Application.Drawing;
+using DrawEM.App.Application.Input;
 using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Infrastructure;
 using DrawEM.App.Infrastructure.Drawing;
@@ -139,18 +140,11 @@ public class GlobalMouseInputAdapterTests
 
     private sealed class FakeKeyboardHookSource : IKeyboardHookSource
     {
-        public event Action<int>? KeyDown;
+        public event Func<int, KeyDirection, bool>? KeyEvent;
 
-        public event Action<int>? KeyUp;
+        public void PressKey(int vkCode) => KeyEvent?.Invoke(vkCode, KeyDirection.Down);
 
-        public event Func<int, KeyDirection, bool>? KeySuppressionRequested;
-
-        public void PressKey(int vkCode) => KeyDown?.Invoke(vkCode);
-
-        public void ReleaseKey(int vkCode) => KeyUp?.Invoke(vkCode);
-
-        public bool ShouldSuppressKey(int vkCode, KeyDirection direction = KeyDirection.Down) =>
-            KeySuppressionRequested?.Invoke(vkCode, direction) ?? false;
+        public void ReleaseKey(int vkCode) => KeyEvent?.Invoke(vkCode, KeyDirection.Up);
     }
 
     private sealed class FakeCursorPositionSource : ICursorPositionSource

@@ -1,6 +1,9 @@
 using DrawEM.App.Application.Drawing;
+using DrawEM.App.Application.Input;
+using DrawEM.App.Application.Settings;
 using DrawEM.App.Application.Sound;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Settings;
 using DrawEM.App.Infrastructure;
 using DrawEM.App.Infrastructure.Drawing;
 using DrawEM.App.Infrastructure.Sound;
@@ -148,14 +151,14 @@ public class GlobalShortcutAdapterTests
         source.PressKey(VirtualKeys.LeftMenu);
         source.PressKey(VirtualKeys.Z);
 
-        Assert.False(source.ShouldSuppressKey(VirtualKeys.LeftControl));
-        Assert.False(source.ShouldSuppressKey(VirtualKeys.LeftMenu));
-        Assert.False(source.ShouldSuppressKey(VirtualKeys.Z));
-        Assert.True(source.ShouldSuppressKey(VirtualKeys.A));
+        Assert.False(source.PressKey(VirtualKeys.LeftControl));
+        Assert.False(source.PressKey(VirtualKeys.LeftMenu));
+        Assert.False(source.PressKey(VirtualKeys.Z));
+        Assert.True(source.PressKey(VirtualKeys.A));
 
         source.ReleaseKey(VirtualKeys.Z);
 
-        Assert.False(source.ShouldSuppressKey(VirtualKeys.A));
+        Assert.False(source.PressKey(VirtualKeys.A));
     }
 
     [Fact]
@@ -342,7 +345,9 @@ public class GlobalShortcutAdapterTests
         Assert.True(sound.Source.PressKey(VirtualKeys.D1));
         Assert.True(sound.Source.PressKey(VirtualKeys.D1));
         Assert.True(sound.Source.ReleaseKey(VirtualKeys.D1));
-        Assert.False(sound.Source.ShouldSuppressKey(VirtualKeys.D1));
+        // Without the chord, a fresh digit press reaches the application: no suppression is left over.
+        sound.Source.ReleaseKey(VirtualKeys.LeftMenu);
+        Assert.False(sound.Source.PressKey(VirtualKeys.D1));
     }
 
     [Fact]
@@ -425,7 +430,7 @@ public class GlobalShortcutAdapterTests
         Assert.Single(sound.Queued);
         Assert.Empty(states);
         Assert.True(sound.Gate.IsActive);
-        Assert.True(sound.Source.ShouldSuppressKey(VirtualKeys.A));
+        Assert.True(sound.Source.PressKey(VirtualKeys.A));
 
         sound.RunQueuedActions();
 
@@ -471,14 +476,154 @@ public class GlobalShortcutAdapterTests
         Assert.Equal([new ScreenPoint(0, 0), new ScreenPoint(3, 4)], state.ActiveStroke!.Points);
         Assert.True(sound.Gate.IsActive);
         Assert.True(digitWasSuppressed);
-        Assert.True(sound.Source.ShouldSuppressKey(VirtualKeys.A));
-        Assert.False(sound.Source.ShouldSuppressKey(VirtualKeys.Z));
+        Assert.True(sound.Source.PressKey(VirtualKeys.A));
+        Assert.False(sound.Source.PressKey(VirtualKeys.Z));
 
         sound.Source.ReleaseKey(VirtualKeys.D1);
         sound.RunQueuedActions();
 
         Assert.True(sound.Gate.IsActive);
         Assert.Equal(statesBeforeSound, states.Count);
+    }
+
+    [Fact]
+    public void Save_WhileDrawChordHeld_ExitsDrawing_AndRequiresFreshPressToDrawAgain()
+    {
+        var save = new SaveTestHarness();
+        save.Source.PressKey(VirtualKeys.LeftControl);
+        save.Source.PressKey(VirtualKeys.LeftMenu);
+        save.Source.PressKey(VirtualKeys.Z);
+        save.RunQueuedActions();
+        Assert.True(save.Gate.IsActive);
+
+        Assert.True(save.Saver.Save(SettingsSnapshot.Default).Succeeded);
+        save.RunQueuedActions();
+
+        Assert.False(save.Gate.IsActive);
+        Assert.False(save.States[^1].IsDrawModeActive);
+        var statesAfterSave = save.States.Count;
+
+        Assert.False(save.Source.PressKey(VirtualKeys.Z));
+        Assert.False(save.Source.ReleaseKey(VirtualKeys.Z));
+        save.RunQueuedActions();
+        Assert.Equal(statesAfterSave, save.States.Count);
+
+        save.Source.PressKey(VirtualKeys.Z);
+        save.RunQueuedActions();
+        Assert.True(save.Gate.IsActive);
+        Assert.True(save.States[^1].IsDrawModeActive);
+    }
+
+    [Fact]
+    public void Save_WhileSoundChordHeld_StopsSound_AndHeldDigitDoesNotReplay()
+    {
+        var save = new SaveTestHarness();
+        save.Source.PressKey(VirtualKeys.LeftControl);
+        save.Source.PressKey(VirtualKeys.LeftMenu);
+        Assert.True(save.Source.PressKey(VirtualKeys.D1));
+        Assert.Single(save.Played);
+
+        save.Saver.Save(SettingsSnapshot.Default);
+
+        Assert.Equal(["stop"], save.Stops);
+        Assert.True(save.Source.PressKey(VirtualKeys.D1));
+        Assert.True(save.Source.ReleaseKey(VirtualKeys.D1));
+        Assert.Single(save.Played);
+
+        Assert.True(save.Source.PressKey(VirtualKeys.D1));
+        Assert.Equal(2, save.Played.Count);
+    }
+
+    [Fact]
+    public void FailedSave_WhileDrawChordHeld_KeepsDrawingAndSound()
+    {
+        var save = new SaveTestHarness { StoreFailure = new SettingsStoreException("Disk is full.") };
+        save.Source.PressKey(VirtualKeys.LeftControl);
+        save.Source.PressKey(VirtualKeys.LeftMenu);
+        save.Source.PressKey(VirtualKeys.Z);
+        save.RunQueuedActions();
+
+        var result = save.Saver.Save(SettingsSnapshot.Default);
+        save.RunQueuedActions();
+
+        Assert.Equal("Disk is full.", result.Error);
+        Assert.Empty(save.Stops);
+        Assert.True(save.Gate.IsActive);
+        Assert.True(save.States[^1].IsDrawModeActive);
+        Assert.True(save.Source.PressKey(VirtualKeys.A));
+
+        save.Source.ReleaseKey(VirtualKeys.Z);
+        save.RunQueuedActions();
+        Assert.False(save.Gate.IsActive);
+    }
+
+    private sealed class SaveTestHarness
+    {
+        public SaveTestHarness()
+        {
+            var engine = new ShortcutDecisionEngine(slot => slot == 1);
+            _ = new GlobalShortcutAdapter(
+                Source,
+                engine,
+                Controller,
+                Gate,
+                new FakeCursorPositionSource(new ScreenPoint(0, 0)),
+                Queued.Enqueue,
+                DefaultMonitorSource,
+                slot => slot == SoundSlot.Slot1 ? new PlaySoundCommand(new SoundId("applause")) : null,
+                Played.Add);
+            Saver = new SettingsSaver(
+                new FailableStore(this),
+                new RecordingStopper(Stops),
+                new DrawingRuntimeReset(Gate, Controller, Queued.Enqueue),
+                engine,
+                new ActiveSettings(SettingsSnapshot.Default));
+            Controller.StateChanged += States.Add;
+        }
+
+        public FakeKeyboardHookSource Source { get; } = new();
+
+        public DrawingSessionController Controller { get; } = new();
+
+        public DrawingModeInputGate Gate { get; } = new();
+
+        public Queue<Action> Queued { get; } = new();
+
+        public List<DrawingState> States { get; } = [];
+
+        public List<PlaySoundCommand> Played { get; } = [];
+
+        public List<string> Stops { get; } = [];
+
+        public ISettingsSaver Saver { get; }
+
+        public SettingsStoreException? StoreFailure { get; init; }
+
+        public void RunQueuedActions()
+        {
+            while (Queued.TryDequeue(out var action))
+            {
+                action();
+            }
+        }
+
+        private sealed class FailableStore(SaveTestHarness harness) : ISettingsStore
+        {
+            public SettingsLoadResult Load() => new SettingsLoadResult.Missing();
+
+            public void Save(SettingsSnapshot snapshot)
+            {
+                if (harness.StoreFailure is not null)
+                {
+                    throw harness.StoreFailure;
+                }
+            }
+        }
+
+        private sealed class RecordingStopper(List<string> stops) : ISoundStopper
+        {
+            public void StopSound() => stops.Add("stop");
+        }
     }
 
     private sealed class SoundTestHarness
@@ -546,32 +691,15 @@ public class GlobalShortcutAdapterTests
 
     private sealed class FakeKeyboardHookSource : IKeyboardHookSource
     {
-        public event Action<int>? KeyDown;
+        public event Func<int, KeyDirection, bool>? KeyEvent;
 
-        public event Action<int>? KeyUp;
+        /// <summary>Sends one key-down (or auto-repeat) and returns whether it is suppressed.</summary>
+        public bool PressKey(int vkCode) => Send(vkCode, KeyDirection.Down);
 
-        public event Func<int, KeyDirection, bool>? KeySuppressionRequested;
+        public bool ReleaseKey(int vkCode) => Send(vkCode, KeyDirection.Up);
 
-        public bool PressKey(int vkCode)
-        {
-            KeyDown?.Invoke(vkCode);
-            return ShouldSuppressKey(vkCode);
-        }
-
-        /// <summary>Asks for suppression before raising KeyUp, as the Win32 hook does.</summary>
-        public bool ReleaseKey(int vkCode)
-        {
-            var suppress = ShouldSuppressKey(vkCode, KeyDirection.Up);
-            KeyUp?.Invoke(vkCode);
-            return suppress;
-        }
-
-        public bool ShouldSuppressKey(int vkCode, KeyDirection direction = KeyDirection.Down) =>
-            KeySuppressionRequested?
-                .GetInvocationList()
-                .Cast<Func<int, KeyDirection, bool>>()
-                .Any(handler => handler(vkCode, direction))
-            ?? false;
+        private bool Send(int vkCode, KeyDirection direction) =>
+            KeyEvent?.Invoke(vkCode, direction) ?? false;
     }
 
     private sealed class FakeCursorPositionSource(ScreenPoint point) : ICursorPositionSource

@@ -228,6 +228,22 @@ public class SoundChannelControllerTests
         Assert.Equal(0, fixture.Time.ActiveTimerCount);
     }
 
+    [Fact]
+    public void Stop_EndsActivePlaybackAndCancelsDeadline_AndChannelStaysUsable()
+    {
+        var fixture = new Fixture();
+        fixture.Controller.Play(new PlaySoundCommand(Applause));
+
+        fixture.Controller.Stop();
+
+        Assert.Equal(["play", "stop", "dispose"], fixture.Players[0].Calls);
+        Assert.Null(fixture.Controller.ActiveSound);
+        Assert.Equal(0, fixture.Time.ActiveTimerCount);
+
+        fixture.Controller.Play(new PlaySoundCommand(Drumroll));
+        Assert.Equal(Drumroll, fixture.Controller.ActiveSound);
+    }
+
     private sealed class Fixture : ISoundPlayerFactory, ISoundFailureReporter
     {
         private readonly Dictionary<SoundId, string> createFailures = [];

@@ -1,21 +1,13 @@
-namespace DrawEM.App.Infrastructure;
+using DrawEM.App.Application.Input;
 
-/// <summary>Whether a keyboard event presses (including auto-repeat) or releases a key.</summary>
-public enum KeyDirection
-{
-    Down,
-    Up,
-}
+namespace DrawEM.App.Infrastructure;
 
 public interface IKeyboardHookSource
 {
-    event Action<int>? KeyDown;
-
-    event Action<int>? KeyUp;
-
     /// <summary>
-    /// Asks whether to hide a key event from the focused application. Raised after
-    /// <see cref="KeyDown"/> for a key-down and before <see cref="KeyUp"/> for a key-up.
+    /// Raised inside the hook callback for every key-down (including auto-repeat) and key-up, with the
+    /// virtual-key code. Returns <c>true</c> to hide the event from the focused application; the answer is
+    /// needed before the callback returns.
     /// </summary>
-    event Func<int, KeyDirection, bool>? KeySuppressionRequested;
+    event Func<int, KeyDirection, bool>? KeyEvent;
 }
