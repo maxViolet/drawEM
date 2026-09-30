@@ -9,6 +9,6 @@ public static class DrawingDefaults
     /// <summary>Stroke color: OrangeRed #FF4500 (RGB 255, 69, 0).</summary>
     public const DrawingColor StrokeColor = DrawingColor.OrangeRed;
 
-    /// <summary>Stroke width in physical pixels. A single-point stroke renders as a dot of this diameter.</summary>
+    /// <summary>Stroke width interpreted by the current WPF renderer as DIPs; a single-point dot has this diameter.</summary>
     public const int StrokeThickness = 4;
 }

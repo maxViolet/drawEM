@@ -5,7 +5,7 @@
 
 ## Purpose
 
-drawEM is a small Windows 10/11 x64 utility that draws persistent 4 px
+drawEM is a small Windows 10/11 x64 utility that draws persistent 4 DIP
 OrangeRed (#FF4500) annotations over all monitors while `Ctrl+Alt+Z` is held.
 `Ctrl+Alt+X` clears annotations on the monitor under the cursor and exits draw
 mode. It normally stays hidden in the system tray.
@@ -236,6 +236,10 @@ error before normal shutdown.
 - The process uses Per-Monitor V2 DPI awareness.
 - Domain coordinates are physical pixels in the virtual desktop coordinate
   space, so monitors with different scaling factors do not shift lines.
+- Current `StrokeRenderElement` converts stroke points to WPF coordinates but
+  passes the numeric thickness unchanged to the WPF pen and dot radius. The
+  current 4-unit default is therefore rendered as 4 DIPs, not a guaranteed
+  4 physical pixels; at 150% scaling it is about 6 physical pixels wide.
 - `StrokeRenderElement` renders through a `VisualCollection` of small
   `DrawingVisual`s: completed strokes are drawn once and never reopened, and
   the active stroke only gets a new `DrawingVisual` for its newest segments
@@ -318,9 +322,10 @@ implementation that makes it pass, then the next behavior.
 
 ## Proposed evolution: screen actions
 
-**Status:** under discussion; not implemented except for the monitor-scoped
-drawing and clearing behavior above. This section describes a future extension
-of the accepted architecture.
+**Status:** proposed evolution. Monitor-scoped drawing/clearing and the v2
+global sound channel are implemented as described above. The v3 settings
+behavior below is planned in [the v3 roadmap](v3/ROADMAP-v3.md); video and
+effects remain future work.
 
 ### Vocabulary
 
@@ -329,13 +334,14 @@ of the accepted architecture.
   while held and clear the drawing.
 - **Command** is one operation of an action triggered by one shortcut. Drawing
   needs two distinct commands and two shortcuts.
-- **Shortcut binding** maps one shortcut to one command; a shortcut never
-  starts several commands at once.
-- **Shortcut slot** is one of ten predefined key combinations. The UI assigns
-  a command to a slot but cannot change the combination itself. Drawing uses
-  two slots when both of its commands are assigned.
-- **Sample** starts a selected sound, video, or effect from the UI without a
-  shortcut.
+- **Action slot** is one of eight numbered positions for an assignable action.
+  In v3 only a sound can occupy one; later versions may add other action types.
+  Each occupied slot has one editable shortcut. Drawing and clearing have two
+  separate required editable shortcuts outside the eight action slots.
+- **Shortcut binding** maps one valid key combination to one command; a
+  combination never starts several commands at once.
+- **Sample** starts a selected action from the UI without a shortcut. In v3
+  only sound can be sampled.
 
 ### Screen mode
 
@@ -375,18 +381,57 @@ drawings on other monitors.
 
 ### Shortcuts, media, and UI
 
-The ten predefined shortcut slots are `Ctrl+Alt+Z`, `Ctrl+Alt+X`, and
-`Ctrl+Alt+1` through `Ctrl+Alt+8`. The UI assigns one command to each slot;
-the combinations themselves are fixed. By default, `Ctrl+Alt+Z` draws and
-`Ctrl+Alt+X` clears. Both bindings may be changed. The UI presents these as
-one Drawing option with two assignable commands.
+The v3 UI has separate Drawing and Actions tabs, opened from the tray. Drawing
+has two required editable bindings: draw while held and clear. Their defaults
+are `Ctrl+Alt+Z` and `Ctrl+Alt+X`. The eight action slots initially support
+sound only; selecting a file proposes `Ctrl+Alt+1` through `Ctrl+Alt+8` by
+slot number, but the combination can be changed. An empty slot has no active
+binding. A binding requires at least two of Ctrl, Alt, and Shift (`Ctrl+Alt`,
+`Ctrl+Shift`, `Alt+Shift`, or all three), plus one letter, digit, or F1–F12 key.
+Single-modifier and Win combinations are excluded. Right Alt is reserved for
+AltGr: while it is held, no action is dispatched or captured, even if Windows
+also reports Left Ctrl. Its input passes through outside draw mode. Physical
+`Ctrl+RightAlt` is unsupported; Alt bindings use Left Alt. Duplicate active
+combinations block saving. Drawing and clearing cannot be unbound; an
+occupied action slot also requires a binding.
+
+When a shortcut capture field has focus, the global keyboard hook stays
+installed but enters capture mode. It routes key activity to the settings draft
+through the composition root rather than resolving or dispatching drawing,
+clear, or sound commands. Captured key-down and key-up events are suppressed
+at the hook. Capture waits for any keys held on entry to be released, retaining
+their prior key-up pass-through/suppression decision, then records one chord;
+Escape or loss of field focus before completion cancels it. After recording,
+action dispatch remains paused until the captured keys are released, and a
+fresh press is required for an action. The hook keeps its pressed-key and
+suppression state consistent across entry, cancellation, and exit. Other
+settings controls use ordinary keyboard input when no capture field has focus.
+
+Drawing color and physical-pixel width become settings, defaulting to OrangeRed
+and 4 physical pixels. This changes high-DPI rendering: lines and single-point
+dots will be thinner than the current 4-DIP default at scaling above 100%.
+The renderer must convert width for the stroke's monitor DPI rather than reuse
+one overlay-wide DPI matrix; v3 tests and manual checks must cover line and dot
+width on mixed-DPI monitors. Saving settings stops sound, exits draw mode, and
+clears strokes on all monitors before new bindings become active. Shortcut
+clear remains scoped to the monitor under the cursor. The settings snapshot is
+persisted in the current Windows user's profile; a damaged settings file is
+retained while the app starts with defaults.
 
 Video, sound, and effects start once on shortcut key-down; holding the keys
-does not retrigger them. Users add sound and video files through the UI; the
-app copies each imported file into its managed library. Effects are written in
-code and shown in the UI for assignment. The `Sample` button starts the
-selected sound, video, or effect without a shortcut. Sampled video and effects
-cover the full active monitor, just as they do when started by a shortcut.
+does not retrigger them. In v3 users add WAV and MP3 files through the UI; the
+app copies each imported file into its managed library, and removes a copy
+after the last slot reference is removed and saved. The `Sample` button plays
+the selected draft sound without saving its assignment. Future versions may
+add video import, code-defined effects, and sampling for those action types.
+Sampled video and effects would cover the full active monitor, as they would
+when started by a shortcut.
 
 The media library and shortcut bindings are stored in the current Windows
-user profile, separately from the executable directory.
+user profile, separately from the executable directory. V3 removes the v2
+`SoundAssignments.Slots` code mapping and starts with eight empty action slots
+when no saved v3 configuration exists; v2 code paths are not migrated. On
+startup, after settings load successfully, remove managed copies not referenced
+by any saved slot, including copies left by an unsaved draft after a crash. If
+settings cannot be read, retain the damaged file and skip media cleanup to
+preserve recovery options.
