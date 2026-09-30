@@ -58,6 +58,22 @@ public class LayerDependencyTests
     [Theory]
     [InlineData(Domain)]
     [InlineData(Application)]
+    public void InnerLayers_DoNotDependOnFileSystem(string layer)
+    {
+        // Settings and media ports pass names and paths as strings; file access stays in Infrastructure.
+        var result = Types.InAssembly(typeof(DrawingState).Assembly)
+            .That().ResideInNamespaceStartingWith(layer)
+            .ShouldNot().HaveDependencyOn("System.IO")
+            .GetResult();
+
+        Assert.True(result.IsSuccessful,
+            $"{layer} must not depend on filesystem types. " +
+            $"Violating types: {string.Join(", ", result.FailingTypeNames ?? [])}");
+    }
+
+    [Theory]
+    [InlineData(Domain)]
+    [InlineData(Application)]
     public void InnerLayers_DoNotDeclareNativeImports(string layer)
     {
         // Runtime.InteropServices also contains managed helpers (for example CollectionsMarshal

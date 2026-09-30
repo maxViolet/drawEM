@@ -120,85 +120,28 @@ Video, effects, and their channel behavior need a separate future roadmap.
 
 ## Delivery order
 
-### 1. Define settings and storage boundaries
+Each step has a [task](step-1/task.md), implementation plan, and acceptance
+criteria in its own directory. Complete automated checks during implementation;
+record published-app desktop checks separately in Step 8. The contract above
+governs every step.
 
-Define one validated settings snapshot covering drawing style, two drawing
-commands, eight action slots, and sound references. Define application-facing
-ports for loading, saving, importing, and previewing media. Keep filesystem,
-WPF, and Win32 types outside Domain and Application. Decide the on-disk schema
-and migration/version policy before writing stored settings. Replace v2's
-code-owned `SoundAssignments.Slots` with eight empty slots when no v3 settings
-exist; there is no automatic migration of those code paths.
-
-**Done when:** validation covers required/empty bindings, rejection of
-single-modifier shortcuts, legal keys, Right Alt/AltGr, conflicts, color, and
-width; storage tests cover first launch with empty slots, restart, corrupt
-data, failed write, shared media references, crash-orphan cleanup, and media
-preservation when settings cannot be read.
-
-### 2. Route configurable shortcuts and drawing style
-
-Replace fixed drawing shortcuts and in-code sound slot resolution with one
-immutable in-memory binding snapshot used by the hook. Keep hook callbacks free
-of file I/O. Add a hook-owned capture state that routes captured key events to
-the settings draft through the composition root instead of resolving actions.
-Keep suppression and pressed-key bookkeeping correct through focus changes,
-cancel, chord completion, and release. Preserve hold/release drawing,
-single-fire sound actions, input suppression, and monitor-scoped clear outside
-capture. Add a narrow platform adapter for the neutral key injection; keep
-injected events out of capture and action dispatch, and verify that injection
-precedes modifier release for both normal actions and capture. Apply the chosen
-color and physical-pixel width when a new stroke
-starts. Convert that width to WPF units using the DPI of the stroke's monitor
-for both line pens and single-point dots; the overlay's one
-`TransformFromDevice` matrix is not sufficient evidence for mixed-DPI monitors.
-Save resets drawing state and clears all monitors before the new snapshot
-becomes usable.
-
-**Done when:** automated tests cover remapping, conflict rejection, key
-repeat/release, pass-through for Right Alt with Windows-reported Left Ctrl and
-for physical `Ctrl+RightAlt`, Left Alt activation, cross-monitor behavior,
-capture of an already-bound chord without dispatch, Tab/Alt+Tab/Win
-pass-through, invalid-chord feedback and retry, cancel/blur, held-key transitions,
-neutral-key ordering for suppressed `Alt+Shift` and `Ctrl+Shift` candidates in
-action and capture modes, and no injection for bare layout-switch pairs,
-physical line and dot width at 100%, 150%, and mixed monitor DPI, and saving
-during an active stroke or sound. No test may infer global-hook or audible
-behavior from fakes alone.
-
-### 3. Add the managed sound library and settings window
-
-Add Settings to the tray menu and the Drawing/Actions tabs. The window edits a
-draft; it validates before Save, supports selecting and sampling a draft sound,
-and shows file/copy failures without losing the active settings. Import and
-deduplicate media safely, then retire unreferenced managed copies after a
-successful configuration change. Wire all sound consumers to the same active
-settings snapshot.
-
-**Done when:** the UI can persist and reload every v3 setting; Cancel leaves
-the active configuration intact; Restore defaults requires Save; file sharing,
-replacement, and last-reference cleanup work without touching original files.
-
-### 4. Publish and verify on Windows
-
-Run the automated suite and publish the self-contained Windows x64 app. Record
-manual results separately: tray Settings access, draft/Save/Cancel/defaults,
-real keyboard combinations with another app focused, recording an already-bound
-chord without playback or drawing, Tab, Alt+Tab, Alt+F4 and Win behavior while
-capturing, invalid capture feedback for `Ctrl+C` and `Ctrl+RightAlt+1`, ordinary
-one-modifier shortcuts such as `Ctrl+C` and `Alt+F4` remaining usable outside
-capture, Right Alt/AltGr typing on German
-(Germany) and Polish (Programmers) layouts, Left Alt bindings on those
-layouts, drawing color and measured physical width of lines and dots across
-DPI/monitors, all-monitor clear on Save, audible WAV/MP3 preview and shortcut
-playback, replacement and cutoff, restart
-persistence, corrupt settings recovery, startup orphan cleanup (including a
-draft import left by forced exit), and media preservation with corrupt
-settings. Enable the Windows `Alt+Shift` and `Ctrl+Shift` input-language hotkeys
-and verify that bound actions and captured chords containing those pairs do not
-switch layouts, while pressing either bare pair still does. Recheck existing
-v1 drawing and v2 sound manual scenarios.
-
-**Done when:** the published app passes the recorded desktop checks on the
-tested Windows setup. Automated tests alone do not establish sound output,
-global input behavior, or multi-monitor/DPI acceptance.
+1. [Define and persist the settings snapshot](step-1/task.md): validation,
+   schema/version policy, durable writes, startup fallback, and empty slots on
+   first launch.
+2. [Build the managed sound library](step-2/task.md): copy and share WAV/MP3,
+   discard draft imports, collect unreferenced copies, and preserve media when
+   settings are unreadable.
+3. [Route configurable actions](step-3/task.md): one in-memory binding snapshot,
+   drawing and sound dispatch, Right Alt pass-through, and existing suppression.
+4. [Capture shortcuts and protect layout switching](step-4/task.md): hook-owned
+   capture, invalid-chord retry, release bookkeeping, and neutral-key injection
+   for suppressed `Alt+Shift` and `Ctrl+Shift` candidates.
+5. [Apply configurable drawing style](step-5/task.md): color and physical-pixel
+   width for lines and dots on the stroke's monitor, including mixed DPI.
+6. [Apply saved settings at runtime](step-6/task.md): retire v2 code assignments,
+   connect playback to the active snapshot, stop sound, exit drawing, and clear
+   every monitor before exposing the saved snapshot.
+7. [Add the Settings window](step-7/task.md): tray entry, Drawing and Actions
+   drafts, Save/Cancel/defaults, file selection, errors, and draft `Sample`.
+8. [Publish and verify on Windows](step-8/task.md): automated suite, Windows x64
+   publish, and recorded desktop acceptance including v1/v2 regressions.
