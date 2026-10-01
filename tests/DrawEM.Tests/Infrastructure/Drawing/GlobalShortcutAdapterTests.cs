@@ -78,7 +78,7 @@ public class GlobalShortcutAdapterTests
         source.PressKey(VirtualKeys.Z);
         source.PressKey(VirtualKeys.Z);
 
-        Assert.Single(states.Where(state => state.IsDrawModeActive));
+        Assert.Single(states, state => state.IsDrawModeActive);
     }
 
     [Fact]
