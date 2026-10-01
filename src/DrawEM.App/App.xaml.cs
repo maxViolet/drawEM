@@ -19,11 +19,25 @@ public partial class App : System.Windows.Application
     private LoggingSoundFailureReporter? soundFailures;
     private TrayApplication? trayApplication;
     private ApplicationExitPolicy? exitPolicy;
+    private SingleInstanceGuard? instanceGuard;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        instanceGuard = SingleInstanceGuard.TryAcquire(SingleInstanceGuard.DefaultName);
+        if (instanceGuard is null)
+        {
+            // Checked before any hook is installed, so the running instance keeps its shortcuts.
+            MessageBox.Show(
+                "drawEM is already running. Use its icon in the notification area.",
+                "drawEM",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            Shutdown();
+            return;
+        }
+
         exitPolicy = new ApplicationExitPolicy(new AppFailureLog(AppFailureLog.DefaultPath), Environment.Exit);
 
         try
@@ -90,6 +104,9 @@ public partial class App : System.Windows.Application
         }
         finally
         {
+            // Released after cleanup so a new instance cannot start while this one still holds hooks.
+            instanceGuard?.Dispose();
+
             // All resource cleanup has been attempted before a timed-out sound thread forces exit.
             exitPolicy?.Complete();
         }
