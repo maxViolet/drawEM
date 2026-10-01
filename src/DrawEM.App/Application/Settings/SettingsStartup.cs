@@ -34,4 +34,11 @@ public static class SettingsStartup
                 return new StartupSettings(SettingsSnapshot.Default, SavedSettingsLoaded: false);
         }
     }
+
+    /// <summary>
+    /// Removes managed sounds the loaded settings do not reference. Skipped after a first launch or a load
+    /// failure, so media referenced by a damaged settings file survives until the user recovers or saves.
+    /// </summary>
+    public static IReadOnlyList<SoundCleanupFailure> RemoveOrphanSounds(StartupSettings startup, ISoundLibrary library) =>
+        startup.SavedSettingsLoaded ? library.RemoveOrphans(startup.Active) : [];
 }
