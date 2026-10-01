@@ -7,6 +7,8 @@ updates:
     groups:
       nuget:
         patterns: ['*']
+    commit-message:
+      prefix: FIX
 
   - package-ecosystem: github-actions
     directory: /
@@ -15,3 +17,5 @@ updates:
     groups:
       actions:
         patterns: ['*']
+    commit-message:
+      prefix: FIX

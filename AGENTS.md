@@ -28,4 +28,4 @@
   - `## Validation` — выполненные команды и их результаты; всё невыполненное помечай как unverified.
   - Ссылки на задачу из документации и связанные PR, если они есть.
 - Не добавляй в тело PR строку атрибуции "Generated with Claude Code".
-- Pull requests от Dependabot не подчиняются правилам названий веток и заголовков PR; workflow `PR lint` их пропускает.
+- Pull requests от Dependabot относятся к типу `FIX`. Dependabot не может задать номер и имя ветки, поэтому заголовок у них — `FIX: <summary>` без номера (префикс задан в `.github/dependabot.yml`), а ветка `dependabot/...` не проверяется. Workflow `PR lint` проверяет у них только заголовок.

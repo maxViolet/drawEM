@@ -10,13 +10,11 @@ permissions:
 
 jobs:
   naming:
-    # Dependabot PRs are exempt from the naming rules (see AGENTS.md). Check the PR author,
-    # not github.actor: a human push to a Dependabot branch must not re-enable the check.
-    if: github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Check branch name and PR title against AGENTS.md
         env:
+          AUTHOR: ${{ github.event.pull_request.user.login }}
           BRANCH: ${{ github.head_ref }}
           TITLE: ${{ github.event.pull_request.title }}
         shell: bash
@@ -24,6 +22,17 @@ jobs:
           # Work id: <TYPE>-<NNN> or a task id from the docs (S1-02, F03, S07), with optional .N.
           id='((DOC|FIX|TEST|FEAT)-[0-9]{3}|[A-Z][0-9]+(-[0-9]{2})?)(\.[0-9]+)?'
           status=0
+
+          # Dependabot PRs are FIX work (see AGENTS.md). Dependabot cannot number them or name the
+          # branch, so check only the 'FIX: <summary>' title set by .github/dependabot.yml. Check the
+          # PR author, not github.actor: a human push to a Dependabot branch keeps these rules.
+          if [[ "$AUTHOR" == 'dependabot[bot]' ]]; then
+            if [[ ! "$TITLE" =~ ^FIX:\ [a-z].*[^.]$ ]]; then
+              echo "::error::Dependabot title '$TITLE' must be 'FIX: <summary>' with a lowercase summary and no trailing period."
+              exit 1
+            fi
+            exit 0
+          fi
 
           if [[ ! "$BRANCH" =~ ^($id)-[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
             echo "::error::Branch '$BRANCH' must be '<TYPE>-<NNN>-<description>' or '<task-id>-<description>', lowercase words joined by hyphens."
