@@ -60,7 +60,7 @@ public class SoundChannelHostTests
         try
         {
             Assert.True(entered.Wait(Wait));
-            disposal = Task.Run(() => Record.Exception(host.Dispose));
+            disposal = Task.Factory.StartNew(() => Record.Exception(host.Dispose), TaskCreationOptions.LongRunning);
             var failure = await disposal.WaitAsync(TimeSpan.FromMilliseconds(2500));
             Assert.IsAssignableFrom<TimeoutException>(failure);
         }
