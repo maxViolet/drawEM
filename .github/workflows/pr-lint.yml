@@ -10,8 +10,9 @@ permissions:
 
 jobs:
   naming:
-    # Dependabot PRs are exempt from the naming rules (see AGENTS.md).
-    if: github.actor != 'dependabot[bot]'
+    # Dependabot PRs are exempt from the naming rules (see AGENTS.md). Check the PR author,
+    # not github.actor: a human push to a Dependabot branch must not re-enable the check.
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Check branch name and PR title against AGENTS.md
