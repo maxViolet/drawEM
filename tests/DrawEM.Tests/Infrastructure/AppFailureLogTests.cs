@@ -18,14 +18,14 @@ public class AppFailureLogTests
             release.Wait();
             finished.Set();
         });
-        var append = Task.Run(() => log.Append("exit", new InvalidOperationException("Failed.")));
+        var append = Task.Factory.StartNew(() => log.Append("exit", new InvalidOperationException("Failed.")), TaskCreationOptions.LongRunning);
         Task? dispose = null;
 
         try
         {
             Assert.True(writing.Wait(TimeSpan.FromSeconds(5)));
             await append.WaitAsync(TimeSpan.FromMilliseconds(500));
-            dispose = Task.Run(log.Dispose);
+            dispose = Task.Factory.StartNew(log.Dispose, TaskCreationOptions.LongRunning);
             await dispose.WaitAsync(TimeSpan.FromMilliseconds(1500));
         }
         finally
