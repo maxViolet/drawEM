@@ -293,6 +293,21 @@ public class ShortcutCaptureTests
         Assert.False(hook.Release(VirtualKeys.A));
     }
 
+    [Fact]
+    public void Begin_WhileDrawing_PassesKeyUpForKeyPressedBeforeDrawing()
+    {
+        var hook = new Harness();
+        Assert.False(hook.Press(VirtualKeys.A));
+        hook.Press(VirtualKeys.LeftControl);
+        hook.Press(VirtualKeys.LeftMenu);
+        hook.Press(VirtualKeys.Z);
+        Assert.True(hook.Gate.IsActive);
+
+        hook.Begin();
+
+        Assert.False(hook.Release(VirtualKeys.A));
+    }
+
     [Theory]
     [InlineData(VirtualKeys.LeftMenu, Tab)]
     [InlineData(VirtualKeys.LeftMenu, VirtualKeys.F4)]
@@ -542,6 +557,15 @@ public class ShortcutCaptureTests
     public void Begin_RequiresReport() =>
         Assert.Throws<ArgumentNullException>(() => new Harness().Adapter.Begin(null!));
 
+    [Fact]
+    public void Hook_AcceptsOnlyOneDecisionHandler()
+    {
+        var hook = new KeyboardHookEvents();
+        hook.SetKeyHandler((_, _) => true);
+
+        Assert.Throws<InvalidOperationException>(() => hook.SetKeyHandler((_, _) => false));
+    }
+
     private static ShortcutCaptureResult Captured(ShortcutModifiers modifiers, int vkCode)
     {
         Assert.True(KeyChord.TryGetShortcutKey(vkCode, out var key));
@@ -562,7 +586,8 @@ public class ShortcutCaptureTests
 
         public Harness()
         {
-            hook = new KeyboardHookEvents(() =>
+            hook = new KeyboardHookEvents();
+            var neutralKeys = new FakeNeutralKeyEmitter(() =>
             {
                 Log.Add("neutral");
                 NeutralKeys++;
@@ -575,6 +600,7 @@ public class ShortcutCaptureTests
             var three = ShortcutKey.Digit(3);
             Adapter = new GlobalShortcutAdapter(
                 hook,
+                neutralKeys,
                 controller,
                 Gate,
                 new FakeCursorPositionSource(new ScreenPoint(0, 0)),
@@ -636,5 +662,10 @@ public class ShortcutCaptureTests
                 action();
             }
         }
+    }
+
+    private sealed class FakeNeutralKeyEmitter(Action emit) : INeutralKeyEmitter
+    {
+        public void EmitNeutralKey() => emit();
     }
 }

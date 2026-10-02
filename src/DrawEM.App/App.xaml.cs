@@ -60,6 +60,7 @@ public partial class App : System.Windows.Application
             keyboardHookSource = new Win32KeyboardHookSource();
             _ = new GlobalShortcutAdapter(
                 keyboardHookSource.Events,
+                keyboardHookSource,
                 controller,
                 inputGate,
                 new Win32CursorPositionSource(),
