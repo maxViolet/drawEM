@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="drawEM prototype tray icon">
+  <rect x="3" y="3" width="58" height="58" rx="14" fill="#20242B"/>
+  <path d="M15 43c9-3 12-22 22-22 5 0 6 5 4 9-2 4-3 8 8 8" fill="none" stroke="#FF5A32" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="50" cy="38" r="4" fill="#FFB68C"/>
+</svg>
