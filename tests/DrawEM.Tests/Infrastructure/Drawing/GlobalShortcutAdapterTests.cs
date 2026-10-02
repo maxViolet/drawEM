@@ -25,7 +25,7 @@ public class GlobalShortcutAdapterTests
         controller.EnterDrawMode(new ScreenPoint(110, 10), right);
         controller.ExitDrawMode();
         var source = new FakeKeyboardHookSource();
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(),
+        _ = new GlobalShortcutAdapter(source, source, controller, new DrawingModeInputGate(),
             new FakeCursorPositionSource(new ScreenPoint(110, 10)), action => action(),
             new FakeMonitorBoundsSource(left, right), DefaultBindings, _ => { });
 
@@ -47,7 +47,7 @@ public class GlobalShortcutAdapterTests
         var controller = new DrawingSessionController();
         var states = new List<DrawingState>();
         controller.StateChanged += states.Add;
-        _ = new GlobalShortcutAdapter(source, controller, gate, cursor, action => action(),
+        _ = new GlobalShortcutAdapter(source, source, controller, gate, cursor, action => action(),
             new FakeMonitorBoundsSource(left, right), DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
@@ -72,7 +72,7 @@ public class GlobalShortcutAdapterTests
         var controller = new DrawingSessionController();
         var states = new List<DrawingState>();
         controller.StateChanged += states.Add;
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, DefaultBindings, _ => { });
+        _ = new GlobalShortcutAdapter(source, source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -90,7 +90,7 @@ public class GlobalShortcutAdapterTests
         var controller = new DrawingSessionController();
         var states = new List<DrawingState>();
         controller.StateChanged += states.Add;
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, DefaultBindings, _ => { });
+        _ = new GlobalShortcutAdapter(source, source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -108,7 +108,7 @@ public class GlobalShortcutAdapterTests
         controller.EnterDrawMode(new ScreenPoint(1, 1), DefaultMonitor);
         controller.ReportPointer(new ScreenPoint(2, 2));
         controller.ExitDrawMode();
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, DefaultBindings, _ => { });
+        _ = new GlobalShortcutAdapter(source, source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -125,7 +125,7 @@ public class GlobalShortcutAdapterTests
         var states = new List<DrawingState>();
         var queuedActions = new Queue<Action>();
         controller.StateChanged += states.Add;
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), queuedActions.Enqueue, DefaultMonitorSource, DefaultBindings, _ => { });
+        _ = new GlobalShortcutAdapter(source, source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), queuedActions.Enqueue, DefaultMonitorSource, DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -144,20 +144,34 @@ public class GlobalShortcutAdapterTests
     {
         var source = new FakeKeyboardHookSource();
         var controller = new DrawingSessionController();
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, DefaultBindings, _ => { });
+        _ = new GlobalShortcutAdapter(source, source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, DefaultBindings, _ => { });
 
+        Assert.False(source.PressKey(VirtualKeys.LeftControl));
+        Assert.False(source.PressKey(VirtualKeys.LeftMenu));
+        Assert.False(source.PressKey(VirtualKeys.Z));
+        Assert.True(source.PressKey(VirtualKeys.A));
+
+        source.ReleaseKey(VirtualKeys.Z);
+
+        Assert.True(source.ReleaseKey(VirtualKeys.A));
+        Assert.False(source.PressKey(VirtualKeys.A));
+    }
+
+    [Fact]
+    public void KeyPressedBeforeDrawing_HidesRepeatsDuringDrawing_ButPassesKeyUp()
+    {
+        var source = new FakeKeyboardHookSource();
+        _ = new GlobalShortcutAdapter(source, source, new DrawingSessionController(), new DrawingModeInputGate(),
+            new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource,
+            DefaultBindings, _ => { });
+
+        Assert.False(source.PressKey(VirtualKeys.A));
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
         source.PressKey(VirtualKeys.Z);
 
-        Assert.False(source.ShouldSuppressKey(VirtualKeys.LeftControl));
-        Assert.False(source.ShouldSuppressKey(VirtualKeys.LeftMenu));
-        Assert.False(source.ShouldSuppressKey(VirtualKeys.Z));
-        Assert.True(source.ShouldSuppressKey(VirtualKeys.A));
-
-        source.ReleaseKey(VirtualKeys.Z);
-
-        Assert.False(source.ShouldSuppressKey(VirtualKeys.A));
+        Assert.True(source.PressKey(VirtualKeys.A));
+        Assert.False(source.ReleaseKey(VirtualKeys.A));
     }
 
     [Fact]
@@ -167,7 +181,7 @@ public class GlobalShortcutAdapterTests
         var controller = new DrawingSessionController();
         var states = new List<DrawingState>();
         controller.StateChanged += states.Add;
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, DefaultBindings, _ => { });
+        _ = new GlobalShortcutAdapter(source, source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -194,6 +208,7 @@ public class GlobalShortcutAdapterTests
         controller.StateChanged += states.Add;
         _ = new GlobalShortcutAdapter(
             source,
+            source,
             controller,
             new DrawingModeInputGate(),
             new FakeCursorPositionSource(cursorPosition),
@@ -216,6 +231,7 @@ public class GlobalShortcutAdapterTests
         var states = new List<DrawingState>();
         controller.StateChanged += states.Add;
         _ = new GlobalShortcutAdapter(
+            source,
             source,
             controller,
             inputGate,
@@ -240,6 +256,7 @@ public class GlobalShortcutAdapterTests
         var cursorSource = new RecoveringCursorPositionSource(failuresBeforeSuccess: 2, new ScreenPoint(5, 9));
         controller.StateChanged += states.Add;
         _ = new GlobalShortcutAdapter(
+            source,
             source,
             controller,
             new DrawingModeInputGate(),
@@ -344,7 +361,9 @@ public class GlobalShortcutAdapterTests
         Assert.True(sound.Source.PressKey(VirtualKeys.D1));
         Assert.True(sound.Source.PressKey(VirtualKeys.D1));
         Assert.True(sound.Source.ReleaseKey(VirtualKeys.D1));
-        Assert.False(sound.Source.ShouldSuppressKey(VirtualKeys.D1));
+        sound.Source.ReleaseKey(VirtualKeys.LeftMenu);
+        sound.Source.ReleaseKey(VirtualKeys.LeftControl);
+        Assert.False(sound.Source.PressKey(VirtualKeys.D1));
     }
 
     [Fact]
@@ -427,7 +446,7 @@ public class GlobalShortcutAdapterTests
         Assert.Single(sound.Queued);
         Assert.Empty(states);
         Assert.True(sound.Gate.IsActive);
-        Assert.True(sound.Source.ShouldSuppressKey(VirtualKeys.A));
+        Assert.True(sound.Source.PressKey(VirtualKeys.A));
 
         sound.RunQueuedActions();
 
@@ -473,8 +492,8 @@ public class GlobalShortcutAdapterTests
         Assert.Equal([new ScreenPoint(0, 0), new ScreenPoint(3, 4)], state.ActiveStroke!.Points);
         Assert.True(sound.Gate.IsActive);
         Assert.True(digitWasSuppressed);
-        Assert.True(sound.Source.ShouldSuppressKey(VirtualKeys.A));
-        Assert.False(sound.Source.ShouldSuppressKey(VirtualKeys.Z));
+        Assert.True(sound.Source.PressKey(VirtualKeys.A));
+        Assert.False(sound.Source.PressKey(VirtualKeys.Z));
 
         sound.Source.ReleaseKey(VirtualKeys.D1);
         sound.RunQueuedActions();
@@ -549,15 +568,11 @@ public class GlobalShortcutAdapterTests
     {
         var sound = new SoundTestHarness(Remapped);
 
-        sound.Source.PressKey(VirtualKeys.RightControl);
-        sound.Source.PressKey(VirtualKeys.RightShift);
-        sound.Source.PressKey(D);
-
-        Assert.False(sound.Source.ShouldSuppressKey(D));
-        Assert.False(sound.Source.ShouldSuppressKey(VirtualKeys.RightControl));
-        Assert.False(sound.Source.ShouldSuppressKey(VirtualKeys.RightShift));
-        Assert.True(sound.Source.ShouldSuppressKey(VirtualKeys.Z));
-        Assert.True(sound.Source.ShouldSuppressKey(VirtualKeys.A));
+        Assert.False(sound.Source.PressKey(VirtualKeys.RightControl));
+        Assert.False(sound.Source.PressKey(VirtualKeys.RightShift));
+        Assert.False(sound.Source.PressKey(D));
+        Assert.True(sound.Source.PressKey(VirtualKeys.Z));
+        Assert.True(sound.Source.PressKey(VirtualKeys.A));
     }
 
     [Fact]
@@ -615,7 +630,7 @@ public class GlobalShortcutAdapterTests
         controller.EnterDrawMode(new ScreenPoint(110, 10), right);
         controller.ExitDrawMode();
         var source = new FakeKeyboardHookSource();
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(),
+        _ = new GlobalShortcutAdapter(source, source, controller, new DrawingModeInputGate(),
             new FakeCursorPositionSource(new ScreenPoint(110, 10)), action => action(),
             new FakeMonitorBoundsSource(left, right), Remapped, _ => { });
 
@@ -679,7 +694,7 @@ public class GlobalShortcutAdapterTests
         var controller = new DrawingSessionController();
         var states = new List<DrawingState>();
         controller.StateChanged += states.Add;
-        _ = new GlobalShortcutAdapter(source, controller, gate, cursor, action => action(),
+        _ = new GlobalShortcutAdapter(source, source, controller, gate, cursor, action => action(),
             new FakeMonitorBoundsSource(left, right), Remapped, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
@@ -761,6 +776,7 @@ public class GlobalShortcutAdapterTests
         {
             _ = new GlobalShortcutAdapter(
                 Source,
+                Source,
                 Controller,
                 Gate,
                 new FakeCursorPositionSource(new ScreenPoint(0, 0)),
@@ -815,42 +831,18 @@ public class GlobalShortcutAdapterTests
         }
     }
 
-    private sealed class FakeKeyboardHookSource : IKeyboardHookSource
+    private sealed class FakeKeyboardHookSource : IKeyboardHookSource, INeutralKeyEmitter
     {
-        public event Action<int>? KeyDown;
+        private Func<int, KeyDirection, bool>? handleKey;
 
-        public event Action<int>? KeyUp;
+        public void SetKeyHandler(Func<int, KeyDirection, bool> handler) => handleKey = handler;
 
-        public event Func<int, KeyDirection, bool>? KeySuppressionRequested;
+        public bool PressKey(int vkCode) => handleKey?.Invoke(vkCode, KeyDirection.Down) ?? false;
 
-        public bool PressKey(int vkCode)
+        public bool ReleaseKey(int vkCode) => handleKey?.Invoke(vkCode, KeyDirection.Up) ?? false;
+
+        public void EmitNeutralKey()
         {
-            KeyDown?.Invoke(vkCode);
-            return ShouldSuppressKey(vkCode);
-        }
-
-        /// <summary>Asks for suppression before raising KeyUp, as the Win32 hook does.</summary>
-        public bool ReleaseKey(int vkCode)
-        {
-            var suppress = ShouldSuppressKey(vkCode, KeyDirection.Up);
-            KeyUp?.Invoke(vkCode);
-            return suppress;
-        }
-
-        public bool ShouldSuppressKey(int vkCode, KeyDirection direction = KeyDirection.Down) =>
-            KeySuppressionRequested?
-                .GetInvocationList()
-                .Cast<Func<int, KeyDirection, bool>>()
-                .Any(handler => handler(vkCode, direction))
-            ?? false;
-    }
-
-    private sealed class FakeCursorPositionSource(ScreenPoint point) : ICursorPositionSource
-    {
-        public bool TryGetCurrentPosition(out ScreenPoint position)
-        {
-            position = point;
-            return true;
         }
     }
 
@@ -862,24 +854,6 @@ public class GlobalShortcutAdapterTests
         {
             position = Position;
             return true;
-        }
-    }
-
-    private sealed class FakeMonitorBoundsSource(params MonitorBounds[] monitors) : IMonitorBoundsSource
-    {
-        public bool TryGetBounds(ScreenPoint point, out MonitorBounds bounds)
-        {
-            foreach (var monitor in monitors)
-            {
-                if (monitor.Contains(point))
-                {
-                    bounds = monitor;
-                    return true;
-                }
-            }
-
-            bounds = default;
-            return false;
         }
     }
 

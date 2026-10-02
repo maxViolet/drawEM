@@ -17,6 +17,26 @@ public readonly record struct KeyChord(ShortcutModifiers Modifiers, int VirtualK
         ShortcutKeyKind.Digit => VirtualKeys.D0 + key.Value,
         _ => VirtualKeys.F1 + key.Value - 1,
     };
+
+    /// <summary>The reverse of <see cref="VirtualKeyOf"/>: a letter, a main-row digit, or F1–F12.</summary>
+    public static bool TryGetShortcutKey(int vkCode, out ShortcutKey key)
+    {
+        switch (vkCode)
+        {
+            case >= VirtualKeys.A and <= VirtualKeys.Z:
+                key = ShortcutKey.Letter((char)vkCode);
+                return true;
+            case >= VirtualKeys.D0 and <= VirtualKeys.D0 + 9:
+                key = ShortcutKey.Digit(vkCode - VirtualKeys.D0);
+                return true;
+            case >= VirtualKeys.F1 and <= VirtualKeys.F12:
+                key = ShortcutKey.Function(vkCode - VirtualKeys.F1 + 1);
+                return true;
+            default:
+                key = default;
+                return false;
+        }
+    }
 }
 
 /// <summary>A sound shortcut with its prepared play command.</summary>

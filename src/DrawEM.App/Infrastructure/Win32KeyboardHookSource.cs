@@ -2,16 +2,11 @@ using System.Runtime.InteropServices;
 
 namespace DrawEM.App.Infrastructure;
 
-public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
+public sealed class Win32KeyboardHookSource : INeutralKeyEmitter, IDisposable
 {
     private readonly NativeMethods.LowLevelHookProc proc;
+    private readonly KeyboardHookEvents events = new();
     private IntPtr hookHandle;
-
-    public event Action<int>? KeyDown;
-
-    public event Action<int>? KeyUp;
-
-    public event Func<int, KeyDirection, bool>? KeySuppressionRequested;
 
     public Win32KeyboardHookSource()
     {
@@ -25,30 +20,24 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
         }
     }
 
+    public IKeyboardHookSource Events => events;
+
     private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {
         if (nCode >= NativeMethods.HC_ACTION)
         {
             var data = Marshal.PtrToStructure<NativeMethods.KBDLLHOOKSTRUCT>(lParam);
-            var vkCode = (int)data.vkCode;
-            var message = wParam.ToInt32();
+            KeyDirection? direction = wParam.ToInt32() switch
+            {
+                NativeMethods.WM_KEYDOWN or NativeMethods.WM_SYSKEYDOWN => KeyDirection.Down,
+                NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP => KeyDirection.Up,
+                _ => null,
+            };
 
-            if (message is NativeMethods.WM_KEYDOWN or NativeMethods.WM_SYSKEYDOWN)
+            if (direction is { } keyDirection
+                && events.Handle((int)data.vkCode, keyDirection, (nuint)data.dwExtraInfo))
             {
-                KeyDown?.Invoke(vkCode);
-                if (ShouldSuppressKey(vkCode, KeyDirection.Down))
-                {
-                    return NativeMethods.SuppressMessage;
-                }
-            }
-            else if (message is NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP)
-            {
-                var suppress = ShouldSuppressKey(vkCode, KeyDirection.Up);
-                KeyUp?.Invoke(vkCode);
-                if (suppress)
-                {
-                    return NativeMethods.SuppressMessage;
-                }
+                return NativeMethods.SuppressMessage;
             }
         }
 
@@ -64,6 +53,18 @@ public sealed class Win32KeyboardHookSource : IKeyboardHookSource, IDisposable
         }
     }
 
-    private bool ShouldSuppressKey(int vkCode, KeyDirection direction) =>
-        KeySuppressionRequested?.Invoke(vkCode, direction) ?? false;
+    /// <remarks>
+    /// Called inside the hook callback. SendInput only queues the events, so they arrive after the event
+    /// being handled and before any key the user presses or releases later. A failure is ignored: the hook
+    /// cannot wait or retry, and a lone key-down of an unassigned key has no effect.
+    /// </remarks>
+    public void EmitNeutralKey()
+    {
+        NativeMethods.INPUT[] inputs =
+        [
+            NativeMethods.INPUT.Key(VirtualKeys.Neutral, keyUp: false, KeyboardHookEvents.NeutralKeyTag),
+            NativeMethods.INPUT.Key(VirtualKeys.Neutral, keyUp: true, KeyboardHookEvents.NeutralKeyTag),
+        ];
+        _ = NativeMethods.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<NativeMethods.INPUT>());
+    }
 }

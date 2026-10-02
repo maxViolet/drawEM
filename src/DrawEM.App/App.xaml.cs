@@ -59,6 +59,7 @@ public partial class App : System.Windows.Application
             var inputGate = new DrawingModeInputGate();
             keyboardHookSource = new Win32KeyboardHookSource();
             _ = new GlobalShortcutAdapter(
+                keyboardHookSource.Events,
                 keyboardHookSource,
                 controller,
                 inputGate,

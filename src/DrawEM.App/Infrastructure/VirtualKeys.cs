@@ -59,4 +59,25 @@ public static class VirtualKeys
 
     /// <summary>F1 key; F2–F12 follow in order.</summary>
     public const int F1 = 0x70;
+
+    /// <summary>F4 key.</summary>
+    public const int F4 = 0x73;
+
+    /// <summary>F12 key.</summary>
+    public const int F12 = 0x7B;
+
+    /// <summary>Esc key.</summary>
+    public const int Escape = 0x1B;
+
+    /// <summary>Left Windows key.</summary>
+    public const int LeftWindows = 0x5B;
+
+    /// <summary>Right Windows key.</summary>
+    public const int RightWindows = 0x5C;
+
+    /// <summary>
+    /// Unassigned virtual key 0xE8. Sent between a suppressed shortcut key and the release of its modifiers,
+    /// so Windows does not read a lone Alt+Shift or Ctrl+Shift press as a layout switch.
+    /// </summary>
+    public const int Neutral = 0xE8;
 }

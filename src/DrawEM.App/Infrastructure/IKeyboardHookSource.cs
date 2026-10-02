@@ -9,13 +9,9 @@ public enum KeyDirection
 
 public interface IKeyboardHookSource
 {
-    event Action<int>? KeyDown;
-
-    event Action<int>? KeyUp;
-
     /// <summary>
-    /// Asks whether to hide a key event from the focused application. Raised after
-    /// <see cref="KeyDown"/> for a key-down and before <see cref="KeyUp"/> for a key-up.
+    /// Installs the sole synchronous key decision handler. Its return value determines whether the
+    /// current event is hidden from the focused application.
     /// </summary>
-    event Func<int, KeyDirection, bool>? KeySuppressionRequested;
+    void SetKeyHandler(Func<int, KeyDirection, bool> handleKey);
 }

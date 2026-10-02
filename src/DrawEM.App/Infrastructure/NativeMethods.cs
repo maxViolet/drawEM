@@ -49,6 +49,71 @@ internal static class NativeMethods
         public IntPtr dwExtraInfo;
     }
 
+    /// <summary>INPUT.type value for keyboard input.</summary>
+    internal const uint INPUT_KEYBOARD = 1;
+
+    /// <summary>KEYBDINPUT.dwFlags value for a key release.</summary>
+    internal const uint KEYEVENTF_KEYUP = 0x0002;
+
+    /// <summary>
+    /// One event for SendInput. The union is sized by MOUSEINPUT, its largest member, so that
+    /// Marshal.SizeOf matches the native size SendInput checks.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct INPUT
+    {
+        public uint type;
+        public InputUnion u;
+
+        internal static INPUT Key(int vkCode, bool keyUp, nuint extraInfo) => new()
+        {
+            type = INPUT_KEYBOARD,
+            u = new InputUnion
+            {
+                ki = new KEYBDINPUT
+                {
+                    wVk = (ushort)vkCode,
+                    dwFlags = keyUp ? KEYEVENTF_KEYUP : 0,
+                    dwExtraInfo = (IntPtr)extraInfo,
+                },
+            },
+        };
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    internal struct InputUnion
+    {
+        [FieldOffset(0)]
+        public MOUSEINPUT mi;
+
+        [FieldOffset(0)]
+        public KEYBDINPUT ki;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MOUSEINPUT
+    {
+        public int dx;
+        public int dy;
+        public uint mouseData;
+        public uint dwFlags;
+        public uint time;
+        public IntPtr dwExtraInfo;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct KEYBDINPUT
+    {
+        public ushort wVk;
+        public ushort wScan;
+        public uint dwFlags;
+        public uint time;
+        public IntPtr dwExtraInfo;
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    internal static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern IntPtr SetWindowsHookEx(
         int idHook, LowLevelHookProc lpfn, IntPtr hMod, uint dwThreadId);
