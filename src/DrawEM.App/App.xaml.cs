@@ -65,7 +65,7 @@ public partial class App : System.Windows.Application
                 new Win32CursorPositionSource(),
                 action => Dispatcher.BeginInvoke(action),
                 new Win32MonitorBoundsSource(),
-                soundConfiguration.Resolve,
+                ShortcutBindings.ForCodeAssignments(soundConfiguration),
                 soundChannel.Play);
 
             mouseHookSource = new Win32MouseHookSource();

@@ -1,5 +1,6 @@
 using DrawEM.App.Application.Drawing;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Settings;
 using DrawEM.App.Infrastructure;
 using DrawEM.App.Infrastructure.Drawing;
 
@@ -95,7 +96,8 @@ public class GlobalMouseInputAdapterTests
         var inputGate = new DrawingModeInputGate();
         var queuedActions = new Queue<Action>();
         _ = new GlobalShortcutAdapter(keyboardSource, controller, inputGate, new FakeCursorPositionSource(), queuedActions.Enqueue,
-            new FakeMonitorBoundsSource(), _ => null, _ => { });
+            new FakeMonitorBoundsSource(),
+            new ShortcutBindings(SettingsSnapshot.Default.DrawShortcut, SettingsSnapshot.Default.ClearShortcut, []), _ => { });
         _ = new GlobalMouseInputAdapter(mouseSource, controller, inputGate, queuedActions.Enqueue);
 
         keyboardSource.PressKey(VirtualKeys.LeftControl);
