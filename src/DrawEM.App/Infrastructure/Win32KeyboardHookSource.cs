@@ -2,10 +2,10 @@ using System.Runtime.InteropServices;
 
 namespace DrawEM.App.Infrastructure;
 
-public sealed class Win32KeyboardHookSource : IDisposable
+public sealed class Win32KeyboardHookSource : INeutralKeyEmitter, IDisposable
 {
     private readonly NativeMethods.LowLevelHookProc proc;
-    private readonly KeyboardHookEvents events = new(SendNeutralKey);
+    private readonly KeyboardHookEvents events = new();
     private IntPtr hookHandle;
 
     public Win32KeyboardHookSource()
@@ -58,7 +58,7 @@ public sealed class Win32KeyboardHookSource : IDisposable
     /// being handled and before any key the user presses or releases later. A failure is ignored: the hook
     /// cannot wait or retry, and a lone key-down of an unassigned key has no effect.
     /// </remarks>
-    private static void SendNeutralKey()
+    public void EmitNeutralKey()
     {
         NativeMethods.INPUT[] inputs =
         [

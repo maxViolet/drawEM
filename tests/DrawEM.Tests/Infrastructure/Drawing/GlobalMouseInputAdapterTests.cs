@@ -95,7 +95,7 @@ public class GlobalMouseInputAdapterTests
         var controller = new DrawingSessionController();
         var inputGate = new DrawingModeInputGate();
         var queuedActions = new Queue<Action>();
-        _ = new GlobalShortcutAdapter(keyboardSource, controller, inputGate, new FakeCursorPositionSource(default), queuedActions.Enqueue,
+        _ = new GlobalShortcutAdapter(keyboardSource, keyboardSource, controller, inputGate, new FakeCursorPositionSource(default), queuedActions.Enqueue,
             new FakeMonitorBoundsSource(new MonitorBounds(-1000, -1000, 1000, 1000)),
             new ShortcutBindings(SettingsSnapshot.Default.DrawShortcut, SettingsSnapshot.Default.ClearShortcut, []), _ => { });
         _ = new GlobalMouseInputAdapter(mouseSource, controller, inputGate, queuedActions.Enqueue);
@@ -139,20 +139,15 @@ public class GlobalMouseInputAdapterTests
             ?? false;
     }
 
-    private sealed class FakeKeyboardHookSource : IKeyboardHookSource
+    private sealed class FakeKeyboardHookSource : IKeyboardHookSource, INeutralKeyEmitter
     {
-        public event Action<int>? KeyDown;
+        private Func<int, KeyDirection, bool>? handleKey;
 
-        public event Action<int>? KeyUp;
+        public void SetKeyHandler(Func<int, KeyDirection, bool> handler) => handleKey = handler;
 
-        public event Func<int, KeyDirection, bool>? KeySuppressionRequested;
+        public bool PressKey(int vkCode) => handleKey?.Invoke(vkCode, KeyDirection.Down) ?? false;
 
-        public void PressKey(int vkCode) => KeyDown?.Invoke(vkCode);
-
-        public void ReleaseKey(int vkCode) => KeyUp?.Invoke(vkCode);
-
-        public bool ShouldSuppressKey(int vkCode, KeyDirection direction = KeyDirection.Down) =>
-            KeySuppressionRequested?.Invoke(vkCode, direction) ?? false;
+        public bool ReleaseKey(int vkCode) => handleKey?.Invoke(vkCode, KeyDirection.Up) ?? false;
 
         public void EmitNeutralKey()
         {
