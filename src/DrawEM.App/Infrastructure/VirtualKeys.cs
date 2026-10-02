@@ -6,6 +6,12 @@ public static class VirtualKeys
     /// <summary>A key.</summary>
     public const int A = 0x41;
 
+    /// <summary>Left Shift key.</summary>
+    public const int LeftShift = 0xA0;
+
+    /// <summary>Right Shift key.</summary>
+    public const int RightShift = 0xA1;
+
     /// <summary>Left Ctrl key.</summary>
     public const int LeftControl = 0xA2;
 
@@ -23,6 +29,9 @@ public static class VirtualKeys
 
     /// <summary>X key.</summary>
     public const int X = 0x58;
+
+    /// <summary>0 key on the main row; 1–9 follow in order.</summary>
+    public const int D0 = 0x30;
 
     /// <summary>1 key on the main row (sound slot 1).</summary>
     public const int D1 = 0x31;
@@ -47,4 +56,7 @@ public static class VirtualKeys
 
     /// <summary>8 key on the main row (sound slot 8).</summary>
     public const int D8 = 0x38;
+
+    /// <summary>F1 key; F2–F12 follow in order.</summary>
+    public const int F1 = 0x70;
 }

@@ -1,6 +1,7 @@
 using DrawEM.App.Application.Drawing;
 using DrawEM.App.Application.Sound;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Settings;
 using DrawEM.App.Infrastructure;
 using DrawEM.App.Infrastructure.Drawing;
 using DrawEM.App.Infrastructure.Sound;
@@ -11,6 +12,7 @@ public class GlobalShortcutAdapterTests
 {
     private static readonly MonitorBounds DefaultMonitor = new(-1000, -1000, 1000, 1000);
     private static readonly IMonitorBoundsSource DefaultMonitorSource = new FakeMonitorBoundsSource(DefaultMonitor);
+    private static readonly ShortcutBindings DefaultBindings = new(SettingsSnapshot.Default.DrawShortcut, SettingsSnapshot.Default.ClearShortcut, []);
 
     [Fact]
     public void CtrlAltX_ClearsOnlyMonitorUnderCursor()
@@ -25,7 +27,7 @@ public class GlobalShortcutAdapterTests
         var source = new FakeKeyboardHookSource();
         _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(),
             new FakeCursorPositionSource(new ScreenPoint(110, 10)), action => action(),
-            new FakeMonitorBoundsSource(left, right), _ => null, _ => { });
+            new FakeMonitorBoundsSource(left, right), DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -46,7 +48,7 @@ public class GlobalShortcutAdapterTests
         var states = new List<DrawingState>();
         controller.StateChanged += states.Add;
         _ = new GlobalShortcutAdapter(source, controller, gate, cursor, action => action(),
-            new FakeMonitorBoundsSource(left, right), _ => null, _ => { });
+            new FakeMonitorBoundsSource(left, right), DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -70,7 +72,7 @@ public class GlobalShortcutAdapterTests
         var controller = new DrawingSessionController();
         var states = new List<DrawingState>();
         controller.StateChanged += states.Add;
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, _ => null, _ => { });
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -88,7 +90,7 @@ public class GlobalShortcutAdapterTests
         var controller = new DrawingSessionController();
         var states = new List<DrawingState>();
         controller.StateChanged += states.Add;
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, _ => null, _ => { });
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -106,7 +108,7 @@ public class GlobalShortcutAdapterTests
         controller.EnterDrawMode(new ScreenPoint(1, 1), DefaultMonitor);
         controller.ReportPointer(new ScreenPoint(2, 2));
         controller.ExitDrawMode();
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, _ => null, _ => { });
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -123,7 +125,7 @@ public class GlobalShortcutAdapterTests
         var states = new List<DrawingState>();
         var queuedActions = new Queue<Action>();
         controller.StateChanged += states.Add;
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), queuedActions.Enqueue, DefaultMonitorSource, _ => null, _ => { });
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), queuedActions.Enqueue, DefaultMonitorSource, DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -142,7 +144,7 @@ public class GlobalShortcutAdapterTests
     {
         var source = new FakeKeyboardHookSource();
         var controller = new DrawingSessionController();
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, _ => null, _ => { });
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -165,7 +167,7 @@ public class GlobalShortcutAdapterTests
         var controller = new DrawingSessionController();
         var states = new List<DrawingState>();
         controller.StateChanged += states.Add;
-        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, _ => null, _ => { });
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(), new FakeCursorPositionSource(new ScreenPoint(0, 0)), action => action(), DefaultMonitorSource, DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -196,7 +198,7 @@ public class GlobalShortcutAdapterTests
             new DrawingModeInputGate(),
             new FakeCursorPositionSource(cursorPosition),
             action => action(),
-            DefaultMonitorSource, _ => null, _ => { });
+            DefaultMonitorSource, DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -219,7 +221,7 @@ public class GlobalShortcutAdapterTests
             inputGate,
             new FailingCursorPositionSource(),
             action => action(),
-            DefaultMonitorSource, _ => null, _ => { });
+            DefaultMonitorSource, DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -243,7 +245,7 @@ public class GlobalShortcutAdapterTests
             new DrawingModeInputGate(),
             cursorSource,
             action => action(),
-            DefaultMonitorSource, _ => null, _ => { });
+            DefaultMonitorSource, DefaultBindings, _ => { });
 
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
@@ -310,7 +312,7 @@ public class GlobalShortcutAdapterTests
         sound.RunQueuedActions();
         Assert.Empty(sound.Played);
 
-        sound.Source.PressKey(VirtualKeys.RightMenu);
+        sound.Source.PressKey(VirtualKeys.LeftMenu);
         sound.Source.PressKey(VirtualKeys.D2);
         sound.RunQueuedActions();
 
@@ -481,13 +483,282 @@ public class GlobalShortcutAdapterTests
         Assert.Equal(statesBeforeSound, states.Count);
     }
 
+    [Fact]
+    public void CtrlAltX_AltReleasedBeforeX_StillSuppressesXUntilReleased()
+    {
+        var sound = new SoundTestHarness();
+
+        sound.Source.PressKey(VirtualKeys.LeftControl);
+        sound.Source.PressKey(VirtualKeys.LeftMenu);
+        Assert.True(sound.Source.PressKey(VirtualKeys.X));
+        sound.Source.ReleaseKey(VirtualKeys.LeftMenu);
+
+        Assert.True(sound.Source.PressKey(VirtualKeys.X));
+        Assert.True(sound.Source.ReleaseKey(VirtualKeys.X));
+        Assert.Single(sound.Queued);
+    }
+
+    [Fact]
+    public void CtrlAltX_ChordCompletedWhileXHeld_ClearsOnce_AndPassesXKeyUp()
+    {
+        var sound = new SoundTestHarness();
+
+        Assert.False(sound.Source.PressKey(VirtualKeys.X));
+        sound.Source.PressKey(VirtualKeys.LeftControl);
+        sound.Source.PressKey(VirtualKeys.LeftMenu);
+        Assert.Single(sound.Queued);
+
+        Assert.True(sound.Source.PressKey(VirtualKeys.X));
+        Assert.False(sound.Source.ReleaseKey(VirtualKeys.X));
+        Assert.Single(sound.Queued);
+    }
+
+    // Remapped bindings: draw Ctrl+Shift+D, clear Alt+Shift+F5, sound Ctrl+Shift+F1.
+    private static readonly ShortcutBindings Remapped = new(
+        Shortcut.Create(ShortcutModifiers.Control | ShortcutModifiers.Shift, ShortcutKey.Letter('D')),
+        Shortcut.Create(ShortcutModifiers.Alt | ShortcutModifiers.Shift, ShortcutKey.Function(5)),
+        [(Shortcut.Create(ShortcutModifiers.Control | ShortcutModifiers.Shift, ShortcutKey.Function(1)),
+            new PlaySoundCommand(new SoundId("applause")))]);
+
+    private const int D = 0x44;
+    private const int F5 = VirtualKeys.F1 + 4;
+
+    [Fact]
+    public void RemappedDraw_HoldsUntilKeyRelease_AndIgnoresAutoRepeat()
+    {
+        var sound = new SoundTestHarness(Remapped);
+        var states = new List<DrawingState>();
+        sound.Controller.StateChanged += states.Add;
+
+        sound.Source.PressKey(VirtualKeys.LeftControl);
+        sound.Source.PressKey(VirtualKeys.LeftShift);
+        Assert.False(sound.Source.PressKey(D));
+        sound.Source.PressKey(D);
+        sound.Source.PressKey(D);
+        sound.RunQueuedActions();
+        Assert.True(sound.Gate.IsActive);
+
+        sound.Source.ReleaseKey(D);
+        sound.RunQueuedActions();
+
+        Assert.Equal([true, false], states.Select(state => state.IsDrawModeActive));
+    }
+
+    [Fact]
+    public void RemappedDraw_SuppressesOtherKeys_ButPassesItsOwnKeyAndModifiers()
+    {
+        var sound = new SoundTestHarness(Remapped);
+
+        sound.Source.PressKey(VirtualKeys.RightControl);
+        sound.Source.PressKey(VirtualKeys.RightShift);
+        sound.Source.PressKey(D);
+
+        Assert.False(sound.Source.ShouldSuppressKey(D));
+        Assert.False(sound.Source.ShouldSuppressKey(VirtualKeys.RightControl));
+        Assert.False(sound.Source.ShouldSuppressKey(VirtualKeys.RightShift));
+        Assert.True(sound.Source.ShouldSuppressKey(VirtualKeys.Z));
+        Assert.True(sound.Source.ShouldSuppressKey(VirtualKeys.A));
+    }
+
+    [Fact]
+    public void RemappedDraw_StaysActiveWhenAnotherModifierJoins()
+    {
+        var sound = new SoundTestHarness(Remapped);
+
+        sound.Source.PressKey(VirtualKeys.LeftControl);
+        sound.Source.PressKey(VirtualKeys.LeftShift);
+        sound.Source.PressKey(D);
+        sound.Source.PressKey(VirtualKeys.LeftMenu);
+
+        Assert.True(sound.Gate.IsActive);
+    }
+
+    [Fact]
+    public void RemappedDraw_ExtraModifier_DoesNotStart()
+    {
+        var sound = new SoundTestHarness(Remapped);
+
+        sound.Source.PressKey(VirtualKeys.LeftControl);
+        sound.Source.PressKey(VirtualKeys.LeftMenu);
+        sound.Source.PressKey(VirtualKeys.LeftShift);
+
+        Assert.False(sound.Source.PressKey(D));
+        Assert.False(sound.Gate.IsActive);
+        Assert.Empty(sound.Queued);
+    }
+
+    [Fact]
+    public void Remapped_OldDefaultShortcuts_DoNothing()
+    {
+        var sound = new SoundTestHarness(Remapped);
+
+        sound.Source.PressKey(VirtualKeys.LeftControl);
+        sound.Source.PressKey(VirtualKeys.LeftMenu);
+
+        Assert.False(sound.Source.PressKey(VirtualKeys.Z));
+        Assert.False(sound.Source.PressKey(VirtualKeys.X));
+        Assert.False(sound.Source.PressKey(VirtualKeys.D1));
+        sound.RunQueuedActions();
+        Assert.False(sound.Gate.IsActive);
+        Assert.Empty(sound.Queued);
+        Assert.Empty(sound.Played);
+    }
+
+    [Fact]
+    public void RemappedClear_ClearsOnlyMonitorUnderCursor_AndSuppressesItsKeyThroughRelease()
+    {
+        var left = new MonitorBounds(0, 0, 100, 100);
+        var right = new MonitorBounds(100, 0, 200, 100);
+        var controller = new DrawingSessionController();
+        controller.EnterDrawMode(new ScreenPoint(10, 10), left);
+        controller.ExitDrawMode();
+        controller.EnterDrawMode(new ScreenPoint(110, 10), right);
+        controller.ExitDrawMode();
+        var source = new FakeKeyboardHookSource();
+        _ = new GlobalShortcutAdapter(source, controller, new DrawingModeInputGate(),
+            new FakeCursorPositionSource(new ScreenPoint(110, 10)), action => action(),
+            new FakeMonitorBoundsSource(left, right), Remapped, _ => { });
+
+        source.PressKey(VirtualKeys.LeftMenu);
+        source.PressKey(VirtualKeys.LeftShift);
+
+        Assert.True(source.PressKey(F5));
+        Assert.Equal(left, Assert.Single(controller.CompletedStrokes).Bounds);
+        Assert.True(source.PressKey(F5));
+        Assert.True(source.ReleaseKey(F5));
+        Assert.Single(controller.CompletedStrokes);
+    }
+
+    [Fact]
+    public void RemappedSound_FiresOncePerPress_AndSuppressesItsKeyThroughRelease()
+    {
+        var sound = new SoundTestHarness(Remapped);
+
+        sound.Source.PressKey(VirtualKeys.LeftControl);
+        sound.Source.PressKey(VirtualKeys.LeftShift);
+        Assert.True(sound.Source.PressKey(VirtualKeys.F1));
+        Assert.True(sound.Source.PressKey(VirtualKeys.F1));
+        Assert.True(sound.Source.ReleaseKey(VirtualKeys.F1));
+        sound.Source.PressKey(VirtualKeys.F1);
+        sound.RunQueuedActions();
+
+        Assert.Equal(2, sound.Played.Count);
+        Assert.All(sound.Played, command => Assert.Equal(new SoundId("applause"), command.Sound));
+    }
+
+    [Fact]
+    public void RemappedSound_DuringRemappedDraw_PlaysAndKeepsDrawing()
+    {
+        var sound = new SoundTestHarness(Remapped);
+        var states = new List<DrawingState>();
+        sound.Controller.StateChanged += states.Add;
+
+        sound.Source.PressKey(VirtualKeys.LeftControl);
+        sound.Source.PressKey(VirtualKeys.LeftShift);
+        sound.Source.PressKey(D);
+        sound.RunQueuedActions();
+        var statesBeforeSound = states.Count;
+
+        Assert.True(sound.Source.PressKey(VirtualKeys.F1));
+        sound.RunQueuedActions();
+
+        Assert.Single(sound.Played);
+        Assert.True(sound.Gate.IsActive);
+        Assert.Equal(statesBeforeSound, states.Count);
+        Assert.True(states[^1].IsDrawModeActive);
+    }
+
+    [Fact]
+    public void RemappedDraw_BoundaryCrossing_RequiresKeyReleaseBeforeDrawingOnNextMonitor()
+    {
+        var left = new MonitorBounds(0, 0, 100, 100);
+        var right = new MonitorBounds(100, 0, 200, 100);
+        var source = new FakeKeyboardHookSource();
+        var cursor = new MutableCursorPositionSource(new ScreenPoint(90, 50));
+        var gate = new DrawingModeInputGate();
+        var controller = new DrawingSessionController();
+        var states = new List<DrawingState>();
+        controller.StateChanged += states.Add;
+        _ = new GlobalShortcutAdapter(source, controller, gate, cursor, action => action(),
+            new FakeMonitorBoundsSource(left, right), Remapped, _ => { });
+
+        source.PressKey(VirtualKeys.LeftControl);
+        source.PressKey(VirtualKeys.LeftShift);
+        source.PressKey(D);
+        Assert.Equal(left, states[^1].ActiveStroke!.Bounds);
+        Assert.True(gate.StopAtBoundary(new ScreenPoint(101, 50)));
+        controller.ExitDrawMode();
+        cursor.Position = new ScreenPoint(110, 50);
+        var countAfterCrossing = states.Count;
+
+        source.PressKey(D);
+        Assert.Equal(countAfterCrossing, states.Count);
+        source.ReleaseKey(D);
+        source.PressKey(D);
+        Assert.Equal(right, states[^1].ActiveStroke!.Bounds);
+    }
+
+    [Fact]
+    public void AltGr_DoesNotStartRemappedDraw_AndPassesKeyThrough()
+    {
+        var sound = new SoundTestHarness(Remapped);
+
+        // Windows reports AltGr as Left Ctrl followed by Right Alt.
+        sound.Source.PressKey(VirtualKeys.LeftControl);
+        sound.Source.PressKey(VirtualKeys.RightMenu);
+        sound.Source.PressKey(VirtualKeys.LeftShift);
+
+        Assert.False(sound.Source.PressKey(D));
+        Assert.False(sound.Source.ReleaseKey(D));
+        Assert.False(sound.Gate.IsActive);
+        Assert.Empty(sound.Queued);
+    }
+
+    [Fact]
+    public void AltGrWithShift_DoesNotStartCtrlShiftSound_AndPassesKeyThrough()
+    {
+        var ctrlShiftA = Shortcut.Create(ShortcutModifiers.Control | ShortcutModifiers.Shift, ShortcutKey.Letter('A'));
+        var sound = new SoundTestHarness(new ShortcutBindings(
+            SettingsSnapshot.Default.DrawShortcut,
+            SettingsSnapshot.Default.ClearShortcut,
+            [(ctrlShiftA, new PlaySoundCommand(new SoundId("applause")))]));
+
+        // Windows reports AltGr as Left Ctrl followed by Right Alt.
+        sound.Source.PressKey(VirtualKeys.LeftControl);
+        sound.Source.PressKey(VirtualKeys.RightMenu);
+        sound.Source.PressKey(VirtualKeys.LeftShift);
+
+        Assert.False(sound.Source.PressKey(VirtualKeys.A));
+        Assert.False(sound.Source.ReleaseKey(VirtualKeys.A));
+        sound.RunQueuedActions();
+        Assert.Empty(sound.Played);
+    }
+
+    [Fact]
+    public void RightAltHeld_BlocksDrawEvenWithLeftAltAndCtrl()
+    {
+        var sound = new SoundTestHarness();
+
+        sound.Source.PressKey(VirtualKeys.LeftControl);
+        sound.Source.PressKey(VirtualKeys.RightMenu);
+        sound.Source.PressKey(VirtualKeys.LeftMenu);
+
+        Assert.False(sound.Source.PressKey(VirtualKeys.Z));
+        Assert.False(sound.Gate.IsActive);
+        Assert.Empty(sound.Queued);
+    }
+
     private sealed class SoundTestHarness
     {
         public SoundTestHarness(params (SoundSlot Slot, string Sound)[] assignments)
-        {
-            var configuration = new SoundConfiguration(assignments.ToDictionary(
+            : this(ShortcutBindings.ForCodeAssignments(new SoundConfiguration(assignments.ToDictionary(
                 assignment => assignment.Slot,
-                assignment => new SoundAssignment(new SoundId(assignment.Sound), $@"C:\sounds\{assignment.Sound}.wav")));
+                assignment => new SoundAssignment(new SoundId(assignment.Sound), $@"C:\sounds\{assignment.Sound}.wav")))))
+        {
+        }
+
+        public SoundTestHarness(ShortcutBindings bindings)
+        {
             _ = new GlobalShortcutAdapter(
                 Source,
                 Controller,
@@ -495,7 +766,7 @@ public class GlobalShortcutAdapterTests
                 new FakeCursorPositionSource(new ScreenPoint(0, 0)),
                 Queued.Enqueue,
                 Monitors,
-                configuration.Resolve,
+                bindings,
                 command => SoundQueued.Enqueue(() => Played.Add(command)));
         }
 

@@ -1,0 +1,85 @@
+using DrawEM.App.Application.Sound;
+using DrawEM.App.Domain.Settings;
+using DrawEM.App.Infrastructure.Sound;
+
+namespace DrawEM.App.Infrastructure.Drawing;
+
+/// <summary>A shortcut in hook terms: its modifiers and the virtual-key code of its key.</summary>
+public readonly record struct KeyChord(ShortcutModifiers Modifiers, int VirtualKey)
+{
+    public static KeyChord From(Shortcut shortcut) => new(shortcut.Modifiers, VirtualKeyOf(shortcut.Key));
+
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="key"/> is <c>default(ShortcutKey)</c>.</exception>
+    public static int VirtualKeyOf(ShortcutKey key) => key.Kind switch
+    {
+        _ when !ShortcutKey.IsValid(key) => throw new ArgumentOutOfRangeException(nameof(key), key, "Invalid shortcut key."),
+        ShortcutKeyKind.Letter => key.Value,
+        ShortcutKeyKind.Digit => VirtualKeys.D0 + key.Value,
+        _ => VirtualKeys.F1 + key.Value - 1,
+    };
+}
+
+/// <summary>A sound shortcut with its prepared play command.</summary>
+public sealed record SoundBinding(KeyChord Chord, PlaySoundCommand Command);
+
+/// <summary>
+/// One immutable set of active shortcuts for the keyboard hook: draw, clear, and the filled sound slots.
+/// Every command is prepared when the bindings are built, so the hook callback only compares keys.
+/// </summary>
+public sealed class ShortcutBindings
+{
+    /// <exception cref="ArgumentException">Two commands use the same shortcut.</exception>
+    public ShortcutBindings(Shortcut draw, Shortcut clear, IEnumerable<(Shortcut Shortcut, PlaySoundCommand Command)> sounds)
+    {
+        ArgumentNullException.ThrowIfNull(draw);
+        ArgumentNullException.ThrowIfNull(clear);
+        ArgumentNullException.ThrowIfNull(sounds);
+        Draw = KeyChord.From(draw);
+        Clear = KeyChord.From(clear);
+        Sounds = Array.AsReadOnly(sounds.Select(sound => new SoundBinding(KeyChord.From(sound.Shortcut), sound.Command)).ToArray());
+
+        var chords = new HashSet<KeyChord> { Draw };
+        foreach (var chord in Sounds.Select(sound => sound.Chord).Prepend(Clear))
+        {
+            if (!chords.Add(chord))
+            {
+                throw new ArgumentException($"Two commands use the shortcut {chord}.", nameof(sounds));
+            }
+        }
+    }
+
+    public KeyChord Draw { get; }
+
+    public KeyChord Clear { get; }
+
+    public IReadOnlyList<SoundBinding> Sounds { get; }
+
+    /// <summary>Binds draw, clear, and every filled slot of <paramref name="snapshot"/>.</summary>
+    /// <param name="resolveSound">Prepares the play command for a slot's sound. Runs here, never in the hook.</param>
+    public static ShortcutBindings FromSnapshot(SettingsSnapshot snapshot, Func<SoundReference, PlaySoundCommand> resolveSound)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(resolveSound);
+        var sounds = snapshot.Slots
+            .Select(slot => slot.Action)
+            .OfType<SoundAction>()
+            .Select(action => (action.Shortcut!, resolveSound(action.Sound)));
+        return new ShortcutBindings(snapshot.DrawShortcut, snapshot.ClearShortcut, sounds);
+    }
+
+    /// <summary>
+    /// Default draw and clear, plus <c>Ctrl+Alt+1</c> through <c>Ctrl+Alt+8</c> for the code-owned v2 sound
+    /// assignments. Step 6 replaces this with <see cref="FromSnapshot"/> over saved settings.
+    /// </summary>
+    public static ShortcutBindings ForCodeAssignments(SoundConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        var sounds = Enum.GetValues<SoundSlot>()
+            .Select(slot => (Slot: slot, Command: configuration.Resolve(slot)))
+            .Where(entry => entry.Command is not null)
+            .Select(entry => (
+                Shortcut.Create(ShortcutModifiers.Control | ShortcutModifiers.Alt, ShortcutKey.Digit((int)entry.Slot)),
+                entry.Command!));
+        return new ShortcutBindings(SettingsSnapshot.Default.DrawShortcut, SettingsSnapshot.Default.ClearShortcut, sounds);
+    }
+}
