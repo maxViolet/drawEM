@@ -95,8 +95,8 @@ public class GlobalMouseInputAdapterTests
         var controller = new DrawingSessionController();
         var inputGate = new DrawingModeInputGate();
         var queuedActions = new Queue<Action>();
-        _ = new GlobalShortcutAdapter(keyboardSource, controller, inputGate, new FakeCursorPositionSource(), queuedActions.Enqueue,
-            new FakeMonitorBoundsSource(),
+        _ = new GlobalShortcutAdapter(keyboardSource, controller, inputGate, new FakeCursorPositionSource(default), queuedActions.Enqueue,
+            new FakeMonitorBoundsSource(new MonitorBounds(-1000, -1000, 1000, 1000)),
             new ShortcutBindings(SettingsSnapshot.Default.DrawShortcut, SettingsSnapshot.Default.ClearShortcut, []), _ => { });
         _ = new GlobalMouseInputAdapter(mouseSource, controller, inputGate, queuedActions.Enqueue);
 
@@ -153,23 +153,9 @@ public class GlobalMouseInputAdapterTests
 
         public bool ShouldSuppressKey(int vkCode, KeyDirection direction = KeyDirection.Down) =>
             KeySuppressionRequested?.Invoke(vkCode, direction) ?? false;
-    }
 
-    private sealed class FakeCursorPositionSource : ICursorPositionSource
-    {
-        public bool TryGetCurrentPosition(out ScreenPoint position)
+        public void EmitNeutralKey()
         {
-            position = default;
-            return true;
-        }
-    }
-
-    private sealed class FakeMonitorBoundsSource : IMonitorBoundsSource
-    {
-        public bool TryGetBounds(ScreenPoint point, out MonitorBounds bounds)
-        {
-            bounds = new MonitorBounds(-1000, -1000, 1000, 1000);
-            return true;
         }
     }
 }

@@ -1,12 +1,18 @@
 using DrawEM.App.Application.Drawing;
+using DrawEM.App.Application.Settings;
 using DrawEM.App.Application.Sound;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Infrastructure;
 
 namespace DrawEM.App.Infrastructure.Drawing;
 
-public sealed class GlobalShortcutAdapter
+/// <remarks>
+/// Hook callbacks and the <see cref="IShortcutCapture"/> calls must run on the thread that installed the
+/// keyboard hook, so they never interleave.
+/// </remarks>
+public sealed class GlobalShortcutAdapter : IShortcutCapture
 {
+    private readonly IKeyboardHookSource source;
     private readonly DrawingSessionController controller;
     private readonly DrawingModeInputGate inputGate;
     private readonly ICursorPositionSource cursorPositionSource;
@@ -16,7 +22,20 @@ public sealed class GlobalShortcutAdapter
     private readonly Action<PlaySoundCommand> playSound;
     private readonly HashSet<int> pressedKeys = [];
     private readonly HashSet<int> startedShortcutKeys = [];
-    private readonly HashSet<int> keysSuppressedOnPress = [];
+
+    /// <summary>
+    /// Keys hidden down and up until each is released: a one-shot chord key whose own first key-down started
+    /// it, a capture candidate, Escape in capture, and keys draw mode was hiding when capture began.
+    /// </summary>
+    private readonly HashSet<int> keysSuppressedUntilRelease = [];
+
+    /// <summary>Keys that must be released before capture evaluates another chord.</summary>
+    private readonly HashSet<int> keysBlockingCapture = [];
+
+    /// <summary>Capture ended with keys held. No command starts until every key is released.</summary>
+    private bool dispatchPaused;
+
+    private Action<ShortcutCaptureResult>? reportCapture;
 
     /// <param name="bindings">The active shortcuts, read inside the hook callback.</param>
     /// <param name="playSound">
@@ -33,6 +52,7 @@ public sealed class GlobalShortcutAdapter
         ShortcutBindings bindings,
         Action<PlaySoundCommand> playSound)
     {
+        this.source = source;
         this.controller = controller;
         this.inputGate = inputGate;
         this.cursorPositionSource = cursorPositionSource;
@@ -45,9 +65,59 @@ public sealed class GlobalShortcutAdapter
         source.KeySuppressionRequested += ShouldSuppressKey;
     }
 
+    private bool IsCapturing => reportCapture is not null;
+
+    /// <remarks>Held keys keep the suppression decision they already have until they are released.</remarks>
+    public void Begin(Action<ShortcutCaptureResult> report)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        if (inputGate.IsActive)
+        {
+            // Draw mode hid these keys' key-downs, so their repeats and key-ups stay hidden after it ends.
+            foreach (var vkCode in pressedKeys)
+            {
+                if (IsHiddenInDrawMode(vkCode))
+                {
+                    keysSuppressedUntilRelease.Add(vkCode);
+                }
+            }
+
+            inputGate.SetActive(false);
+            dispatch(controller.ExitDrawMode);
+        }
+
+        reportCapture = report;
+        keysBlockingCapture.Clear();
+        keysBlockingCapture.UnionWith(pressedKeys);
+    }
+
+    public void End()
+    {
+        if (IsCapturing)
+        {
+            StopCapture();
+        }
+    }
+
     private void OnKeyChanged(int vkCode)
     {
-        int? firstKeyDown = pressedKeys.Add(vkCode) ? vkCode : null;
+        var isFirstKeyDown = pressedKeys.Add(vkCode);
+        if (IsCapturing)
+        {
+            if (isFirstKeyDown)
+            {
+                Capture(vkCode);
+            }
+
+            return;
+        }
+
+        if (dispatchPaused)
+        {
+            return;
+        }
+
+        int? firstKeyDown = isFirstKeyDown ? vkCode : null;
         UpdateChords(firstKeyDown);
         UpdateSoundShortcuts(firstKeyDown);
     }
@@ -56,8 +126,95 @@ public sealed class GlobalShortcutAdapter
     {
         pressedKeys.Remove(vkCode);
         startedShortcutKeys.Remove(vkCode);
-        keysSuppressedOnPress.Remove(vkCode);
+        keysSuppressedUntilRelease.Remove(vkCode);
+        keysBlockingCapture.Remove(vkCode);
+        var dispatchWasPaused = dispatchPaused;
+        dispatchPaused &= pressedKeys.Count > 0;
+        if (IsCapturing || dispatchWasPaused)
+        {
+            return;
+        }
+
         UpdateChords(firstKeyDown: null);
+    }
+
+    /// <summary>Evaluates the first key-down of a key while capture is on.</summary>
+    /// <remarks>
+    /// Escape cancels. Only a letter, digit, or F1–F12 key is a candidate. Win chords and Alt+F4 pass
+    /// through untouched. A Right Alt chord passes through and is rejected. Any other candidate is hidden
+    /// down and up, then recorded if valid or rejected. A rejected attempt blocks capture until all its keys
+    /// are released.
+    /// </remarks>
+    private void Capture(int vkCode)
+    {
+        if (vkCode == VirtualKeys.Escape)
+        {
+            keysSuppressedUntilRelease.Add(vkCode);
+            FinishCapture(new ShortcutCaptureResult.Cancelled());
+            return;
+        }
+
+        var modifiers = CurrentModifiers();
+        if (keysBlockingCapture.Count > 0
+            || !KeyChord.TryGetShortcutKey(vkCode, out var key)
+            || pressedKeys.Contains(VirtualKeys.LeftWindows)
+            || pressedKeys.Contains(VirtualKeys.RightWindows)
+            || (vkCode == VirtualKeys.F4 && modifiers == ShortcutModifiers.Alt))
+        {
+            return;
+        }
+
+        if (pressedKeys.Contains(VirtualKeys.RightMenu))
+        {
+            RejectCapture(ShortcutCaptureRejection.RightAlt);
+            return;
+        }
+
+        keysSuppressedUntilRelease.Add(vkCode);
+        ProtectLayoutSwitch(modifiers);
+        if (Shortcut.TryCreate(modifiers, key, out var shortcut, out _))
+        {
+            FinishCapture(new ShortcutCaptureResult.Captured(shortcut));
+        }
+        else
+        {
+            RejectCapture(ShortcutCaptureRejection.TooFewModifiers);
+        }
+    }
+
+    private void RejectCapture(ShortcutCaptureRejection reason)
+    {
+        keysBlockingCapture.UnionWith(pressedKeys);
+        var report = reportCapture!;
+        dispatch(() => report(new ShortcutCaptureResult.Rejected(reason)));
+    }
+
+    private void FinishCapture(ShortcutCaptureResult result)
+    {
+        var report = reportCapture!;
+        StopCapture();
+        dispatch(() => report(result));
+    }
+
+    private void StopCapture()
+    {
+        reportCapture = null;
+        keysBlockingCapture.Clear();
+        dispatchPaused = pressedKeys.Count > 0;
+    }
+
+    /// <summary>
+    /// Windows switches the input layout when Alt+Shift or Ctrl+Shift is released and it saw no other key
+    /// in between. After a candidate key is hidden under such a pair, a neutral key fills that gap while the
+    /// modifiers are still down. A chord without Shift needs none.
+    /// </summary>
+    private void ProtectLayoutSwitch(ShortcutModifiers modifiers)
+    {
+        if (modifiers.HasFlag(ShortcutModifiers.Shift)
+            && (modifiers & (ShortcutModifiers.Control | ShortcutModifiers.Alt)) != 0)
+        {
+            source.EmitNeutralKey();
+        }
     }
 
     /// <summary>
@@ -100,7 +257,8 @@ public sealed class GlobalShortcutAdapter
 
         if (chord.VirtualKey == firstKeyDown)
         {
-            keysSuppressedOnPress.Add(chord.VirtualKey);
+            keysSuppressedUntilRelease.Add(chord.VirtualKey);
+            ProtectLayoutSwitch(chord.Modifiers);
         }
 
         return true;
@@ -184,18 +342,22 @@ public sealed class GlobalShortcutAdapter
         return modifiers;
     }
 
-    /// <remarks>
-    /// Modifier keys always pass through, so the system never sees a key-down without its key-up.
-    /// </remarks>
     private bool ShouldSuppressKey(int vkCode, KeyDirection direction) =>
-        (inputGate.IsActive && vkCode != bindings.Draw.VirtualKey && vkCode is not (
+        keysSuppressedUntilRelease.Contains(vkCode) ||
+        (inputGate.IsActive && IsHiddenInDrawMode(vkCode)) ||
+        (direction == KeyDirection.Down && startedShortcutKeys.Contains(vkCode));
+
+    /// <remarks>
+    /// Draw mode hides every key except the draw key and modifiers. Modifier keys always pass through, so
+    /// the system never sees a key-down without its key-up.
+    /// </remarks>
+    private bool IsHiddenInDrawMode(int vkCode) =>
+        vkCode != bindings.Draw.VirtualKey && vkCode is not (
             VirtualKeys.LeftControl or
             VirtualKeys.RightControl or
             VirtualKeys.LeftMenu or
             VirtualKeys.RightMenu or
             VirtualKeys.LeftShift or
-            VirtualKeys.RightShift)) ||
-        (direction == KeyDirection.Down && startedShortcutKeys.Contains(vkCode)) ||
-        keysSuppressedOnPress.Contains(vkCode);
+            VirtualKeys.RightShift);
 
 }

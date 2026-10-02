@@ -843,14 +843,9 @@ public class GlobalShortcutAdapterTests
                 .Cast<Func<int, KeyDirection, bool>>()
                 .Any(handler => handler(vkCode, direction))
             ?? false;
-    }
 
-    private sealed class FakeCursorPositionSource(ScreenPoint point) : ICursorPositionSource
-    {
-        public bool TryGetCurrentPosition(out ScreenPoint position)
+        public void EmitNeutralKey()
         {
-            position = point;
-            return true;
         }
     }
 
@@ -862,24 +857,6 @@ public class GlobalShortcutAdapterTests
         {
             position = Position;
             return true;
-        }
-    }
-
-    private sealed class FakeMonitorBoundsSource(params MonitorBounds[] monitors) : IMonitorBoundsSource
-    {
-        public bool TryGetBounds(ScreenPoint point, out MonitorBounds bounds)
-        {
-            foreach (var monitor in monitors)
-            {
-                if (monitor.Contains(point))
-                {
-                    bounds = monitor;
-                    return true;
-                }
-            }
-
-            bounds = default;
-            return false;
         }
     }
 

@@ -34,6 +34,31 @@ public class ShortcutBindingsTests
         Assert.Throws<ArgumentOutOfRangeException>(() => KeyChord.VirtualKeyOf(default));
 
     [Fact]
+    public void TryGetShortcutKey_EveryLegalKey_RoundTripsVirtualKeyOf()
+    {
+        var keys = Enumerable.Range('A', 26).Select(letter => ShortcutKey.Letter((char)letter))
+            .Concat(Enumerable.Range(0, 10).Select(ShortcutKey.Digit))
+            .Concat(Enumerable.Range(1, 12).Select(ShortcutKey.Function));
+
+        foreach (var key in keys)
+        {
+            Assert.True(KeyChord.TryGetShortcutKey(KeyChord.VirtualKeyOf(key), out var mapped));
+            Assert.Equal(key, mapped);
+        }
+    }
+
+    [Theory]
+    [InlineData(VirtualKeys.Escape)]
+    [InlineData(0x09)] // Tab
+    [InlineData(VirtualKeys.LeftControl)]
+    [InlineData(VirtualKeys.LeftWindows)]
+    [InlineData(VirtualKeys.Neutral)]
+    [InlineData(0x60)] // Numpad 0
+    [InlineData(0x7C)] // F13
+    public void TryGetShortcutKey_OtherKey_IsNotACandidate(int vkCode) =>
+        Assert.False(KeyChord.TryGetShortcutKey(vkCode, out _));
+
+    [Fact]
     public void FromSnapshot_BindsDrawClearAndFilledSlotsOnly()
     {
         var applause = new SoundReference("a1.wav", "applause.wav");
