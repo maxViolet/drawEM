@@ -120,28 +120,28 @@ Video, effects, and their channel behavior need a separate future roadmap.
 
 ## Delivery order
 
-Each step has a [task](step-1/task.md), implementation plan, and acceptance
+Each step has a [task](step-1-settings/task.md), implementation plan, and acceptance
 criteria in its own directory. Complete automated checks during implementation;
 record published-app desktop checks separately in Step 8. The contract above
 governs every step.
 
-1. [Define and persist the settings snapshot](step-1/task.md): validation,
+1. [Define and persist the settings snapshot](step-1-settings/task.md): validation,
    schema/version policy, durable writes, startup fallback, and empty slots on
    first launch.
-2. [Build the managed sound library](step-2/task.md): copy and share WAV/MP3,
+2. [Build the managed sound library](step-2-sound-library/task.md): copy and share WAV/MP3,
    discard draft imports, collect unreferenced copies, and preserve media when
    settings are unreadable.
-3. [Route configurable actions](step-3/task.md): one in-memory binding snapshot,
+3. [Route configurable actions](step-3-action-routing/task.md): one in-memory binding snapshot,
    drawing and sound dispatch, Right Alt pass-through, and existing suppression.
-4. [Capture shortcuts and protect layout switching](step-4/task.md): hook-owned
+4. [Capture shortcuts and protect layout switching](step-4-shortcut-capture/task.md): hook-owned
    capture, invalid-chord retry, release bookkeeping, and neutral-key injection
    for suppressed `Alt+Shift` and `Ctrl+Shift` candidates.
-5. [Apply configurable drawing style](step-5/task.md): color and physical-pixel
+5. [Apply configurable drawing style](step-5-drawing-style/task.md): color and physical-pixel
    width for lines and dots on the stroke's monitor, including mixed DPI.
-6. [Apply saved settings at runtime](step-6/task.md): retire v2 code assignments,
+6. [Apply saved settings at runtime](step-6-runtime-settings/task.md): retire v2 code assignments,
    connect playback to the active snapshot, stop sound, exit drawing, and clear
    every monitor before exposing the saved snapshot.
-7. [Add the Settings window](step-7/task.md): tray entry, Drawing and Actions
+7. [Add the Settings window](step-7-settings-window/task.md): tray entry, Drawing and Actions
    drafts, Save/Cancel/defaults, file selection, errors, and draft `Sample`.
-8. [Publish and verify on Windows](step-8/task.md): automated suite, Windows x64
+8. [Publish and verify on Windows](step-8-publish/task.md): automated suite, Windows x64
    publish, and recorded desktop acceptance including v1/v2 regressions.

@@ -47,7 +47,7 @@ are confirmed.
   unplayable file is logged locally and does not terminate drawEM or affect
   drawing. Exit stops playback and releases its resources.
 
-### 1. [Define the command and code configuration](stage-1/step-1/task.md)
+### 1. [Define the command and code configuration](stage-1/step-1-sound-command/task.md)
 
 - Define a playback command that identifies a configured sound without
   depending on WPF, Win32 hooks, or the future settings UI.
@@ -60,7 +60,7 @@ are confirmed.
 **Done when:** the mapping and playback command have one clear owner and can be
 tested without real audio hardware or a settings window.
 
-### 2. [Implement the global sound channel](stage-1/step-2/task.md)
+### 2. [Implement the global sound channel](stage-1/step-2-sound-channel/task.md)
 
 - Add a playback adapter for WAV and MP3 and a controller that owns at most
   one active sound. For every request, stop the active sound action before
@@ -77,7 +77,7 @@ tested without real audio hardware or a settings window.
 ten-second timeout, stale callbacks, and recoverable failure using a fake
 playback adapter.
 
-### 3. [Connect the sound shortcuts](stage-1/step-3/task.md)
+### 3. [Connect the sound shortcuts](stage-1/step-3-sound-shortcuts/task.md)
 
 - Extend the existing global keyboard path to recognize the configured
   `Ctrl+Alt+1` through `Ctrl+Alt+8` commands on the first key-down of a press.
@@ -93,7 +93,7 @@ playback adapter.
 repress, assigned-slot suppression, unassigned-slot pass-through, and sound
 invocation during an active stroke.
 
-### 4. [Publish and verify](stage-1/step-4/task.md)
+### 4. [Publish and verify](stage-1/step-4-publish/task.md)
 
 - Run the automated tests and publish the self-contained Windows x64 app.
 - Manually play configured WAV and MP3 files through shortcuts while another
@@ -110,7 +110,7 @@ invocation during an active stroke.
 checks on the tested Windows setup. Unit tests alone cannot establish audible
 output or global input behavior.
 
-### 5. [Route sound into the call microphone](stage-1/step-5/task.md)
+### 5. [Route sound into the call microphone](stage-1/step-5-call-microphone/task.md)
 
 - Use Voicemeeter Standard to mix physical microphone voice and drawEM into
   a virtual microphone selected in Google Meet. No custom driver is planned.

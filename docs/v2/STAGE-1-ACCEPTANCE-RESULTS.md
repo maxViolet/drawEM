@@ -1,6 +1,6 @@
 # Stage 1 acceptance results: sound command
 
-**Plan:** [Stage 1 / Step 4](stage-1/step-4/plan.md). **Criteria:** [acceptance](stage-1/step-4/acceptance.md).
+**Plan:** [Stage 1 / Step 4](stage-1/step-4-publish/plan.md). **Criteria:** [acceptance](stage-1/step-4-publish/acceptance.md).
 
 **Status:** automated gate passed; manual gate in progress.
 

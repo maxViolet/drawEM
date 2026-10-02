@@ -8,11 +8,11 @@ Each step has a task description, implementation plan, and acceptance criteria:
 
 | Step | Task | Plan | Acceptance |
 | --- | --- | --- | --- |
-| 1. Command and code configuration | [Task](stage-1/step-1/task.md) | [Plan](stage-1/step-1/plan.md) | [Acceptance](stage-1/step-1/acceptance.md) |
-| 2. Global sound channel | [Task](stage-1/step-2/task.md) | [Plan](stage-1/step-2/plan.md) | [Acceptance](stage-1/step-2/acceptance.md) |
-| 3. Sound shortcuts | [Task](stage-1/step-3/task.md) | [Plan](stage-1/step-3/plan.md) | [Acceptance](stage-1/step-3/acceptance.md) |
-| 4. Publish and verify | [Task](stage-1/step-4/task.md) | [Plan](stage-1/step-4/plan.md) | [Acceptance](stage-1/step-4/acceptance.md) |
-| 5. Call microphone routing | [Task](stage-1/step-5/task.md) | [Plan](stage-1/step-5/plan.md) | [Acceptance](stage-1/step-5/acceptance.md) |
+| 1. Command and code configuration | [Task](stage-1/step-1-sound-command/task.md) | [Plan](stage-1/step-1-sound-command/plan.md) | [Acceptance](stage-1/step-1-sound-command/acceptance.md) |
+| 2. Global sound channel | [Task](stage-1/step-2-sound-channel/task.md) | [Plan](stage-1/step-2-sound-channel/plan.md) | [Acceptance](stage-1/step-2-sound-channel/acceptance.md) |
+| 3. Sound shortcuts | [Task](stage-1/step-3-sound-shortcuts/task.md) | [Plan](stage-1/step-3-sound-shortcuts/plan.md) | [Acceptance](stage-1/step-3-sound-shortcuts/acceptance.md) |
+| 4. Publish and verify | [Task](stage-1/step-4-publish/task.md) | [Plan](stage-1/step-4-publish/plan.md) | [Acceptance](stage-1/step-4-publish/acceptance.md) |
+| 5. Call microphone routing | [Task](stage-1/step-5-call-microphone/task.md) | [Plan](stage-1/step-5-call-microphone/plan.md) | [Acceptance](stage-1/step-5-call-microphone/acceptance.md) |
 
 Use a red-to-green TDD cycle for testable behavior in steps 1 through 3: one failing behavior test, the minimum implementation, then the next behavior. Step 4 records automated results and separate manual acceptance evidence. Passing unit tests does not complete manual acceptance.
 
@@ -71,14 +71,14 @@ verification of the upstream mix.
 
 ## 5. Route sound into the call microphone
 
-1. Follow the [external mixer setup plan](stage-1/step-5/plan.md) to route only
+1. Follow the [external mixer setup plan](stage-1/step-5-call-microphone/plan.md) to route only
    physical microphone voice and drawEM to the virtual recording output.
 2. Monitor drawEM in headphones without returning the user's own voice.
    Keep other app audio and received call audio outside the outgoing mix.
 3. Verify the signal before Meet processing, then test a Meet call with
    noise cancellation enabled and microphone mute/unmute.
 4. Record upstream results, remote observations, and filtering limitations
-   against [step 5 acceptance](stage-1/step-5/acceptance.md).
+   against [step 5 acceptance](stage-1/step-5-call-microphone/acceptance.md).
 
 **Done when:** mixing, monitoring, and routing isolation pass, and the Meet
 call and mute behavior are documented under the agreed filtering limitation.
