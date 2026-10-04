@@ -295,12 +295,12 @@ public class StrokeRenderElementTests
     [Theory]
     [InlineData(1.0)]
     [InlineData(1.5)]
-    public void UpdateState_MixedDpiMonitors_KeepPhysicalWidthOnEachMonitor(double overlayScale)
+    public void UpdateState_StrokesOnTwoMonitors_KeepPhysicalWidthOnEachMonitor(double overlayScale)
     {
         // The overlay is one per-monitor-aware window, so it has one DPI even when its monitors differ.
         // Windows does not stretch it on the other monitor: a physical pixel is one surface pixel everywhere.
-        // A width converted with the monitor's own DPI would be wrong on the monitor that does not match
-        // the window, so both monitors must show the same physical width at either window DPI.
+        // Mixed DPI is therefore handled by design, not by a monitor DPI input. This test shows that
+        // clipping each stroke to its monitor keeps the physical width at either window DPI.
         const int width = 6;
         RunOnStaThread(() =>
         {

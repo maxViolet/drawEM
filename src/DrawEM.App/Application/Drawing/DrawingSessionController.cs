@@ -9,7 +9,8 @@ public sealed class DrawingSessionController
     private readonly Func<DrawingStyle> currentStyle;
     private readonly List<Stroke> completedStrokes = [];
     private List<ScreenPoint>? activePoints;
-    private DrawingStyle? activeStyle;
+    // Read only while activePoints is set; BeginStroke assigns both together.
+    private DrawingStyle activeStyle = SettingsSnapshot.Default.Style;
     private MonitorBounds? activeBounds;
     private bool drawModeActive;
     private int generation;
@@ -114,9 +115,8 @@ public sealed class DrawingSessionController
     {
         if (activePoints is not null)
         {
-            completedStrokes.Add(new Stroke(Snapshot(activePoints), activeStyle!, activeBounds));
+            completedStrokes.Add(new Stroke(Snapshot(activePoints), activeStyle, activeBounds));
             activePoints = null;
-            activeStyle = null;
         }
         activeBounds = null;
     }
@@ -126,7 +126,6 @@ public sealed class DrawingSessionController
         drawModeActive = false;
         completedStrokes.Clear();
         activePoints = null;
-        activeStyle = null;
         activeBounds = null;
         generation++;
         PublishState();
@@ -145,7 +144,7 @@ public sealed class DrawingSessionController
     {
         var active = activePoints is null
             ? null
-            : new Stroke(Snapshot(activePoints), activeStyle!, activeBounds);
+            : new Stroke(Snapshot(activePoints), activeStyle, activeBounds);
 
         StateChanged?.Invoke(new DrawingState(Snapshot(completedStrokes), active, drawModeActive, generation));
     }

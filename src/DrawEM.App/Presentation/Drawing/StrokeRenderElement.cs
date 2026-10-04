@@ -237,6 +237,10 @@ public sealed class StrokeRenderElement : FrameworkElement
         completedRendered = 0;
         activePointCount = 0;
         activeFirstPoint = null;
+
+        // Drop pens and brushes of cleared styles, so changing colors over time does not grow the caches.
+        penCache.Clear();
+        brushCache.Clear();
     }
 
     /// <summary>A pen whose width is the stroke's physical width converted to local units.</summary>
