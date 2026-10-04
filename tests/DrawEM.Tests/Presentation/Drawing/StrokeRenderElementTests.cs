@@ -13,17 +13,28 @@ public class StrokeRenderElementTests
     /// <summary>OrangeRed <c>#FF4500</c>, 4 physical pixels.</summary>
     private static readonly DrawingStyle DefaultStyle = SettingsSnapshot.Default.Style;
 
-    /// <summary>Blue channel of OrangeRed #FF4500 (Pbgra32 byte 0).</summary>
-    private const byte OrangeRedBlue = 0x00;
-
-    /// <summary>Green channel of OrangeRed #FF4500 (Pbgra32 byte 1).</summary>
-    private const byte OrangeRedGreen = 0x45;
-
-    /// <summary>Red channel of OrangeRed #FF4500 (Pbgra32 byte 2).</summary>
-    private const byte OrangeRedRed = 0xFF;
-
     /// <summary>Alpha of a fully opaque pixel (Pbgra32 byte 3).</summary>
     private const byte OpaqueAlpha = 0xFF;
+
+    /// <summary>WPF units per inch; a bitmap at this DPI has one pixel per unit.</summary>
+    private const double UnitsPerInch = 96;
+
+    /// <summary>Pbgra32 stores blue, green, red, and alpha bytes per pixel.</summary>
+    private const int BytesPerPixel = 4;
+
+    /// <summary>Size, in pixels, of the square element that the incremental-rendering tests use.</summary>
+    private const int SmallSurfaceSize = 20;
+
+    /// <summary>Widths 1, 4 (default), and 20 at overlay scales 100% and 150%.</summary>
+    public static TheoryData<int, double> WidthsAndScales => new()
+    {
+        { StrokeWidth.Min, 1.0 },
+        { 4, 1.0 },
+        { StrokeWidth.Max, 1.0 },
+        { StrokeWidth.Min, 1.5 },
+        { 4, 1.5 },
+        { StrokeWidth.Max, 1.5 },
+    };
 
     /// <summary>
     /// Allowed difference, in physical pixels, between a measured and a chosen width. Anti-aliasing
@@ -69,16 +80,9 @@ public class StrokeRenderElementTests
                     0),
                 new PhysicalToLocalTransform(0, 0, Matrix.Identity));
 
-            var bitmap = new RenderTargetBitmap(20, 20, 96, 96, PixelFormats.Pbgra32);
-            bitmap.Render(element);
-            var pixels = new byte[20 * 20 * 4];
-            bitmap.CopyPixels(pixels, 20 * 4, 0);
+            var pixels = RenderPixels(element, SmallSurfaceSize, SmallSurfaceSize, 1.0);
 
-            var offset = ((10 * 20) + 10) * 4;
-            Assert.Equal(OrangeRedBlue, pixels[offset]);
-            Assert.Equal(OrangeRedGreen, pixels[offset + 1]);
-            Assert.Equal(OrangeRedRed, pixels[offset + 2]);
-            Assert.Equal(OpaqueAlpha, pixels[offset + 3]);
+            Assert.Equal(Opaque(DefaultStyle.Color), PixelAt(pixels, SmallSurfaceSize, 10, 10));
         });
     }
 
@@ -257,12 +261,7 @@ public class StrokeRenderElementTests
     }
 
     [Theory]
-    [InlineData(StrokeWidth.Min, 1.0)]
-    [InlineData(4, 1.0)]
-    [InlineData(StrokeWidth.Max, 1.0)]
-    [InlineData(StrokeWidth.Min, 1.5)]
-    [InlineData(4, 1.5)]
-    [InlineData(StrokeWidth.Max, 1.5)]
+    [MemberData(nameof(WidthsAndScales))]
     public void UpdateState_LineHasChosenPhysicalWidth(int width, double overlayScale)
     {
         RunOnStaThread(() =>
@@ -270,17 +269,12 @@ public class StrokeRenderElementTests
             var surface = new DeviceSurface(60, 60, overlayScale);
             surface.Render(new Stroke([new ScreenPoint(10, 30), new ScreenPoint(50, 30)], StyleOfWidth(width)));
 
-            Assert.InRange(surface.ColumnCoverage(30, 0, 60), width - WidthTolerance, width + WidthTolerance);
+            AssertWidth(width, surface.ColumnCoverage(30, 0, 60));
         });
     }
 
     [Theory]
-    [InlineData(StrokeWidth.Min, 1.0)]
-    [InlineData(4, 1.0)]
-    [InlineData(StrokeWidth.Max, 1.0)]
-    [InlineData(StrokeWidth.Min, 1.5)]
-    [InlineData(4, 1.5)]
-    [InlineData(StrokeWidth.Max, 1.5)]
+    [MemberData(nameof(WidthsAndScales))]
     public void UpdateState_DotHasChosenPhysicalDiameter(int width, double overlayScale)
     {
         RunOnStaThread(() =>
@@ -288,7 +282,7 @@ public class StrokeRenderElementTests
             var surface = new DeviceSurface(60, 60, overlayScale);
             surface.Render(new Stroke([new ScreenPoint(30, 30)], StyleOfWidth(width)));
 
-            Assert.InRange(surface.DotDiameter(0, 0, 60, 60), width - WidthTolerance, width + WidthTolerance);
+            AssertWidth(width, surface.DotDiameter(0, 0, 60, 60));
         });
     }
 
@@ -315,10 +309,10 @@ public class StrokeRenderElementTests
                 new Stroke([new ScreenPoint(45, 15), new ScreenPoint(75, 15)], style, right),
                 new Stroke([new ScreenPoint(60, 45)], style, right));
 
-            Assert.InRange(surface.ColumnCoverage(20, 0, 30), width - WidthTolerance, width + WidthTolerance);
-            Assert.InRange(surface.ColumnCoverage(60, 0, 30), width - WidthTolerance, width + WidthTolerance);
-            Assert.InRange(surface.DotDiameter(0, 30, 40, 60), width - WidthTolerance, width + WidthTolerance);
-            Assert.InRange(surface.DotDiameter(40, 30, 80, 60), width - WidthTolerance, width + WidthTolerance);
+            AssertWidth(width, surface.ColumnCoverage(20, 0, 30));
+            AssertWidth(width, surface.ColumnCoverage(60, 0, 30));
+            AssertWidth(width, surface.DotDiameter(0, 30, 40, 60));
+            AssertWidth(width, surface.DotDiameter(40, 30, 80, 60));
         });
     }
 
@@ -333,7 +327,7 @@ public class StrokeRenderElementTests
             var color = new HexColor(0x1E, 0x90, 0xC8);
             surface.Render(new Stroke([new ScreenPoint(10, 10)], new DrawingStyle(color, new StrokeWidth(8))));
 
-            Assert.Equal((color.Blue, color.Green, color.Red, OpaqueAlpha), surface.PixelAt(10, 10));
+            Assert.Equal(Opaque(color), surface.PixelAt(10, 10));
         });
     }
 
@@ -349,13 +343,36 @@ public class StrokeRenderElementTests
                 new Stroke([new ScreenPoint(10, 10)], DefaultStyle),
                 new Stroke([new ScreenPoint(40, 10)], new DrawingStyle(blue, new StrokeWidth(StrokeWidth.Max))));
 
-            Assert.Equal((OrangeRedBlue, OrangeRedGreen, OrangeRedRed, OpaqueAlpha), surface.PixelAt(10, 10));
-            Assert.Equal((blue.Blue, blue.Green, blue.Red, OpaqueAlpha), surface.PixelAt(40, 10));
-            Assert.InRange(surface.DotDiameter(0, 0, 20, 20), 4 - WidthTolerance, 4 + WidthTolerance);
+            Assert.Equal(Opaque(DefaultStyle.Color), surface.PixelAt(10, 10));
+            Assert.Equal(Opaque(blue), surface.PixelAt(40, 10));
+            AssertWidth(DefaultStyle.Width.Pixels, surface.DotDiameter(0, 0, 20, 20));
         });
     }
 
     private static DrawingStyle StyleOfWidth(int width) => DefaultStyle with { Width = new StrokeWidth(width) };
+
+    private static void AssertWidth(int expected, double measured) =>
+        Assert.InRange(measured, expected - WidthTolerance, expected + WidthTolerance);
+
+    private static (byte Blue, byte Green, byte Red, byte Alpha) Opaque(HexColor color) =>
+        (color.Blue, color.Green, color.Red, OpaqueAlpha);
+
+    /// <summary>Renders <paramref name="element"/> into a bitmap with one pixel per physical pixel.</summary>
+    private static byte[] RenderPixels(StrokeRenderElement element, int width, int height, double scale)
+    {
+        var bitmap = new RenderTargetBitmap(
+            width, height, UnitsPerInch * scale, UnitsPerInch * scale, PixelFormats.Pbgra32);
+        bitmap.Render(element);
+        var pixels = new byte[width * height * BytesPerPixel];
+        bitmap.CopyPixels(pixels, width * BytesPerPixel, 0);
+        return pixels;
+    }
+
+    private static (byte Blue, byte Green, byte Red, byte Alpha) PixelAt(byte[] pixels, int width, int x, int y)
+    {
+        var offset = ((y * width) + x) * BytesPerPixel;
+        return (pixels[offset], pixels[offset + 1], pixels[offset + 2], pixels[offset + 3]);
+    }
 
     /// <summary>
     /// A stroke element rendered at an overlay scale into a bitmap with one pixel per physical pixel.
@@ -363,11 +380,6 @@ public class StrokeRenderElementTests
     /// </summary>
     private sealed class DeviceSurface
     {
-        /// <summary>WPF units per inch; a bitmap at this DPI has one pixel per unit.</summary>
-        private const double UnitsPerInch = 96;
-
-        private const int BytesPerPixel = 4;
-
         private readonly int width;
         private readonly int height;
         private readonly double scale;
@@ -390,19 +402,11 @@ public class StrokeRenderElementTests
             element.UpdateState(
                 new DrawingState(strokes, null, false, 0),
                 new PhysicalToLocalTransform(0, 0, new Matrix(1 / scale, 0, 0, 1 / scale, 0, 0)));
-
-            var bitmap = new RenderTargetBitmap(
-                width, height, UnitsPerInch * scale, UnitsPerInch * scale, PixelFormats.Pbgra32);
-            bitmap.Render(element);
-            pixels = new byte[width * height * BytesPerPixel];
-            bitmap.CopyPixels(pixels, width * BytesPerPixel, 0);
+            pixels = RenderPixels(element, width, height, scale);
         }
 
-        public (byte Blue, byte Green, byte Red, byte Alpha) PixelAt(int x, int y)
-        {
-            var offset = ((y * width) + x) * BytesPerPixel;
-            return (pixels[offset], pixels[offset + 1], pixels[offset + 2], pixels[offset + 3]);
-        }
+        public (byte Blue, byte Green, byte Red, byte Alpha) PixelAt(int x, int y) =>
+            StrokeRenderElementTests.PixelAt(pixels, width, x, y);
 
         /// <summary>Covered pixels in column <paramref name="x"/>: a horizontal line's width.</summary>
         public double ColumnCoverage(int x, int top, int bottom) => Coverage(x, top, x + 1, bottom);
@@ -426,14 +430,8 @@ public class StrokeRenderElementTests
         }
     }
 
-    private static byte PixelAlphaAt(StrokeRenderElement element, int x, int y)
-    {
-        var bitmap = new RenderTargetBitmap(20, 20, 96, 96, PixelFormats.Pbgra32);
-        bitmap.Render(element);
-        var pixels = new byte[20 * 20 * 4];
-        bitmap.CopyPixels(pixels, 20 * 4, 0);
-        return pixels[(((y * 20) + x) * 4) + 3];
-    }
+    private static byte PixelAlphaAt(StrokeRenderElement element, int x, int y) =>
+        PixelAt(RenderPixels(element, SmallSurfaceSize, SmallSurfaceSize, 1.0), SmallSurfaceSize, x, y).Alpha;
 
     private static void RunOnStaThread(Action action)
     {

@@ -1,4 +1,5 @@
 using System.Windows;
+using DrawEM.App.Domain.Settings;
 using DrawEM.App.Infrastructure;
 using DrawEM.App.Infrastructure.Drawing;
 using DrawEM.App.Infrastructure.Sound;
@@ -42,7 +43,8 @@ public partial class App : System.Windows.Application
 
         try
         {
-            controller = new DrawingSessionController();
+            // Step 6 replaces the default with the active saved snapshot's style.
+            controller = new DrawingSessionController(() => SettingsSnapshot.Default.Style);
             overlayWindow = new OverlayWindow();
             _ = new OverlayWindowAdapter(controller, overlayWindow);
 

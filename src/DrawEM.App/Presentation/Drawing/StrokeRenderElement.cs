@@ -147,12 +147,7 @@ public sealed class StrokeRenderElement : FrameworkElement
             var clipped = PushMonitorClip(drawingContext, stroke, transform);
             if (stroke.Points.Count == 1)
             {
-                drawingContext.DrawEllipse(
-                    GetBrush(stroke.Style.Color),
-                    null,
-                    transform.ToLocalPoint(stroke.Points[0]),
-                    DotRadius(stroke, transform),
-                    DotRadius(stroke, transform));
+                DrawDot(drawingContext, stroke, transform);
             }
             else
             {
@@ -177,12 +172,7 @@ public sealed class StrokeRenderElement : FrameworkElement
         using (var drawingContext = visual.RenderOpen())
         {
             var clipped = PushMonitorClip(drawingContext, active, transform);
-            drawingContext.DrawEllipse(
-                GetBrush(active.Style.Color),
-                null,
-                transform.ToLocalPoint(active.Points[0]),
-                DotRadius(active, transform),
-                DotRadius(active, transform));
+            DrawDot(drawingContext, active, transform);
             if (clipped) drawingContext.Pop();
         }
 
@@ -246,7 +236,7 @@ public sealed class StrokeRenderElement : FrameworkElement
     /// <summary>A pen whose width is the stroke's physical width converted to local units.</summary>
     private Pen GetPen(Stroke stroke, PhysicalToLocalTransform transform)
     {
-        var key = (Color: stroke.Style.Color, Thickness: transform.ToLocalLength(stroke.Style.Width.Pixels));
+        var key = (Color: stroke.Style.Color, Thickness: LocalWidth(stroke, transform));
         if (penCache.TryGetValue(key, out var cached))
         {
             return cached;
@@ -277,8 +267,16 @@ public sealed class StrokeRenderElement : FrameworkElement
     }
 
     /// <summary>A single-point stroke is a dot whose diameter equals the stroke's physical width.</summary>
-    private static double DotRadius(Stroke stroke, PhysicalToLocalTransform transform) =>
-        transform.ToLocalLength(stroke.Style.Width.Pixels) / DiameterToRadius;
+    private void DrawDot(DrawingContext context, Stroke stroke, PhysicalToLocalTransform transform)
+    {
+        var radius = LocalWidth(stroke, transform) / DiameterToRadius;
+        context.DrawEllipse(
+            GetBrush(stroke.Style.Color), null, transform.ToLocalPoint(stroke.Points[0]), radius, radius);
+    }
+
+    /// <summary>The stroke's physical width in local units: a pen width or a dot diameter.</summary>
+    private static double LocalWidth(Stroke stroke, PhysicalToLocalTransform transform) =>
+        transform.ToLocalLength(stroke.Style.Width.Pixels);
 
     private static bool PushMonitorClip(
         DrawingContext context, Stroke stroke, PhysicalToLocalTransform transform)
