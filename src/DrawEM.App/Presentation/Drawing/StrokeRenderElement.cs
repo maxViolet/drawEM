@@ -1,8 +1,8 @@
 using System.Windows;
 using System.Windows.Media;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Settings;
 using Brush = System.Windows.Media.Brush;
-using Brushes = System.Windows.Media.Brushes;
 using Pen = System.Windows.Media.Pen;
 
 namespace DrawEM.App.Presentation.Drawing;
@@ -25,7 +25,8 @@ public sealed class StrokeRenderElement : FrameworkElement
 
     private readonly VisualCollection children;
     private readonly List<DrawingVisual> activeSegmentVisuals = [];
-    private readonly Dictionary<(DrawingColor Color, int Thickness), Pen> penCache = [];
+    private readonly Dictionary<(HexColor Color, double Thickness), Pen> penCache = [];
+    private readonly Dictionary<HexColor, Brush> brushCache = [];
     private DrawingVisual? activeDotVisual;
     private int completedRendered;
     private int activePointCount;
@@ -146,16 +147,11 @@ public sealed class StrokeRenderElement : FrameworkElement
             var clipped = PushMonitorClip(drawingContext, stroke, transform);
             if (stroke.Points.Count == 1)
             {
-                drawingContext.DrawEllipse(
-                    ToBrush(stroke.Color),
-                    null,
-                    transform.ToLocalPoint(stroke.Points[0]),
-                    DotRadius(stroke.Thickness),
-                    DotRadius(stroke.Thickness));
+                DrawDot(drawingContext, stroke, transform);
             }
             else
             {
-                var pen = GetPen(stroke.Color, stroke.Thickness);
+                var pen = GetPen(stroke, transform);
                 for (var i = 1; i < stroke.Points.Count; i++)
                 {
                     drawingContext.DrawLine(
@@ -176,12 +172,7 @@ public sealed class StrokeRenderElement : FrameworkElement
         using (var drawingContext = visual.RenderOpen())
         {
             var clipped = PushMonitorClip(drawingContext, active, transform);
-            drawingContext.DrawEllipse(
-                ToBrush(active.Color),
-                null,
-                transform.ToLocalPoint(active.Points[0]),
-                DotRadius(active.Thickness),
-                DotRadius(active.Thickness));
+            DrawDot(drawingContext, active, transform);
             if (clipped) drawingContext.Pop();
         }
 
@@ -195,7 +186,7 @@ public sealed class StrokeRenderElement : FrameworkElement
         using (var drawingContext = visual.RenderOpen())
         {
             var clipped = PushMonitorClip(drawingContext, active, transform);
-            var pen = GetPen(active.Color, active.Thickness);
+            var pen = GetPen(active, transform);
             for (var i = fromIndex; i < active.Points.Count; i++)
             {
                 drawingContext.DrawLine(
@@ -236,17 +227,22 @@ public sealed class StrokeRenderElement : FrameworkElement
         completedRendered = 0;
         activePointCount = 0;
         activeFirstPoint = null;
+
+        // Drop pens and brushes of cleared styles, so changing colors over time does not grow the caches.
+        penCache.Clear();
+        brushCache.Clear();
     }
 
-    private Pen GetPen(DrawingColor color, int thickness)
+    /// <summary>A pen whose width is the stroke's physical width converted to local units.</summary>
+    private Pen GetPen(Stroke stroke, PhysicalToLocalTransform transform)
     {
-        var key = (color, thickness);
+        var key = (Color: stroke.Style.Color, Thickness: LocalWidth(stroke, transform));
         if (penCache.TryGetValue(key, out var cached))
         {
             return cached;
         }
 
-        var pen = new Pen(ToBrush(color), thickness)
+        var pen = new Pen(GetBrush(key.Color), key.Thickness)
         {
             StartLineCap = PenLineCap.Round,
             EndLineCap = PenLineCap.Round,
@@ -257,8 +253,30 @@ public sealed class StrokeRenderElement : FrameworkElement
         return pen;
     }
 
-    /// <summary>A single-point stroke is a dot whose diameter equals the stroke thickness.</summary>
-    private static double DotRadius(int thickness) => thickness / DiameterToRadius;
+    private Brush GetBrush(HexColor color)
+    {
+        if (brushCache.TryGetValue(color, out var cached))
+        {
+            return cached;
+        }
+
+        var brush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(color.Red, color.Green, color.Blue));
+        brush.Freeze();
+        brushCache[color] = brush;
+        return brush;
+    }
+
+    /// <summary>A single-point stroke is a dot whose diameter equals the stroke's physical width.</summary>
+    private void DrawDot(DrawingContext context, Stroke stroke, PhysicalToLocalTransform transform)
+    {
+        var radius = LocalWidth(stroke, transform) / DiameterToRadius;
+        context.DrawEllipse(
+            GetBrush(stroke.Style.Color), null, transform.ToLocalPoint(stroke.Points[0]), radius, radius);
+    }
+
+    /// <summary>The stroke's physical width in local units: a pen width or a dot diameter.</summary>
+    private static double LocalWidth(Stroke stroke, PhysicalToLocalTransform transform) =>
+        transform.ToLocalLength(stroke.Style.Width.Pixels);
 
     private static bool PushMonitorClip(
         DrawingContext context, Stroke stroke, PhysicalToLocalTransform transform)
@@ -273,10 +291,4 @@ public sealed class StrokeRenderElement : FrameworkElement
         context.PushClip(new RectangleGeometry(new Rect(topLeft, bottomRight)));
         return true;
     }
-
-    private static Brush ToBrush(DrawingColor color) => color switch
-    {
-        DrawingColor.OrangeRed => Brushes.OrangeRed,
-        _ => Brushes.OrangeRed,
-    };
 }

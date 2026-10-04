@@ -6,6 +6,9 @@
    sound paths. On first v3 launch, use eight empty slots; remove the
    production use of `SoundAssignments.Slots` without importing developer/test
    paths. Route recoverable load errors to the user while retaining the file.
+   [Step 5](../step-5-drawing-style/acceptance.md#validation) already loads
+   settings at startup, shows load errors with `SettingsFailureDialog`, and
+   passes the drawing style; reuse that load for shortcuts and sounds.
 2. Give sound creation and failure reporting a consistent view of the active
    snapshot, including managed file references. Preserve one global channel,
    stop-then-start replacement, same-sound restart, and the ten-second cap.
