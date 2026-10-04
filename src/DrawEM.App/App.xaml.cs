@@ -1,7 +1,8 @@
 using System.Windows;
-using DrawEM.App.Domain.Settings;
+using DrawEM.App.Application.Settings;
 using DrawEM.App.Infrastructure;
 using DrawEM.App.Infrastructure.Drawing;
+using DrawEM.App.Infrastructure.Settings;
 using DrawEM.App.Infrastructure.Sound;
 using DrawEM.App.Presentation.Drawing;
 using DrawingSessionController = DrawEM.App.Application.Drawing.DrawingSessionController;
@@ -43,8 +44,13 @@ public partial class App : System.Windows.Application
 
         try
         {
-            // Step 6 replaces the default with the active saved snapshot's style.
-            controller = new DrawingSessionController(() => SettingsSnapshot.Default.Style);
+            // Shortcuts and sounds still come from code; Step 6 builds them from these settings too
+            // and replaces the snapshot on Save.
+            var settings = SettingsStartup.Load(
+                new JsonSettingsStore(JsonSettingsStore.DefaultDirectory),
+                new SettingsFailureDialog(message =>
+                    MessageBox.Show(message, "drawEM", MessageBoxButton.OK, MessageBoxImage.Warning)));
+            controller = new DrawingSessionController(() => settings.Active.Style);
             overlayWindow = new OverlayWindow();
             _ = new OverlayWindowAdapter(controller, overlayWindow);
 

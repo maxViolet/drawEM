@@ -1,5 +1,7 @@
 using System.Text;
+using DrawEM.App.Application.Drawing;
 using DrawEM.App.Application.Settings;
+using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Infrastructure.Settings;
 
@@ -64,6 +66,33 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         Assert.Equal(snapshot, Assert.IsType<SettingsLoadResult.Loaded>(result).Snapshot);
         Assert.Equal([SettingsPath], Directory.GetFiles(directory));
+    }
+
+    [Fact]
+    public void SavedStyle_IsUsedByNewStrokesAfterRestart()
+    {
+        Store().Save(Custom());
+        var startup = SettingsStartup.Load(Store(), new NoReporter());
+        var controller = new DrawingSessionController(() => startup.Active.Style);
+
+        controller.EnterDrawMode(new ScreenPoint(1, 1));
+        controller.ExitDrawMode();
+
+        Assert.Equal(Custom().Style, Assert.Single(controller.CompletedStrokes).Style);
+    }
+
+    [Fact]
+    public void UnreadableSettings_ShowReasonAndRecoveryCopy()
+    {
+        Directory.CreateDirectory(directory);
+        File.WriteAllText(SettingsPath, "damaged");
+        var messages = new List<string>();
+
+        SettingsStartup.Load(Store(), new SettingsFailureDialog(messages.Add));
+
+        var message = Assert.Single(messages);
+        Assert.Contains("started with defaults", message);
+        Assert.Contains(Assert.Single(Directory.GetFiles(directory, "settings.unreadable-*.json")), message);
     }
 
     [Fact]

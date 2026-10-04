@@ -15,7 +15,10 @@
 
 ## Validation
 
-- `dotnet test` (2026-10-04): 378 passed, 0 failed.
+- `dotnet test -c Release` (2026-10-04): 380 passed, 0 failed.
+- `Infrastructure/Settings/JsonSettingsStoreTests`: a saved style reaches new
+  strokes after a restart through `SettingsStartup.Load`; unreadable settings
+  show the reason and the recovery copy path.
 - `Application/Drawing/DrawingSessionControllerTests`: a stroke keeps the style
   read when it starts; a style change during or after a stroke affects only
   the next stroke. The parameterless controller uses `#FF4500`, 4 pixels.
@@ -36,5 +39,8 @@
   comes from that design, not from a test: no test input carries a monitor
   DPI, so the two-monitor test shows only that monitor clipping keeps the
   width. Mixed-DPI desktop appearance is a [Step 8](../step-8-publish/task.md) check.
-- Not wired to saved settings yet: the app draws with the default style until
-  [Step 6](../step-6-runtime-settings/task.md) passes the active snapshot's style.
+- App wiring: `App.xaml.cs` loads saved settings at startup and passes their
+  style to the controller. An unreadable file shows a message and the app
+  starts with defaults. Shortcuts and sounds still come from code, and a
+  saved change applies after restart; [Step 6](../step-6-runtime-settings/task.md)
+  builds them from settings and applies Save at runtime.

@@ -16,3 +16,7 @@
 3. Test rendered line and dot dimensions at 100% and 150%, including strokes
    on monitors with different DPI. Test arbitrary valid HEX color and the
    1- and 20-pixel width boundaries; record any rasterization tolerance.
+   **Changed:** an automated test cannot create monitors with different DPI;
+   the renderer has no monitor-DPI input to vary. Automated tests cover 100%
+   and 150% overlay scales and strokes clipped to two monitors. Mixed-DPI
+   width is measured on a desktop in [Step 8](../step-8-publish/task.md).
