@@ -5,8 +5,11 @@
 - [x] New strokes use the configured color and physical-pixel width; existing
   strokes retain their creation-time style until cleared.
 - [x] Line pens and single-point dots render at the chosen physical width on
-  each stroke's monitor at 100%, 150%, and mixed DPI in automated rendering
-  tests with explicit rasterization tolerance.
+  each stroke's monitor at 100% and 150% in automated rendering tests with
+  explicit rasterization tolerance.
+- [ ] Mixed DPI: satisfied by design, not by an automated test (see
+  [Validation](#validation)). Confirm on a mixed-DPI desktop in
+  [Step 8](../step-8-publish/task.md).
 - [x] Widths 1 and 20 and a nondefault HEX color are covered by tests.
   Measured desktop appearance remains for [Step 8](../step-8-publish/task.md).
 
