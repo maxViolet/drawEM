@@ -3,12 +3,16 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using DrawEM.App.Application.Drawing;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Settings;
 using DrawEM.App.Presentation.Drawing;
 
 namespace DrawEM.Tests.Presentation.Drawing;
 
 public class StrokeRenderElementTests
 {
+    /// <summary>OrangeRed <c>#FF4500</c>, 4 physical pixels.</summary>
+    private static readonly DrawingStyle DefaultStyle = SettingsSnapshot.Default.Style;
+
     /// <summary>Blue channel of OrangeRed #FF4500 (Pbgra32 byte 0).</summary>
     private const byte OrangeRedBlue = 0x00;
 
@@ -21,6 +25,12 @@ public class StrokeRenderElementTests
     /// <summary>Alpha of a fully opaque pixel (Pbgra32 byte 3).</summary>
     private const byte OpaqueAlpha = 0xFF;
 
+    /// <summary>
+    /// Allowed difference, in physical pixels, between a measured and a chosen width. Anti-aliasing
+    /// spreads an edge over partial pixels; coverage counts them fractionally but keeps rounding error.
+    /// </summary>
+    private const double WidthTolerance = 0.25;
+
     [Fact]
     public void UpdateState_ClipsStrokeThicknessToItsStartingMonitor()
     {
@@ -31,7 +41,7 @@ public class StrokeRenderElementTests
             element.Arrange(new Rect(0, 0, 20, 20));
             var bounds = new MonitorBounds(0, 0, 10, 20);
             element.UpdateState(
-                new DrawingState([], new Stroke([new ScreenPoint(9, 10)], DrawingColor.OrangeRed, 4, bounds), true, 0),
+                new DrawingState([], new Stroke([new ScreenPoint(9, 10)], DefaultStyle, bounds), true, 0),
                 new PhysicalToLocalTransform(0, 0, Matrix.Identity));
 
             Assert.True(PixelAlphaAt(element, 9, 10) > 0);
@@ -54,7 +64,7 @@ public class StrokeRenderElementTests
             element.UpdateState(
                 new DrawingState(
                     [],
-                    new Stroke([new ScreenPoint(10, 10)], DrawingColor.OrangeRed, 4),
+                    new Stroke([new ScreenPoint(10, 10)], DefaultStyle),
                     true,
                     0),
                 new PhysicalToLocalTransform(0, 0, Matrix.Identity));
@@ -83,15 +93,15 @@ public class StrokeRenderElementTests
             var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
 
             element.UpdateState(
-                new DrawingState([], new Stroke([new ScreenPoint(2, 10)], DrawingColor.OrangeRed, 4), true, 0),
+                new DrawingState([], new Stroke([new ScreenPoint(2, 10)], DefaultStyle), true, 0),
                 transform);
             element.UpdateState(
-                new DrawingState([], new Stroke([new ScreenPoint(2, 10), new ScreenPoint(10, 10)], DrawingColor.OrangeRed, 4), true, 0),
+                new DrawingState([], new Stroke([new ScreenPoint(2, 10), new ScreenPoint(10, 10)], DefaultStyle), true, 0),
                 transform);
             element.UpdateState(
                 new DrawingState(
                     [],
-                    new Stroke([new ScreenPoint(2, 10), new ScreenPoint(10, 10), new ScreenPoint(17, 10)], DrawingColor.OrangeRed, 4),
+                    new Stroke([new ScreenPoint(2, 10), new ScreenPoint(10, 10), new ScreenPoint(17, 10)], DefaultStyle),
                     true,
                     0),
                 transform);
@@ -110,12 +120,12 @@ public class StrokeRenderElementTests
             element.Measure(new Size(20, 20));
             element.Arrange(new Rect(0, 0, 20, 20));
             var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
-            var completed = new Stroke([new ScreenPoint(1, 1), new ScreenPoint(5, 1)], DrawingColor.OrangeRed, 4);
+            var completed = new Stroke([new ScreenPoint(1, 1), new ScreenPoint(5, 1)], DefaultStyle);
 
             element.UpdateState(new DrawingState([], completed, true, 0), transform);
             element.UpdateState(new DrawingState([completed], null, false, 0), transform);
             element.UpdateState(
-                new DrawingState([completed], new Stroke([new ScreenPoint(15, 15)], DrawingColor.OrangeRed, 4), true, 0),
+                new DrawingState([completed], new Stroke([new ScreenPoint(15, 15)], DefaultStyle), true, 0),
                 transform);
 
             Assert.Equal((byte)255, PixelAlphaAt(element, 5, 1));
@@ -132,7 +142,7 @@ public class StrokeRenderElementTests
             element.Measure(new Size(20, 20));
             element.Arrange(new Rect(0, 0, 20, 20));
             var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
-            var completed = new Stroke([new ScreenPoint(1, 1), new ScreenPoint(5, 1)], DrawingColor.OrangeRed, 4);
+            var completed = new Stroke([new ScreenPoint(1, 1), new ScreenPoint(5, 1)], DefaultStyle);
 
             element.UpdateState(new DrawingState([], completed, true, 0), transform);
             element.UpdateState(new DrawingState([completed], null, false, 0), transform);
@@ -157,8 +167,8 @@ public class StrokeRenderElementTests
             element.Measure(new Size(20, 20));
             element.Arrange(new Rect(0, 0, 20, 20));
             var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
-            var oldStroke = new Stroke([new ScreenPoint(1, 1), new ScreenPoint(5, 1)], DrawingColor.OrangeRed, 4);
-            var newStroke = new Stroke([new ScreenPoint(12, 12), new ScreenPoint(16, 12)], DrawingColor.OrangeRed, 4);
+            var oldStroke = new Stroke([new ScreenPoint(1, 1), new ScreenPoint(5, 1)], DefaultStyle);
+            var newStroke = new Stroke([new ScreenPoint(12, 12), new ScreenPoint(16, 12)], DefaultStyle);
 
             element.UpdateState(new DrawingState([oldStroke], null, false, 0), transform);
             Assert.Equal((byte)255, PixelAlphaAt(element, 5, 1));
@@ -185,13 +195,12 @@ public class StrokeRenderElementTests
             var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
 
             element.UpdateState(
-                new DrawingState([], new Stroke([new ScreenPoint(2, 2), new ScreenPoint(6, 2)], DrawingColor.OrangeRed, 4), true, 0),
+                new DrawingState([], new Stroke([new ScreenPoint(2, 2), new ScreenPoint(6, 2)], DefaultStyle), true, 0),
                 transform);
 
             var completedWithExtraPoint = new Stroke(
                 [new ScreenPoint(2, 2), new ScreenPoint(6, 2), new ScreenPoint(10, 2)],
-                DrawingColor.OrangeRed,
-                4);
+                DefaultStyle);
             element.UpdateState(new DrawingState([completedWithExtraPoint], null, false, 0), transform);
 
             Assert.Equal((byte)255, PixelAlphaAt(element, 10, 2));
@@ -201,14 +210,14 @@ public class StrokeRenderElementTests
             element.UpdateState(
                 new DrawingState(
                     [completedWithExtraPoint],
-                    new Stroke([new ScreenPoint(2, 2)], DrawingColor.OrangeRed, 4),
+                    new Stroke([new ScreenPoint(2, 2)], DefaultStyle),
                     true,
                     0),
                 transform);
             element.UpdateState(
                 new DrawingState(
                     [completedWithExtraPoint],
-                    new Stroke([new ScreenPoint(2, 2), new ScreenPoint(2, 15)], DrawingColor.OrangeRed, 4),
+                    new Stroke([new ScreenPoint(2, 2), new ScreenPoint(2, 15)], DefaultStyle),
                     true,
                     0),
                 transform);
@@ -245,6 +254,176 @@ public class StrokeRenderElementTests
             Assert.Equal((byte)0, PixelAlphaAt(element, 15, 5));
             Assert.Empty(controller.CompletedStrokes);
         });
+    }
+
+    [Theory]
+    [InlineData(StrokeWidth.Min, 1.0)]
+    [InlineData(4, 1.0)]
+    [InlineData(StrokeWidth.Max, 1.0)]
+    [InlineData(StrokeWidth.Min, 1.5)]
+    [InlineData(4, 1.5)]
+    [InlineData(StrokeWidth.Max, 1.5)]
+    public void UpdateState_LineHasChosenPhysicalWidth(int width, double overlayScale)
+    {
+        RunOnStaThread(() =>
+        {
+            var surface = new DeviceSurface(60, 60, overlayScale);
+            surface.Render(new Stroke([new ScreenPoint(10, 30), new ScreenPoint(50, 30)], StyleOfWidth(width)));
+
+            Assert.InRange(surface.ColumnCoverage(30, 0, 60), width - WidthTolerance, width + WidthTolerance);
+        });
+    }
+
+    [Theory]
+    [InlineData(StrokeWidth.Min, 1.0)]
+    [InlineData(4, 1.0)]
+    [InlineData(StrokeWidth.Max, 1.0)]
+    [InlineData(StrokeWidth.Min, 1.5)]
+    [InlineData(4, 1.5)]
+    [InlineData(StrokeWidth.Max, 1.5)]
+    public void UpdateState_DotHasChosenPhysicalDiameter(int width, double overlayScale)
+    {
+        RunOnStaThread(() =>
+        {
+            var surface = new DeviceSurface(60, 60, overlayScale);
+            surface.Render(new Stroke([new ScreenPoint(30, 30)], StyleOfWidth(width)));
+
+            Assert.InRange(surface.DotDiameter(0, 0, 60, 60), width - WidthTolerance, width + WidthTolerance);
+        });
+    }
+
+    [Theory]
+    [InlineData(1.0)]
+    [InlineData(1.5)]
+    public void UpdateState_MixedDpiMonitors_KeepPhysicalWidthOnEachMonitor(double overlayScale)
+    {
+        // The overlay is one per-monitor-aware window, so it has one DPI even when its monitors differ.
+        // Windows does not stretch it on the other monitor: a physical pixel is one surface pixel everywhere.
+        // A width converted with the monitor's own DPI would be wrong on the monitor that does not match
+        // the window, so both monitors must show the same physical width at either window DPI.
+        const int width = 6;
+        RunOnStaThread(() =>
+        {
+            var surface = new DeviceSurface(80, 60, overlayScale);
+            var left = new MonitorBounds(0, 0, 40, 60);
+            var right = new MonitorBounds(40, 0, 80, 60);
+            var style = StyleOfWidth(width);
+
+            surface.Render(
+                new Stroke([new ScreenPoint(5, 15), new ScreenPoint(35, 15)], style, left),
+                new Stroke([new ScreenPoint(20, 45)], style, left),
+                new Stroke([new ScreenPoint(45, 15), new ScreenPoint(75, 15)], style, right),
+                new Stroke([new ScreenPoint(60, 45)], style, right));
+
+            Assert.InRange(surface.ColumnCoverage(20, 0, 30), width - WidthTolerance, width + WidthTolerance);
+            Assert.InRange(surface.ColumnCoverage(60, 0, 30), width - WidthTolerance, width + WidthTolerance);
+            Assert.InRange(surface.DotDiameter(0, 30, 40, 60), width - WidthTolerance, width + WidthTolerance);
+            Assert.InRange(surface.DotDiameter(40, 30, 80, 60), width - WidthTolerance, width + WidthTolerance);
+        });
+    }
+
+    [Theory]
+    [InlineData(1.0)]
+    [InlineData(1.5)]
+    public void UpdateState_UsesStrokeHexColor(double overlayScale)
+    {
+        RunOnStaThread(() =>
+        {
+            var surface = new DeviceSurface(20, 20, overlayScale);
+            var color = new HexColor(0x1E, 0x90, 0xC8);
+            surface.Render(new Stroke([new ScreenPoint(10, 10)], new DrawingStyle(color, new StrokeWidth(8))));
+
+            Assert.Equal((color.Blue, color.Green, color.Red, OpaqueAlpha), surface.PixelAt(10, 10));
+        });
+    }
+
+    [Fact]
+    public void UpdateState_StrokesKeepTheirOwnStyle()
+    {
+        RunOnStaThread(() =>
+        {
+            var surface = new DeviceSurface(60, 20, 1.0);
+            var blue = new HexColor(0x00, 0x00, 0xFF);
+
+            surface.Render(
+                new Stroke([new ScreenPoint(10, 10)], DefaultStyle),
+                new Stroke([new ScreenPoint(40, 10)], new DrawingStyle(blue, new StrokeWidth(StrokeWidth.Max))));
+
+            Assert.Equal((OrangeRedBlue, OrangeRedGreen, OrangeRedRed, OpaqueAlpha), surface.PixelAt(10, 10));
+            Assert.Equal((blue.Blue, blue.Green, blue.Red, OpaqueAlpha), surface.PixelAt(40, 10));
+            Assert.InRange(surface.DotDiameter(0, 0, 20, 20), 4 - WidthTolerance, 4 + WidthTolerance);
+        });
+    }
+
+    private static DrawingStyle StyleOfWidth(int width) => DefaultStyle with { Width = new StrokeWidth(width) };
+
+    /// <summary>
+    /// A stroke element rendered at an overlay scale into a bitmap with one pixel per physical pixel.
+    /// Coverage is the sum of alpha over a region, so anti-aliased edge pixels count fractionally.
+    /// </summary>
+    private sealed class DeviceSurface
+    {
+        /// <summary>WPF units per inch; a bitmap at this DPI has one pixel per unit.</summary>
+        private const double UnitsPerInch = 96;
+
+        private const int BytesPerPixel = 4;
+
+        private readonly int width;
+        private readonly int height;
+        private readonly double scale;
+        private readonly StrokeRenderElement element;
+        private byte[] pixels = [];
+
+        public DeviceSurface(int width, int height, double scale)
+        {
+            this.width = width;
+            this.height = height;
+            this.scale = scale;
+            var size = new Size(width / scale, height / scale);
+            element = new StrokeRenderElement { Width = size.Width, Height = size.Height };
+            element.Measure(size);
+            element.Arrange(new Rect(size));
+        }
+
+        public void Render(params Stroke[] strokes)
+        {
+            element.UpdateState(
+                new DrawingState(strokes, null, false, 0),
+                new PhysicalToLocalTransform(0, 0, new Matrix(1 / scale, 0, 0, 1 / scale, 0, 0)));
+
+            var bitmap = new RenderTargetBitmap(
+                width, height, UnitsPerInch * scale, UnitsPerInch * scale, PixelFormats.Pbgra32);
+            bitmap.Render(element);
+            pixels = new byte[width * height * BytesPerPixel];
+            bitmap.CopyPixels(pixels, width * BytesPerPixel, 0);
+        }
+
+        public (byte Blue, byte Green, byte Red, byte Alpha) PixelAt(int x, int y)
+        {
+            var offset = ((y * width) + x) * BytesPerPixel;
+            return (pixels[offset], pixels[offset + 1], pixels[offset + 2], pixels[offset + 3]);
+        }
+
+        /// <summary>Covered pixels in column <paramref name="x"/>: a horizontal line's width.</summary>
+        public double ColumnCoverage(int x, int top, int bottom) => Coverage(x, top, x + 1, bottom);
+
+        /// <summary>The diameter of a circle with the covered area of the region.</summary>
+        public double DotDiameter(int left, int top, int right, int bottom) =>
+            2 * Math.Sqrt(Coverage(left, top, right, bottom) / Math.PI);
+
+        private double Coverage(int left, int top, int right, int bottom)
+        {
+            var alpha = 0d;
+            for (var y = top; y < bottom; y++)
+            {
+                for (var x = left; x < right; x++)
+                {
+                    alpha += PixelAt(x, y).Alpha;
+                }
+            }
+
+            return alpha / byte.MaxValue;
+        }
     }
 
     private static byte PixelAlphaAt(StrokeRenderElement element, int x, int y)

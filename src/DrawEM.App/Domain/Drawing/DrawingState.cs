@@ -1,16 +1,16 @@
+using DrawEM.App.Domain.Settings;
+
 namespace DrawEM.App.Domain.Drawing;
 
 public readonly record struct ScreenPoint(int X, int Y);
 
-public enum DrawingColor
-{
-    OrangeRed,
-}
-
+/// <summary>
+/// A stroke and the style it started with. The style never changes after creation, so a later
+/// settings change does not restyle the stroke. A single-point stroke is a dot whose diameter is the width.
+/// </summary>
 public sealed record Stroke(
     IReadOnlyList<ScreenPoint> Points,
-    DrawingColor Color,
-    int Thickness,
+    DrawingStyle Style,
     MonitorBounds? Bounds = null);
 
 // Generation increments on ClearAndExitDrawMode. A renderer that caches per-stroke

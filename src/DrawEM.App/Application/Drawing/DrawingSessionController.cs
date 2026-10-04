@@ -1,19 +1,38 @@
 using System.Collections.ObjectModel;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Settings;
 
 namespace DrawEM.App.Application.Drawing;
 
 public sealed class DrawingSessionController
 {
+    private readonly Func<DrawingStyle> currentStyle;
     private readonly List<Stroke> completedStrokes = [];
     private List<ScreenPoint>? activePoints;
+    private DrawingStyle? activeStyle;
     private MonitorBounds? activeBounds;
     private bool drawModeActive;
     private int generation;
 
+    /// <summary>Draws every stroke with the style of <see cref="SettingsSnapshot.Default"/>.</summary>
+    public DrawingSessionController()
+        : this(() => SettingsSnapshot.Default.Style)
+    {
+    }
+
+    /// <param name="currentStyle">
+    /// The active settings' style. It is read once when a stroke starts, and the stroke keeps that style.
+    /// </param>
+    public DrawingSessionController(Func<DrawingStyle> currentStyle)
+    {
+        ArgumentNullException.ThrowIfNull(currentStyle);
+        this.currentStyle = currentStyle;
+    }
+
     public IReadOnlyList<Stroke> CompletedStrokes => completedStrokes.AsReadOnly();
 
     public event Action<DrawingState>? StateChanged;
+
     public void EnterDrawMode()
     {
         drawModeActive = true;
@@ -23,7 +42,7 @@ public sealed class DrawingSessionController
     public void EnterDrawMode(ScreenPoint startingPoint)
     {
         drawModeActive = true;
-        activePoints = [startingPoint];
+        BeginStroke(startingPoint);
         PublishState();
     }
 
@@ -69,7 +88,7 @@ public sealed class DrawingSessionController
 
     public void Start(ScreenPoint point)
     {
-        activePoints = [point];
+        BeginStroke(point);
         PublishState();
     }
 
@@ -85,16 +104,19 @@ public sealed class DrawingSessionController
         PublishState();
     }
 
+    private void BeginStroke(ScreenPoint point)
+    {
+        activePoints = [point];
+        activeStyle = currentStyle();
+    }
+
     private void CompleteActiveStroke()
     {
         if (activePoints is not null)
         {
-            completedStrokes.Add(new Stroke(
-                Snapshot(activePoints),
-                DrawingDefaults.StrokeColor,
-                DrawingDefaults.StrokeThickness,
-                activeBounds));
+            completedStrokes.Add(new Stroke(Snapshot(activePoints), activeStyle!, activeBounds));
             activePoints = null;
+            activeStyle = null;
         }
         activeBounds = null;
     }
@@ -104,6 +126,7 @@ public sealed class DrawingSessionController
         drawModeActive = false;
         completedStrokes.Clear();
         activePoints = null;
+        activeStyle = null;
         activeBounds = null;
         generation++;
         PublishState();
@@ -122,8 +145,7 @@ public sealed class DrawingSessionController
     {
         var active = activePoints is null
             ? null
-            : new Stroke(Snapshot(activePoints), DrawingDefaults.StrokeColor,
-                DrawingDefaults.StrokeThickness, activeBounds);
+            : new Stroke(Snapshot(activePoints), activeStyle!, activeBounds);
 
         StateChanged?.Invoke(new DrawingState(Snapshot(completedStrokes), active, drawModeActive, generation));
     }

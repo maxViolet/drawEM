@@ -1,5 +1,6 @@
 using DrawEM.App.Application.Drawing;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Settings;
 
 namespace DrawEM.Tests.Application.Drawing;
 
@@ -55,11 +56,34 @@ public class DrawingSessionControllerTests
         session.End();
 
         var stroke = Assert.Single(session.CompletedStrokes);
-        Assert.Equal(DrawingColor.OrangeRed, stroke.Color);
-        Assert.Equal(4, stroke.Thickness);
+        Assert.Equal(SettingsSnapshot.Default.Style, stroke.Style);
         Assert.Equal(
             [new ScreenPoint(100, 200), new ScreenPoint(120, 215)],
             stroke.Points);
+    }
+
+    [Fact]
+    public void NewStroke_UsesStyleActiveWhenItStarts()
+    {
+        var first = new DrawingStyle(new HexColor(0x1E, 0x90, 0xC8), new StrokeWidth(StrokeWidth.Min));
+        var second = new DrawingStyle(new HexColor(0x00, 0xFF, 0x00), new StrokeWidth(StrokeWidth.Max));
+        var current = first;
+        var session = new DrawingSessionController(() => current);
+        DrawingState lastState = default!;
+        session.StateChanged += state => lastState = state;
+
+        session.EnterDrawMode(new ScreenPoint(10, 10));
+        current = second;
+        session.ReportPointer(new ScreenPoint(20, 10));
+
+        Assert.Equal(first, lastState.ActiveStroke!.Style);
+
+        session.ExitDrawMode();
+        session.EnterDrawMode();
+        session.ReportPointer(new ScreenPoint(30, 10));
+        session.ExitDrawMode();
+
+        Assert.Equal([first, second], session.CompletedStrokes.Select(stroke => stroke.Style));
     }
 
     [Fact]
