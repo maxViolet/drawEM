@@ -49,15 +49,23 @@ public enum SettingsErrorCode
 
 public sealed record SettingsError(SettingsErrorCode Code, SettingsCommand? Command = null, SettingsCommand? Other = null)
 {
-    public override string ToString() => Code switch
+    public override string ToString() => Describe(command => command.ToString());
+
+    /// <summary>The message, with each command named by <paramref name="name"/>.</summary>
+    public string Describe(Func<SettingsCommand, string> name)
     {
-        SettingsErrorCode.MissingShortcut => $"{Command} requires a shortcut.",
-        SettingsErrorCode.DuplicateShortcut => $"{Command} uses the same shortcut as {Other}.",
-        SettingsErrorCode.InvalidWidth => $"Width must be {StrokeWidth.Min}–{StrokeWidth.Max} physical pixels.",
-        SettingsErrorCode.MissingSound => $"{Command} requires a sound.",
-        SettingsErrorCode.InvalidShortcut => $"{Command} has an invalid shortcut.",
-        _ => $"Settings must contain exactly slots 1–{ActionSlot.Count} in order.",
-    };
+        string Name(SettingsCommand? command) => command is { } value ? name(value) : "";
+
+        return Code switch
+        {
+            SettingsErrorCode.MissingShortcut => $"{Name(Command)} requires a shortcut.",
+            SettingsErrorCode.DuplicateShortcut => $"{Name(Command)} uses the same shortcut as {Name(Other)}.",
+            SettingsErrorCode.InvalidWidth => $"Width must be {StrokeWidth.Min}–{StrokeWidth.Max} physical pixels.",
+            SettingsErrorCode.MissingSound => $"{Name(Command)} requires a sound.",
+            SettingsErrorCode.InvalidShortcut => $"{Name(Command)} has an invalid shortcut.",
+            _ => $"Settings must contain exactly slots 1–{ActionSlot.Count} in order.",
+        };
+    }
 }
 
 /// <summary>Either a snapshot or the reasons it is invalid.</summary>

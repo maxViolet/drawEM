@@ -5,6 +5,7 @@ using DrawEM.App.Infrastructure.Drawing;
 using DrawEM.App.Infrastructure.Settings;
 using DrawEM.App.Infrastructure.Sound;
 using DrawEM.App.Presentation.Drawing;
+using DrawEM.App.Presentation.Settings;
 using DrawingSessionController = DrawEM.App.Application.Drawing.DrawingSessionController;
 using MessageBox = System.Windows.MessageBox;
 using SoundChannelController = DrawEM.App.Application.Sound.SoundChannelController;
@@ -22,9 +23,7 @@ public partial class App : System.Windows.Application
     private TrayApplication? trayApplication;
     private ApplicationExitPolicy? exitPolicy;
     private SingleInstanceGuard? instanceGuard;
-
-    /// <summary>Saves a settings draft and applies it to the running app. Call on the UI thread.</summary>
-    internal SettingsSaveOperation? SettingsSave { get; private set; }
+    private SettingsWindow? settingsWindow;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -67,9 +66,11 @@ public partial class App : System.Windows.Application
             overlayWindow = new OverlayWindow();
             _ = new OverlayWindowAdapter(controller, overlayWindow);
 
+            // Failures of a Settings window sample are also shown in the window.
+            var playbackFailures = new SampleFailureRouter(soundLog, action => Dispatcher.BeginInvoke(action));
             var channelHost = new SoundChannelHost(dispatch => new SoundChannelController(
                 new MediaSoundPlayerFactory(),
-                soundLog,
+                playbackFailures,
                 TimeProvider.System,
                 dispatch));
             soundChannel = channelHost;
@@ -104,9 +105,18 @@ public partial class App : System.Windows.Application
                 new WpfApplicationLifetime(this),
                 action => Dispatcher.BeginInvoke(action),
                 failure => exitPolicy.Report("exit", failure));
-            trayApplication.Start();
 
-            SettingsSave = new SettingsSaveOperation(store, library, settings, channelHost, shortcuts, saveNotifications);
+            var settingsSave = new SettingsSaveOperation(store, library, settings, channelHost, shortcuts, saveNotifications);
+            var sampler = new SoundSampler(channelHost.Play, channelHost.Stop, settings.CommandFor, playbackFailures);
+            trayApplication.SettingsRequested += () => OpenSettings(() =>
+            {
+                var window = new SettingsWindow();
+                var editor = new SettingsEditor(
+                    () => settings.Current, library, settingsSave, sampler, saveNotifications.CleanupFailed);
+                window.Attach(new SettingsViewModel(editor, shortcuts, window));
+                return window;
+            });
+            trayApplication.Start();
         }
         catch (Exception exception)
         {
@@ -125,7 +135,7 @@ public partial class App : System.Windows.Application
     {
         try
         {
-            trayApplication?.Dispose();
+            CleanupSteps.RunAll([CloseSettings, () => trayApplication?.Dispose()]);
             base.OnExit(e);
         }
         finally
@@ -137,6 +147,29 @@ public partial class App : System.Windows.Application
             exitPolicy?.Complete();
         }
     }
+
+    /// <summary>Shows a Settings window over a fresh draft, or brings the open one to the front.</summary>
+    /// <param name="create">Builds the window over a fresh draft of the active settings.</param>
+    private void OpenSettings(Func<SettingsWindow> create)
+    {
+        if (settingsWindow is null)
+        {
+            var window = create();
+            window.Closed += (_, _) => settingsWindow = null;
+            settingsWindow = window;
+            window.Show();
+        }
+
+        if (settingsWindow.WindowState == WindowState.Minimized)
+        {
+            settingsWindow.WindowState = WindowState.Normal;
+        }
+
+        settingsWindow.Activate();
+    }
+
+    /// <summary>Discards an open draft, so its imports are removed before the sound library is left.</summary>
+    private void CloseSettings() => settingsWindow?.Close();
 
     private void ReleaseStartedResources()
     {

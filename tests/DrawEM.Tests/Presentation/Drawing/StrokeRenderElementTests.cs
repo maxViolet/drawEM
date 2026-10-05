@@ -45,7 +45,7 @@ public class StrokeRenderElementTests
     [Fact]
     public void UpdateState_ClipsStrokeThicknessToItsStartingMonitor()
     {
-        RunOnStaThread(() =>
+        StaThread.Run(() =>
         {
             var element = new StrokeRenderElement { Width = 20, Height = 20 };
             element.Measure(new Size(20, 20));
@@ -63,7 +63,7 @@ public class StrokeRenderElementTests
     [Fact]
     public void UpdateState_RendersSinglePointStroke()
     {
-        RunOnStaThread(() =>
+        StaThread.Run(() =>
         {
             var element = new StrokeRenderElement
             {
@@ -89,7 +89,7 @@ public class StrokeRenderElementTests
     [Fact]
     public void UpdateState_GrowingActiveStroke_RendersEachIncrementalSegment()
     {
-        RunOnStaThread(() =>
+        StaThread.Run(() =>
         {
             var element = new StrokeRenderElement { Width = 20, Height = 20 };
             element.Measure(new Size(20, 20));
@@ -118,7 +118,7 @@ public class StrokeRenderElementTests
     [Fact]
     public void UpdateState_StrokeCompletesThenNewOneStarts_KeepsCompletedPixelsVisible()
     {
-        RunOnStaThread(() =>
+        StaThread.Run(() =>
         {
             var element = new StrokeRenderElement { Width = 20, Height = 20 };
             element.Measure(new Size(20, 20));
@@ -140,7 +140,7 @@ public class StrokeRenderElementTests
     [Fact]
     public void UpdateState_FewerCompletedStrokesThanBefore_ResetsAndDropsOldPixels()
     {
-        RunOnStaThread(() =>
+        StaThread.Run(() =>
         {
             var element = new StrokeRenderElement { Width = 20, Height = 20 };
             element.Measure(new Size(20, 20));
@@ -165,7 +165,7 @@ public class StrokeRenderElementTests
         // Regression for a coalesced pendingState update that folds clear -> new
         // stroke -> end into one call: CompletedStrokes.Count is unchanged (1 -> 1),
         // so only Generation distinguishes this from "nothing happened".
-        RunOnStaThread(() =>
+        StaThread.Run(() =>
         {
             var element = new StrokeRenderElement { Width = 20, Height = 20 };
             element.Measure(new Size(20, 20));
@@ -191,7 +191,7 @@ public class StrokeRenderElementTests
         // renderer never saw as "active" (e.g. a move batched together with the End),
         // so the match heuristic in UpdateState cannot recognize the completed stroke
         // as a continuation of what it already drew.
-        RunOnStaThread(() =>
+        StaThread.Run(() =>
         {
             var element = new StrokeRenderElement { Width = 20, Height = 20 };
             element.Measure(new Size(20, 20));
@@ -238,7 +238,7 @@ public class StrokeRenderElementTests
         // reset. Wires a real DrawingSessionController to a real StrokeRenderElement, the
         // same way OverlayWindowAdapter/OverlayWindow.Render do, instead of hand-built
         // DrawingState values.
-        RunOnStaThread(() =>
+        StaThread.Run(() =>
         {
             var element = new StrokeRenderElement { Width = 20, Height = 20 };
             element.Measure(new Size(20, 20));
@@ -264,7 +264,7 @@ public class StrokeRenderElementTests
     [MemberData(nameof(WidthsAndScales))]
     public void UpdateState_LineHasChosenPhysicalWidth(int width, double overlayScale)
     {
-        RunOnStaThread(() =>
+        StaThread.Run(() =>
         {
             var surface = new DeviceSurface(60, 60, overlayScale);
             surface.Render(new Stroke([new ScreenPoint(10, 30), new ScreenPoint(50, 30)], StyleOfWidth(width)));
@@ -277,7 +277,7 @@ public class StrokeRenderElementTests
     [MemberData(nameof(WidthsAndScales))]
     public void UpdateState_DotHasChosenPhysicalDiameter(int width, double overlayScale)
     {
-        RunOnStaThread(() =>
+        StaThread.Run(() =>
         {
             var surface = new DeviceSurface(60, 60, overlayScale);
             surface.Render(new Stroke([new ScreenPoint(30, 30)], StyleOfWidth(width)));
@@ -296,7 +296,7 @@ public class StrokeRenderElementTests
         // Mixed DPI is therefore handled by design, not by a monitor DPI input. This test shows that
         // clipping each stroke to its monitor keeps the physical width at either window DPI.
         const int width = 6;
-        RunOnStaThread(() =>
+        StaThread.Run(() =>
         {
             var surface = new DeviceSurface(80, 60, overlayScale);
             var left = new MonitorBounds(0, 0, 40, 60);
@@ -321,7 +321,7 @@ public class StrokeRenderElementTests
     [InlineData(1.5)]
     public void UpdateState_UsesStrokeHexColor(double overlayScale)
     {
-        RunOnStaThread(() =>
+        StaThread.Run(() =>
         {
             var surface = new DeviceSurface(20, 20, overlayScale);
             var color = new HexColor(0x1E, 0x90, 0xC8);
@@ -334,7 +334,7 @@ public class StrokeRenderElementTests
     [Fact]
     public void UpdateState_StrokesKeepTheirOwnStyle()
     {
-        RunOnStaThread(() =>
+        StaThread.Run(() =>
         {
             var surface = new DeviceSurface(60, 20, 1.0);
             var blue = new HexColor(0x00, 0x00, 0xFF);
@@ -432,28 +432,4 @@ public class StrokeRenderElementTests
 
     private static byte PixelAlphaAt(StrokeRenderElement element, int x, int y) =>
         PixelAt(RenderPixels(element, SmallSurfaceSize, SmallSurfaceSize, 1.0), SmallSurfaceSize, x, y).Alpha;
-
-    private static void RunOnStaThread(Action action)
-    {
-        Exception? exception = null;
-        var thread = new Thread(() =>
-        {
-            try
-            {
-                action();
-            }
-            catch (Exception caught)
-            {
-                exception = caught;
-            }
-        });
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
-        thread.Join();
-
-        if (exception is not null)
-        {
-            throw new InvalidOperationException("The STA render assertion failed.", exception);
-        }
-    }
 }
