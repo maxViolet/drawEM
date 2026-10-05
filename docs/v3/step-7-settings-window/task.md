@@ -1,6 +1,6 @@
 # v3 / Step 7: Settings window
 
-**Status:** planned. **Source:** [v3 roadmap](../ROADMAP-v3.md#delivery-order).
+**Status:** implemented; see [acceptance](acceptance.md). **Source:** [v3 roadmap](../ROADMAP-v3.md#delivery-order).
 
 ## Task
 

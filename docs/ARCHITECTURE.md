@@ -24,12 +24,14 @@ dependency-injection container.
 App.xaml.cs  (composition root)
 │
 ├── Infrastructure
-│   ├── shared keyboard hook and tray lifecycle
+│   ├── shared keyboard hook and tray lifecycle (tray Settings and Exit)
 │   ├── Drawing (mouse input, shared drawing/sound shortcut adapter, input gate)
-│   └── Sound (code assignments, failure log, MediaPlayer adapter)
+│   ├── Settings (JSON settings store, failure dialogs)
+│   └── Sound (managed sound library, draft sampler, failure log, MediaPlayer adapter)
 │
 ├── Application
 │   ├── Drawing (DrawingSessionController)
+│   ├── Settings (active snapshot, Save operation, SettingsEditor draft, capture port)
 │   └── Sound (play command, playback ports, SoundChannelController)
 │
 ├── Domain
@@ -38,7 +40,8 @@ App.xaml.cs  (composition root)
 │
 └── Presentation
     ├── Drawing (OverlayWindow, StrokeRenderElement)
-    └── Sound (placeholder for the later settings UI)
+    ├── Settings (SettingsWindow, SettingsViewModel)
+    └── Sound (placeholder)
 ```
 
 ## Modules and responsibilities
@@ -61,7 +64,9 @@ mapping is no longer read. `Infrastructure/Drawing/GlobalShortcutAdapter` owns
 the shared pressed-key and suppression state for drawing and sound shortcuts.
 It routes each filled slot's shortcut to the sound channel without changing the
 drawing gate.
-The settings UI remains unimplemented. Shared
+The tray Settings command opens `Presentation/Settings/SettingsWindow` over a
+fresh `Application/Settings/SettingsEditor` draft of the active snapshot; see
+[Edit settings](#edit-settings). Shared
 keyboard-hook and tray code stays at the `Infrastructure` root; the composition
 root stays in `App.xaml.cs`.
 
@@ -132,6 +137,29 @@ key's later key-downs are suppressed until release. Its key-up is suppressed
 only if its initial key-down started the sound; a key held before its modifiers
 receives its matching key-up outside draw mode. Existing drawing suppression
 still applies in both directions.
+
+### Edit settings
+
+```text
+Tray Settings (or double-click the tray icon)
+  → open SettingsWindow, or activate the one already open
+  → SettingsEditor copies ActiveSettings.Current into a draft
+  → focus a shortcut field → IShortcutCapture.Begin (GlobalShortcutAdapter): the hook records one chord
+    into the draft and dispatches no action; focus loss → End; Escape cancels
+  → choose a file → ISoundLibrary.Import copies it; an empty slot proposes Ctrl+Alt+<slot>
+  → Sample → SoundSampler queues the managed copy on SoundChannelHost; a failure of that sample is
+    logged and also shown on its slot through SampleFailureRouter
+  → every edit → SettingsSnapshot.Validate: errors beside their fields; any error disables Save
+  → Save → SettingsSaveOperation (below); Saved closes the window, NotSaved keeps the draft and shows why
+  → Cancel or close → ISoundSampler.StopSamples (stops the channel only if a sample was played), then
+    ISoundLibrary.DiscardDraft against the active snapshot; an unconfirmed stop leaves draft copies
+    to startup cleanup
+```
+
+All of it runs on the UI thread. Restore defaults replaces only the draft. The
+draft never changes active shortcuts: a conflict is shown on both fields and
+blocks Save; nothing is reassigned. Reopening the window starts a new draft
+from the settings active at that time.
 
 ### Save settings
 
