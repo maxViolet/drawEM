@@ -152,7 +152,7 @@ internal static class Program
             }));
         };
 
-        _ = new GlobalMouseInputAdapter(mouseSource, controller, inputGate, instrumentedDispatch);
+        _ = new GlobalMouseInputAdapter(mouseSource, controller, inputGate, instrumentedDispatch, new Win32MonitorBoundsSource());
 
         var intervalTicks = Stopwatch.Frequency / rate;
         var runStart = Stopwatch.GetTimestamp();
