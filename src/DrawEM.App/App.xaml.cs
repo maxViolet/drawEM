@@ -78,6 +78,7 @@ public partial class App : System.Windows.Application
             var active = settings.Current;
 
             var inputGate = new DrawingModeInputGate();
+            var monitorBoundsSource = new Win32MonitorBoundsSource();
             keyboardHookSource = new Win32KeyboardHookSource();
             var shortcuts = new GlobalShortcutAdapter(
                 keyboardHookSource.Events,
@@ -86,12 +87,13 @@ public partial class App : System.Windows.Application
                 inputGate,
                 new Win32CursorPositionSource(),
                 action => Dispatcher.BeginInvoke(action),
-                new Win32MonitorBoundsSource(),
+                monitorBoundsSource,
                 ShortcutBindings.FromSnapshot(active, settings.CommandFor),
                 channelHost.Play);
 
             mouseHookSource = new Win32MouseHookSource();
-            _ = new GlobalMouseInputAdapter(mouseHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action));
+            _ = new GlobalMouseInputAdapter(
+                mouseHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action), monitorBoundsSource);
 
             overlayWindow.Show();
             trayApplication = new TrayApplication(
