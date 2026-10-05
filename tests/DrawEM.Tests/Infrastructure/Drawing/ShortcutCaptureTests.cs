@@ -19,8 +19,8 @@ public class ShortcutCaptureTests
     private const ShortcutModifiers CtrlAlt = ShortcutModifiers.Control | ShortcutModifiers.Alt;
     private const ShortcutModifiers CtrlShift = ShortcutModifiers.Control | ShortcutModifiers.Shift;
     private const ShortcutModifiers AltShift = ShortcutModifiers.Alt | ShortcutModifiers.Shift;
-    private static readonly PlaySoundCommand Applause = new(new SoundId("applause"));
-    private static readonly PlaySoundCommand Drumroll = new(new SoundId("drumroll"));
+    private static readonly PlaySoundCommand Applause = new(new SoundId("applause"), @"C:\library\applause");
+    private static readonly PlaySoundCommand Drumroll = new(new SoundId("drumroll"), @"C:\library\drumroll");
 
     [Theory]
     [InlineData(VirtualKeys.Z)]

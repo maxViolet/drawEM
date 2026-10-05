@@ -104,6 +104,14 @@ public sealed partial class ManagedSoundLibrary : ISoundLibrary
         }
     }
 
+    public void CommitSaveKeepingCopies()
+    {
+        lock (gate)
+        {
+            draftImports.Clear();
+        }
+    }
+
     public IReadOnlyList<SoundCleanupFailure> RemoveOrphans(SettingsSnapshot saved)
     {
         ArgumentNullException.ThrowIfNull(saved);

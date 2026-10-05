@@ -53,11 +53,14 @@ App.xaml.cs  (composition root)
 
 The four modules remain in one WPF project. Each has a `Drawing` and a `Sound`
 folder. `Application/Sound` defines the play command, the playback ports, and the
-global sound channel controller; `Infrastructure/Sound` defines code
-assignments, failure logging, and WAV/MP3 playback through WPF `MediaPlayer`.
-`Infrastructure/Drawing/GlobalShortcutAdapter` owns the shared pressed-key and
-suppression state for drawing and sound shortcuts. It routes `Ctrl+Alt+1`
-through `Ctrl+Alt+8` to the sound channel without changing the drawing gate.
+global sound channel controller; `Infrastructure/Sound` defines the managed
+sound library, failure logging, and WAV/MP3 playback through WPF `MediaPlayer`.
+Sounds and their shortcuts come from saved settings through
+`Application/Settings/ActiveSettings`; the v2 code-owned `SoundAssignments`
+mapping is no longer read. `Infrastructure/Drawing/GlobalShortcutAdapter` owns
+the shared pressed-key and suppression state for drawing and sound shortcuts.
+It routes each filled slot's shortcut to the sound channel without changing the
+drawing gate.
 The settings UI remains unimplemented. Shared
 keyboard-hook and tray code stays at the `Infrastructure` root; the composition
 root stays in `App.xaml.cs`.
@@ -106,26 +109,71 @@ Ctrl+Alt+X pressed
 ### Play sound
 
 ```text
-Assigned Ctrl+Alt+1 through Ctrl+Alt+8 chord becomes active
+A filled slot's saved shortcut becomes active
   → Win32KeyboardHookSource forwards the key event to GlobalShortcutAdapter
-  → resolve the slot's command in memory and mark it started for this press
+  → read the slot's command, prepared from the active settings, and mark it started for this press
   → call SoundChannelHost.Play directly inside the hook callback
   → SoundChannelHost queues SoundChannelController.Play on the sound Dispatcher
   → stop the current player, then create and start the requested player
 ```
 
-An unassigned slot queues nothing. Auto-repeat cannot start another command;
-the digit must be released before it can start again. Playback work runs on
+An empty slot has no binding and queues nothing. Auto-repeat cannot start
+another command; the key must be released before it can start again. Playback work runs on
 the sound thread, outside the hook callback. Sound does not wait for queued
 drawing commands and may start before the UI processes the beginning of a
 stroke; the drawing input gate has already changed synchronously.
 
 `IKeyboardHookSource.KeySuppressionRequested` includes `KeyDirection`: it is
-queried after `KeyDown` handlers and before `KeyUp` handlers. An assigned sound
-digit's later key-downs are suppressed until release. Its key-up is suppressed
-only if its initial key-down started the sound; a digit held before Ctrl+Alt
+queried after `KeyDown` handlers and before `KeyUp` handlers. A bound sound
+key's later key-downs are suppressed until release. Its key-up is suppressed
+only if its initial key-down started the sound; a key held before its modifiers
 receives its matching key-up outside draw mode. Existing drawing suppression
 still applies in both directions.
+
+### Save settings
+
+```text
+SettingsSaveOperation.Save(draft) on the WPF UI thread
+  → SettingsSnapshot.Validate: an invalid draft returns its errors; nothing changes
+  → SettingsPersistence.Save: ISettingsStore.Save persists the snapshot durably
+      (SettingsStoreException → report through SettingsFailureDialog; nothing below runs)
+  → activate, only after persistence succeeded:
+      → SoundChannelHost.Stop: bar every earlier play request from starting playback, then, on the
+        sound thread, stop the player; returns whether that happened within two seconds
+      → GlobalShortcutAdapter.Interrupt: close the drawing gate, drop queued drawing commands,
+        ignore keys until every held key is released
+      → DrawingSessionController.ClearAndExitDrawMode: drop the active stroke, clear every monitor
+      → ActiveSettings.Publish: one write exposes the new immutable configuration
+      → GlobalShortcutAdapter.Bind: shortcut bindings rebuilt from that configuration
+      → stop not confirmed: record it once in sound.log
+  → stop confirmed: ISoundLibrary.CommitSave retires media the saved settings no longer reference
+    stop not confirmed: ISoundLibrary.CommitSaveKeepingCopies ends the draft and removes nothing
+```
+
+Save runs on the UI thread, which also runs the keyboard and mouse hook
+callbacks and the drawing controller, so no key event interleaves with it. A
+press before Save cannot act under the new configuration: its queued drawing
+command is dropped by the adapter's epoch check, and its play request never
+starts playback. `SoundChannelHost.Stop` advances a request generation on the
+calling thread before it waits. The sound thread checks a request's generation
+before opening its player and again just before starting it, so a request made
+before Save is dropped, or releases a player it was still opening, even when the
+sound thread reaches it after `Publish`. Each `PlaySoundCommand` also carries
+the managed copy resolved by the configuration that built its binding; the
+player factory and the sound failure log use that path and never read the
+active settings.
+
+`SoundChannelHost.Stop` waits at most two seconds. A timed-out stop stays
+queued ahead of every later play request, and Save still returns `Saved`: the
+snapshot is persisted and active for fresh presses, and no earlier request can
+start. Because an old request may still hold a copy open, that Save removes no
+managed copy; the next startup cleanup (`SettingsStartup.RemoveOrphanSounds`)
+removes the copies the saved settings do not reference. A player whose own
+start or stop call is stuck inside the media engine is outside drawEM's control
+until that call returns; the queued stop then releases it. After Save, every
+command needs a fresh press, even when only the stroke color changed. A failed
+Save leaves sound, drawing, bindings, the active snapshot, and managed media
+unchanged.
 
 ### Exit
 

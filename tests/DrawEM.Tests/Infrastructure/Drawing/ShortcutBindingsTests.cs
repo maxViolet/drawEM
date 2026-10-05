@@ -2,7 +2,6 @@ using DrawEM.App.Application.Sound;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Infrastructure;
 using DrawEM.App.Infrastructure.Drawing;
-using DrawEM.App.Infrastructure.Sound;
 
 namespace DrawEM.Tests.Infrastructure.Drawing;
 
@@ -74,32 +73,15 @@ public class ShortcutBindingsTests
         var bindings = ShortcutBindings.FromSnapshot(snapshot, sound =>
         {
             resolved.Add(sound);
-            return new PlaySoundCommand(new SoundId(sound.LibraryFileName));
+            return Command(sound.LibraryFileName);
         });
 
         Assert.Equal(new KeyChord(ShortcutModifiers.Control | ShortcutModifiers.Shift, 'D'), bindings.Draw);
         Assert.Equal(new KeyChord(CtrlAlt, VirtualKeys.F1 + 4), bindings.Clear);
         Assert.Equal(
-            [new SoundBinding(new KeyChord(CtrlAlt, VirtualKeys.D0), new PlaySoundCommand(new SoundId("a1.wav")))],
+            [new SoundBinding(new KeyChord(CtrlAlt, VirtualKeys.D0), Command("a1.wav"))],
             bindings.Sounds);
         Assert.Equal([applause], resolved);
-    }
-
-    [Fact]
-    public void ForCodeAssignments_BindsCtrlAltDigitForAssignedSlots()
-    {
-        var configuration = new SoundConfiguration(new Dictionary<SoundSlot, SoundAssignment>
-        {
-            [SoundSlot.Slot2] = new(new SoundId("drumroll"), @"C:\sounds\drumroll.wav"),
-        });
-
-        var bindings = ShortcutBindings.ForCodeAssignments(configuration);
-
-        Assert.Equal(new KeyChord(CtrlAlt, VirtualKeys.Z), bindings.Draw);
-        Assert.Equal(new KeyChord(CtrlAlt, VirtualKeys.X), bindings.Clear);
-        Assert.Equal(
-            [new SoundBinding(new KeyChord(CtrlAlt, VirtualKeys.D2), new PlaySoundCommand(new SoundId("drumroll")))],
-            bindings.Sounds);
     }
 
     [Fact]
@@ -108,6 +90,8 @@ public class ShortcutBindingsTests
         var draw = SettingsSnapshot.Default.DrawShortcut;
 
         Assert.Throws<ArgumentException>(() => new ShortcutBindings(
-            draw, SettingsSnapshot.Default.ClearShortcut, [(draw, new PlaySoundCommand(new SoundId("applause")))]));
+            draw, SettingsSnapshot.Default.ClearShortcut, [(draw, Command("applause"))]));
     }
+
+    private static PlaySoundCommand Command(string sound) => new(new SoundId(sound), @"C:\library\" + sound);
 }

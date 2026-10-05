@@ -6,5 +6,6 @@ namespace DrawEM.App.Application.Sound;
 /// </summary>
 public interface ISoundFailureReporter
 {
-    void Report(SoundId sound, string reason);
+    /// <param name="command">The failed request; its <see cref="PlaySoundCommand.Path"/> names the file.</param>
+    void Report(PlaySoundCommand command, string reason);
 }

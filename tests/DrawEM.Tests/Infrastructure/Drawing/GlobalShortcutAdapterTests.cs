@@ -296,7 +296,7 @@ public class GlobalShortcutAdapterTests
         sound.Source.PressKey(vkCode);
         sound.RunQueuedActions();
 
-        Assert.Equal([new PlaySoundCommand(new SoundId("applause"))], sound.Played);
+        Assert.Equal([Command("applause")], sound.Played);
     }
 
     [Fact]
@@ -333,7 +333,7 @@ public class GlobalShortcutAdapterTests
         sound.Source.PressKey(VirtualKeys.D2);
         sound.RunQueuedActions();
 
-        Assert.Equal([new PlaySoundCommand(new SoundId("drumroll"))], sound.Played);
+        Assert.Equal([Command("drumroll")], sound.Played);
     }
 
     [Fact]
@@ -442,7 +442,7 @@ public class GlobalShortcutAdapterTests
         sound.Source.PressKey(VirtualKeys.D1);
         sound.RunSoundActions();
 
-        Assert.Equal([new PlaySoundCommand(new SoundId("applause"))], sound.Played);
+        Assert.Equal([Command("applause")], sound.Played);
         Assert.Single(sound.Queued);
         Assert.Empty(states);
         Assert.True(sound.Gate.IsActive);
@@ -537,7 +537,7 @@ public class GlobalShortcutAdapterTests
         Shortcut.Create(ShortcutModifiers.Control | ShortcutModifiers.Shift, ShortcutKey.Letter('D')),
         Shortcut.Create(ShortcutModifiers.Alt | ShortcutModifiers.Shift, ShortcutKey.Function(5)),
         [(Shortcut.Create(ShortcutModifiers.Control | ShortcutModifiers.Shift, ShortcutKey.Function(1)),
-            new PlaySoundCommand(new SoundId("applause")))]);
+            Command("applause"))]);
 
     private const int D = 0x44;
     private const int F5 = VirtualKeys.F1 + 4;
@@ -736,7 +736,7 @@ public class GlobalShortcutAdapterTests
         var sound = new SoundTestHarness(new ShortcutBindings(
             SettingsSnapshot.Default.DrawShortcut,
             SettingsSnapshot.Default.ClearShortcut,
-            [(ctrlShiftA, new PlaySoundCommand(new SoundId("applause")))]));
+            [(ctrlShiftA, Command("applause"))]));
 
         // Windows reports AltGr as Left Ctrl followed by Right Alt.
         sound.Source.PressKey(VirtualKeys.LeftControl);
@@ -763,12 +763,17 @@ public class GlobalShortcutAdapterTests
         Assert.Empty(sound.Queued);
     }
 
+    private static PlaySoundCommand Command(string sound) => new(new SoundId(sound), @"C:\library\" + sound);
+
     private sealed class SoundTestHarness
     {
         public SoundTestHarness(params (SoundSlot Slot, string Sound)[] assignments)
-            : this(ShortcutBindings.ForCodeAssignments(new SoundConfiguration(assignments.ToDictionary(
-                assignment => assignment.Slot,
-                assignment => new SoundAssignment(new SoundId(assignment.Sound), $@"C:\sounds\{assignment.Sound}.wav")))))
+            : this(new ShortcutBindings(
+                SettingsSnapshot.Default.DrawShortcut,
+                SettingsSnapshot.Default.ClearShortcut,
+                assignments.Select(assignment => (
+                    Shortcut.Create(ShortcutModifiers.Control | ShortcutModifiers.Alt, ShortcutKey.Digit((int)assignment.Slot)),
+                    Command(assignment.Sound)))))
         {
         }
 

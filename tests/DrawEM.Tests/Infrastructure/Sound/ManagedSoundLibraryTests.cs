@@ -275,26 +275,25 @@ public sealed class ManagedSoundLibraryTests : IDisposable
     }
 
     [Fact]
-    public void Save_WhenSettingsCannotBeSaved_KeepsSavedMediaAndDraftImports()
+    public void CommitSaveKeepingCopies_RemovesNothing_LaterCancelKeepsThatDraft_AndOrphanCleanupRemovesIt()
     {
-        var store = new JsonSettingsStore(root);
         var library = Library();
-        var saved = library.Import(WriteSource("saved.wav", "saved"));
-        var previous = Snapshot((1, saved));
-        SettingsPersistence.Save(store, library, SettingsSnapshot.Default, previous);
-        var replacement = library.Import(WriteSource("replacement.wav", "replacement"));
-        File.SetAttributes(store.SettingsPath, FileAttributes.ReadOnly);
+        var abandoned = library.Import(WriteSource("abandoned.wav", "abandoned"));
+        var kept = library.Import(WriteSource("kept.wav", "kept"));
+        var saved = Snapshot((1, kept));
 
-        Assert.Throws<SettingsStoreException>(
-            () => SettingsPersistence.Save(store, library, previous, Snapshot((1, replacement))));
+        library.CommitSaveKeepingCopies();
+        var cancelFailures = library.DiscardDraft(saved);
 
-        Assert.Equal(Bytes("saved"), File.ReadAllBytes(CopyPath(saved)));
-        Assert.True(File.Exists(CopyPath(replacement)));
-        Assert.Equal(previous, Assert.IsType<SettingsLoadResult.Loaded>(store.Load()).Snapshot);
+        Assert.Empty(cancelFailures);
+        Assert.True(File.Exists(CopyPath(abandoned)));
+        Assert.True(File.Exists(CopyPath(kept)));
 
-        library.DiscardDraft(previous);
+        var cleanupFailures = library.RemoveOrphans(saved);
 
-        Assert.Equal([saved.LibraryFileName], LibraryFiles());
+        Assert.Empty(cleanupFailures);
+        Assert.False(File.Exists(CopyPath(abandoned)));
+        Assert.True(File.Exists(CopyPath(kept)));
     }
 
     [Fact]
@@ -303,7 +302,7 @@ public sealed class ManagedSoundLibraryTests : IDisposable
         var store = new JsonSettingsStore(root);
         var before = Library();
         var saved = before.Import(WriteSource("saved.wav", "saved"));
-        SettingsPersistence.Save(store, before, SettingsSnapshot.Default, Snapshot((1, saved), (4, saved)));
+        SettingsPersistence.Save(store, before, SettingsSnapshot.Default, Snapshot((1, saved), (4, saved)), _ => true);
         var draft = before.Import(WriteSource("draft.mp3", "draft"));
         var leftoverTemp = Path.Combine(LibraryDirectory, "import-" + Guid.NewGuid().ToString("N") + ".tmp");
         File.WriteAllText(leftoverTemp, "partial");
@@ -326,7 +325,7 @@ public sealed class ManagedSoundLibraryTests : IDisposable
         var store = new JsonSettingsStore(root);
         var library = Library();
         var saved = library.Import(WriteSource("saved.wav", "saved"));
-        SettingsPersistence.Save(store, library, SettingsSnapshot.Default, Snapshot((1, saved)));
+        SettingsPersistence.Save(store, library, SettingsSnapshot.Default, Snapshot((1, saved)), _ => true);
         var draft = library.Import(WriteSource("draft.wav", "draft"));
         File.WriteAllText(store.SettingsPath, "{ damaged");
 

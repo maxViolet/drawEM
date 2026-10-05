@@ -12,7 +12,7 @@ public class SoundChannelControllerTests
     {
         var fixture = new Fixture();
 
-        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Controller.Play(Command(Applause));
 
         var player = Assert.Single(fixture.Players);
         Assert.Equal(Applause, player.Sound);
@@ -25,8 +25,8 @@ public class SoundChannelControllerTests
     {
         var fixture = new Fixture();
 
-        fixture.Controller.Play(new PlaySoundCommand(Applause));
-        fixture.Controller.Play(new PlaySoundCommand(Drumroll));
+        fixture.Controller.Play(Command(Applause));
+        fixture.Controller.Play(Command(Drumroll));
 
         Assert.Equal(
             ["create applause", "play applause", "stop applause", "dispose applause", "create drumroll", "play drumroll"],
@@ -39,9 +39,9 @@ public class SoundChannelControllerTests
     {
         var fixture = new Fixture();
 
-        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Controller.Play(Command(Applause));
         fixture.Time.Advance(TimeSpan.FromSeconds(6));
-        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Controller.Play(Command(Applause));
         fixture.Time.Advance(TimeSpan.FromSeconds(6));
 
         Assert.Equal(2, fixture.Players.Count);
@@ -59,7 +59,7 @@ public class SoundChannelControllerTests
     public void NaturalCompletion_StopsAndDisposesPlayerAndCancelsDeadline()
     {
         var fixture = new Fixture();
-        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Controller.Play(Command(Applause));
 
         fixture.Players[0].Complete();
 
@@ -72,7 +72,7 @@ public class SoundChannelControllerTests
     public void Deadline_StopsPlaybackTenSecondsAfterStart()
     {
         var fixture = new Fixture();
-        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Controller.Play(Command(Applause));
 
         fixture.Time.Advance(TimeSpan.FromSeconds(10) - TimeSpan.FromMilliseconds(1));
         Assert.Equal(["play"], fixture.Players[0].Calls);
@@ -86,8 +86,8 @@ public class SoundChannelControllerTests
     public void StaleCompletionAndFailure_DoNotStopReplacement()
     {
         var fixture = new Fixture();
-        fixture.Controller.Play(new PlaySoundCommand(Applause));
-        fixture.Controller.Play(new PlaySoundCommand(Drumroll));
+        fixture.Controller.Play(Command(Applause));
+        fixture.Controller.Play(Command(Drumroll));
 
         fixture.Players[0].Complete();
         fixture.Players[0].Fail("Late decode error.");
@@ -102,10 +102,10 @@ public class SoundChannelControllerTests
     {
         var queued = new Queue<Action>();
         var fixture = new Fixture(queued.Enqueue);
-        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Controller.Play(Command(Applause));
 
         fixture.Time.Advance(TimeSpan.FromSeconds(10));
-        fixture.Controller.Play(new PlaySoundCommand(Drumroll));
+        fixture.Controller.Play(Command(Drumroll));
         while (queued.Count > 0)
         {
             queued.Dequeue().Invoke();
@@ -119,7 +119,7 @@ public class SoundChannelControllerTests
     public void PlayerFailure_IsReportedAndReleasesPlayer()
     {
         var fixture = new Fixture();
-        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Controller.Play(Command(Applause));
 
         fixture.Players[0].Fail("No output device.");
 
@@ -135,8 +135,8 @@ public class SoundChannelControllerTests
         var fixture = new Fixture();
         fixture.FailCreateFor(Applause, "File not found.");
 
-        fixture.Controller.Play(new PlaySoundCommand(Applause));
-        fixture.Controller.Play(new PlaySoundCommand(Drumroll));
+        fixture.Controller.Play(Command(Applause));
+        fixture.Controller.Play(Command(Drumroll));
 
         Assert.Equal([(Applause, "File not found.")], fixture.Failures);
         Assert.Equal(Drumroll, fixture.Controller.ActiveSound);
@@ -148,7 +148,7 @@ public class SoundChannelControllerTests
         var fixture = new Fixture();
         fixture.FailPlayFor(Applause, "Invalid media.");
 
-        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Controller.Play(Command(Applause));
 
         Assert.Equal([(Applause, "Invalid media.")], fixture.Failures);
         Assert.True(fixture.Players[0].IsDisposed);
@@ -160,10 +160,10 @@ public class SoundChannelControllerTests
     public void PlayerThatThrowsOnStop_IsStillDisposedAndReported()
     {
         var fixture = new Fixture();
-        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Controller.Play(Command(Applause));
         fixture.Players[0].StopFailure = "Stop failed.";
 
-        fixture.Controller.Play(new PlaySoundCommand(Drumroll));
+        fixture.Controller.Play(Command(Drumroll));
 
         Assert.True(fixture.Players[0].IsDisposed);
         Assert.Equal([(Applause, "Stop failed.")], fixture.Failures);
@@ -174,11 +174,11 @@ public class SoundChannelControllerTests
     public void PlayerThatThrowsOnDispose_IsReportedAndChannelStaysUsable()
     {
         var fixture = new Fixture();
-        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Controller.Play(Command(Applause));
         fixture.Players[0].DisposeFailure = "Close failed.";
 
         fixture.Players[0].Complete();
-        fixture.Controller.Play(new PlaySoundCommand(Drumroll));
+        fixture.Controller.Play(Command(Drumroll));
 
         Assert.Equal([(Applause, "Close failed.")], fixture.Failures);
         Assert.Equal(Drumroll, fixture.Controller.ActiveSound);
@@ -188,7 +188,7 @@ public class SoundChannelControllerTests
     public void PlayerFailure_WhenStopAlsoThrows_ReportsBothInOrder()
     {
         var fixture = new Fixture();
-        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Controller.Play(Command(Applause));
         fixture.Players[0].StopFailure = "Stop failed.";
 
         fixture.Players[0].Fail("No output device.");
@@ -202,7 +202,7 @@ public class SoundChannelControllerTests
     public void Failures_AreReportedOnlyAfterPlayerIsReleased()
     {
         var fixture = new Fixture();
-        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Controller.Play(Command(Applause));
         fixture.Players[0].StopFailure = "Stop failed.";
 
         fixture.Players[0].Fail("No output device.");
@@ -216,17 +216,45 @@ public class SoundChannelControllerTests
     public void Dispose_StopsPlaybackCancelsDeadlineAndIgnoresLaterRequests()
     {
         var fixture = new Fixture();
-        fixture.Controller.Play(new PlaySoundCommand(Applause));
+        fixture.Controller.Play(Command(Applause));
 
         fixture.Controller.Dispose();
         fixture.Controller.Dispose();
-        fixture.Controller.Play(new PlaySoundCommand(Drumroll));
+        fixture.Controller.Play(Command(Drumroll));
 
         var player = Assert.Single(fixture.Players);
         Assert.Equal(["play", "stop", "dispose"], player.Calls);
         Assert.Null(fixture.Controller.ActiveSound);
         Assert.Equal(0, fixture.Time.ActiveTimerCount);
     }
+
+    [Fact]
+    public void RequestSupersededWhileOpening_ReleasesPlayerWithoutPlaying()
+    {
+        var fixture = new Fixture();
+        var current = true;
+        fixture.OnCreate = () => current = false;
+
+        fixture.Controller.Play(Command(Applause), () => current);
+
+        Assert.Equal(["create applause", "dispose applause"], fixture.Log);
+        Assert.Null(fixture.Controller.ActiveSound);
+        Assert.Equal(0, fixture.Time.ActiveTimerCount);
+    }
+
+    [Fact]
+    public void RequestNoLongerCurrent_OpensNothing_AndKeepsActiveSound()
+    {
+        var fixture = new Fixture();
+        fixture.Controller.Play(Command(Applause));
+
+        fixture.Controller.Play(Command(Drumroll), () => false);
+
+        Assert.Equal(["create applause", "play applause"], fixture.Log);
+        Assert.Equal(Applause, fixture.Controller.ActiveSound);
+    }
+
+    private static PlaySoundCommand Command(SoundId sound) => new(sound, @"C:\library\" + sound.Value + ".wav");
 
     private sealed class Fixture : ISoundPlayerFactory, ISoundFailureReporter
     {
@@ -252,9 +280,13 @@ public class SoundChannelControllerTests
 
         public void FailPlayFor(SoundId sound, string reason) => playFailures[sound] = reason;
 
-        public ISoundPlayer Create(SoundId sound)
+        public Action? OnCreate { get; set; }
+
+        public ISoundPlayer Create(PlaySoundCommand command)
         {
+            var sound = command.Sound;
             Log.Add("create " + sound.Value);
+            OnCreate?.Invoke();
             if (createFailures.TryGetValue(sound, out var reason))
             {
                 throw new SoundPlaybackException(reason);
@@ -265,10 +297,10 @@ public class SoundChannelControllerTests
             return player;
         }
 
-        public void Report(SoundId sound, string reason)
+        public void Report(PlaySoundCommand command, string reason)
         {
-            Log.Add("report " + sound.Value);
-            Failures.Add((sound, reason));
+            Log.Add("report " + command.Sound.Value);
+            Failures.Add((command.Sound, reason));
         }
     }
 

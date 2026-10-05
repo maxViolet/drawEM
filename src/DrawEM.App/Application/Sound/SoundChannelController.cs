@@ -30,31 +30,48 @@ public sealed class SoundChannelController : IDisposable
     }
 
     /// <summary>The sound that owns the channel, or <c>null</c> when the channel is idle.</summary>
-    public SoundId? ActiveSound => active?.Sound;
+    public SoundId? ActiveSound => active?.Command.Sound;
 
-    public void Play(PlaySoundCommand command)
+    public void Play(PlaySoundCommand command) => Play(command, static () => true);
+
+    /// <param name="isCurrent">
+    /// Whether the request may still play, for example because no settings Save has happened since it was
+    /// made. Checked before the player opens and again just before it starts; a request that is no longer
+    /// current is dropped without playing, and a player it opened is released.
+    /// </param>
+    public void Play(PlaySoundCommand command, Func<bool> isCurrent)
     {
-        if (disposed)
+        if (disposed || !isCurrent())
         {
             return;
         }
 
-        StopActive();
+        Stop();
 
-        var sound = command.Sound;
         ISoundPlayer player;
         try
         {
-            player = players.Create(sound);
+            player = players.Create(command);
         }
         catch (SoundPlaybackException exception)
         {
-            failures.Report(sound, exception.Message);
+            failures.Report(command, exception.Message);
+            return;
+        }
+
+        // Opening can take long; a request superseded meanwhile must not start.
+        if (!isCurrent())
+        {
+            if (Release(player.Dispose) is { } disposeFailure)
+            {
+                failures.Report(command, disposeFailure);
+            }
+
             return;
         }
 
         // The attempt object is the generation token: callbacks act only while it is still active.
-        var attempt = new Attempt(sound, player);
+        var attempt = new Attempt(command, player);
         attempt.OnCompleted = () => End(attempt);
         attempt.OnFailed = reason => End(attempt, reason);
         player.Completed += attempt.OnCompleted;
@@ -82,10 +99,11 @@ public sealed class SoundChannelController : IDisposable
         }
 
         disposed = true;
-        StopActive();
+        Stop();
     }
 
-    private void StopActive()
+    /// <summary>Stops and releases the active attempt, if any. The channel stays usable.</summary>
+    public void Stop()
     {
         if (active is { } attempt)
         {
@@ -114,7 +132,7 @@ public sealed class SoundChannelController : IDisposable
         {
             if (reason is not null)
             {
-                failures.Report(attempt.Sound, reason);
+                failures.Report(attempt.Command, reason);
             }
         }
     }
@@ -132,9 +150,9 @@ public sealed class SoundChannelController : IDisposable
         }
     }
 
-    private sealed class Attempt(SoundId sound, ISoundPlayer player)
+    private sealed class Attempt(PlaySoundCommand command, ISoundPlayer player)
     {
-        public SoundId Sound { get; } = sound;
+        public PlaySoundCommand Command { get; } = command;
 
         public ISoundPlayer Player { get; } = player;
 
