@@ -2,6 +2,7 @@ using System.Text;
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Application.Sound;
 using DrawEM.App.Domain.Settings;
+using DrawEM.App.Domain.Sound;
 using DrawEM.App.Infrastructure.Settings;
 using DrawEM.App.Infrastructure.Sound;
 

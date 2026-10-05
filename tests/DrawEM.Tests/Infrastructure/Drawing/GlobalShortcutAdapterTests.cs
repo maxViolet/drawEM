@@ -2,9 +2,9 @@ using DrawEM.App.Application.Drawing;
 using DrawEM.App.Application.Sound;
 using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Settings;
-using DrawEM.App.Infrastructure;
 using DrawEM.App.Infrastructure.Drawing;
 using DrawEM.App.Infrastructure.Sound;
+using DrawEM.App.Infrastructure;
 
 namespace DrawEM.Tests.Infrastructure.Drawing;
 

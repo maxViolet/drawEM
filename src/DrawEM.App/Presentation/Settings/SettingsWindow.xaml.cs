@@ -1,7 +1,7 @@
 using System.ComponentModel;
-using System.Windows;
 using System.Windows.Input;
-using DrawEM.App.Domain.Settings;
+using System.Windows;
+using DrawEM.App.Domain.Drawing;
 using Microsoft.Win32;
 using WinFormsColorDialog = System.Windows.Forms.ColorDialog;
 using WinFormsDialogResult = System.Windows.Forms.DialogResult;

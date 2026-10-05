@@ -1,7 +1,6 @@
 using System.Windows;
 using System.Windows.Media;
 using DrawEM.App.Domain.Drawing;
-using DrawEM.App.Domain.Settings;
 using Brush = System.Windows.Media.Brush;
 using Pen = System.Windows.Media.Pen;
 

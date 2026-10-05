@@ -1,3 +1,4 @@
+using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Settings;
 
 namespace DrawEM.App.Application.Settings;

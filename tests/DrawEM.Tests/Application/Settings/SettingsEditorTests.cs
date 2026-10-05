@@ -1,6 +1,8 @@
 using System.IO;
 using DrawEM.App.Application.Settings;
+using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Settings;
+using DrawEM.App.Domain.Sound;
 using DrawEM.App.Infrastructure.Sound;
 
 namespace DrawEM.Tests.Application.Settings;

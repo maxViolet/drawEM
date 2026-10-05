@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using DrawEM.App.Domain.Drawing;
 
 namespace DrawEM.App.Domain.Settings;
 

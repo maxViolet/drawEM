@@ -35,8 +35,9 @@ App.xaml.cs  (composition root)
 │   └── Sound (play command, playback ports, SoundChannelController)
 │
 ├── Domain
-│   ├── Drawing (DrawingState, Stroke, ScreenPoint)
-│   └── Sound (placeholder)
+│   ├── Drawing (DrawingState, Stroke, ScreenPoint, DrawingStyle)
+│   ├── Settings (SettingsSnapshot, shortcuts, action slots; stores drawing and sound values)
+│   └── Sound (SoundReference)
 │
 └── Presentation
     ├── Drawing (OverlayWindow, StrokeRenderElement)

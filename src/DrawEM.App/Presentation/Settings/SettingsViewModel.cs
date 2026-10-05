@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using DrawEM.App.Application.Settings;
+using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Settings;
 
 namespace DrawEM.App.Presentation.Settings;

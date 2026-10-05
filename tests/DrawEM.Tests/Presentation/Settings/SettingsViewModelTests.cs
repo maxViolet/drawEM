@@ -3,11 +3,12 @@ using DrawEM.App.Application.Settings;
 using DrawEM.App.Application.Sound;
 using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Settings;
-using DrawEM.App.Infrastructure;
+using DrawEM.App.Domain.Sound;
 using DrawEM.App.Infrastructure.Drawing;
+using DrawEM.App.Infrastructure;
 using DrawEM.App.Presentation.Settings;
-using DrawEM.Tests.Infrastructure.Drawing;
 using DrawEM.Tests.Application.Settings;
+using DrawEM.Tests.Infrastructure.Drawing;
 
 namespace DrawEM.Tests.Presentation.Settings;
 

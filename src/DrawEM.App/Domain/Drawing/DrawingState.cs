@@ -1,5 +1,3 @@
-using DrawEM.App.Domain.Settings;
-
 namespace DrawEM.App.Domain.Drawing;
 
 public readonly record struct ScreenPoint(int X, int Y);
