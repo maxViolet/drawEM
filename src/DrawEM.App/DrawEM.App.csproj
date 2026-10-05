@@ -8,9 +8,15 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Rendered from Assets\drawEM.svg; used by the executable, the tray icon, and the Settings window. -->
+    <ApplicationIcon>Assets\drawEM.ico</ApplicationIcon>
     <!-- WFAC010 targets WinForms-hosted apps. WPF owns this process and reads DPI awareness only from app.manifest; WinForms is used for NotifyIcon alone. -->
     <NoWarn>$(NoWarn);WFAC010</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\drawEM.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <Using Remove="System.Drawing" />

@@ -10,7 +10,8 @@
         ShowInTaskbar="True"
         FontFamily="Segoe UI"
         FontSize="13"
-        Background="White">
+        Background="White"
+        Icon="pack://application:,,,/DrawEM.App;component/Assets/drawEM.ico">
     <Window.Resources>
         <Style x:Key="ErrorText" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#A92F16" />
