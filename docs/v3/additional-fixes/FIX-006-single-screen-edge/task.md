@@ -1,6 +1,6 @@
 # FIX-006: keep drawing active at a single screen edge
 
-**Status:** implemented; manual desktop check pending. **Package:** [v3 additional fixes](../README.md).
+**Status:** implemented; two-monitor check pending. **Package:** [v3 additional fixes](../README.md).
 
 ## Current behavior
 
@@ -68,13 +68,13 @@ two adjacent screens without the real mouse hook.
 - [ ] Reproduce and record the current edge interruption on a one-screen
   Windows desktop, including the edge and the pointer coordinates the hook
   reports.
-- [ ] With one connected screen, holding the draw shortcut while touching
+- [x] With one connected screen, holding the draw shortcut while touching
   each outside edge leaves draw mode active; moving back inward continues the
   same stroke without release and repress.
 - [ ] With two connected monitors, touching an outer edge of the starting
   monitor leaves draw mode active; crossing the shared edge to the other
   monitor still ends the stroke and requires release and repress.
-- [ ] Strokes remain clipped to the starting monitor.
+- [x] Strokes remain clipped to the starting monitor.
 - [x] The pointer-move path (`GlobalMouseInputAdapter` or
   `DrawingModeInputGate`) receives `IMonitorBoundsSource` and uses it to
   decide a monitor change; `MonitorBounds.Contains` alone no longer ends
@@ -90,7 +90,7 @@ two adjacent screens without the real mouse hook.
   - `docs/ARCHITECTURE.md`, `Differences from the first version`: replace
     "crossing the boundary ends it" with entering another monitor.
   - `README.md`, `Use drawEM`: reaching a screen edge does not end the stroke.
-- [ ] Record automated regression results separately from the manual desktop
+- [x] Record automated regression results separately from the manual desktop
   check of the real mouse hook and screen edge.
 
 ## Validation
@@ -102,6 +102,10 @@ Automated (FIX-006.1):
   a corner past two edges, an outer edge of two adjacent monitors, and the
   shared edge, with fake `IMonitorBoundsSource` layouts.
 
-Manual desktop check of the real mouse hook: unverified. The reproduction with
-hook coordinates, the edge checks on one screen and two monitors, and stroke
-clipping remain open.
+Manual desktop check on a one-screen laptop with the real mouse hook (FIX-006.1
+build): passed, as reported by the user. Holding the draw shortcut past each
+edge kept draw mode active, moving back inward continued the same stroke, and
+the stroke stayed clipped to the screen.
+
+Unverified: the recorded reproduction with hook coordinates on the old build,
+and the two-monitor check (outer edge and shared edge).
