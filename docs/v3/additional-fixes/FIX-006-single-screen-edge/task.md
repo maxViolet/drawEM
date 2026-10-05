@@ -42,17 +42,26 @@ Only a pointer coordinate that lies on another connected monitor ends drawing
 on the starting monitor and requires shortcut release and a new press, as
 specified in the [screen-mode contract](../../../ARCHITECTURE.md#screen-mode).
 
-## Test seam
+## Monitor lookup and test seam
 
-`IMonitorBoundsSource.TryGetBounds` already returns false for a point outside
-every monitor (`Win32MonitorBoundsSource` uses `MONITOR_DEFAULTTONULL`).
-Infrastructure decides a monitor change through this seam, not through
-`MonitorBounds.Contains` alone. `DrawingSessionController` is in the
-Application layer and must not depend on `IMonitorBoundsSource`, so the mouse
-input path must not forward a point outside every monitor as a point outside
-the starting monitor; for example, it clamps that point to the starting
-monitor's bounds. Fake monitor layouts in tests cover one screen and two
-adjacent screens without the real mouse hook.
+`IMonitorBoundsSource.TryGetBounds` returns false for a point outside every
+monitor (`Win32MonitorBoundsSource` uses `MONITOR_DEFAULTTONULL`). Today only
+`GlobalShortcutAdapter` uses it, to resolve the monitor when drawing starts
+and when clear is pressed. The pointer-move path does not use it:
+`GlobalMouseInputAdapter.OnPointerMoved` calls
+`DrawingModeInputGate.StopAtBoundary`, which checks only
+`activeBounds.Contains`, and then forwards the raw point to
+`DrawingSessionController.ReportPointer`, which repeats that check.
+
+The fix connects monitor lookup to the pointer-move path. For a point outside
+the starting monitor, Infrastructure resolves it through
+`IMonitorBoundsSource`: a point on another monitor ends drawing; a point
+outside every monitor does not. `DrawingSessionController` is in the
+Application layer and must not depend on `IMonitorBoundsSource`, so the
+pointer-move path must not forward a point outside every monitor as a point
+outside the starting monitor; for example, it clamps that point to the
+starting monitor's bounds. Fake monitor layouts in tests cover one screen and
+two adjacent screens without the real mouse hook.
 
 ## Acceptance
 
@@ -66,6 +75,10 @@ adjacent screens without the real mouse hook.
   monitor leaves draw mode active; crossing the shared edge to the other
   monitor still ends the stroke and requires release and repress.
 - [ ] Strokes remain clipped to the starting monitor.
+- [ ] The pointer-move path (`GlobalMouseInputAdapter` or
+  `DrawingModeInputGate`) receives `IMonitorBoundsSource` and uses it to
+  decide a monitor change; `MonitorBounds.Contains` alone no longer ends
+  drawing.
 - [ ] Automated tests drive the mouse input path (`GlobalMouseInputAdapter`,
   `DrawingModeInputGate`, `DrawingSessionController`) with fake
   `IMonitorBoundsSource` layouts for a point past an outside edge and a point
