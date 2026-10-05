@@ -53,7 +53,7 @@ public class GlobalShortcutAdapterTests
         source.PressKey(VirtualKeys.LeftControl);
         source.PressKey(VirtualKeys.LeftMenu);
         source.PressKey(VirtualKeys.Z);
-        Assert.True(gate.StopAtBoundary(new ScreenPoint(101, 50)));
+        Assert.True(gate.StopAtBoundary(new ScreenPoint(101, 50), new FakeMonitorBoundsSource(left, right), out _));
         controller.ExitDrawMode();
         cursor.Position = new ScreenPoint(110, 50);
         var countAfterCrossing = states.Count;
@@ -701,7 +701,7 @@ public class GlobalShortcutAdapterTests
         source.PressKey(VirtualKeys.LeftShift);
         source.PressKey(D);
         Assert.Equal(left, states[^1].ActiveStroke!.Bounds);
-        Assert.True(gate.StopAtBoundary(new ScreenPoint(101, 50)));
+        Assert.True(gate.StopAtBoundary(new ScreenPoint(101, 50), new FakeMonitorBoundsSource(left, right), out _));
         controller.ExitDrawMode();
         cursor.Position = new ScreenPoint(110, 50);
         var countAfterCrossing = states.Count;

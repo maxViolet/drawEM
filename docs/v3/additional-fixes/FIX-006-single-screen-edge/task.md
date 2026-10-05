@@ -1,6 +1,6 @@
 # FIX-006: keep drawing active at a single screen edge
 
-**Status:** planned. **Package:** [v3 additional fixes](../README.md).
+**Status:** implemented; manual desktop check pending. **Package:** [v3 additional fixes](../README.md).
 
 ## Current behavior
 
@@ -75,15 +75,15 @@ two adjacent screens without the real mouse hook.
   monitor leaves draw mode active; crossing the shared edge to the other
   monitor still ends the stroke and requires release and repress.
 - [ ] Strokes remain clipped to the starting monitor.
-- [ ] The pointer-move path (`GlobalMouseInputAdapter` or
+- [x] The pointer-move path (`GlobalMouseInputAdapter` or
   `DrawingModeInputGate`) receives `IMonitorBoundsSource` and uses it to
   decide a monitor change; `MonitorBounds.Contains` alone no longer ends
   drawing.
-- [ ] Automated tests drive the mouse input path (`GlobalMouseInputAdapter`,
+- [x] Automated tests drive the mouse input path (`GlobalMouseInputAdapter`,
   `DrawingModeInputGate`, `DrawingSessionController`) with fake
   `IMonitorBoundsSource` layouts for a point past an outside edge and a point
   on another monitor.
-- [ ] Documentation states that only entering another monitor ends a stroke
+- [x] Documentation states that only entering another monitor ends a stroke
   and that an outside edge does not:
   - `docs/ARCHITECTURE.md`, `Runtime flow` → `Draw`: the gate closes only
     when the cursor enters another monitor.
@@ -92,3 +92,16 @@ two adjacent screens without the real mouse hook.
   - `README.md`, `Use drawEM`: reaching a screen edge does not end the stroke.
 - [ ] Record automated regression results separately from the manual desktop
   check of the real mouse hook and screen edge.
+
+## Validation
+
+Automated (FIX-006.1):
+
+- `dotnet test -c Release`: 403 passed, 0 failed.
+- `GlobalMouseInputAdapterTests` covers a point past each edge of one screen,
+  a corner past two edges, an outer edge of two adjacent monitors, and the
+  shared edge, with fake `IMonitorBoundsSource` layouts.
+
+Manual desktop check of the real mouse hook: unverified. The reproduction with
+hook coordinates, the edge checks on one screen and two monitors, and stroke
+clipping remain open.

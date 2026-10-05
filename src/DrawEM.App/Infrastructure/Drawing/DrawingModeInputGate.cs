@@ -41,12 +41,24 @@ public sealed class DrawingModeInputGate
         }
     }
 
-    public bool StopAtBoundary(ScreenPoint point)
+    /// <summary>
+    /// Closes the gate when the pointer enters a monitor other than the starting one.
+    /// A point outside every monitor counts as a position on the starting monitor: the gate
+    /// stays open and <paramref name="drawPoint"/> is that point clamped to the starting monitor.
+    /// </summary>
+    public bool StopAtBoundary(ScreenPoint point, IMonitorBoundsSource monitors, out ScreenPoint drawPoint)
     {
+        drawPoint = point;
         lock (sync)
         {
             if (active == Inactive || activeBounds is not { } bounds || bounds.Contains(point))
             {
+                return false;
+            }
+
+            if (!monitors.TryGetBounds(point, out var monitor) || monitor == bounds)
+            {
+                drawPoint = bounds.Clamp(point);
                 return false;
             }
 

@@ -8,16 +8,19 @@ public sealed class GlobalMouseInputAdapter
     private readonly DrawingSessionController controller;
     private readonly DrawingModeInputGate inputGate;
     private readonly Action<Action> dispatch;
+    private readonly IMonitorBoundsSource monitorBoundsSource;
 
     public GlobalMouseInputAdapter(
         IMouseHookSource source,
         DrawingSessionController controller,
         DrawingModeInputGate inputGate,
-        Action<Action> dispatch)
+        Action<Action> dispatch,
+        IMonitorBoundsSource monitorBoundsSource)
     {
         this.controller = controller;
         this.inputGate = inputGate;
         this.dispatch = dispatch;
+        this.monitorBoundsSource = monitorBoundsSource;
         source.PointerMoved += OnPointerMoved;
         source.PointerButtonActivity += ShouldSuppressPointerButton;
         source.PointerWheelActivity += ShouldSuppressPointerButton;
@@ -25,7 +28,7 @@ public sealed class GlobalMouseInputAdapter
 
     private void OnPointerMoved(ScreenPoint point)
     {
-        if (inputGate.StopAtBoundary(point))
+        if (inputGate.StopAtBoundary(point, monitorBoundsSource, out var drawPoint))
         {
             dispatch(controller.ExitDrawMode);
             return;
@@ -33,7 +36,7 @@ public sealed class GlobalMouseInputAdapter
 
         if (inputGate.IsActive)
         {
-            dispatch(() => controller.ReportPointer(point));
+            dispatch(() => controller.ReportPointer(drawPoint));
         }
     }
 

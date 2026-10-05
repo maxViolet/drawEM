@@ -8,6 +8,9 @@ namespace DrawEM.Tests.Infrastructure.Drawing;
 
 public class GlobalMouseInputAdapterTests
 {
+    private static readonly MonitorBounds Left = new(0, 0, 100, 100);
+    private static readonly MonitorBounds Right = new(100, 0, 200, 100);
+
     [Fact]
     public void BoundaryCrossing_ClosesInputGateBeforeQueuedControllerAction()
     {
@@ -15,11 +18,10 @@ public class GlobalMouseInputAdapterTests
         var controller = new DrawingSessionController();
         var gate = new DrawingModeInputGate();
         var queued = new Queue<Action>();
-        _ = new GlobalMouseInputAdapter(source, controller, gate, queued.Enqueue);
-        var left = new MonitorBounds(0, 0, 100, 100);
+        _ = new GlobalMouseInputAdapter(source, controller, gate, queued.Enqueue, new FakeMonitorBoundsSource(Left, Right));
 
-        gate.Begin(left);
-        controller.EnterDrawMode(new ScreenPoint(90, 50), left);
+        gate.Begin(Left);
+        controller.EnterDrawMode(new ScreenPoint(90, 50), Left);
         source.Move(new ScreenPoint(101, 50));
 
         Assert.False(gate.IsActive);
@@ -30,13 +32,64 @@ public class GlobalMouseInputAdapterTests
         Assert.Equal([new ScreenPoint(90, 50)], Assert.Single(controller.CompletedStrokes).Points);
     }
 
+    [Theory]
+    [InlineData(-1, 50, 0, 50)]
+    [InlineData(100, 50, 99, 50)]
+    [InlineData(50, -1, 50, 0)]
+    [InlineData(50, 100, 50, 99)]
+    [InlineData(-40, 130, 0, 99)]
+    public void PointerPastOutsideEdgeOfSingleScreen_KeepsStrokeAtEdge(int x, int y, int edgeX, int edgeY)
+    {
+        var source = new FakeMouseHookSource();
+        var controller = new DrawingSessionController();
+        var gate = new DrawingModeInputGate();
+        _ = new GlobalMouseInputAdapter(source, controller, gate, action => action(), new FakeMonitorBoundsSource(Left));
+
+        gate.Begin(Left);
+        controller.EnterDrawMode(new ScreenPoint(50, 50), Left);
+        source.Move(new ScreenPoint(x, y));
+        source.Move(new ScreenPoint(60, 60));
+
+        Assert.True(gate.IsActive);
+        Assert.False(gate.IsBlockedUntilReleased);
+        gate.SetActive(false);
+        controller.ExitDrawMode();
+        Assert.Equal(
+            [new ScreenPoint(50, 50), new ScreenPoint(edgeX, edgeY), new ScreenPoint(60, 60)],
+            Assert.Single(controller.CompletedStrokes).Points);
+    }
+
+    [Fact]
+    public void PointerPastOuterEdgeOfTwoMonitors_KeepsStroke_AndSharedEdgeEndsIt()
+    {
+        var source = new FakeMouseHookSource();
+        var controller = new DrawingSessionController();
+        var gate = new DrawingModeInputGate();
+        _ = new GlobalMouseInputAdapter(source, controller, gate, action => action(), new FakeMonitorBoundsSource(Left, Right));
+
+        gate.Begin(Left);
+        controller.EnterDrawMode(new ScreenPoint(50, 50), Left);
+        source.Move(new ScreenPoint(-5, 50));
+        source.Move(new ScreenPoint(50, 105));
+
+        Assert.True(gate.IsActive);
+
+        source.Move(new ScreenPoint(100, 50));
+
+        Assert.False(gate.IsActive);
+        Assert.True(gate.IsBlockedUntilReleased);
+        Assert.Equal(
+            [new ScreenPoint(50, 50), new ScreenPoint(0, 50), new ScreenPoint(50, 99)],
+            Assert.Single(controller.CompletedStrokes).Points);
+    }
+
     [Fact]
     public void PointerMovement_DuringDrawMode_BecomesCompletedStroke()
     {
         var source = new FakeMouseHookSource();
         var controller = new DrawingSessionController();
         var inputGate = new DrawingModeInputGate();
-        _ = new GlobalMouseInputAdapter(source, controller, inputGate, action => action());
+        _ = new GlobalMouseInputAdapter(source, controller, inputGate, action => action(), new FakeMonitorBoundsSource(Left));
 
         inputGate.SetActive(true);
         controller.EnterDrawMode();
@@ -55,7 +108,7 @@ public class GlobalMouseInputAdapterTests
         var source = new FakeMouseHookSource();
         var controller = new DrawingSessionController();
         var inputGate = new DrawingModeInputGate();
-        _ = new GlobalMouseInputAdapter(source, controller, inputGate, action => action());
+        _ = new GlobalMouseInputAdapter(source, controller, inputGate, action => action(), new FakeMonitorBoundsSource(Left));
 
         Assert.False(source.ShouldSuppressPointerButton());
 
@@ -74,7 +127,7 @@ public class GlobalMouseInputAdapterTests
         var source = new FakeMouseHookSource();
         var controller = new DrawingSessionController();
         var inputGate = new DrawingModeInputGate();
-        _ = new GlobalMouseInputAdapter(source, controller, inputGate, action => action());
+        _ = new GlobalMouseInputAdapter(source, controller, inputGate, action => action(), new FakeMonitorBoundsSource(Left));
 
         Assert.False(source.ShouldSuppressPointerWheel());
 
@@ -98,7 +151,7 @@ public class GlobalMouseInputAdapterTests
         _ = new GlobalShortcutAdapter(keyboardSource, keyboardSource, controller, inputGate, new FakeCursorPositionSource(default), queuedActions.Enqueue,
             new FakeMonitorBoundsSource(new MonitorBounds(-1000, -1000, 1000, 1000)),
             new ShortcutBindings(SettingsSnapshot.Default.DrawShortcut, SettingsSnapshot.Default.ClearShortcut, []), _ => { });
-        _ = new GlobalMouseInputAdapter(mouseSource, controller, inputGate, queuedActions.Enqueue);
+        _ = new GlobalMouseInputAdapter(mouseSource, controller, inputGate, queuedActions.Enqueue, new FakeMonitorBoundsSource(Left));
 
         keyboardSource.PressKey(VirtualKeys.LeftControl);
         keyboardSource.PressKey(VirtualKeys.LeftMenu);

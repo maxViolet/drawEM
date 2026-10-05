@@ -17,7 +17,8 @@ overlay across the desktop.
 Drawings are OrangeRed (`#FF4500`) and 4 px thick. They remain visible while
 you switch windows, until you clear them or exit. A stroke stays on the monitor
 where it began. If the pointer crosses to another monitor while drawing, the
-stroke ends; release and press `Ctrl+Alt+Z` again to draw there.
+stroke ends; release and press `Ctrl+Alt+Z` again to draw there. Reaching a
+screen edge with no monitor beyond it does not end the stroke.
 
 While drawing, drawEM blocks pointer clicks, scrolling, and keyboard input
 other than the draw shortcut from the app beneath the overlay. After the draw

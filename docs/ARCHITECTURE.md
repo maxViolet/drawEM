@@ -88,9 +88,12 @@ mouse hooks. It changes synchronously in the keyboard callback, before the
 controller action is queued on the WPF Dispatcher. The `Win32MouseHookAdapter`
 forwards physical mouse movement to the controller only when this gate is open.
 When `Ctrl+Alt+Z` is released, the gate closes and the controller completes the
-active stroke. If the cursor crosses to another monitor first, the gate closes
+active stroke. If the cursor enters another monitor first, the gate closes
 synchronously and drawing stays blocked until the shortcut is released and
-pressed again. The mouse hook suppresses pointer-button and wheel messages, and
+pressed again. The mouse hook resolves a point outside the starting monitor
+through `IMonitorBoundsSource`. A point outside every monitor, past an outside
+edge of the desktop, keeps the gate open and is clamped to the starting
+monitor, so the stroke continues along the edge. The mouse hook suppresses pointer-button and wheel messages, and
 the keyboard hook suppresses non-chord keys during draw mode, so clicks,
 scrolling, and typed symbols do not reach the application underneath. The
 overlay is always click-through and is not an input source.
@@ -370,8 +373,9 @@ implementation that makes it pass, then the next behavior.
 
 - A stroke formerly continued across monitor boundaries while the shortcut
   remained held. It is now confined to the monitor where drawing started;
-  crossing the boundary ends it, and drawing resumes only after release and
-  another press. The stroke thickness is clipped at the monitor edge.
+  entering another monitor ends it, and drawing resumes only after release
+  and another press. Reaching an outside edge of the desktop does not end it.
+  The stroke thickness is clipped at the monitor edge.
 - `Ctrl+Alt+X` formerly cleared strokes on every monitor. It now clears only
   the monitor under the cursor, preserving drawings on other monitors.
 
