@@ -35,6 +35,9 @@ public sealed partial class ManagedSoundLibrary : ISoundLibrary
 
     public string LibraryDirectory => directory;
 
+    /// <summary>The path of the copy named <paramref name="libraryFileName"/>. Pure; touches no file.</summary>
+    public string PathFor(string libraryFileName) => Path.Combine(directory, libraryFileName);
+
     public SoundReference Import(string sourceFile)
     {
         ArgumentNullException.ThrowIfNull(sourceFile);
@@ -45,7 +48,7 @@ public sealed partial class ManagedSoundLibrary : ISoundLibrary
             throw new SoundImportException($"'{sourceFile}' is not a WAV or MP3 file.");
         }
 
-        var temp = Path.Combine(directory, TempPrefix + Guid.NewGuid().ToString("N") + TempSuffix);
+        var temp = PathFor(TempPrefix + Guid.NewGuid().ToString("N") + TempSuffix);
         try
         {
             if (IsInLibrary(sourceFile))
@@ -57,7 +60,7 @@ public sealed partial class ManagedSoundLibrary : ISoundLibrary
             Directory.CreateDirectory(directory);
             var (hash, length) = CopyHashed(sourceFile, temp, displayName);
             var name = hash + extension;
-            var target = Path.Combine(directory, name);
+            var target = PathFor(name);
             lock (gate)
             {
                 if (!IsIntactCopy(target, hash, length))
@@ -91,7 +94,8 @@ public sealed partial class ManagedSoundLibrary : ISoundLibrary
         }
     }
 
-    public IReadOnlyList<SoundCleanupFailure> CommitSave(SettingsSnapshot previous, SettingsSnapshot saved)
+    public IReadOnlyList<SoundCleanupFailure> CommitSave(
+        SettingsSnapshot previous, SettingsSnapshot saved, bool removeUnreferencedCopies)
     {
         ArgumentNullException.ThrowIfNull(previous);
         ArgumentNullException.ThrowIfNull(saved);
@@ -100,7 +104,7 @@ public sealed partial class ManagedSoundLibrary : ISoundLibrary
             var candidates = References(previous);
             candidates.UnionWith(draftImports);
             draftImports.Clear();
-            return Remove(candidates, References(saved));
+            return removeUnreferencedCopies ? Remove(candidates, References(saved)) : [];
         }
     }
 
@@ -196,7 +200,7 @@ public sealed partial class ManagedSoundLibrary : ISoundLibrary
         {
             try
             {
-                File.Delete(Path.Combine(directory, name));
+                File.Delete(PathFor(name));
             }
             catch (DirectoryNotFoundException)
             {

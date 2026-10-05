@@ -27,6 +27,6 @@
   same extension shares one copy; the same bytes selected as `.wav` and as
   `.mp3` make two copies. Only these names and leftover `import-*.tmp` files are ever removed.
 - Not wired into the running app yet. Startup cleanup
-  (`SettingsStartup.RemoveOrphanSounds`) and Save (`SettingsPersistence.Save`)
+  (`SettingsStartup.RemoveOrphanSounds`) and Save (`SettingsSaveOperation.Save`)
   are connected in [Step 6](../step-6-runtime-settings/task.md); import and Cancel in
   [Step 7](../step-7-settings-window/task.md).

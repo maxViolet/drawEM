@@ -1,8 +1,9 @@
 namespace DrawEM.App.Application.Sound;
 
-/// <summary>Opens a player for one configured sound. The implementation owns path lookup and the playback engine.</summary>
+/// <summary>Opens a player for one requested sound. The implementation owns the playback engine.</summary>
 public interface ISoundPlayerFactory
 {
-    /// <exception cref="SoundPlaybackException">The sound has no path, or its file cannot be opened.</exception>
-    ISoundPlayer Create(SoundId sound);
+    /// <summary>Opens <see cref="PlaySoundCommand.Path"/>; never resolves the sound against other settings.</summary>
+    /// <exception cref="SoundPlaybackException">The file cannot be opened.</exception>
+    ISoundPlayer Create(PlaySoundCommand command);
 }
