@@ -4,26 +4,18 @@ using DrawEM.App.Application.Sound;
 namespace DrawEM.App.Infrastructure.Sound;
 
 /// <summary>
-/// Resolves a sound to its configured file and opens a <see cref="MediaSoundPlayer"/> for it.
-/// Missing assignments, missing files, and engine errors become <see cref="SoundPlaybackException"/>.
+/// Opens a <see cref="MediaSoundPlayer"/> for the managed copy a request carries. A missing copy and engine
+/// errors become <see cref="SoundPlaybackException"/>.
 /// </summary>
-public sealed class MediaSoundPlayerFactory(SoundConfiguration configuration) : ISoundPlayerFactory
+public sealed class MediaSoundPlayerFactory : ISoundPlayerFactory
 {
-    public ISoundPlayer Create(SoundId sound)
+    public ISoundPlayer Create(PlaySoundCommand command)
     {
-        var path = configuration.PathOf(sound)
-            ?? throw new SoundPlaybackException("Sound is not assigned to a file.");
-
-        if (!Path.IsPathFullyQualified(path))
-        {
-            throw new SoundPlaybackException("Path is not absolute.");
-        }
-
-        if (!File.Exists(path))
+        if (!File.Exists(command.Path))
         {
             throw new SoundPlaybackException("File not found.");
         }
 
-        return new MediaSoundPlayer(path);
+        return new MediaSoundPlayer(command.Path);
     }
 }

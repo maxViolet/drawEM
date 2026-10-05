@@ -1,3 +1,4 @@
+using DrawEM.App.Application.Settings;
 using DrawEM.App.Application.Sound;
 using DrawEM.App.Infrastructure.Sound;
 
@@ -55,7 +56,7 @@ public class SoundChannelHostTests
             },
         };
         var host = new SoundChannelHost(dispatch => NewChannel(players, new ManualTimeProvider(), dispatch));
-        host.Play(new PlaySoundCommand(Applause));
+        host.Play(Command(Applause));
         Task<Exception>? disposal = null;
         try
         {
@@ -85,11 +86,99 @@ public class SoundChannelHostTests
         var players = new ThreadRecordingFactory();
         using var host = new SoundChannelHost(dispatch => NewChannel(players, new ManualTimeProvider(), dispatch));
 
-        host.Play(new PlaySoundCommand(Applause));
+        host.Play(Command(Applause));
 
         Assert.True(players.Played.Wait(Wait));
         Assert.NotEqual(Environment.CurrentManagedThreadId, players.Player!.PlayThreadId);
         Assert.Equal(ApartmentState.STA, players.Player.PlayApartment);
+    }
+
+    [Fact]
+    public void Stop_WithPlayingSound_ReportsStoppedOnceItsPlayerIsReleased()
+    {
+        var players = new ThreadRecordingFactory();
+        using var host = new SoundChannelHost(dispatch => NewChannel(players, new ManualTimeProvider(), dispatch));
+        host.Play(Command(Applause));
+        Assert.True(players.Played.Wait(Wait));
+
+        var stopped = host.Stop();
+
+        Assert.True(stopped);
+        Assert.True(players.Player!.IsDisposed);
+        Assert.Equal(players.Player.PlayThreadId, players.Player.StopThreadId);
+    }
+
+    [Fact]
+    public void EndEarlierRequests_WithBlockedSoundThread_StopNotConfirmed_AndEarlierRequestsNeverPlay()
+    {
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        var players = new ThreadRecordingFactory
+        {
+            OnCreate = () =>
+            {
+                entered.Set();
+                release.Wait();
+            },
+        };
+        var host = new SoundChannelHost(
+            dispatch => NewChannel(players, new ManualTimeProvider(), dispatch), TimeSpan.FromMilliseconds(50));
+        host.Play(Command(Applause));
+        Assert.True(entered.Wait(Wait));
+        host.Play(Command(Applause));
+
+        bool stopped;
+        try
+        {
+            using (var hold = host.TryHoldStarts())
+            {
+                Assert.NotNull(hold);
+                hold.EndEarlierRequests();
+            }
+
+            stopped = host.Stop();
+        }
+        finally
+        {
+            release.Set();
+        }
+
+        host.Dispose();
+        Assert.False(stopped);
+        Assert.True(Assert.Single(players.Created).IsDisposed);
+        Assert.False(players.Played.IsSet);
+    }
+
+    [Fact]
+    public void TryHoldStarts_WhileAPlayerIsStarting_ReturnsNull_AndSucceedsOnceTheStartEnds()
+    {
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        var players = new ThreadRecordingFactory();
+        players.OnPlay = () =>
+        {
+            entered.Set();
+            release.Wait();
+        };
+        using var host = new SoundChannelHost(
+            dispatch => NewChannel(players, new ManualTimeProvider(), dispatch), TimeSpan.FromMilliseconds(50));
+        host.Play(Command(Applause));
+        Assert.True(entered.Wait(Wait));
+
+        ISoundStartHold? whileStarting;
+        try
+        {
+            whileStarting = host.TryHoldStarts();
+        }
+        finally
+        {
+            release.Set();
+        }
+
+        Assert.Null(whileStarting);
+        Assert.True(players.Played.Wait(Wait));
+        using var afterStart = host.TryHoldStarts();
+        Assert.NotNull(afterStart);
     }
 
     [Fact]
@@ -98,7 +187,7 @@ public class SoundChannelHostTests
         var players = new ThreadRecordingFactory();
         var time = new ManualTimeProvider();
         using var host = new SoundChannelHost(dispatch => NewChannel(players, time, dispatch));
-        host.Play(new PlaySoundCommand(Applause));
+        host.Play(Command(Applause));
         Assert.True(players.Played.Wait(Wait));
 
         // The deadline callback fires on this thread, which never yields to a dispatcher.
@@ -113,12 +202,12 @@ public class SoundChannelHostTests
     {
         var players = new ThreadRecordingFactory();
         var host = new SoundChannelHost(dispatch => NewChannel(players, new ManualTimeProvider(), dispatch));
-        host.Play(new PlaySoundCommand(Applause));
+        host.Play(Command(Applause));
         Assert.True(players.Played.Wait(Wait));
 
         host.Dispose();
         host.Dispose();
-        host.Play(new PlaySoundCommand(Applause));
+        host.Play(Command(Applause));
 
         Assert.True(players.Player!.IsDisposed);
     }
@@ -153,7 +242,7 @@ public class SoundChannelHostTests
             dispatch(() => soundThread = Thread.CurrentThread);
             return new SoundChannelController(players, new ThrowingReporter(), new ManualTimeProvider(), dispatch);
         });
-        host.Play(new PlaySoundCommand(Applause));
+        host.Play(Command(Applause));
         Assert.True(players.Played.Wait(Wait));
 
         Assert.Throws<InvalidOperationException>(host.Dispose);
@@ -169,7 +258,7 @@ public class SoundChannelHostTests
         var players = new ThreadRecordingFactory { OnCreate = () => rejected = Record.Exception(() => host!.Dispose()) };
         host = new SoundChannelHost(dispatch => NewChannel(players, new ManualTimeProvider(), dispatch));
 
-        host.Play(new PlaySoundCommand(Applause));
+        host.Play(Command(Applause));
 
         Assert.True(players.Played.Wait(Wait));
         Assert.IsType<InvalidOperationException>(rejected);
@@ -181,16 +270,18 @@ public class SoundChannelHostTests
         ISoundPlayerFactory players, TimeProvider time, Action<Action> dispatch) =>
         new(players, new IgnoringReporter(), time, dispatch);
 
+    private static PlaySoundCommand Command(SoundId sound) => new(sound, @"C:\library\" + sound.Value + ".wav");
+
     private sealed class IgnoringReporter : ISoundFailureReporter
     {
-        public void Report(SoundId sound, string reason)
+        public void Report(PlaySoundCommand command, string reason)
         {
         }
     }
 
     private sealed class ThrowingReporter : ISoundFailureReporter
     {
-        public void Report(SoundId sound, string reason) => throw new InvalidOperationException("Reporter broke.");
+        public void Report(PlaySoundCommand command, string reason) => throw new InvalidOperationException("Reporter broke.");
     }
 
     private sealed class ThreadRecordingFactory : ISoundPlayerFactory
@@ -199,18 +290,24 @@ public class SoundChannelHostTests
 
         public ThreadRecordingPlayer? Player { get; private set; }
 
+        public List<ThreadRecordingPlayer> Created { get; } = [];
+
         public string? StopFailure { get; init; }
 
         public Action? OnCreate { get; init; }
 
-        public ISoundPlayer Create(SoundId sound)
+        /// <summary>Runs inside the player's start, before it reports <see cref="Played"/>.</summary>
+        public Action? OnPlay { get; set; }
+
+        public ISoundPlayer Create(PlaySoundCommand command)
         {
             OnCreate?.Invoke();
-            Player = new ThreadRecordingPlayer(Played, StopFailure);
+            Player = new ThreadRecordingPlayer(Played, StopFailure, OnPlay);
+            Created.Add(Player);
             return Player;
         }
 
-        public sealed class ThreadRecordingPlayer(ManualResetEventSlim played, string? stopFailure) : ISoundPlayer
+        public sealed class ThreadRecordingPlayer(ManualResetEventSlim played, string? stopFailure, Action? onPlay) : ISoundPlayer
         {
             public event Action? Completed { add { } remove { } }
 
@@ -230,6 +327,7 @@ public class SoundChannelHostTests
             {
                 PlayThreadId = Environment.CurrentManagedThreadId;
                 PlayApartment = Thread.CurrentThread.GetApartmentState();
+                onPlay?.Invoke();
                 played.Set();
             }
 

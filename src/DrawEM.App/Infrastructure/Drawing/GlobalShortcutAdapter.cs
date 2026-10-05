@@ -7,10 +7,10 @@ using DrawEM.App.Infrastructure;
 namespace DrawEM.App.Infrastructure.Drawing;
 
 /// <remarks>
-/// Hook callbacks and the <see cref="IShortcutCapture"/> calls must run on the thread that installed the
-/// keyboard hook, so they never interleave.
+/// Hook callbacks, the <see cref="IShortcutCapture"/> calls, and the <see cref="IActiveShortcuts"/> calls
+/// must run on the thread that installed the keyboard hook, so they never interleave.
 /// </remarks>
-public sealed class GlobalShortcutAdapter : IShortcutCapture
+public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
 {
     private readonly INeutralKeyEmitter neutralKeys;
     private readonly DrawingSessionController controller;
@@ -18,7 +18,7 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture
     private readonly ICursorPositionSource cursorPositionSource;
     private readonly IMonitorBoundsSource monitorBoundsSource;
     private readonly Action<Action> dispatch;
-    private readonly ShortcutBindings bindings;
+    private ShortcutBindings bindings;
     private readonly Action<PlaySoundCommand> playSound;
     private readonly HashSet<int> pressedKeys = [];
     private readonly HashSet<int> startedShortcutKeys = [];
@@ -31,12 +31,18 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture
     /// <summary>Keys that must be released before capture evaluates another chord.</summary>
     private readonly HashSet<int> keysBlockingCapture = [];
 
-    /// <summary>Capture ended with keys held. No command starts until every key is released.</summary>
+    /// <summary>Capture or a Save ended with keys held. No command starts until every key is released.</summary>
     private bool dispatchPaused;
+
+    /// <summary>
+    /// Advanced by <see cref="Interrupt"/>. A queued drawing command runs only if it was queued under the
+    /// current value. Written on the hook thread, read on the dispatcher thread.
+    /// </summary>
+    private int drawingEpoch;
 
     private Action<ShortcutCaptureResult>? reportCapture;
 
-    /// <param name="bindings">The active shortcuts, read inside the hook callback.</param>
+    /// <param name="bindings">The shortcuts to start with, read inside the hook callback. <see cref="Bind"/> replaces them.</param>
     /// <param name="playSound">
     /// Queues the command on the sound thread. Called directly inside the hook callback, so it must
     /// return promptly without file access, decoding, or player creation. Production uses SoundChannelHost.Play.
@@ -72,7 +78,7 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture
         if (inputGate.IsActive)
         {
             inputGate.SetActive(false);
-            dispatch(controller.ExitDrawMode);
+            DispatchDrawing(controller.ExitDrawMode);
         }
 
         reportCapture = report;
@@ -87,6 +93,22 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture
             StopCapture();
         }
     }
+
+    /// <remarks>Resets the drawing controller directly, so call it on the controller's thread.</remarks>
+    public void Interrupt()
+    {
+        inputGate.SetActive(false);
+        inputGate.ReleaseBlock();
+        Volatile.Write(ref drawingEpoch, drawingEpoch + 1);
+        dispatchPaused = pressedKeys.Count > 0;
+
+        // A dropped command may have been an exit, so drawing is reset here rather than queued.
+        controller.ClearAndExitDrawMode();
+    }
+
+    /// <remarks>Call after <see cref="Interrupt"/>, so no press started under the previous shortcuts continues.</remarks>
+    public void Bind(SettingsSnapshot snapshot, Func<SoundReference, PlaySoundCommand> commandFor) =>
+        bindings = ShortcutBindings.FromSnapshot(snapshot, commandFor);
 
     private bool HandleKey(int vkCode, KeyDirection direction)
     {
@@ -278,13 +300,13 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture
             if (monitorBoundsSource.TryGetBounds(startingPoint, out var bounds))
             {
                 inputGate.Begin(bounds);
-                dispatch(() => controller.EnterDrawMode(startingPoint, bounds));
+                DispatchDrawing(() => controller.EnterDrawMode(startingPoint, bounds));
             }
         }
         else if (!drawShortcutHeld && inputGate.IsActive)
         {
             inputGate.SetActive(false);
-            dispatch(controller.ExitDrawMode);
+            DispatchDrawing(controller.ExitDrawMode);
         }
 
         if (!drawShortcutHeld && !clearShortcutHeld)
@@ -299,13 +321,29 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture
             if (cursorPositionSource.TryGetCurrentPosition(out var clearPoint)
                 && monitorBoundsSource.TryGetBounds(clearPoint, out var clearBounds))
             {
-                dispatch(() => controller.ClearMonitorAndExitDrawMode(clearBounds));
+                DispatchDrawing(() => controller.ClearMonitorAndExitDrawMode(clearBounds));
             }
             else
             {
-                dispatch(controller.ExitDrawMode);
+                DispatchDrawing(controller.ExitDrawMode);
             }
         }
+    }
+
+    /// <summary>
+    /// Queues a drawing command that is dropped if <see cref="Interrupt"/> runs before it, so a press made
+    /// under the previous shortcuts cannot draw under the new configuration.
+    /// </summary>
+    private void DispatchDrawing(Action command)
+    {
+        var epoch = drawingEpoch;
+        dispatch(() =>
+        {
+            if (epoch == Volatile.Read(ref drawingEpoch))
+            {
+                command();
+            }
+        });
     }
 
     /// <summary>
