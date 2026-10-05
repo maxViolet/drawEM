@@ -1,4 +1,3 @@
-using System.IO;
 using System.Windows;
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Infrastructure;
@@ -53,20 +52,18 @@ public partial class App : System.Windows.Application
                 MessageBox.Show(message, "drawEM", MessageBoxButton.OK, MessageBoxImage.Warning));
             var startup = SettingsStartup.Load(store, settingsFailures);
             var library = new ManagedSoundLibrary(ManagedSoundLibrary.DefaultDirectory);
-            string ManagedCopy(string libraryFileName) => Path.Combine(library.LibraryDirectory, libraryFileName);
-            var settings = new ActiveSettings(startup.Active, sound => ManagedCopy(sound.LibraryFileName));
+            var settings = new ActiveSettings(startup.Active, sound => library.PathFor(sound.LibraryFileName));
 
             var soundLog = new LoggingSoundFailureReporter(
                 new SoundFailureLog(SoundFailureLog.DefaultPath).Append, TimeProvider.System);
             soundFailures = soundLog;
-            void ReportCleanup(SoundCleanupFailure failure) => soundLog.ReportCleanup(
-                failure.LibraryFileName is { } name ? ManagedCopy(name) : library.LibraryDirectory, failure.Reason);
+            var saveNotifications = new SettingsSaveNotifications(settingsFailures, soundLog, library);
             foreach (var failure in SettingsStartup.RemoveOrphanSounds(startup, library))
             {
-                ReportCleanup(failure);
+                saveNotifications.CleanupFailed(failure);
             }
 
-            controller = new DrawingSessionController(() => settings.Current.Snapshot.Style);
+            controller = new DrawingSessionController(() => settings.Current.Style);
             overlayWindow = new OverlayWindow();
             _ = new OverlayWindowAdapter(controller, overlayWindow);
 
@@ -77,7 +74,7 @@ public partial class App : System.Windows.Application
                 dispatch));
             soundChannel = channelHost;
 
-            // Bindings and the sound commands they hold come from one configuration.
+            // Bindings and the sound commands they hold come from one snapshot.
             var active = settings.Current;
 
             var inputGate = new DrawingModeInputGate();
@@ -90,7 +87,7 @@ public partial class App : System.Windows.Application
                 new Win32CursorPositionSource(),
                 action => Dispatcher.BeginInvoke(action),
                 new Win32MonitorBoundsSource(),
-                ShortcutBindings.FromSnapshot(active.Snapshot, active.CommandFor),
+                ShortcutBindings.FromSnapshot(active, settings.CommandFor),
                 channelHost.Play);
 
             mouseHookSource = new Win32MouseHookSource();
@@ -107,9 +104,7 @@ public partial class App : System.Windows.Application
                 failure => exitPolicy.Report("exit", failure));
             trayApplication.Start();
 
-            SettingsSave = new SettingsSaveOperation(
-                store, library, settings, channelHost.Stop, shortcuts, controller, settingsFailures, ReportCleanup,
-                soundLog.ReportUnconfirmedStop);
+            SettingsSave = new SettingsSaveOperation(store, library, settings, channelHost, shortcuts, saveNotifications);
         }
         catch (Exception exception)
         {

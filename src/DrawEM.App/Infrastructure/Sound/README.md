@@ -8,7 +8,7 @@
   A sound's `SoundId` is its managed copy's file name. `SoundAssignments.cs` is
   the retired v2 code-owned mapping; nothing at run time reads it.
 - `SoundFailureLog` appends failures to `%LOCALAPPDATA%\drawEM\logs\sound.log`:
-  time, slot, sound identifier, path, and reason. Write errors are
+  time, sound identifier, path, and reason. Write errors are
   swallowed so logging cannot end the tray app.
 - `MediaSoundPlayerFactory` opens a `MediaSoundPlayer` (WPF `MediaPlayer`, WAV
   and MP3) for the managed copy a `PlaySoundCommand` carries. A missing copy or
@@ -24,8 +24,10 @@
 - `SoundChannelHost` runs `SoundChannelController` on a dedicated STA
   dispatcher thread, so `MediaPlayer` can be stopped at the deadline even when
   the UI thread is busy. Call `SoundChannelHost.Play` from any thread; call
-  `Stop` and `Dispose` from any thread except the sound thread. `Stop` waits
-  at most two seconds and reports whether the stop ran. See
+  `TryHoldStarts`, `Stop`, and `Dispose` from any thread except the sound
+  thread. A Save holds player starts while it ends earlier requests, so no
+  request made before the Save starts afterwards; `Stop` waits at most two
+  seconds and reports whether the stop ran. See
   `docs/ARCHITECTURE.md`, "Sound thread", for the shutdown order.
 
 `GlobalShortcutAdapter` (in `Infrastructure/Drawing`) matches each filled

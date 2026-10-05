@@ -229,15 +229,27 @@ public class SoundChannelControllerTests
     }
 
     [Fact]
-    public void RequestSupersededWhileOpening_ReleasesPlayerWithoutPlaying()
+    public void Player_StartsOnlyInsideTheRequestsAtomicStart()
     {
         var fixture = new Fixture();
-        var current = true;
-        fixture.OnCreate = () => current = false;
+        var request = new FakeRequest(fixture.Log);
 
-        fixture.Controller.Play(Command(Applause), () => current);
+        fixture.Controller.Play(Command(Applause), request);
 
-        Assert.Equal(["create applause", "dispose applause"], fixture.Log);
+        Assert.Equal(["create applause", "start begins", "play applause", "start ends"], fixture.Log);
+        Assert.Equal(Applause, fixture.Controller.ActiveSound);
+    }
+
+    [Fact]
+    public void RequestEndedWhileOpening_ReleasesPlayerWithoutPlaying()
+    {
+        var fixture = new Fixture();
+        var request = new FakeRequest(fixture.Log);
+        fixture.OnCreate = () => request.IsCurrent = false;
+
+        fixture.Controller.Play(Command(Applause), request);
+
+        Assert.Equal(["create applause", "stop applause", "dispose applause"], fixture.Log);
         Assert.Null(fixture.Controller.ActiveSound);
         Assert.Equal(0, fixture.Time.ActiveTimerCount);
     }
@@ -248,13 +260,32 @@ public class SoundChannelControllerTests
         var fixture = new Fixture();
         fixture.Controller.Play(Command(Applause));
 
-        fixture.Controller.Play(Command(Drumroll), () => false);
+        fixture.Controller.Play(Command(Drumroll), new FakeRequest(fixture.Log) { IsCurrent = false });
 
         Assert.Equal(["create applause", "play applause"], fixture.Log);
         Assert.Equal(Applause, fixture.Controller.ActiveSound);
     }
 
     private static PlaySoundCommand Command(SoundId sound) => new(sound, @"C:\library\" + sound.Value + ".wav");
+
+    /// <summary>Logs where its atomic start section begins and ends.</summary>
+    private sealed class FakeRequest(List<string> log) : IPlayRequest
+    {
+        public bool IsCurrent { get; set; } = true;
+
+        public bool TryStart(Action start)
+        {
+            if (!IsCurrent)
+            {
+                return false;
+            }
+
+            log.Add("start begins");
+            start();
+            log.Add("start ends");
+            return true;
+        }
+    }
 
     private sealed class Fixture : ISoundPlayerFactory, ISoundFailureReporter
     {

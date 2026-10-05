@@ -1,3 +1,4 @@
+using DrawEM.App.Application.Settings;
 using DrawEM.App.Application.Sound;
 using DrawEM.App.Infrastructure.Sound;
 
@@ -108,7 +109,7 @@ public class SoundChannelHostTests
     }
 
     [Fact]
-    public void Stop_WithBlockedSoundThread_ReportsNotConfirmed_AndEarlierRequestsNeverPlay()
+    public void EndEarlierRequests_WithBlockedSoundThread_StopNotConfirmed_AndEarlierRequestsNeverPlay()
     {
         using var entered = new ManualResetEventSlim();
         using var release = new ManualResetEventSlim();
@@ -129,6 +130,12 @@ public class SoundChannelHostTests
         bool stopped;
         try
         {
+            using (var hold = host.TryHoldStarts())
+            {
+                Assert.NotNull(hold);
+                hold.EndEarlierRequests();
+            }
+
             stopped = host.Stop();
         }
         finally
@@ -140,6 +147,38 @@ public class SoundChannelHostTests
         Assert.False(stopped);
         Assert.True(Assert.Single(players.Created).IsDisposed);
         Assert.False(players.Played.IsSet);
+    }
+
+    [Fact]
+    public void TryHoldStarts_WhileAPlayerIsStarting_ReturnsNull_AndSucceedsOnceTheStartEnds()
+    {
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        var players = new ThreadRecordingFactory();
+        players.OnPlay = () =>
+        {
+            entered.Set();
+            release.Wait();
+        };
+        using var host = new SoundChannelHost(
+            dispatch => NewChannel(players, new ManualTimeProvider(), dispatch), TimeSpan.FromMilliseconds(50));
+        host.Play(Command(Applause));
+        Assert.True(entered.Wait(Wait));
+
+        ISoundStartHold? whileStarting;
+        try
+        {
+            whileStarting = host.TryHoldStarts();
+        }
+        finally
+        {
+            release.Set();
+        }
+
+        Assert.Null(whileStarting);
+        Assert.True(players.Played.Wait(Wait));
+        using var afterStart = host.TryHoldStarts();
+        Assert.NotNull(afterStart);
     }
 
     [Fact]
@@ -257,15 +296,18 @@ public class SoundChannelHostTests
 
         public Action? OnCreate { get; init; }
 
+        /// <summary>Runs inside the player's start, before it reports <see cref="Played"/>.</summary>
+        public Action? OnPlay { get; set; }
+
         public ISoundPlayer Create(PlaySoundCommand command)
         {
             OnCreate?.Invoke();
-            Player = new ThreadRecordingPlayer(Played, StopFailure);
+            Player = new ThreadRecordingPlayer(Played, StopFailure, OnPlay);
             Created.Add(Player);
             return Player;
         }
 
-        public sealed class ThreadRecordingPlayer(ManualResetEventSlim played, string? stopFailure) : ISoundPlayer
+        public sealed class ThreadRecordingPlayer(ManualResetEventSlim played, string? stopFailure, Action? onPlay) : ISoundPlayer
         {
             public event Action? Completed { add { } remove { } }
 
@@ -285,6 +327,7 @@ public class SoundChannelHostTests
             {
                 PlayThreadId = Environment.CurrentManagedThreadId;
                 PlayApartment = Thread.CurrentThread.GetApartmentState();
+                onPlay?.Invoke();
                 played.Set();
             }
 

@@ -36,8 +36,8 @@ public sealed class RuntimeSettingsTests : IDisposable
         var bindings = Bind(settings);
 
         Assert.False(startup.SavedSettingsLoaded);
-        Assert.Equal(ActionSlot.Count, settings.Current.Snapshot.Slots.Count);
-        Assert.All(settings.Current.Snapshot.Slots, slot => Assert.True(slot.IsEmpty));
+        Assert.Equal(ActionSlot.Count, settings.Current.Slots.Count);
+        Assert.All(settings.Current.Slots, slot => Assert.True(slot.IsEmpty));
         Assert.Equal(new KeyChord(CtrlAlt, VirtualKeys.Z), bindings.Draw);
         Assert.Equal(new KeyChord(CtrlAlt, VirtualKeys.X), bindings.Clear);
         Assert.Empty(bindings.Sounds);
@@ -98,14 +98,11 @@ public sealed class RuntimeSettingsTests : IDisposable
         var startup = SettingsStartup.Load(new JsonSettingsStore(SettingsDirectory, time), new NoSettingsFailures());
         var library = new ManagedSoundLibrary(LibraryDirectory);
         Assert.Empty(SettingsStartup.RemoveOrphanSounds(startup, library));
-        return (startup, new ActiveSettings(startup.Active, sound => Path.Combine(library.LibraryDirectory, sound.LibraryFileName)));
+        return (startup, new ActiveSettings(startup.Active, sound => library.PathFor(sound.LibraryFileName)));
     }
 
-    private static ShortcutBindings Bind(ActiveSettings settings)
-    {
-        var active = settings.Current;
-        return ShortcutBindings.FromSnapshot(active.Snapshot, active.CommandFor);
-    }
+    private static ShortcutBindings Bind(ActiveSettings settings) =>
+        ShortcutBindings.FromSnapshot(settings.Current, settings.CommandFor);
 
     private string WriteSource(string name)
     {

@@ -21,7 +21,7 @@ public class LoggingSoundFailureReporterTests : IDisposable
         reporter.Dispose();
 
         var line = Assert.Single(File.ReadAllLines(logPath));
-        Assert.EndsWith("\tslot=-\tsound=applause.mp3\tpath=C:\\Sounds\\applause.mp3\treason=No output device.", line);
+        Assert.EndsWith("\tsound=applause.mp3\tpath=C:\\Sounds\\applause.mp3\treason=No output device.", line);
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class LoggingSoundFailureReporterTests : IDisposable
         reporter.Dispose();
 
         var line = Assert.Single(File.ReadAllLines(logPath));
-        Assert.EndsWith("\tslot=-\tsound=-\tpath=C:\\Sounds\\orphan.wav\treason=In use.", line);
+        Assert.EndsWith("\tsound=-\tpath=C:\\Sounds\\orphan.wav\treason=In use.", line);
     }
 
     [Fact]

@@ -94,20 +94,21 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
         }
     }
 
+    /// <remarks>Resets the drawing controller directly, so call it on the controller's thread.</remarks>
     public void Interrupt()
     {
         inputGate.SetActive(false);
         inputGate.ReleaseBlock();
         Volatile.Write(ref drawingEpoch, drawingEpoch + 1);
         dispatchPaused = pressedKeys.Count > 0;
+
+        // A dropped command may have been an exit, so drawing is reset here rather than queued.
+        controller.ClearAndExitDrawMode();
     }
 
     /// <remarks>Call after <see cref="Interrupt"/>, so no press started under the previous shortcuts continues.</remarks>
-    public void Bind(ActiveConfiguration configuration)
-    {
-        ArgumentNullException.ThrowIfNull(configuration);
-        bindings = ShortcutBindings.FromSnapshot(configuration.Snapshot, configuration.CommandFor);
-    }
+    public void Bind(SettingsSnapshot snapshot, Func<SoundReference, PlaySoundCommand> commandFor) =>
+        bindings = ShortcutBindings.FromSnapshot(snapshot, commandFor);
 
     private bool HandleKey(int vkCode, KeyDirection direction)
     {

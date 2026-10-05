@@ -836,21 +836,6 @@ public class GlobalShortcutAdapterTests
         }
     }
 
-    private sealed class FakeKeyboardHookSource : IKeyboardHookSource, INeutralKeyEmitter
-    {
-        private Func<int, KeyDirection, bool>? handleKey;
-
-        public void SetKeyHandler(Func<int, KeyDirection, bool> handler) => handleKey = handler;
-
-        public bool PressKey(int vkCode) => handleKey?.Invoke(vkCode, KeyDirection.Down) ?? false;
-
-        public bool ReleaseKey(int vkCode) => handleKey?.Invoke(vkCode, KeyDirection.Up) ?? false;
-
-        public void EmitNeutralKey()
-        {
-        }
-    }
-
     private sealed class MutableCursorPositionSource(ScreenPoint position) : ICursorPositionSource
     {
         public ScreenPoint Position { get; set; } = position;

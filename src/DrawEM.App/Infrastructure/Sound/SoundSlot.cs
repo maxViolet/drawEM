@@ -1,6 +1,6 @@
 namespace DrawEM.App.Infrastructure.Sound;
 
-/// <summary>One of the eight numbered action slots, as recorded in a <see cref="SoundFailure"/>.</summary>
+/// <summary>One of the eight numbered slots of the retired v2 <see cref="SoundAssignments"/> mapping.</summary>
 public enum SoundSlot
 {
     Slot1 = 1,

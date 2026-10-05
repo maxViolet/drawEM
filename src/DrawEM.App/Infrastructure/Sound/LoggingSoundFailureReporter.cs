@@ -27,19 +27,19 @@ public sealed class LoggingSoundFailureReporter : ISoundFailureReporter, IDispos
 
     /// <summary>Queues the record and returns at once. Records reported after <see cref="Dispose"/> are dropped.</summary>
     public void Report(PlaySoundCommand command, string reason) =>
-        writer.Enqueue(new SoundFailure(time.GetLocalNow(), null, command.Sound, command.Path, reason));
+        writer.Enqueue(new SoundFailure(time.GetLocalNow(), command.Sound, command.Path, reason));
 
     /// <summary>Queues a managed copy that startup cleanup could not remove, like <see cref="Report"/>.</summary>
     /// <param name="path">The copy, or the library directory when it could not be listed.</param>
     public void ReportCleanup(string path, string reason) =>
-        writer.Enqueue(new SoundFailure(time.GetLocalNow(), null, null, path, reason));
+        writer.Enqueue(new SoundFailure(time.GetLocalNow(), null, path, reason));
 
     /// <summary>
     /// Queues that a Save could not confirm the sound channel stopped, so it removed no sound copy, like
     /// <see cref="Report"/>.
     /// </summary>
     public void ReportUnconfirmedStop() =>
-        writer.Enqueue(new SoundFailure(time.GetLocalNow(), null, null, null, UnconfirmedStopReason));
+        writer.Enqueue(new SoundFailure(time.GetLocalNow(), null, null, UnconfirmedStopReason));
 
     /// <summary>Stops accepting records and waits up to <see cref="DrainTimeout"/> for queued ones.</summary>
     public void Dispose() => writer.Dispose();

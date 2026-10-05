@@ -1,4 +1,4 @@
-using DrawEM.App.Application.Drawing;
+using DrawEM.App.Application.Sound;
 using DrawEM.App.Domain.Settings;
 
 namespace DrawEM.App.Application.Settings;
@@ -17,33 +17,68 @@ public abstract record SettingsSaveResult
     public sealed record Invalid(IReadOnlyList<SettingsError> Errors) : SettingsSaveResult;
 
     /// <summary>
-    /// The settings could not be persisted. The failure was reported and the previous configuration stays
+    /// The settings were not persisted. The failure was reported and the previous configuration stays
     /// active: sound, drawing, shortcuts, and saved media.
     /// </summary>
     public sealed record NotSaved(string Reason) : SettingsSaveResult;
 }
 
-/// <summary>Receives a Save failure the user must see.</summary>
-public interface ISettingsSaveFailureReporter
+/// <summary>What a Save reports.</summary>
+public interface ISettingsSaveNotifications
 {
-    void SettingsNotSaved(string reason);
+    /// <summary>Nothing was saved; the user must see why.</summary>
+    void NotSaved(string reason);
+
+    /// <summary>A managed copy could not be removed; it stays until the next startup cleanup.</summary>
+    void CleanupFailed(SoundCleanupFailure failure);
+
+    /// <summary>The sound stop was not confirmed in time, so the Save removed no copy.</summary>
+    void StopUnconfirmed();
 }
 
 /// <summary>
 /// The keyboard shortcuts of the running app. Call every member on the thread that runs the keyboard hook
-/// callbacks, so no key event interleaves with a change.
+/// callbacks and the drawing controller, so no key event interleaves with a change.
 /// </summary>
 public interface IActiveShortcuts
 {
     /// <summary>
     /// Ends every press in progress: closes the drawing gate, drops drawing commands queued but not yet run,
-    /// and ignores keys until all held keys are released, so the next command needs a fresh press. The
-    /// caller resets the drawing controller, because a dropped command may have been an exit.
+    /// ends drawing and clears strokes on every monitor, and ignores keys until all held keys are released,
+    /// so the next command needs a fresh press.
     /// </summary>
     void Interrupt();
 
-    /// <summary>Replaces the shortcuts and their sound commands with those of <paramref name="configuration"/>.</summary>
-    void Bind(ActiveConfiguration configuration);
+    /// <summary>Replaces the shortcuts with those of <paramref name="snapshot"/>.</summary>
+    /// <param name="commandFor">Builds the play command for each of the snapshot's sounds.</param>
+    void Bind(SettingsSnapshot snapshot, Func<SoundReference, PlaySoundCommand> commandFor);
+}
+
+/// <summary>The global sound channel as a Save drives it. Call every member outside the sound thread.</summary>
+public interface ISaveSoundChannel
+{
+    /// <summary>
+    /// Waits a bounded time until no play request is starting its player, then keeps every request from
+    /// starting until the hold is disposed. Dispose the hold on the thread that took it.
+    /// </summary>
+    /// <returns>The hold, or <c>null</c> when a start did not finish in time.</returns>
+    ISoundStartHold? TryHoldStarts();
+
+    /// <summary>
+    /// Stops the active sound on the sound thread after every earlier queued request, within a bounded wait.
+    /// </summary>
+    /// <returns>
+    /// <c>true</c> when the stop ran; <c>false</c> when it was not confirmed in time. A timed-out stop stays
+    /// queued and still runs before any later request.
+    /// </returns>
+    bool Stop();
+}
+
+/// <summary>Keeps play requests from starting their players until disposed. Disposing again does nothing.</summary>
+public interface ISoundStartHold : IDisposable
+{
+    /// <summary>Ends every play request made so far: none of them will ever start its player.</summary>
+    void EndEarlierRequests();
 }
 
 /// <summary>
@@ -52,64 +87,54 @@ public interface IActiveShortcuts
 /// </summary>
 public sealed class SettingsSaveOperation
 {
+    /// <summary>The reason a Save reports when a sound was still starting and nothing was saved.</summary>
+    public const string SoundStartingReason =
+        "A sound was still starting, so nothing was saved. Try again.";
+
     private readonly ISettingsStore store;
     private readonly ISoundLibrary library;
     private readonly ActiveSettings settings;
-    private readonly Func<bool> stopSound;
+    private readonly ISaveSoundChannel sound;
     private readonly IActiveShortcuts shortcuts;
-    private readonly DrawingSessionController drawing;
-    private readonly ISettingsSaveFailureReporter failures;
-    private readonly Action<SoundCleanupFailure> reportCleanup;
-    private readonly Action reportUnconfirmedStop;
+    private readonly ISettingsSaveNotifications notifications;
 
-    /// <param name="stopSound">
-    /// Stops the global sound channel within a bounded wait, for example SoundChannelHost.Stop. Before it
-    /// returns, every play request made earlier is barred from starting playback, so none plays under the
-    /// new configuration. Returns <c>true</c> once those requests have ended and the active player is
-    /// released, <c>false</c> when that was not confirmed in time.
-    /// </param>
-    /// <param name="reportCleanup">Records a managed sound the Save could not remove.</param>
-    /// <param name="reportUnconfirmedStop">Records that the stop was not confirmed, so no copy was removed.</param>
     public SettingsSaveOperation(
         ISettingsStore store,
         ISoundLibrary library,
         ActiveSettings settings,
-        Func<bool> stopSound,
+        ISaveSoundChannel sound,
         IActiveShortcuts shortcuts,
-        DrawingSessionController drawing,
-        ISettingsSaveFailureReporter failures,
-        Action<SoundCleanupFailure> reportCleanup,
-        Action reportUnconfirmedStop)
+        ISettingsSaveNotifications notifications)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(library);
         ArgumentNullException.ThrowIfNull(settings);
-        ArgumentNullException.ThrowIfNull(stopSound);
+        ArgumentNullException.ThrowIfNull(sound);
         ArgumentNullException.ThrowIfNull(shortcuts);
-        ArgumentNullException.ThrowIfNull(drawing);
-        ArgumentNullException.ThrowIfNull(failures);
-        ArgumentNullException.ThrowIfNull(reportCleanup);
-        ArgumentNullException.ThrowIfNull(reportUnconfirmedStop);
+        ArgumentNullException.ThrowIfNull(notifications);
         this.store = store;
         this.library = library;
         this.settings = settings;
-        this.stopSound = stopSound;
+        this.sound = sound;
         this.shortcuts = shortcuts;
-        this.drawing = drawing;
-        this.failures = failures;
-        this.reportCleanup = reportCleanup;
-        this.reportUnconfirmedStop = reportUnconfirmedStop;
+        this.notifications = notifications;
     }
 
     /// <summary>
-    /// Validates the complete draft, persists it, then stops sound, ends drawing, clears every monitor, and
-    /// publishes it. No play request made before the Save starts afterwards, and every command needs a fresh
-    /// press, even when only an unrelated setting changed. Copies the new settings no longer reference are
-    /// removed only when the sound stop was confirmed; otherwise, because an old request may still hold a
-    /// copy open, the unconfirmed stop is reported, every copy stays until the next startup cleanup, and the
-    /// result is still <see cref="SettingsSaveResult.Saved"/>. An invalid draft or a failed persist changes
-    /// nothing running.
+    /// Validates the draft, persists it, then stops sound, ends drawing on every monitor, publishes the
+    /// snapshot, and rebinds shortcuts, so every command needs a fresh press.
     /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>The snapshot is persisted before anything running changes. An invalid draft, a failed write, or a
+    /// sound start that does not finish in time changes nothing.</item>
+    /// <item>Sound starts are held from before the write until every earlier play request is ended, so no
+    /// request made before the Save starts playback afterwards.</item>
+    /// <item>Copies no longer referenced are removed only after the sound stop was confirmed, because an old
+    /// request may still hold a copy open. Otherwise the result is still <see cref="SettingsSaveResult.Saved"/>
+    /// and startup cleanup removes them.</item>
+    /// </list>
+    /// </remarks>
     public SettingsSaveResult Save(DrawingStyle style, Shortcut? draw, Shortcut? clear, IEnumerable<ActionSlot> slots)
     {
         var validation = SettingsSnapshot.Validate(style, draw, clear, slots);
@@ -118,38 +143,48 @@ public sealed class SettingsSaveOperation
             return new SettingsSaveResult.Invalid(validation.Errors);
         }
 
-        IReadOnlyList<SoundCleanupFailure> cleanupFailures;
+        var hold = sound.TryHoldStarts();
+        if (hold is null)
+        {
+            return NotSaved(SoundStartingReason);
+        }
+
+        var previous = settings.Current;
         try
         {
-            cleanupFailures = SettingsPersistence.Save(store, library, settings.Current.Snapshot, draft, Activate);
+            store.Save(draft);
+            hold.EndEarlierRequests();
         }
         catch (SettingsStoreException exception)
         {
-            failures.SettingsNotSaved(exception.Message);
-            return new SettingsSaveResult.NotSaved(exception.Message);
+            return NotSaved(exception.Message);
+        }
+        finally
+        {
+            // Released before the stop: the sound thread may need it to drop an ended request.
+            hold.Dispose();
         }
 
-        foreach (var failure in cleanupFailures)
+        var stopped = sound.Stop();
+        shortcuts.Interrupt();
+        settings.Publish(draft);
+        shortcuts.Bind(draft, settings.CommandFor);
+        if (!stopped)
         {
-            reportCleanup(failure);
+            notifications.StopUnconfirmed();
+        }
+
+        foreach (var failure in library.CommitSave(previous, draft, removeUnreferencedCopies: stopped))
+        {
+            notifications.CleanupFailed(failure);
         }
 
         return new SettingsSaveResult.Saved(draft);
     }
 
-    /// <summary>Runs only after the snapshot was persisted.</summary>
-    /// <returns>Whether the copies of the previous configuration may be removed.</returns>
-    private bool Activate(SettingsSnapshot saved)
+    private SettingsSaveResult.NotSaved NotSaved(string reason)
     {
-        var stopped = stopSound();
-        shortcuts.Interrupt();
-        drawing.ClearAndExitDrawMode();
-        shortcuts.Bind(settings.Publish(saved));
-        if (!stopped)
-        {
-            reportUnconfirmedStop();
-        }
-
-        return stopped;
+        notifications.NotSaved(reason);
+        return new SettingsSaveResult.NotSaved(reason);
     }
 }

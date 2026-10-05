@@ -47,11 +47,11 @@ public sealed class SettingsSaveOperationTests
         Assert.NotNull(app.States[^1].ActiveStroke);
         Assert.True(app.Gate.IsActive);
         app.Players.OnStop = () => app.Events.Add(
-            $"sound stopped; gate {(app.Gate.IsActive ? "open" : "closed")}; {Name(app.Settings.Current.Snapshot)} active");
+            $"sound stopped; gate {(app.Gate.IsActive ? "open" : "closed")}; {Name(app.Settings.Current)} active");
         app.Controller.StateChanged += state => app.Events.Add(
             $"drawing {(state.IsDrawModeActive ? "on" : "off")}, {state.CompletedStrokes.Count} strokes, " +
             $"active stroke {(state.ActiveStroke is null ? "none" : "kept")}; gate {(app.Gate.IsActive ? "open" : "closed")}; " +
-            $"{Name(app.Settings.Current.Snapshot)} active");
+            $"{Name(app.Settings.Current)} active");
 
         var result = app.Save(Remapped);
 
@@ -62,7 +62,7 @@ public sealed class SettingsSaveOperationTests
                 "drawing off, 0 strokes, active stroke none; gate closed; initial active",
             ],
             app.Events);
-        Assert.Equal(Remapped, app.Settings.Current.Snapshot);
+        Assert.Equal(Remapped, app.Settings.Current);
         Assert.Equal([Remapped], app.Store.Saved);
         Assert.Equal(["play", "stop", "dispose"], player.Calls);
         Assert.Null(app.Channel.ActiveSound);
@@ -73,6 +73,27 @@ public sealed class SettingsSaveOperationTests
         Assert.Empty(app.Controller.CompletedStrokes);
         Assert.Null(app.States[^1].ActiveStroke);
         Assert.Empty(app.SoundFailures);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Save_PersistsBeforeActivating_AndRemovesCopiesOnlyAfterConfirmedStop(bool stopConfirmed)
+    {
+        var app = new SaveHarness();
+        app.Sound.StopConfirmed = stopConfirmed;
+        SettingsSnapshot? activeWhenWritten = null;
+        SettingsSnapshot? activeWhenCommitted = null;
+        app.Store.OnSave = () => activeWhenWritten = app.Settings.Current;
+        app.Library.OnCommit = () => activeWhenCommitted = app.Settings.Current;
+
+        var result = app.Save(Remapped);
+
+        Assert.IsType<SettingsSaveResult.Saved>(result);
+        Assert.Same(Initial, activeWhenWritten);
+        Assert.Equal(Remapped, activeWhenCommitted);
+        Assert.Equal([(Initial, Remapped, stopConfirmed)], app.Library.Commits);
+        Assert.Equal(stopConfirmed ? 0 : 1, app.Notifications.UnconfirmedStops);
     }
 
     [Fact]
@@ -179,8 +200,8 @@ public sealed class SettingsSaveOperationTests
         var result = app.Save(Remapped);
 
         Assert.Equal(new SettingsSaveResult.NotSaved("The disk is full."), result);
-        Assert.Equal(["The disk is full."], app.SaveFailures);
-        Assert.Same(Initial, app.Settings.Current.Snapshot);
+        Assert.Equal(["The disk is full."], app.Notifications.NotSavedReasons);
+        Assert.Same(Initial, app.Settings.Current);
         Assert.Empty(app.Library.Commits);
         Assert.Equal(["play"], player.Calls);
         Assert.Equal(new SoundId(Applause.LibraryFileName), app.Channel.ActiveSound);
@@ -196,7 +217,7 @@ public sealed class SettingsSaveOperationTests
         Assert.True(app.Gate.IsActive);
         Assert.True(app.States[^1].IsDrawModeActive);
         Assert.Equal(new SoundId(Drumroll.LibraryFileName), app.Players.Created[^1].Sound);
-        Assert.Equal(["The disk is full."], app.SaveFailures);
+        Assert.Equal(["The disk is full."], app.Notifications.NotSavedReasons);
     }
 
     [Fact]
@@ -219,8 +240,8 @@ public sealed class SettingsSaveOperationTests
             invalid.Errors);
         Assert.Empty(app.Store.Saved);
         Assert.Empty(app.Library.Commits);
-        Assert.Empty(app.SaveFailures);
-        Assert.Same(Initial, app.Settings.Current.Snapshot);
+        Assert.Empty(app.Notifications.NotSavedReasons);
+        Assert.Same(Initial, app.Settings.Current);
         Assert.Equal(["play"], player.Calls);
         Assert.True(app.Gate.IsActive);
         Assert.Same(drawing, app.States[^1]);
@@ -248,17 +269,15 @@ public sealed class SettingsSaveOperationTests
     private sealed class SaveHarness
     {
         private readonly Queue<Action> ui = new();
-        private readonly Queue<Action> sound = new();
-        private int generation;
 
         public SaveHarness()
         {
             Settings = new ActiveSettings(Initial, reference => @"C:\library\" + reference.LibraryFileName);
             Players = new FakePlayerFactory();
             Channel = new SoundChannelController(Players, new RecordingSoundFailures(SoundFailures), new ManualTimeProvider(), action => action());
-            Controller = new DrawingSessionController(() => Settings.Current.Snapshot.Style);
+            Sound = new FakeSoundChannel(Channel);
+            Controller = new DrawingSessionController(() => Settings.Current.Style);
             Controller.StateChanged += States.Add;
-            var active = Settings.Current;
             var shortcuts = new GlobalShortcutAdapter(
                 Keyboard,
                 Keyboard,
@@ -267,26 +286,10 @@ public sealed class SettingsSaveOperationTests
                 new FakeCursorPositionSource(new ScreenPoint(10, 10)),
                 ui.Enqueue,
                 new FakeMonitorBoundsSource(Left, Right),
-                ShortcutBindings.FromSnapshot(active.Snapshot, active.CommandFor),
-                command =>
-                {
-                    var requested = generation;
-                    sound.Enqueue(() => Channel.Play(command, () => requested == generation));
-                });
+                ShortcutBindings.FromSnapshot(Settings.Current, Settings.CommandFor),
+                Sound.Play);
             _ = new GlobalMouseInputAdapter(Mouse, Controller, Gate, ui.Enqueue);
-
-            // Like SoundChannelHost: Stop bars earlier requests, runs the queue, then stops the channel.
-            bool StopSound()
-            {
-                generation++;
-                RunSound();
-                Channel.Stop();
-                return true;
-            }
-
-            Operation = new SettingsSaveOperation(
-                Store, Library, Settings, StopSound, shortcuts, Controller, new RecordingSaveFailures(SaveFailures),
-                _ => { }, () => throw new InvalidOperationException("The stop is always confirmed here."));
+            Operation = new SettingsSaveOperation(Store, Library, Settings, Sound, shortcuts, Notifications);
         }
 
         public ActiveSettings Settings { get; }
@@ -294,6 +297,8 @@ public sealed class SettingsSaveOperationTests
         public FakeStore Store { get; } = new();
 
         public FakeLibrary Library { get; } = new();
+
+        public FakeSoundChannel Sound { get; }
 
         public FakePlayerFactory Players { get; }
 
@@ -303,9 +308,11 @@ public sealed class SettingsSaveOperationTests
 
         public DrawingModeInputGate Gate { get; } = new();
 
-        public FakeKeyboard Keyboard { get; } = new();
+        public FakeKeyboardHookSource Keyboard { get; } = new();
 
         public FakeMouse Mouse { get; } = new();
+
+        public RecordingNotifications Notifications { get; } = new();
 
         public SettingsSaveOperation Operation { get; }
 
@@ -313,28 +320,14 @@ public sealed class SettingsSaveOperationTests
 
         public List<string> Events { get; } = [];
 
-        public List<string> SaveFailures { get; } = [];
-
         public List<string> SoundFailures { get; } = [];
 
         public SettingsSaveResult Save(SettingsSnapshot draft) =>
             Operation.Save(draft.Style, draft.DrawShortcut, draft.ClearShortcut, draft.Slots);
 
-        public void Press(params int[] keys)
-        {
-            foreach (var key in keys)
-            {
-                Keyboard.Handle(key, KeyDirection.Down);
-            }
-        }
+        public void Press(params int[] keys) => Keyboard.Press(keys);
 
-        public void Release(params int[] keys)
-        {
-            foreach (var key in keys)
-            {
-                Keyboard.Handle(key, KeyDirection.Up);
-            }
-        }
+        public void Release(params int[] keys) => Keyboard.Release(keys);
 
         public void RunUi()
         {
@@ -344,25 +337,41 @@ public sealed class SettingsSaveOperationTests
             }
         }
 
-        public void RunSound()
-        {
-            while (sound.TryDequeue(out var action))
-            {
-                action();
-            }
-        }
+        public void RunSound() => Sound.Run();
     }
 
-    private sealed class FakeKeyboard : IKeyboardHookSource, INeutralKeyEmitter
+    /// <summary>
+    /// Plays wait in a queue until <see cref="Run"/>; ending earlier requests discards the queued ones. The
+    /// start race is covered against the real host in SettingsSaveStuckSoundTests and SoundChannelHostTests.
+    /// </summary>
+    private sealed class FakeSoundChannel(SoundChannelController channel) : ISaveSoundChannel, ISoundStartHold
     {
-        private Func<int, KeyDirection, bool>? handleKey;
+        private readonly Queue<PlaySoundCommand> queue = new();
 
-        public void SetKeyHandler(Func<int, KeyDirection, bool> handler) => handleKey = handler;
+        public bool StopConfirmed { get; set; } = true;
 
-        public void Handle(int vkCode, KeyDirection direction) => handleKey!(vkCode, direction);
+        public void Play(PlaySoundCommand command) => queue.Enqueue(command);
 
-        public void EmitNeutralKey()
+        public void Run()
         {
+            while (queue.TryDequeue(out var command))
+            {
+                channel.Play(command);
+            }
+        }
+
+        public ISoundStartHold? TryHoldStarts() => this;
+
+        public void EndEarlierRequests() => queue.Clear();
+
+        public void Dispose()
+        {
+        }
+
+        public bool Stop()
+        {
+            channel.Stop();
+            return StopConfirmed;
         }
     }
 
@@ -381,12 +390,15 @@ public sealed class SettingsSaveOperationTests
     {
         public string? Failure { get; set; }
 
+        public Action? OnSave { get; set; }
+
         public List<SettingsSnapshot> Saved { get; } = [];
 
         public SettingsLoadResult Load() => new SettingsLoadResult.Missing();
 
         public void Save(SettingsSnapshot snapshot)
         {
+            OnSave?.Invoke();
             if (Failure is not null)
             {
                 throw new SettingsStoreException(Failure);
@@ -398,26 +410,36 @@ public sealed class SettingsSaveOperationTests
 
     private sealed class FakeLibrary : ISoundLibrary
     {
-        public List<(SettingsSnapshot Previous, SettingsSnapshot Saved)> Commits { get; } = [];
+        public List<(SettingsSnapshot Previous, SettingsSnapshot Saved, bool RemoveUnreferencedCopies)> Commits { get; } = [];
+
+        public Action? OnCommit { get; set; }
 
         public SoundReference Import(string sourceFile) => throw new NotSupportedException();
 
         public IReadOnlyList<SoundCleanupFailure> DiscardDraft(SettingsSnapshot saved) => throw new NotSupportedException();
 
-        public IReadOnlyList<SoundCleanupFailure> CommitSave(SettingsSnapshot previous, SettingsSnapshot saved)
+        public IReadOnlyList<SoundCleanupFailure> CommitSave(
+            SettingsSnapshot previous, SettingsSnapshot saved, bool removeUnreferencedCopies)
         {
-            Commits.Add((previous, saved));
+            OnCommit?.Invoke();
+            Commits.Add((previous, saved, removeUnreferencedCopies));
             return [];
         }
-
-        public void CommitSaveKeepingCopies() => throw new NotSupportedException();
 
         public IReadOnlyList<SoundCleanupFailure> RemoveOrphans(SettingsSnapshot saved) => throw new NotSupportedException();
     }
 
-    private sealed class RecordingSaveFailures(List<string> reasons) : ISettingsSaveFailureReporter
+    private sealed class RecordingNotifications : ISettingsSaveNotifications
     {
-        public void SettingsNotSaved(string reason) => reasons.Add(reason);
+        public List<string> NotSavedReasons { get; } = [];
+
+        public int UnconfirmedStops { get; private set; }
+
+        public void NotSaved(string reason) => NotSavedReasons.Add(reason);
+
+        public void CleanupFailed(SoundCleanupFailure failure) => throw new InvalidOperationException(failure.Reason);
+
+        public void StopUnconfirmed() => UnconfirmedStops++;
     }
 
     private sealed class RecordingSoundFailures(List<string> reasons) : ISoundFailureReporter

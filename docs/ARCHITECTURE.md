@@ -135,45 +135,52 @@ still applies in both directions.
 ```text
 SettingsSaveOperation.Save(draft) on the WPF UI thread
   → SettingsSnapshot.Validate: an invalid draft returns its errors; nothing changes
-  → SettingsPersistence.Save: ISettingsStore.Save persists the snapshot durably
-      (SettingsStoreException → report through SettingsFailureDialog; nothing below runs)
-  → activate, only after persistence succeeded:
-      → SoundChannelHost.Stop: bar every earlier play request from starting playback, then, on the
-        sound thread, stop the player; returns whether that happened within two seconds
-      → GlobalShortcutAdapter.Interrupt: close the drawing gate, drop queued drawing commands,
-        ignore keys until every held key is released
-      → DrawingSessionController.ClearAndExitDrawMode: drop the active stroke, clear every monitor
-      → ActiveSettings.Publish: one write exposes the new immutable configuration
-      → GlobalShortcutAdapter.Bind: shortcut bindings rebuilt from that configuration
-      → stop not confirmed: record it once in sound.log
-  → stop confirmed: ISoundLibrary.CommitSave retires media the saved settings no longer reference
-    stop not confirmed: ISoundLibrary.CommitSaveKeepingCopies ends the draft and removes nothing
+  → SoundChannelHost.TryHoldStarts: wait at most two seconds until no player is starting, then hold
+      starts (null → report "a sound was still starting"; nothing is saved or changed)
+  → ISettingsStore.Save persists the snapshot durably
+      (SettingsStoreException → release the hold, report through SettingsFailureDialog; nothing below runs)
+  → hold.EndEarlierRequests, then release the hold: no earlier play request will ever start
+  → SoundChannelHost.Stop: on the sound thread, stop the player; returns whether that happened within
+    two seconds
+  → GlobalShortcutAdapter.Interrupt: close the drawing gate, drop queued drawing commands, clear strokes
+    on every monitor, ignore keys until every held key is released
+  → ActiveSettings.Publish: one write exposes the new snapshot
+  → GlobalShortcutAdapter.Bind: shortcut bindings rebuilt from that snapshot
+  → stop not confirmed: record it once in sound.log
+  → ISoundLibrary.CommitSave ends the draft; it removes copies the saved settings no longer reference
+    only when the stop was confirmed
 ```
 
 Save runs on the UI thread, which also runs the keyboard and mouse hook
 callbacks and the drawing controller, so no key event interleaves with it. A
 press before Save cannot act under the new configuration: its queued drawing
 command is dropped by the adapter's epoch check, and its play request never
-starts playback. `SoundChannelHost.Stop` advances a request generation on the
-calling thread before it waits. The sound thread checks a request's generation
-before opening its player and again just before starting it, so a request made
-before Save is dropped, or releases a player it was still opening, even when the
-sound thread reaches it after `Publish`. Each `PlaySoundCommand` also carries
-the managed copy resolved by the configuration that built its binding; the
-player factory and the sound failure log use that path and never read the
-active settings.
+starts playback after Save.
+
+Each play request carries the request generation it was made in. On the sound
+thread, `SoundChannelController` checks it before opening the player and then
+starts the player only through `IPlayRequest.TryStart`. The host runs that
+final check and `player.Play()` under one start lock. Save takes the same lock
+before persisting and advances the generation while it holds it. So a start is
+either finished before Save takes the lock, or it sees the new generation and
+releases its player unplayed, however long the sound thread was delayed. If a
+start does not finish within two seconds, Save refuses: nothing is persisted,
+the previous configuration stays active, and the failure is reported like a
+failed write. The lock is released before Save waits for the stop, because the
+sound thread may need it to drop an ended request. Each `PlaySoundCommand` also
+carries the path of its sound's managed copy, built from the snapshot that built
+its binding; the player factory and the sound failure log use that path and
+never read the active settings.
 
 `SoundChannelHost.Stop` waits at most two seconds. A timed-out stop stays
 queued ahead of every later play request, and Save still returns `Saved`: the
 snapshot is persisted and active for fresh presses, and no earlier request can
 start. Because an old request may still hold a copy open, that Save removes no
 managed copy; the next startup cleanup (`SettingsStartup.RemoveOrphanSounds`)
-removes the copies the saved settings do not reference. A player whose own
-start or stop call is stuck inside the media engine is outside drawEM's control
-until that call returns; the queued stop then releases it. After Save, every
+removes the copies the saved settings do not reference. After Save, every
 command needs a fresh press, even when only the stroke color changed. A failed
-Save leaves sound, drawing, bindings, the active snapshot, and managed media
-unchanged.
+or refused Save leaves sound, drawing, bindings, the active snapshot, and
+managed media unchanged.
 
 ### Exit
 

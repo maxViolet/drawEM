@@ -109,7 +109,7 @@ public sealed class ManagedSoundLibraryTests : IDisposable
     {
         var library = Library();
         var sound = library.Import(WriteSource("a.wav", "data"));
-        library.CommitSave(SettingsSnapshot.Default, Snapshot((1, sound)));
+        library.CommitSave(SettingsSnapshot.Default, Snapshot((1, sound)), removeUnreferencedCopies: true);
 
         Assert.Throws<SoundImportException>(() => library.Import(CopyPath(sound)));
         library.DiscardDraft(SettingsSnapshot.Default);
@@ -182,7 +182,7 @@ public sealed class ManagedSoundLibraryTests : IDisposable
         var library = Library();
         var saved = library.Import(WriteSource("saved.wav", "saved"));
         var savedSettings = Snapshot((1, saved), (2, saved));
-        library.CommitSave(SettingsSnapshot.Default, savedSettings);
+        library.CommitSave(SettingsSnapshot.Default, savedSettings, removeUnreferencedCopies: true);
         var draftOnly = library.Import(WriteSource("new.wav", "new"));
         var reused = library.Import(WriteSource("copy-of-saved.wav", "saved"));
 
@@ -200,10 +200,10 @@ public sealed class ManagedSoundLibraryTests : IDisposable
         var library = Library();
         var shared = library.Import(WriteSource("shared.wav", "shared"));
         var previous = Snapshot((1, shared), (2, shared));
-        library.CommitSave(SettingsSnapshot.Default, previous);
+        library.CommitSave(SettingsSnapshot.Default, previous, removeUnreferencedCopies: true);
         var replacement = library.Import(WriteSource("replacement.mp3", "replacement"));
 
-        var failures = library.CommitSave(previous, Snapshot((1, replacement), (2, shared)));
+        var failures = library.CommitSave(previous, Snapshot((1, replacement), (2, shared)), removeUnreferencedCopies: true);
 
         Assert.Empty(failures);
         Assert.Equal(
@@ -217,12 +217,12 @@ public sealed class ManagedSoundLibraryTests : IDisposable
         var library = Library();
         var shared = library.Import(WriteSource("shared.wav", "shared"));
         var both = Snapshot((1, shared), (2, shared));
-        library.CommitSave(SettingsSnapshot.Default, both);
+        library.CommitSave(SettingsSnapshot.Default, both, removeUnreferencedCopies: true);
         var one = Snapshot((2, shared));
-        library.CommitSave(both, one);
+        library.CommitSave(both, one, removeUnreferencedCopies: true);
         Assert.True(File.Exists(CopyPath(shared)));
 
-        var failures = library.CommitSave(one, SettingsSnapshot.Default);
+        var failures = library.CommitSave(one, SettingsSnapshot.Default, removeUnreferencedCopies: true);
 
         Assert.Empty(failures);
         Assert.Empty(LibraryFiles());
@@ -235,7 +235,7 @@ public sealed class ManagedSoundLibraryTests : IDisposable
         var abandoned = library.Import(WriteSource("first-choice.wav", "first"));
         var chosen = library.Import(WriteSource("second-choice.wav", "second"));
 
-        library.CommitSave(SettingsSnapshot.Default, Snapshot((1, chosen)));
+        library.CommitSave(SettingsSnapshot.Default, Snapshot((1, chosen)), removeUnreferencedCopies: true);
 
         Assert.False(File.Exists(CopyPath(abandoned)));
         Assert.Equal([chosen.LibraryFileName], LibraryFiles());
@@ -248,12 +248,12 @@ public sealed class ManagedSoundLibraryTests : IDisposable
         var locked = library.Import(WriteSource("locked.wav", "locked"));
         var free = library.Import(WriteSource("free.wav", "free"));
         var previous = Snapshot((1, locked), (2, free));
-        library.CommitSave(SettingsSnapshot.Default, previous);
+        library.CommitSave(SettingsSnapshot.Default, previous, removeUnreferencedCopies: true);
 
         IReadOnlyList<SoundCleanupFailure> failures;
         using (new FileStream(CopyPath(locked), FileMode.Open, FileAccess.Read, FileShare.None))
         {
-            failures = library.CommitSave(previous, SettingsSnapshot.Default);
+            failures = library.CommitSave(previous, SettingsSnapshot.Default, removeUnreferencedCopies: true);
         }
 
         Assert.Equal(locked.LibraryFileName, Assert.Single(failures).LibraryFileName);
@@ -268,21 +268,21 @@ public sealed class ManagedSoundLibraryTests : IDisposable
         File.WriteAllText(foreign, "not a managed copy");
         var previous = Snapshot((1, new SoundReference("keep.wav", "keep.wav")));
 
-        var failures = Library().CommitSave(previous, SettingsSnapshot.Default);
+        var failures = Library().CommitSave(previous, SettingsSnapshot.Default, removeUnreferencedCopies: true);
 
         Assert.Empty(failures);
         Assert.True(File.Exists(foreign));
     }
 
     [Fact]
-    public void CommitSaveKeepingCopies_RemovesNothing_LaterCancelKeepsThatDraft_AndOrphanCleanupRemovesIt()
+    public void CommitSaveWithoutRemoval_RemovesNothing_LaterCancelKeepsThatDraft_AndOrphanCleanupRemovesIt()
     {
         var library = Library();
         var abandoned = library.Import(WriteSource("abandoned.wav", "abandoned"));
         var kept = library.Import(WriteSource("kept.wav", "kept"));
         var saved = Snapshot((1, kept));
 
-        library.CommitSaveKeepingCopies();
+        Assert.Empty(library.CommitSave(SettingsSnapshot.Default, saved, removeUnreferencedCopies: false));
         var cancelFailures = library.DiscardDraft(saved);
 
         Assert.Empty(cancelFailures);
@@ -302,7 +302,9 @@ public sealed class ManagedSoundLibraryTests : IDisposable
         var store = new JsonSettingsStore(root);
         var before = Library();
         var saved = before.Import(WriteSource("saved.wav", "saved"));
-        SettingsPersistence.Save(store, before, SettingsSnapshot.Default, Snapshot((1, saved), (4, saved)), _ => true);
+        var savedSettings = Snapshot((1, saved), (4, saved));
+        store.Save(savedSettings);
+        before.CommitSave(SettingsSnapshot.Default, savedSettings, removeUnreferencedCopies: true);
         var draft = before.Import(WriteSource("draft.mp3", "draft"));
         var leftoverTemp = Path.Combine(LibraryDirectory, "import-" + Guid.NewGuid().ToString("N") + ".tmp");
         File.WriteAllText(leftoverTemp, "partial");
@@ -325,7 +327,9 @@ public sealed class ManagedSoundLibraryTests : IDisposable
         var store = new JsonSettingsStore(root);
         var library = Library();
         var saved = library.Import(WriteSource("saved.wav", "saved"));
-        SettingsPersistence.Save(store, library, SettingsSnapshot.Default, Snapshot((1, saved)), _ => true);
+        var savedSettings = Snapshot((1, saved));
+        store.Save(savedSettings);
+        library.CommitSave(SettingsSnapshot.Default, savedSettings, removeUnreferencedCopies: true);
         var draft = library.Import(WriteSource("draft.wav", "draft"));
         File.WriteAllText(store.SettingsPath, "{ damaged");
 

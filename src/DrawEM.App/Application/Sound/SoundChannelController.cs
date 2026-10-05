@@ -32,16 +32,17 @@ public sealed class SoundChannelController : IDisposable
     /// <summary>The sound that owns the channel, or <c>null</c> when the channel is idle.</summary>
     public SoundId? ActiveSound => active?.Command.Sound;
 
-    public void Play(PlaySoundCommand command) => Play(command, static () => true);
+    public void Play(PlaySoundCommand command) => Play(command, AlwaysCurrent.Instance);
 
-    /// <param name="isCurrent">
-    /// Whether the request may still play, for example because no settings Save has happened since it was
-    /// made. Checked before the player opens and again just before it starts; a request that is no longer
-    /// current is dropped without playing, and a player it opened is released.
+    /// <param name="request">
+    /// Decides whether the request may still play, for example because no settings Save has ended it.
+    /// Checked before the player opens; the player then starts only through
+    /// <see cref="IPlayRequest.TryStart"/>. A request that is no longer current never starts, and a player
+    /// it opened is released.
     /// </param>
-    public void Play(PlaySoundCommand command, Func<bool> isCurrent)
+    public void Play(PlaySoundCommand command, IPlayRequest request)
     {
-        if (disposed || !isCurrent())
+        if (disposed || !request.IsCurrent)
         {
             return;
         }
@@ -59,17 +60,6 @@ public sealed class SoundChannelController : IDisposable
             return;
         }
 
-        // Opening can take long; a request superseded meanwhile must not start.
-        if (!isCurrent())
-        {
-            if (Release(player.Dispose) is { } disposeFailure)
-            {
-                failures.Report(command, disposeFailure);
-            }
-
-            return;
-        }
-
         // The attempt object is the generation token: callbacks act only while it is still active.
         var attempt = new Attempt(command, player);
         attempt.OnCompleted = () => End(attempt);
@@ -83,7 +73,11 @@ public sealed class SoundChannelController : IDisposable
 
         try
         {
-            player.Play();
+            // Opening can take long; a request ended meanwhile must not start.
+            if (!request.TryStart(player.Play))
+            {
+                End(attempt);
+            }
         }
         catch (SoundPlaybackException exception)
         {
@@ -162,4 +156,32 @@ public sealed class SoundChannelController : IDisposable
 
         public Action<string>? OnFailed { get; set; }
     }
+
+    /// <summary>A request nothing can end.</summary>
+    private sealed class AlwaysCurrent : IPlayRequest
+    {
+        public static readonly AlwaysCurrent Instance = new();
+
+        public bool IsCurrent => true;
+
+        public bool TryStart(Action start)
+        {
+            start();
+            return true;
+        }
+    }
+}
+
+/// <summary>Whether one play request may still play, decided atomically with whatever ends requests.</summary>
+public interface IPlayRequest
+{
+    /// <summary>An early check, before the player opens. A later end is caught by <see cref="TryStart"/>.</summary>
+    bool IsCurrent { get; }
+
+    /// <summary>
+    /// Runs <paramref name="start"/> only while the request is current, and keeps anything from ending the
+    /// request between that decision and the end of <paramref name="start"/>.
+    /// </summary>
+    /// <returns>Whether <paramref name="start"/> ran.</returns>
+    bool TryStart(Action start);
 }

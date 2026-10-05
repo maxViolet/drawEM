@@ -17,7 +17,7 @@ public class MediaSoundPlayerFactoryTests
         var settings = new ActiveSettings(TestSettings.WithSounds((1, Applause)), sound => Path.Combine(missing, sound.LibraryFileName));
 
         var exception = Assert.Throws<SoundPlaybackException>(
-            () => new MediaSoundPlayerFactory().Create(settings.Current.CommandFor(Applause)));
+            () => new MediaSoundPlayerFactory().Create(settings.CommandFor(Applause)));
 
         Assert.Equal("File not found.", exception.Message);
     }

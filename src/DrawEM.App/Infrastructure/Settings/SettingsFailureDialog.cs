@@ -6,7 +6,7 @@ namespace DrawEM.App.Infrastructure.Settings;
 /// Shows the user why saved settings were not used and where the damaged bytes were kept, or why a Save
 /// failed.
 /// </summary>
-public sealed class SettingsFailureDialog : ISettingsFailureReporter, ISettingsSaveFailureReporter
+public sealed class SettingsFailureDialog : ISettingsFailureReporter
 {
     private readonly Action<string> show;
 
