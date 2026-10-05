@@ -1,6 +1,6 @@
 namespace DrawEM.App.Infrastructure.Sound;
 
-/// <summary>The eight fixed sound shortcut slots, <c>Ctrl+Alt+1</c> through <c>Ctrl+Alt+8</c>.</summary>
+/// <summary>One of the eight numbered slots of the retired v2 <see cref="SoundAssignments"/> mapping.</summary>
 public enum SoundSlot
 {
     Slot1 = 1,

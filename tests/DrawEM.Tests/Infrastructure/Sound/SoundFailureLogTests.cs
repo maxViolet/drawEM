@@ -17,23 +17,22 @@ public class SoundFailureLogTests
     }
 
     [Fact]
-    public void FormatLine_ContainsTimeSlotSoundPathAndReason()
+    public void FormatLine_ContainsTimeSoundPathAndReason()
     {
-        var failure = new SoundFailure(FailureTime, SoundSlot.Slot2, new SoundId("applause"),
-            @"C:\Sounds\applause.mp3", "File not found.");
+        var failure = new SoundFailure(FailureTime, new SoundId("applause"), @"C:\Sounds\applause.mp3", "File not found.");
 
         Assert.Equal(
-            "2026-09-25T14:30:05.0000000+00:00\tslot=2\tsound=applause\tpath=C:\\Sounds\\applause.mp3\treason=File not found.",
+            "2026-09-25T14:30:05.0000000+00:00\tsound=applause\tpath=C:\\Sounds\\applause.mp3\treason=File not found.",
             SoundFailureLog.FormatLine(failure));
     }
 
     [Fact]
     public void FormatLine_WritesUnknownDetailsAsDashAndFlattensSeparators()
     {
-        var failure = new SoundFailure(FailureTime, null, null, null, "Decode\terror\r\nat frame 3.");
+        var failure = new SoundFailure(FailureTime, null, null, "Decode\terror\r\nat frame 3.");
 
         Assert.Equal(
-            "2026-09-25T14:30:05.0000000+00:00\tslot=-\tsound=-\tpath=-\treason=Decode error at frame 3.",
+            "2026-09-25T14:30:05.0000000+00:00\tsound=-\tpath=-\treason=Decode error at frame 3.",
             SoundFailureLog.FormatLine(failure));
     }
 
@@ -42,7 +41,7 @@ public class SoundFailureLogTests
     {
         var directory = Path.Combine(Path.GetTempPath(), "drawEM-tests", Guid.NewGuid().ToString("N"));
         var log = new SoundFailureLog(Path.Combine(directory, "logs", "sound.log"));
-        var failure = new SoundFailure(FailureTime, SoundSlot.Slot2, new SoundId("applause"), null, "File not found.");
+        var failure = new SoundFailure(FailureTime, new SoundId("applause"), null, "File not found.");
 
         try
         {
@@ -68,7 +67,7 @@ public class SoundFailureLogTests
         try
         {
             var exception = Record.Exception(() =>
-                log.Append(new SoundFailure(FailureTime, null, new SoundId("applause"), null, "Decode error.")));
+                log.Append(new SoundFailure(FailureTime, new SoundId("applause"), null, "Decode error.")));
 
             Assert.Null(exception);
         }

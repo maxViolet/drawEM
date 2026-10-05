@@ -23,6 +23,9 @@ public partial class App : System.Windows.Application
     private ApplicationExitPolicy? exitPolicy;
     private SingleInstanceGuard? instanceGuard;
 
+    /// <summary>Saves a settings draft and applies it to the running app. Call on the UI thread.</summary>
+    internal SettingsSaveOperation? SettingsSave { get; private set; }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -44,29 +47,39 @@ public partial class App : System.Windows.Application
 
         try
         {
-            // Shortcuts and sounds still come from code; Step 6 builds them from these settings too
-            // and replaces the snapshot on Save.
-            var settings = SettingsStartup.Load(
-                new JsonSettingsStore(JsonSettingsStore.DefaultDirectory),
-                new SettingsFailureDialog(message =>
-                    MessageBox.Show(message, "drawEM", MessageBoxButton.OK, MessageBoxImage.Warning)));
-            controller = new DrawingSessionController(() => settings.Active.Style);
+            var store = new JsonSettingsStore(JsonSettingsStore.DefaultDirectory);
+            var settingsFailures = new SettingsFailureDialog(message =>
+                MessageBox.Show(message, "drawEM", MessageBoxButton.OK, MessageBoxImage.Warning));
+            var startup = SettingsStartup.Load(store, settingsFailures);
+            var library = new ManagedSoundLibrary(ManagedSoundLibrary.DefaultDirectory);
+            var settings = new ActiveSettings(startup.Active, sound => library.PathFor(sound.LibraryFileName));
+
+            var soundLog = new LoggingSoundFailureReporter(
+                new SoundFailureLog(SoundFailureLog.DefaultPath).Append, TimeProvider.System);
+            soundFailures = soundLog;
+            var saveNotifications = new SettingsSaveNotifications(settingsFailures, soundLog, library);
+            foreach (var failure in SettingsStartup.RemoveOrphanSounds(startup, library))
+            {
+                saveNotifications.CleanupFailed(failure);
+            }
+
+            controller = new DrawingSessionController(() => settings.Current.Style);
             overlayWindow = new OverlayWindow();
             _ = new OverlayWindowAdapter(controller, overlayWindow);
 
-            var soundConfiguration = SoundConfiguration.Default;
-            soundFailures = new LoggingSoundFailureReporter(
-                new SoundFailureLog(SoundFailureLog.DefaultPath).Append, soundConfiguration, TimeProvider.System);
-            var failures = soundFailures;
-            soundChannel = new SoundChannelHost(dispatch => new SoundChannelController(
-                new MediaSoundPlayerFactory(soundConfiguration),
-                failures,
+            var channelHost = new SoundChannelHost(dispatch => new SoundChannelController(
+                new MediaSoundPlayerFactory(),
+                soundLog,
                 TimeProvider.System,
                 dispatch));
+            soundChannel = channelHost;
+
+            // Bindings and the sound commands they hold come from one snapshot.
+            var active = settings.Current;
 
             var inputGate = new DrawingModeInputGate();
             keyboardHookSource = new Win32KeyboardHookSource();
-            _ = new GlobalShortcutAdapter(
+            var shortcuts = new GlobalShortcutAdapter(
                 keyboardHookSource.Events,
                 keyboardHookSource,
                 controller,
@@ -74,8 +87,8 @@ public partial class App : System.Windows.Application
                 new Win32CursorPositionSource(),
                 action => Dispatcher.BeginInvoke(action),
                 new Win32MonitorBoundsSource(),
-                ShortcutBindings.ForCodeAssignments(soundConfiguration),
-                soundChannel.Play);
+                ShortcutBindings.FromSnapshot(active, settings.CommandFor),
+                channelHost.Play);
 
             mouseHookSource = new Win32MouseHookSource();
             _ = new GlobalMouseInputAdapter(mouseHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action));
@@ -84,12 +97,14 @@ public partial class App : System.Windows.Application
             trayApplication = new TrayApplication(
                 new NotifyIconTrayHost(),
                 // The sound channel reports its last failures while it stops, so the log drains after it.
-                new CompositeDisposable(keyboardHookSource, mouseHookSource, soundChannel, soundFailures),
+                new CompositeDisposable(keyboardHookSource, mouseHookSource, channelHost, soundLog),
                 overlayWindow,
                 new WpfApplicationLifetime(this),
                 action => Dispatcher.BeginInvoke(action),
                 failure => exitPolicy.Report("exit", failure));
             trayApplication.Start();
+
+            SettingsSave = new SettingsSaveOperation(store, library, settings, channelHost, shortcuts, saveNotifications);
         }
         catch (Exception exception)
         {

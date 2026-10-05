@@ -3,7 +3,7 @@ using DrawEM.App.Application.Sound;
 namespace DrawEM.App.Infrastructure.Sound;
 
 /// <summary>
-/// One sound assigned to a slot: its identifier and the external local WAV or MP3 path.
-/// The file stays where it is; drawEM does not import or copy it.
+/// A v2 code-owned sound: its identifier and an external local WAV or MP3 path. Only the retired
+/// <c>SoundAssignments</c> file uses it; the running app plays managed copies named by saved settings.
 /// </summary>
 public sealed record SoundAssignment(SoundId Id, string Path);

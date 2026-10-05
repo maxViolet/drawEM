@@ -3,12 +3,11 @@ using DrawEM.App.Application.Sound;
 namespace DrawEM.App.Infrastructure.Sound;
 
 /// <summary>
-/// One failed sound request. <see cref="Slot"/>, <see cref="Sound"/>, and <see cref="Path"/> are
-/// <c>null</c> when the failure happened before that detail was known.
+/// One sound failure. <see cref="Sound"/> and <see cref="Path"/> are <c>null</c> when the failure is not
+/// about one sound or one copy.
 /// </summary>
 public sealed record SoundFailure(
     DateTimeOffset Time,
-    SoundSlot? Slot,
     SoundId? Sound,
     string? Path,
     string Reason);

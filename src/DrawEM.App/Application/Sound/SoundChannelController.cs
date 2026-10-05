@@ -30,31 +30,38 @@ public sealed class SoundChannelController : IDisposable
     }
 
     /// <summary>The sound that owns the channel, or <c>null</c> when the channel is idle.</summary>
-    public SoundId? ActiveSound => active?.Sound;
+    public SoundId? ActiveSound => active?.Command.Sound;
 
-    public void Play(PlaySoundCommand command)
+    public void Play(PlaySoundCommand command) => Play(command, AlwaysCurrent.Instance);
+
+    /// <param name="request">
+    /// Decides whether the request may still play, for example because no settings Save has ended it.
+    /// Checked before the player opens; the player then starts only through
+    /// <see cref="IPlayRequest.TryStart"/>. A request that is no longer current never starts, and a player
+    /// it opened is released.
+    /// </param>
+    public void Play(PlaySoundCommand command, IPlayRequest request)
     {
-        if (disposed)
+        if (disposed || !request.IsCurrent)
         {
             return;
         }
 
-        StopActive();
+        Stop();
 
-        var sound = command.Sound;
         ISoundPlayer player;
         try
         {
-            player = players.Create(sound);
+            player = players.Create(command);
         }
         catch (SoundPlaybackException exception)
         {
-            failures.Report(sound, exception.Message);
+            failures.Report(command, exception.Message);
             return;
         }
 
         // The attempt object is the generation token: callbacks act only while it is still active.
-        var attempt = new Attempt(sound, player);
+        var attempt = new Attempt(command, player);
         attempt.OnCompleted = () => End(attempt);
         attempt.OnFailed = reason => End(attempt, reason);
         player.Completed += attempt.OnCompleted;
@@ -66,7 +73,11 @@ public sealed class SoundChannelController : IDisposable
 
         try
         {
-            player.Play();
+            // Opening can take long; a request ended meanwhile must not start.
+            if (!request.TryStart(player.Play))
+            {
+                End(attempt);
+            }
         }
         catch (SoundPlaybackException exception)
         {
@@ -82,10 +93,11 @@ public sealed class SoundChannelController : IDisposable
         }
 
         disposed = true;
-        StopActive();
+        Stop();
     }
 
-    private void StopActive()
+    /// <summary>Stops and releases the active attempt, if any. The channel stays usable.</summary>
+    public void Stop()
     {
         if (active is { } attempt)
         {
@@ -114,7 +126,7 @@ public sealed class SoundChannelController : IDisposable
         {
             if (reason is not null)
             {
-                failures.Report(attempt.Sound, reason);
+                failures.Report(attempt.Command, reason);
             }
         }
     }
@@ -132,9 +144,9 @@ public sealed class SoundChannelController : IDisposable
         }
     }
 
-    private sealed class Attempt(SoundId sound, ISoundPlayer player)
+    private sealed class Attempt(PlaySoundCommand command, ISoundPlayer player)
     {
-        public SoundId Sound { get; } = sound;
+        public PlaySoundCommand Command { get; } = command;
 
         public ISoundPlayer Player { get; } = player;
 
@@ -144,4 +156,32 @@ public sealed class SoundChannelController : IDisposable
 
         public Action<string>? OnFailed { get; set; }
     }
+
+    /// <summary>A request nothing can end.</summary>
+    private sealed class AlwaysCurrent : IPlayRequest
+    {
+        public static readonly AlwaysCurrent Instance = new();
+
+        public bool IsCurrent => true;
+
+        public bool TryStart(Action start)
+        {
+            start();
+            return true;
+        }
+    }
+}
+
+/// <summary>Whether one play request may still play, decided atomically with whatever ends requests.</summary>
+public interface IPlayRequest
+{
+    /// <summary>An early check, before the player opens. A later end is caught by <see cref="TryStart"/>.</summary>
+    bool IsCurrent { get; }
+
+    /// <summary>
+    /// Runs <paramref name="start"/> only while the request is current, and keeps anything from ending the
+    /// request between that decision and the end of <paramref name="start"/>.
+    /// </summary>
+    /// <returns>Whether <paramref name="start"/> ran.</returns>
+    bool TryStart(Action start);
 }

@@ -26,7 +26,6 @@ public sealed class SoundFailureLog
 
     public static string FormatLine(SoundFailure failure) => string.Join('\t',
         failure.Time.ToString("O", CultureInfo.InvariantCulture),
-        "slot=" + FieldValue(failure.Slot is { } slot ? ((int)slot).ToString(CultureInfo.InvariantCulture) : null),
         "sound=" + FieldValue(failure.Sound?.Value),
         "path=" + FieldValue(failure.Path),
         "reason=" + FieldValue(failure.Reason));

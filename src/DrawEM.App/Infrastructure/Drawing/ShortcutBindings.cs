@@ -1,6 +1,5 @@
 using DrawEM.App.Application.Sound;
 using DrawEM.App.Domain.Settings;
-using DrawEM.App.Infrastructure.Sound;
 
 namespace DrawEM.App.Infrastructure.Drawing;
 
@@ -85,21 +84,5 @@ public sealed class ShortcutBindings
             .OfType<SoundAction>()
             .Select(action => (action.Shortcut!, resolveSound(action.Sound)));
         return new ShortcutBindings(snapshot.DrawShortcut, snapshot.ClearShortcut, sounds);
-    }
-
-    /// <summary>
-    /// Default draw and clear, plus <c>Ctrl+Alt+1</c> through <c>Ctrl+Alt+8</c> for the code-owned v2 sound
-    /// assignments. Step 6 replaces this with <see cref="FromSnapshot"/> over saved settings.
-    /// </summary>
-    public static ShortcutBindings ForCodeAssignments(SoundConfiguration configuration)
-    {
-        ArgumentNullException.ThrowIfNull(configuration);
-        var sounds = Enum.GetValues<SoundSlot>()
-            .Select(slot => (Slot: slot, Command: configuration.Resolve(slot)))
-            .Where(entry => entry.Command is not null)
-            .Select(entry => (
-                Shortcut.Create(ShortcutModifiers.Control | ShortcutModifiers.Alt, ShortcutKey.Digit((int)entry.Slot)),
-                entry.Command!));
-        return new ShortcutBindings(SettingsSnapshot.Default.DrawShortcut, SettingsSnapshot.Default.ClearShortcut, sounds);
     }
 }

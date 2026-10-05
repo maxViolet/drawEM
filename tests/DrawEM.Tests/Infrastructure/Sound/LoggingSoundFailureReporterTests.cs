@@ -7,26 +7,34 @@ namespace DrawEM.Tests.Infrastructure.Sound;
 
 public class LoggingSoundFailureReporterTests : IDisposable
 {
-    private static readonly SoundId Applause = new("applause");
-    private static readonly SoundConfiguration Configuration = new(new Dictionary<SoundSlot, SoundAssignment>
-    {
-        [SoundSlot.Slot2] = new(Applause, @"C:\Sounds\applause.mp3"),
-    });
+    private static readonly PlaySoundCommand Applause = new(new SoundId("applause.mp3"), @"C:\Sounds\applause.mp3");
 
     private readonly string directory = Path.Combine(Path.GetTempPath(), "drawEM-tests", Guid.NewGuid().ToString("N"));
 
     [Fact]
-    public void Report_AppendsSoundConfiguredPathAndReasonToLog()
+    public void Report_AppendsSoundManagedCopyAndReasonToLog()
     {
         var logPath = Path.Combine(directory, "sound.log");
-        var reporter = new LoggingSoundFailureReporter(
-            new SoundFailureLog(logPath).Append, Configuration, new ManualTimeProvider());
+        var reporter = new LoggingSoundFailureReporter(new SoundFailureLog(logPath).Append, new ManualTimeProvider());
 
         reporter.Report(Applause, "No output device.");
         reporter.Dispose();
 
         var line = Assert.Single(File.ReadAllLines(logPath));
-        Assert.EndsWith("\tslot=-\tsound=applause\tpath=C:\\Sounds\\applause.mp3\treason=No output device.", line);
+        Assert.EndsWith("\tsound=applause.mp3\tpath=C:\\Sounds\\applause.mp3\treason=No output device.", line);
+    }
+
+    [Fact]
+    public void ReportCleanup_AppendsCopyAndReasonWithoutSound()
+    {
+        var logPath = Path.Combine(directory, "sound.log");
+        var reporter = new LoggingSoundFailureReporter(new SoundFailureLog(logPath).Append, new ManualTimeProvider());
+
+        reporter.ReportCleanup(@"C:\Sounds\orphan.wav", "In use.");
+        reporter.Dispose();
+
+        var line = Assert.Single(File.ReadAllLines(logPath));
+        Assert.EndsWith("\tsound=-\tpath=C:\\Sounds\\orphan.wav\treason=In use.", line);
     }
 
     [Fact]
@@ -41,7 +49,6 @@ public class LoggingSoundFailureReporterTests : IDisposable
                 release.Wait();
                 written.Add(failure);
             },
-            Configuration,
             time);
         var reportedAt = time.GetLocalNow();
 
@@ -58,7 +65,7 @@ public class LoggingSoundFailureReporterTests : IDisposable
     public void Dispose_WaitsForStuckLogOnlyUpToDrainTimeout()
     {
         using var never = new ManualResetEventSlim();
-        var reporter = new LoggingSoundFailureReporter(_ => never.Wait(), Configuration, new ManualTimeProvider());
+        var reporter = new LoggingSoundFailureReporter(_ => never.Wait(), new ManualTimeProvider());
         reporter.Report(Applause, "Decode error.");
         var watch = Stopwatch.StartNew();
 
@@ -82,7 +89,6 @@ public class LoggingSoundFailureReporterTests : IDisposable
 
                 written.Add(failure.Reason);
             },
-            Configuration,
             new ManualTimeProvider());
 
         reporter.Report(Applause, "first");

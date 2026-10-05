@@ -1,6 +1,6 @@
 # v3 / Step 6: apply saved settings at runtime
 
-**Status:** planned. **Source:** [v3 roadmap](../ROADMAP-v3.md#delivery-order).
+**Status:** implemented; see [acceptance](acceptance.md). **Source:** [v3 roadmap](../ROADMAP-v3.md#delivery-order).
 
 ## Task
 
