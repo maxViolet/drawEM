@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
-namespace DrawEM.App.Domain.Settings;
+namespace DrawEM.App.Domain.Drawing;
 
 /// <summary>An opaque RGB color written as <c>#RRGGBB</c>.</summary>
 public readonly record struct HexColor(byte Red, byte Green, byte Blue)

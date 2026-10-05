@@ -1,6 +1,8 @@
 using System.IO;
 using DrawEM.App.Application.Settings;
+using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Settings;
+using DrawEM.App.Domain.Sound;
 using DrawEM.App.Infrastructure.Sound;
 
 namespace DrawEM.Tests.Application.Settings;
@@ -259,6 +261,31 @@ public sealed class SettingsEditorTests : IDisposable
         editor.Cancel();
 
         Assert.True(File.Exists(library.PathFor(sound.LibraryFileName)));
+    }
+
+    [Fact]
+    public void Save_EndsTheDraftsSamplesWithoutAnotherStop()
+    {
+        var editor = Editor();
+        editor.Sample(1, _ => { });
+
+        Assert.IsType<SettingsSaveResult.Saved>(editor.Save());
+        editor.Cancel();
+
+        Assert.Equal(1, sampler.Forgets);
+        Assert.Equal(0, sampler.Stops);
+    }
+
+    [Fact]
+    public void FailedSave_KeepsTheDraftsSamples()
+    {
+        saver.Result = new SettingsSaveResult.NotSaved("disk full");
+        var editor = Editor();
+        editor.Sample(1, _ => { });
+
+        editor.Save();
+
+        Assert.Equal(0, sampler.Forgets);
     }
 
     [Fact]

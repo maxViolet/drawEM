@@ -1,7 +1,9 @@
 using System.IO;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Settings;
+using DrawEM.App.Domain.Sound;
 
 namespace DrawEM.App.Infrastructure.Settings;
 

@@ -1,6 +1,6 @@
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Application.Sound;
-using DrawEM.App.Domain.Settings;
+using DrawEM.App.Domain.Sound;
 
 namespace DrawEM.App.Infrastructure.Sound;
 
@@ -58,6 +58,12 @@ public sealed class SoundSampler : ISoundSampler
 
         sampled = false;
         return stop();
+    }
+
+    public void ForgetSamples()
+    {
+        failures.Forget();
+        sampled = false;
     }
 }
 

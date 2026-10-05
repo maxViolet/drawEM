@@ -1,6 +1,7 @@
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Application.Sound;
 using DrawEM.App.Domain.Settings;
+using DrawEM.App.Domain.Sound;
 using DrawEM.App.Infrastructure.Sound;
 
 namespace DrawEM.Tests.Infrastructure.Sound;
@@ -135,6 +136,31 @@ public sealed class SoundSamplerTests
         sampler.Sample(Horn, _ => { });
 
         Assert.False(sampler.StopSamples());
+    }
+
+    [Fact]
+    public void ForgetSamples_DropsQueuedFailuresWithoutStoppingTheChannel()
+    {
+        var shown = new List<string>();
+        sampler.Sample(Horn, shown.Add);
+        router.Report(played[0], "late failure");
+
+        sampler.ForgetSamples();
+        ui.Dequeue()();
+
+        Assert.Equal(0, stops);
+        Assert.Empty(shown);
+    }
+
+    [Fact]
+    public void StopSamples_AfterForgetSamples_LeavesTheChannelAlone()
+    {
+        sampler.Sample(Horn, _ => { });
+        sampler.ForgetSamples();
+
+        Assert.True(sampler.StopSamples());
+
+        Assert.Equal(0, stops);
     }
 
     private sealed class RecordingReporter(List<(PlaySoundCommand, string)> records) : ISoundFailureReporter

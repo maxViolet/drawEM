@@ -1,5 +1,7 @@
 using DrawEM.App.Application.Settings;
+using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Settings;
+using DrawEM.App.Domain.Sound;
 using DrawEM.App.Presentation.Settings;
 
 namespace DrawEM.Tests.Application.Settings;
@@ -45,6 +47,10 @@ internal sealed class FakeSampler : ISoundSampler
         Stops++;
         return StopConfirmed;
     }
+
+    public int Forgets { get; private set; }
+
+    public void ForgetSamples() => Forgets++;
 }
 
 internal sealed class FakeCapture : IShortcutCapture

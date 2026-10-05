@@ -3,6 +3,7 @@ using DrawEM.App.Application.Drawing;
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Settings;
+using DrawEM.App.Domain.Sound;
 using DrawEM.App.Infrastructure.Settings;
 
 namespace DrawEM.Tests.Infrastructure.Settings;

@@ -1,6 +1,6 @@
-using System.Windows;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Media;
+using System.Windows;
 using DrawEM.App.Application.Drawing;
 using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Settings;

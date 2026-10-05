@@ -1,7 +1,8 @@
 using DrawEM.App.Application.Sound;
 using DrawEM.App.Domain.Settings;
-using DrawEM.App.Infrastructure;
+using DrawEM.App.Domain.Sound;
 using DrawEM.App.Infrastructure.Drawing;
+using DrawEM.App.Infrastructure;
 
 namespace DrawEM.Tests.Infrastructure.Drawing;
 

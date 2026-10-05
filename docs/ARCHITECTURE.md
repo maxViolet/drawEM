@@ -35,8 +35,9 @@ App.xaml.cs  (composition root)
 │   └── Sound (play command, playback ports, SoundChannelController)
 │
 ├── Domain
-│   ├── Drawing (DrawingState, Stroke, ScreenPoint)
-│   └── Sound (placeholder)
+│   ├── Drawing (DrawingState, Stroke, ScreenPoint, DrawingStyle)
+│   ├── Settings (SettingsSnapshot, shortcuts, action slots; stores drawing and sound values)
+│   └── Sound (SoundReference)
 │
 └── Presentation
     ├── Drawing (OverlayWindow, StrokeRenderElement)
@@ -150,7 +151,8 @@ Tray Settings (or double-click the tray icon)
   → Sample → SoundSampler queues the managed copy on SoundChannelHost; a failure of that sample is
     logged and also shown on its slot through SampleFailureRouter
   → every edit → SettingsSnapshot.Validate: errors beside their fields; any error disables Save
-  → Save → SettingsSaveOperation (below); Saved closes the window, NotSaved keeps the draft and shows why
+  → Save → SettingsSaveOperation (below); Saved closes the window and ISoundSampler.ForgetSamples ends
+    the draft's samples (Save already stopped the channel), NotSaved keeps the draft and shows why
   → Cancel or close → ISoundSampler.StopSamples (stops the channel only if a sample was played), then
     ISoundLibrary.DiscardDraft against the active snapshot; an unconfirmed stop leaves draft copies
     to startup cleanup

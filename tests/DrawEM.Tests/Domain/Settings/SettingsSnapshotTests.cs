@@ -1,4 +1,6 @@
+using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Settings;
+using DrawEM.App.Domain.Sound;
 
 namespace DrawEM.Tests.Domain.Settings;
 

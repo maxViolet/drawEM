@@ -1,3 +1,4 @@
+using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Settings;
 
 namespace DrawEM.App.Application.Settings;
@@ -124,11 +125,20 @@ public sealed class SettingsEditor
         }
     }
 
-    /// <summary>Saves the draft. After <see cref="SettingsSaveResult.Saved"/> the draft has ended and Cancel does nothing.</summary>
+    /// <summary>
+    /// Saves the draft. After <see cref="SettingsSaveResult.Saved"/> the draft has ended and Cancel does
+    /// nothing. Save already stopped the sound channel, so the draft's samples are only forgotten: they no
+    /// longer report failures, and a later draft does not stop a shortcut's sound on their behalf.
+    /// </summary>
     public SettingsSaveResult Save()
     {
         var result = saver.Save(Style(), DrawShortcut, ClearShortcut, slots);
-        ended |= result is SettingsSaveResult.Saved;
+        if (result is SettingsSaveResult.Saved)
+        {
+            ended = true;
+            sampler.ForgetSamples();
+        }
+
         return result;
     }
 
