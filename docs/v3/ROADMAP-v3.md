@@ -145,3 +145,9 @@ governs every step.
    drafts, Save/Cancel/defaults, file selection, errors, and draft `Sample`.
 8. [Publish and verify on Windows](step-8-publish/task.md): automated suite, Windows x64
    publish, and recorded desktop acceptance including v1/v2 regressions.
+
+## Additional fixes
+
+The [additional fixes package](additional-fixes/README.md) tracks defects found
+outside the eight-step settings delivery order. These fixes have their own
+acceptance criteria and do not change the scope of the numbered steps.
