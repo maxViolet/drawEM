@@ -70,7 +70,12 @@ adjacent screens without the real mouse hook.
   `DrawingModeInputGate`, `DrawingSessionController`) with fake
   `IMonitorBoundsSource` layouts for a point past an outside edge and a point
   on another monitor.
-- [ ] `docs/ARCHITECTURE.md` (Draw runtime flow and Known boundaries) and
-  `README.md` state that only entering another monitor ends a stroke.
+- [ ] Documentation states that only entering another monitor ends a stroke
+  and that an outside edge does not:
+  - `docs/ARCHITECTURE.md`, `Runtime flow` → `Draw`: the gate closes only
+    when the cursor enters another monitor.
+  - `docs/ARCHITECTURE.md`, `Differences from the first version`: replace
+    "crossing the boundary ends it" with entering another monitor.
+  - `README.md`, `Use drawEM`: reaching a screen edge does not end the stroke.
 - [ ] Record automated regression results separately from the manual desktop
   check of the real mouse hook and screen edge.
