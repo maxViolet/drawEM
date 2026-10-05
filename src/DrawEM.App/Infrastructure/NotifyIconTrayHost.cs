@@ -9,6 +9,8 @@ public sealed class NotifyIconTrayHost : ITrayHost
 
     public NotifyIconTrayHost()
     {
+        var settingsItem = new ToolStripMenuItem("Settings…") { Font = new Font(SystemFonts.MenuFont!, FontStyle.Bold) };
+        settingsItem.Click += (_, _) => SettingsRequested?.Invoke();
         var exitItem = new ToolStripMenuItem("Exit");
         exitItem.Click += (_, _) => ExitRequested?.Invoke();
 
@@ -19,10 +21,15 @@ public sealed class NotifyIconTrayHost : ITrayHost
             Text = "drawEM",
             Visible = false,
         };
+        notifyIcon.ContextMenuStrip.Items.Add(settingsItem);
+        notifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
         notifyIcon.ContextMenuStrip.Items.Add(exitItem);
+        notifyIcon.DoubleClick += (_, _) => SettingsRequested?.Invoke();
     }
 
     public event Action? ExitRequested;
+
+    public event Action? SettingsRequested;
 
     public void Show() => notifyIcon.Visible = true;
 

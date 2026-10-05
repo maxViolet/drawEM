@@ -47,7 +47,22 @@ public sealed record SoundCleanupFailure(string? LibraryFileName, string Reason)
 /// <summary>Plays a draft sound on the global sound channel without changing active shortcuts.</summary>
 public interface ISoundSampler
 {
-    void Sample(SoundReference sound);
+    /// <summary>
+    /// Queues <paramref name="sound"/> on the global sound channel under the same ten-second cap as a
+    /// shortcut. Returns at once.
+    /// </summary>
+    /// <param name="reportFailure">
+    /// Receives the reason when this sample cannot play, on the UI thread. Not called once a newer sample
+    /// was requested.
+    /// </param>
+    void Sample(SoundReference sound, Action<string> reportFailure);
+
+    /// <summary>
+    /// Stops the sound channel if a sample was requested since the last call, so no draft copy stays open,
+    /// and stops reporting sample failures. Does not interrupt a shortcut's sound when nothing was sampled.
+    /// </summary>
+    /// <returns><c>false</c> when the stop was not confirmed in time; a sample may still hold its file open.</returns>
+    bool StopSamples();
 }
 
 public sealed class SoundImportException : Exception

@@ -97,6 +97,28 @@ public class TrayApplicationTests
     }
 
     [Fact]
+    public void TraySettings_OpensSettingsUntilExit()
+    {
+        var calls = new List<string>();
+        var tray = new FakeTrayHost(calls);
+        var application = new TrayApplication(
+            tray,
+            new FakeDisposable(calls, "shortcuts"),
+            new FakeOverlay(calls),
+            new FakeApplicationLifetime(calls),
+            action => action(),
+            ExceptionDispatchInfo.Throw);
+        application.SettingsRequested += () => calls.Add("settings");
+        application.Start();
+
+        tray.RequestSettings();
+        application.Exit();
+        tray.RequestSettings();
+
+        Assert.Equal(["tray shown", "settings", "shortcuts", "overlay", "tray disposed", "shutdown"], calls);
+    }
+
+    [Fact]
     public void TrayExit_IsScheduledAfterTheTrayCallbackReturns()
     {
         var calls = new List<string>();
@@ -212,6 +234,8 @@ public class TrayApplicationTests
     {
         public event Action? ExitRequested;
 
+        public event Action? SettingsRequested;
+
         public void Show() => calls.Add("tray shown");
 
         public void Dispose()
@@ -224,6 +248,8 @@ public class TrayApplicationTests
         }
 
         public void RequestExit() => ExitRequested?.Invoke();
+
+        public void RequestSettings() => SettingsRequested?.Invoke();
     }
 
     private sealed class FakeDisposable(List<string> calls, string name) : IDisposable

@@ -81,11 +81,17 @@ public interface ISoundStartHold : IDisposable
     void EndEarlierRequests();
 }
 
+/// <summary>Saves a settings draft and makes it the running configuration; see <see cref="SettingsSaveOperation"/>.</summary>
+public interface ISettingsSave
+{
+    SettingsSaveResult Save(DrawingStyle style, Shortcut? draw, Shortcut? clear, IEnumerable<ActionSlot> slots);
+}
+
 /// <summary>
 /// Saves a settings draft and makes it the running configuration. Call <see cref="Save"/> on the thread that
 /// runs the keyboard hook callbacks and the drawing controller (the WPF UI thread), never on the sound thread.
 /// </summary>
-public sealed class SettingsSaveOperation
+public sealed class SettingsSaveOperation : ISettingsSave
 {
     /// <summary>The reason a Save reports when a sound was still starting and nothing was saved.</summary>
     public const string SoundStartingReason =

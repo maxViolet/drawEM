@@ -4,6 +4,8 @@ public interface ITrayHost : IDisposable
 {
     event Action? ExitRequested;
 
+    event Action? SettingsRequested;
+
     void Show();
 }
 
@@ -46,7 +48,11 @@ public sealed class TrayApplication : IDisposable
         this.scheduleExit = scheduleExit;
         this.reportCleanupFailure = reportCleanupFailure;
         trayHost.ExitRequested += OnExitRequested;
+        trayHost.SettingsRequested += OnSettingsRequested;
     }
+
+    /// <summary>The tray Settings command was chosen. Never raised after exit.</summary>
+    public event Action? SettingsRequested;
 
     public void Start() => trayHost.Show();
 
@@ -55,6 +61,8 @@ public sealed class TrayApplication : IDisposable
     public void Dispose() => Stop(shutDownApplication: false);
 
     private void OnExitRequested() => scheduleExit(Exit);
+
+    private void OnSettingsRequested() => SettingsRequested?.Invoke();
 
     private void Stop(bool shutDownApplication)
     {
@@ -65,6 +73,7 @@ public sealed class TrayApplication : IDisposable
 
         exited = true;
         trayHost.ExitRequested -= OnExitRequested;
+        trayHost.SettingsRequested -= OnSettingsRequested;
 
         // A failed step must not skip the later ones, so the process still shuts down.
         List<Action> steps = [shortcutRegistration.Dispose, overlay.Close, trayHost.Dispose];
