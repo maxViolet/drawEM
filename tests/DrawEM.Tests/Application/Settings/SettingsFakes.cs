@@ -45,6 +45,10 @@ internal sealed class FakeSampler : ISoundSampler
         Stops++;
         return StopConfirmed;
     }
+
+    public int Forgets { get; private set; }
+
+    public void ForgetSamples() => Forgets++;
 }
 
 internal sealed class FakeCapture : IShortcutCapture

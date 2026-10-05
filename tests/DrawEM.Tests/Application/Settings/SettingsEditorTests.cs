@@ -262,6 +262,31 @@ public sealed class SettingsEditorTests : IDisposable
     }
 
     [Fact]
+    public void Save_EndsTheDraftsSamplesWithoutAnotherStop()
+    {
+        var editor = Editor();
+        editor.Sample(1, _ => { });
+
+        Assert.IsType<SettingsSaveResult.Saved>(editor.Save());
+        editor.Cancel();
+
+        Assert.Equal(1, sampler.Forgets);
+        Assert.Equal(0, sampler.Stops);
+    }
+
+    [Fact]
+    public void FailedSave_KeepsTheDraftsSamples()
+    {
+        saver.Result = new SettingsSaveResult.NotSaved("disk full");
+        var editor = Editor();
+        editor.Sample(1, _ => { });
+
+        editor.Save();
+
+        Assert.Equal(0, sampler.Forgets);
+    }
+
+    [Fact]
     public void FailedSave_KeepsTheDraftOpen_SoCancelStillDiscardsItsImports()
     {
         saver.Result = new SettingsSaveResult.NotSaved("disk full");

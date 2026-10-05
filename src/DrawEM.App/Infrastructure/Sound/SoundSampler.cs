@@ -59,6 +59,12 @@ public sealed class SoundSampler : ISoundSampler
         sampled = false;
         return stop();
     }
+
+    public void ForgetSamples()
+    {
+        failures.Forget();
+        sampled = false;
+    }
 }
 
 /// <summary>

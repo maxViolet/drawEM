@@ -63,6 +63,12 @@ public interface ISoundSampler
     /// </summary>
     /// <returns><c>false</c> when the stop was not confirmed in time; a sample may still hold its file open.</returns>
     bool StopSamples();
+
+    /// <summary>
+    /// Stops reporting sample failures and forgets earlier samples without stopping the sound channel. Call
+    /// when the draft ends after something else already stopped the channel, as a successful Save does.
+    /// </summary>
+    void ForgetSamples();
 }
 
 public sealed class SoundImportException : Exception
