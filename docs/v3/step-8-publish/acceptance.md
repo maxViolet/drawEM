@@ -2,7 +2,7 @@
 
 **Task:** [publish and verify](task.md). **Plan:** [verification](plan.md).
 
-- [ ] Automated suite and Windows x64 publish commands, results, and build
+- [x] Automated suite and Windows x64 publish commands, results, and build
   identity are recorded.
 - [ ] Separate manual results cover every group in the verification plan,
   including tray/settings, storage/media recovery, real keys and layouts,

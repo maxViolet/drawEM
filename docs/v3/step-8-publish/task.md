@@ -1,6 +1,6 @@
 # v3 / Step 8: publish and verify on Windows
 
-**Status:** planned. **Source:** [v3 roadmap](../ROADMAP-v3.md#delivery-order).
+**Status:** in progress; automated gate passed, manual gate open — see [results](../STEP-8-ACCEPTANCE-RESULTS.md). **Source:** [v3 roadmap](../ROADMAP-v3.md#delivery-order).
 
 ## Task
 
