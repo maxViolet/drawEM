@@ -2,7 +2,7 @@
 
 **Task:** [publish and verify](step-8-publish/task.md). **Plan:** [verification](step-8-publish/plan.md). **Criteria:** [acceptance](step-8-publish/acceptance.md).
 
-**Status:** automated gate passed; manual desktop gate not started. v3 is not
+**Status:** automated gate passed; manual desktop gate in progress (2 of 40 checks pass). v3 is not
 releasable until every manual check below is Pass or has an accepted reason.
 
 Result values: **Pass**, **Fail**, **Unverified** (not run, or the environment
@@ -49,7 +49,7 @@ with the observed result and a short note.
 
 | # | Check | Result | Notes |
 | --- | --- | --- | --- |
-| 1.1 | Tray icon visible; tray menu opens Settings. | Unverified | Not run. |
+| 1.1 | Tray icon visible; tray menu opens Settings. | Pass | 2026-10-07, reported by the operator. |
 | 1.2 | Draft isolation: edits in an open Settings window do not change live behavior before Save. | Unverified | Not run. |
 | 1.3 | Save applies the draft; Cancel discards it; defaults restore the default values. | Unverified | Not run. |
 | 1.4 | Shortcut conflict error and sound copy error are shown and leave saved settings unchanged. | Unverified | Not run. |
@@ -63,7 +63,7 @@ with the observed result and a short note.
 
 | # | Check | Result | Notes |
 | --- | --- | --- | --- |
-| 2.1 | Bound drawing shortcut draws over the focused app. | Unverified | Not run. |
+| 2.1 | Bound drawing shortcut draws over the focused app. | Pass | 2026-10-07, reported by the operator with the default `Ctrl+Alt+Z`; focused app not recorded. |
 | 2.2 | Bound sound shortcut plays its sound. | Unverified | Not run. |
 | 2.3 | Ordinary `Ctrl+C` and `Alt+F4` reach the focused app. | Unverified | Not run. |
 | 2.4 | Capturing an already-bound chord does not dispatch its action. | Unverified | Not run. |
@@ -115,7 +115,7 @@ checks.
 
 ## Release blockers
 
-- The whole manual gate is open: no desktop check above has run.
+- The manual gate is open: 38 of 40 desktop checks have not run.
 - Checks 2.7 and 2.8 need the German (Germany) and Polish (Programmers)
   layouts installed.
 - Checks 4.2, 4.3, 4.5 (all-monitor part), 6.1 (multi-monitor part), and 6.2
