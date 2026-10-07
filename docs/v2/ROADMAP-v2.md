@@ -7,8 +7,9 @@
 This version delivers [sound playback through code, with global shortcuts
 configured in code, and external call microphone routing](STAGE-1-SOUND-IMPLEMENTATION-PLAN.md).
 The [v3 roadmap](../v3/ROADMAP-v3.md) covers the settings UI, media library,
-editable shortcuts, and drawing style. Video and screen effects are deferred
-to a separate future roadmap. The proposed screen-action model is recorded in
+editable shortcuts, and drawing style. The [v4 roadmap](../v4/ROADMAP-v4.md)
+proposes built-in screen effects; imported video remains a later phase.
+The proposed screen-action model is recorded in
 [ARCHITECTURE.md](../ARCHITECTURE.md).
 
 ## Stage 1: sound command
