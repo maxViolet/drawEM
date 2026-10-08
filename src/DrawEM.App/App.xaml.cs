@@ -2,9 +2,11 @@ using System.Windows;
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Infrastructure;
 using DrawEM.App.Infrastructure.Drawing;
+using DrawEM.App.Infrastructure.Effects;
 using DrawEM.App.Infrastructure.Settings;
 using DrawEM.App.Infrastructure.Sound;
 using DrawEM.App.Presentation.Drawing;
+using DrawEM.App.Presentation.Effects;
 using DrawEM.App.Presentation.Settings;
 using DrawingSessionController = DrawEM.App.Application.Drawing.DrawingSessionController;
 using MessageBox = System.Windows.MessageBox;
@@ -24,6 +26,7 @@ public partial class App : System.Windows.Application
     private ApplicationExitPolicy? exitPolicy;
     private SingleInstanceGuard? instanceGuard;
     private SettingsWindow? settingsWindow;
+    private IDisposable? effectProbe;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -97,10 +100,17 @@ public partial class App : System.Windows.Application
                 mouseHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action), monitorBoundsSource);
 
             overlayWindow.Show();
+
+            // Temporary S4-01 renderer experiment; S4-06 removes it with its trigger.
+            effectProbe = EffectSurfaceProbe.IsEnabled(Environment.GetEnvironmentVariable(EffectSurfaceProbe.EnableVariable))
+                ? StartEffectProbe(controller, inputGate, monitorBoundsSource)
+                : new CompositeDisposable();
+
             trayApplication = new TrayApplication(
                 new NotifyIconTrayHost(),
                 // The sound channel reports its last failures while it stops, so the log drains after it.
-                new CompositeDisposable(keyboardHookSource, mouseHookSource, channelHost, soundLog),
+                // The effect probe's hooks and windows go first, before the hooks it measures against.
+                new CompositeDisposable(effectProbe, keyboardHookSource, mouseHookSource, channelHost, soundLog),
                 overlayWindow,
                 new WpfApplicationLifetime(this),
                 action => Dispatcher.BeginInvoke(action),
@@ -171,6 +181,45 @@ public partial class App : System.Windows.Application
     /// <summary>Discards an open draft, so its imports are removed before the sound library is left.</summary>
     private void CloseSettings() => settingsWindow?.Close();
 
+    /// <summary>
+    /// Starts the S4-01 effect-window probe: Ctrl+Alt+F9 shows one effect, Ctrl+Alt+F10 runs the benchmark
+    /// with drawing active. Its hooks are installed after the production hooks they measure against.
+    /// </summary>
+    private static IDisposable StartEffectProbe(
+        DrawingSessionController drawing, DrawingModeInputGate inputGate, IMonitorBoundsSource monitors)
+    {
+        var cursor = new Win32CursorPositionSource();
+        var load = new EffectProbeInputLoad();
+        try
+        {
+            var probe = new EffectSurfaceProbe(new EffectProbePorts(
+                () => cursor.TryGetCurrentPosition(out var position) ? position : null,
+                point => monitors.TryGetBounds(point, out var bounds) ? bounds : null,
+                (point, bounds) =>
+                {
+                    inputGate.Begin(bounds);
+                    drawing.EnterDrawMode(point, bounds);
+                },
+                () =>
+                {
+                    inputGate.SetActive(false);
+                    drawing.ExitDrawMode();
+                },
+                () => inputGate.IsActive,
+                load.Start,
+                load.Stop,
+                EffectSurfaceProbe.DefaultReportDirectory));
+            load.DelayMeasured += probe.RecordHookDelay;
+            var hotkeys = new EffectProbeHotkeys(probe.Invoke, probe.RunBenchmark);
+            return new CompositeDisposable(hotkeys, probe, load);
+        }
+        catch
+        {
+            load.Dispose();
+            throw;
+        }
+    }
+
     private void ReleaseStartedResources()
     {
         if (trayApplication is not null)
@@ -181,6 +230,7 @@ public partial class App : System.Windows.Application
 
         CleanupSteps.RunAll(
         [
+            () => effectProbe?.Dispose(),
             () => keyboardHookSource?.Dispose(),
             () => mouseHookSource?.Dispose(),
             () => soundChannel?.Dispose(),
