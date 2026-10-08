@@ -16,14 +16,14 @@
 - [ ] [gate] Fill in the **Renderer decision** below with the chosen option, measurements and desktop evidence, and why each other roadmap option was rejected or skipped. If the WPF UI thread fails the render-callback or hook-delay threshold, prove a separate effect UI thread or another renderer against the same criteria before S4-02. Limit each fallback proof to two working days, then escalate to the sign-off owner. If no option meets the criteria, stop and revise the roadmap thresholds or scope before S4-02.
 - [x] [record] A locally published Windows x64 build contains the temporary S4-01 trigger in `src/DrawEM.App/Presentation/Effects/EffectSurfaceProbe.cs`, wired only when `DRAWEM_EFFECT_PROBE=1` in `App.xaml.cs`. Record its exact executable path, version, hash, and trigger setting; S4-06 removes this trigger.
   - Executable: `src\DrawEM.App\bin\Release\net8.0-windows\win-x64\publish\DrawEM.App.exe` in the `S4-01-effect-surface` worktree, published with `dotnet publish .\src\DrawEM.App\DrawEM.App.csproj -c Release -p:PublishProfile=win-x64`.
-  - Version: `1.0.0+d68b33e3e0c53dba3e4cfd06e1edeb32ea6bf645` (commit `d68b33e`). SHA-256: `2775850155ea2d56ef788f245bedb7322b1e8539a63d7079c9ea09b37cf13d17`.
+  - Version: `1.0.0+3ef66d3f6cff201f51bf6f5f4574be61a5072890` (commit `3ef66d3`). SHA-256: `9519465c76e27a2f9cc742ae99eec11dfefe4619d22b70b3a9f1f9312925025b`.
   - Trigger setting: `DRAWEM_EFFECT_PROBE=1` in the environment of the process. Any other value, or no value, leaves the probe, its hooks, and its hotkeys out.
   - The hotkey registration is in `src/DrawEM.App/Infrastructure/Effects/EffectProbeHotkeys.cs` and the measurement hooks in `EffectProbeInputLoad.cs` next to it, because Presentation must not own global input. S4-06 removes both with the probe.
 - [ ] [gate] After 100 effect cycles, the probe has no `CompositionTarget.Rendering` subscription or effect window left. Record process handle, GDI object, and USER object counts after warm-up and after the cycles; each final count is within 5% of its warm-up count.
 
 ## Validation
 
-- Automated checks, 2026-10-08, commit `d68b33e`:
+- Automated checks, 2026-10-08, commit `3ef66d3`:
   - `dotnet build DrawEM.sln -warnaserror`: succeeded, no warnings.
   - `dotnet test DrawEM.sln --no-build --filter "FullyQualifiedName~EffectSurfaceCoordinateTests"`: 29 passed, 0 failed. The tests cover physical-to-DIP mapping of a monitor at negative desktop coordinates at 100%, 150%, and 200% scaling, points on the neighboring monitor, clipping at the right edge and the top-left corner, and invalid scales.
   - `dotnet test DrawEM.sln --no-build`: 501 passed, 0 failed, including the layer dependency tests.
