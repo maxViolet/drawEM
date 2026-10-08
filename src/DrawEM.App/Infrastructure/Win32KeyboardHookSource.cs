@@ -22,10 +22,17 @@ public sealed class Win32KeyboardHookSource : INeutralKeyEmitter, IDisposable
 
     public IKeyboardHookSource Events => events;
 
+    /// <summary>
+    /// Raised inside the hook callback for every keyboard event, including drawEM's own neutral keys,
+    /// before the shortcut decision. The S4-01 effect probe uses it to confirm the hook still responds.
+    /// </summary>
+    public event Action? EventObserved;
+
     private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {
         if (nCode >= NativeMethods.HC_ACTION)
         {
+            EventObserved?.Invoke();
             var data = Marshal.PtrToStructure<NativeMethods.KBDLLHOOKSTRUCT>(lParam);
             KeyDirection? direction = wParam.ToInt32() switch
             {
