@@ -77,6 +77,9 @@ public sealed class EffectSurfaceProbe : IDisposable
     private static readonly TimeSpan PauseBetweenInvocations = TimeSpan.FromMilliseconds(250);
     private static readonly TimeSpan IdleSettleDelay = TimeSpan.FromSeconds(1);
 
+    /// <summary>How long the hooks are exercised after the last cycle.</summary>
+    private static readonly TimeSpan PostCycleCheckDuration = TimeSpan.FromSeconds(1);
+
     /// <summary>Time past the effect duration after which an invocation without frames fails.</summary>
     private static readonly TimeSpan DeadlineMargin = TimeSpan.FromSeconds(3);
 
@@ -166,10 +169,10 @@ public sealed class EffectSurfaceProbe : IDisposable
                 var trigger = Stopwatch.GetTimestamp();
                 benchmark = record;
                 record.CurrentInvocation = i;
-                ports.BeginDrawing(target.Cursor, target.Monitor);
-                ports.StartInputLoad(target.Cursor, target.Monitor);
                 try
                 {
+                    ports.BeginDrawing(target.Cursor, target.Monitor);
+                    ports.StartInputLoad(target.Cursor, target.Monitor);
                     record.Add(await Start(target.Monitor, trigger, i));
                 }
                 finally
@@ -182,6 +185,7 @@ public sealed class EffectSurfaceProbe : IDisposable
                 await Task.Delay(PauseBetweenInvocations);
             }
 
+            await CheckHooksAfterCycles(record);
             await Task.Delay(IdleSettleDelay);
             record.FinalResources = ResourceCounts.Read();
             record.FinalOpenWindows = OpenWindows;
@@ -207,6 +211,32 @@ public sealed class EffectSurfaceProbe : IDisposable
     {
         disposed = true;
         current?.Finish();
+    }
+
+    /// <summary>
+    /// Injects input for <see cref="PostCycleCheckDuration"/> with no effect and no draw mode, and counts the
+    /// events of each type the probe hooks receive. The production hooks follow them on the same thread.
+    /// </summary>
+    private async Task CheckHooksAfterCycles(BenchmarkRecord record)
+    {
+        if (disposed || TargetAtCursor() is not { } target)
+        {
+            return;
+        }
+
+        record.PostCycleCheck = true;
+        benchmark = record;
+        try
+        {
+            ports.StartInputLoad(target.Cursor, target.Monitor);
+            await Task.Delay(PostCycleCheckDuration);
+        }
+        finally
+        {
+            benchmark = null;
+            record.PostCycleTimeouts = ports.StopInputLoad();
+            record.PostCycleCheck = false;
+        }
     }
 
     private (MonitorBounds Monitor, ScreenPoint Cursor)? TargetAtCursor() =>
@@ -464,6 +494,15 @@ public sealed class EffectSurfaceProbe : IDisposable
 
         public int InputTimeouts { get; set; }
 
+        /// <summary>Whether hook events count toward the check after the last cycle.</summary>
+        public bool PostCycleCheck { get; set; }
+
+        public int PostCycleKeyboard { get; private set; }
+
+        public int PostCycleMouse { get; private set; }
+
+        public int PostCycleTimeouts { get; set; } = -1;
+
         public ResourceCounts? WarmUpResources { get; set; }
 
         public ResourceCounts? FinalResources { get; set; }
@@ -478,8 +517,21 @@ public sealed class EffectSurfaceProbe : IDisposable
 
         public void Add(InvocationResult invocation) => invocations.Add(invocation);
 
-        public void AddHookDelay(bool keyboard, double delayMs, bool drawing) =>
-            hookDelays.Add(new HookDelay(CurrentInvocation, keyboard, delayMs, drawing));
+        public void AddHookDelay(bool keyboard, double delayMs, bool drawing)
+        {
+            if (!PostCycleCheck)
+            {
+                hookDelays.Add(new HookDelay(CurrentInvocation, keyboard, delayMs, drawing));
+            }
+            else if (keyboard)
+            {
+                PostCycleKeyboard++;
+            }
+            else
+            {
+                PostCycleMouse++;
+            }
+        }
 
         public string SamplesCsv()
         {
@@ -580,6 +632,10 @@ public sealed class EffectSurfaceProbe : IDisposable
             Gate(report, "Hook events after draw mode closed early", Invariant($"{notDrawingCount}"), "0",
                 notDrawingCount == 0);
             Gate(report, "Injected events never received", Invariant($"{InputTimeouts}"), "0", InputTimeouts == 0);
+            Gate(report, "Hooks after the cycles (keyboard / mouse / not received)",
+                PostCycleTimeouts < 0 ? "not run" : Invariant($"{PostCycleKeyboard} / {PostCycleMouse} / {PostCycleTimeouts}"),
+                "both types received, 0 missed",
+                PostCycleKeyboard > 0 && PostCycleMouse > 0 && PostCycleTimeouts == 0);
             Gate(report, "Effect windows left", Invariant($"{FinalOpenWindows}"), "0", FinalOpenWindows == 0);
             Gate(report, "Rendering subscriptions left", Invariant($"{FinalRenderingSubscriptions}"), "0",
                 FinalRenderingSubscriptions == 0);
