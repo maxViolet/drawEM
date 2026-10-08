@@ -91,7 +91,7 @@ public sealed class EffectSurfaceProbe : IDisposable
     private readonly EffectProbePorts ports;
     private ProbeInvocation? current;
     private BenchmarkRecord? benchmark;
-    private bool coldRecorded;
+    private InvocationResult? coldStart;
     private bool benchmarkRunning;
     private bool disposed;
 
@@ -202,6 +202,7 @@ public sealed class EffectSurfaceProbe : IDisposable
             benchmarkRunning = false;
         }
 
+        record.ColdStart = coldStart;
         WriteReport(record);
     }
 
@@ -251,8 +252,14 @@ public sealed class EffectSurfaceProbe : IDisposable
     private Task<InvocationResult> Start(MonitorBounds monitor, long trigger, int invocationIndex)
     {
         current?.Finish();
-        var invocation = new ProbeInvocation(this, monitor, trigger, invocationIndex, cold: !coldRecorded);
-        coldRecorded = true;
+        var cold = coldStart is null;
+        var invocation = new ProbeInvocation(this, monitor, trigger, invocationIndex, cold);
+        if (cold)
+        {
+            // Kept for the benchmark report even when the cold invocation came from Ctrl+Alt+F9.
+            coldStart = invocation.Result;
+        }
+
         current = invocation;
         invocation.Start();
         return invocation.Completion;
@@ -335,6 +342,8 @@ public sealed class EffectSurfaceProbe : IDisposable
         }
 
         public Task<InvocationResult> Completion => completion.Task;
+
+        public InvocationResult Result => result;
 
         public void Start()
         {
@@ -523,7 +532,15 @@ public sealed class EffectSurfaceProbe : IDisposable
 
         public Exception? Failure { get; set; }
 
-        private IEnumerable<InvocationResult> Measured => invocations.Where(invocation => invocation.Index > 0);
+        /// <summary>The process's first invocation, from Ctrl+Alt+F9 or the benchmark's warm-up.</summary>
+        public InvocationResult? ColdStart { get; set; }
+
+        private IEnumerable<InvocationResult> Measured =>
+            invocations.Where(invocation => invocation.Index > 0 && !invocation.Cold);
+
+        /// <summary>Benchmark invocations, preceded by the cold start when it happened before the benchmark.</summary>
+        private IEnumerable<InvocationResult> AllInvocations =>
+            ColdStart is { } cold && !invocations.Contains(cold) ? invocations.Prepend(cold) : invocations;
 
         public void Add(InvocationResult invocation) => invocations.Add(invocation);
 
@@ -546,7 +563,7 @@ public sealed class EffectSurfaceProbe : IDisposable
         public string SamplesCsv()
         {
             var csv = new StringBuilder("kind,invocation,cold,value_ms,drawing\n");
-            foreach (var invocation in invocations)
+            foreach (var invocation in AllInvocations)
             {
                 var cold = invocation.Cold ? 1 : 0;
                 if (invocation.FirstAppearanceMs is { } appearance)
@@ -589,8 +606,8 @@ public sealed class EffectSurfaceProbe : IDisposable
             var notDrawingCount = hookDelays.Count - drawingDelays.Count;
             var medianInterval = Percentile(intervals, 0.5);
             var longFrames = medianInterval is { } median ? intervals.Count(value => value > median * LongFrameFactor) : 0;
-            var cold = invocations.FirstOrDefault(invocation => invocation.Cold);
-            var failures = invocations.Where(invocation => invocation.Failure is not null).ToList();
+            var cold = ColdStart;
+            var failures = AllInvocations.Where(invocation => invocation.Failure is not null).ToList();
 
             var report = new StringBuilder();
             report.AppendLine("# drawEM S4-01 effect probe report");
@@ -608,7 +625,7 @@ public sealed class EffectSurfaceProbe : IDisposable
                 report.AppendLine($"- {line}");
             }
 
-            report.AppendLine("- Monitors used (physical bounds @ DPI scale): " + string.Join("; ", invocations
+            report.AppendLine("- Monitors used (physical bounds @ DPI scale): " + string.Join("; ", AllInvocations
                 .Select(invocation => Invariant($"({invocation.Monitor.Left}, {invocation.Monitor.Top}, {invocation.Monitor.Right}, {invocation.Monitor.Bottom}) @ {invocation.DpiScale:0.##}"))
                 .Distinct()));
             report.AppendLine("- Timing: `Stopwatch` (QueryPerformanceCounter, " +
@@ -656,10 +673,10 @@ public sealed class EffectSurfaceProbe : IDisposable
             ResourceGate(report, "Process handles", counts => counts.Handles);
             ResourceGate(report, "GDI objects", counts => counts.GdiObjects);
             ResourceGate(report, "USER objects", counts => counts.UserObjects);
-            var foregroundChanged = invocations.Count(invocation => !invocation.ForegroundUnchanged);
+            var foregroundChanged = AllInvocations.Count(invocation => !invocation.ForegroundUnchanged);
             Gate(report, "Invocations that changed the foreground window", Invariant($"{foregroundChanged}"), "0",
                 foregroundChanged == 0);
-            var misplaced = invocations.Count(invocation => !invocation.PlacementMatches);
+            var misplaced = AllInvocations.Count(invocation => !invocation.PlacementMatches);
             Gate(report, "Windows not covering exactly the target monitor", Invariant($"{misplaced}"), "0", misplaced == 0);
             Gate(report, "Invocation failures", Invariant($"{failures.Count}"), "0", failures.Count == 0 && Failure is null);
             report.AppendLine();
@@ -669,8 +686,8 @@ public sealed class EffectSurfaceProbe : IDisposable
             report.AppendLine(Invariant($"- First appearance, {appearances.Count} warm invocations (estimate against the {FirstAppearanceTargetMs} ms release target, not a gate): ") +
                 Invariant($"median {Ms(Percentile(appearances, 0.5))}, p95 {Ms(Percentile(appearances, 0.95))}, max {Ms(appearances.Count > 0 ? appearances.Max() : null)}."));
             report.AppendLine(cold is null
-                ? "- Cold start: the process had shown an effect before the benchmark; restart drawEM to record one."
-                : Invariant($"- Cold start (invocation {cold.Index}): first appearance {Ms(cold.FirstAppearanceMs)}, ") +
+                ? "- Cold start: not recorded; the process showed no effect."
+                : Invariant($"- Cold start ({DescribeSource(cold)}): first appearance {Ms(cold.FirstAppearanceMs)}, ") +
                   Invariant($"render callback max {Ms(cold.CallbackMs.Count > 0 ? cold.CallbackMs.Max() : null)}."));
             report.AppendLine(Invariant($"- Render callbacks: {callbacks.Count} samples; median {Ms(Percentile(callbacks, 0.5))}, ") +
                 Invariant($"p99 {Ms(Percentile(callbacks, 0.99))}, max {Ms(callbacks.Count > 0 ? callbacks.Max() : null)}."));
@@ -707,6 +724,13 @@ public sealed class EffectSurfaceProbe : IDisposable
 
         private static void Gate(StringBuilder report, string check, string measured, string limit, bool passed) =>
             report.AppendLine($"| {check} | {measured} | {limit} | {(passed ? "pass" : "FAIL")} |");
+
+        private static string DescribeSource(InvocationResult invocation) => invocation.Index switch
+        {
+            0 => "Ctrl+Alt+F9 before the benchmark",
+            < 0 => Invariant($"warm-up invocation {-invocation.Index}"),
+            _ => Invariant($"measured invocation {invocation.Index}, excluded from the warm results"),
+        };
 
         private static string Describe(ResourceCounts? counts) => counts is { } value
             ? Invariant($"{value.Handles} handles, {value.GdiObjects} GDI, {value.UserObjects} USER")
