@@ -153,6 +153,10 @@ public sealed class EffectSurfaceProbe : IDisposable
                 {
                     record.Add(await Start(target.Monitor, Stopwatch.GetTimestamp(), -i));
                 }
+                else
+                {
+                    record.SkippedWarmUp++;
+                }
 
                 await Task.Delay(PauseBetweenInvocations);
             }
@@ -507,6 +511,9 @@ public sealed class EffectSurfaceProbe : IDisposable
 
         public int SkippedNoMonitor { get; set; }
 
+        /// <summary>Warm-up invocations skipped because no monitor contained the cursor.</summary>
+        public int SkippedWarmUp { get; set; }
+
         public int InputTimeouts { get; set; }
 
         /// <summary>Whether hook events count toward the check after the last cycle.</summary>
@@ -643,6 +650,10 @@ public sealed class EffectSurfaceProbe : IDisposable
             report.AppendLine("| Check | Measured | Limit | Result |");
             report.AppendLine("|---|---|---|---|");
             var callbackP95 = Percentile(callbacks, 0.95);
+            // Without every warm-up, the resource baseline and the warm results start from a colder state.
+            var warmUpCount = invocations.Count(invocation => invocation.Index < 0);
+            Gate(report, "Warm-up invocations completed", Invariant($"{warmUpCount}"), Invariant($"{WarmUpInvocations}"),
+                warmUpCount == WarmUpInvocations && SkippedWarmUp == 0);
             Gate(report, "Measured invocations completed", Invariant($"{measured.Count}"), Invariant($"{MeasuredInvocations}"),
                 measured.Count == MeasuredInvocations && SkippedNoMonitor == 0);
             Gate(report, "Render callback p95", Ms(callbackP95), Invariant($"<= {RenderCallbackP95LimitMs} ms"),
