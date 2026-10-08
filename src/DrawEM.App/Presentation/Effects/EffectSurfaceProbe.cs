@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Threading;
 using DrawEM.App.Domain.Drawing;
 using Microsoft.Win32;
 using Brush = System.Windows.Media.Brush;
@@ -75,6 +76,9 @@ public sealed class EffectSurfaceProbe : IDisposable
 
     private static readonly TimeSpan PauseBetweenInvocations = TimeSpan.FromMilliseconds(250);
     private static readonly TimeSpan IdleSettleDelay = TimeSpan.FromSeconds(1);
+
+    /// <summary>Time past the effect duration after which an invocation without frames fails.</summary>
+    private static readonly TimeSpan DeadlineMargin = TimeSpan.FromSeconds(3);
 
     private static readonly Brush ShapeFill = Freeze(new SolidColorBrush(Color.FromArgb(0xC0, 0x1E, 0x90, 0xFF)));
     private static readonly Pen ShapeOutline = Freeze(new Pen(Brushes.White, OutlineThickness));
@@ -282,6 +286,7 @@ public sealed class EffectSurfaceProbe : IDisposable
         private IntPtr foregroundBefore;
         private TimeSpan lastRenderingTime = TimeSpan.MinValue;
         private long lastFrame;
+        private DispatcherTimer? deadline;
         private bool subscribed;
         private bool finished;
 
@@ -310,6 +315,16 @@ public sealed class EffectSurfaceProbe : IDisposable
                 CompositionTarget.Rendering += OnRendering;
                 subscribed = true;
                 owner.RenderingSubscriptions++;
+
+                // Rendering stops, for example, while the session is locked; the invocation must still end.
+                deadline = new DispatcherTimer { Interval = EffectDuration + DeadlineMargin };
+                deadline.Tick += (_, _) =>
+                {
+                    result.Failure = new TimeoutException(
+                        $"The effect did not finish within {(EffectDuration + DeadlineMargin).TotalSeconds} s; rendering callbacks stopped.");
+                    Finish();
+                };
+                deadline.Start();
             }
             catch (Exception exception)
             {
@@ -326,6 +341,7 @@ public sealed class EffectSurfaceProbe : IDisposable
             }
 
             finished = true;
+            deadline?.Stop();
             if (owner.current == this)
             {
                 owner.current = null;
@@ -503,10 +519,12 @@ public sealed class EffectSurfaceProbe : IDisposable
             var intervals = measured.SelectMany(invocation => invocation.FrameIntervalMs).ToList();
             var appearances = measured.Where(invocation => invocation.FirstAppearanceMs is not null)
                 .Select(invocation => invocation.FirstAppearanceMs!.Value).ToList();
-            var delays = hookDelays.Select(delay => delay.DelayMs).ToList();
-            var keyboardCount = hookDelays.Count(delay => delay.Keyboard);
-            var mouseCount = hookDelays.Count - keyboardCount;
-            var drawingCount = hookDelays.Count(delay => delay.Drawing);
+            // The gates require delays measured while drawing; a key press closes the probe's draw mode early.
+            var drawingDelays = hookDelays.Where(delay => delay.Drawing).ToList();
+            var delays = drawingDelays.Select(delay => delay.DelayMs).ToList();
+            var keyboardCount = drawingDelays.Count(delay => delay.Keyboard);
+            var mouseCount = drawingDelays.Count - keyboardCount;
+            var notDrawingCount = hookDelays.Count - drawingDelays.Count;
             var medianInterval = Percentile(intervals, 0.5);
             var longFrames = medianInterval is { } median ? intervals.Count(value => value > median * LongFrameFactor) : 0;
             var cold = invocations.FirstOrDefault(invocation => invocation.Cold);
@@ -555,10 +573,12 @@ public sealed class EffectSurfaceProbe : IDisposable
             Gate(report, "Hook delay p95", Ms(delayP95), Invariant($"<= {HookDelayP95LimitMs} ms"), delayP95 <= HookDelayP95LimitMs);
             Gate(report, "Hook delay max", Ms(delayMax), Invariant($"<= {HookDelayMaxLimitMs} ms"),
                 delayMax <= HookDelayMaxLimitMs && InputTimeouts == 0);
-            Gate(report, "Hook events (keyboard / mouse / while drawing)",
-                Invariant($"{hookDelays.Count} ({keyboardCount} / {mouseCount} / {drawingCount})"),
+            Gate(report, "Hook events while drawing (keyboard / mouse)",
+                Invariant($"{drawingDelays.Count} ({keyboardCount} / {mouseCount})"),
                 Invariant($">= {MinimumHookEvents}, both types"),
-                hookDelays.Count >= MinimumHookEvents && keyboardCount > 0 && mouseCount > 0);
+                drawingDelays.Count >= MinimumHookEvents && keyboardCount > 0 && mouseCount > 0);
+            Gate(report, "Hook events after draw mode closed early", Invariant($"{notDrawingCount}"), "0",
+                notDrawingCount == 0);
             Gate(report, "Injected events never received", Invariant($"{InputTimeouts}"), "0", InputTimeouts == 0);
             Gate(report, "Effect windows left", Invariant($"{FinalOpenWindows}"), "0", FinalOpenWindows == 0);
             Gate(report, "Rendering subscriptions left", Invariant($"{FinalRenderingSubscriptions}"), "0",
