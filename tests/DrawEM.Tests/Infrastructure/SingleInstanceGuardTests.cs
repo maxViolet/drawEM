@@ -43,11 +43,22 @@ public class SingleInstanceGuardTests
     public void TryAcquire_AfterInstanceDiedHoldingName_TakesItOver()
     {
         // A thread that ends while owning the mutex abandons it, as a killed process does.
-        OnOtherThread(() => SingleInstanceGuard.TryAcquire(name));
+        var abandonedGuard = OnOtherThread(() => SingleInstanceGuard.TryAcquire(name));
+        Assert.NotNull(abandonedGuard);
 
-        using var guard = SingleInstanceGuard.TryAcquire(name);
-
-        Assert.NotNull(guard);
+        SingleInstanceGuard? guard = null;
+        try
+        {
+            // A zero-timeout wait can race with the mutex becoming abandoned after Thread.Join.
+            Assert.True(SpinWait.SpinUntil(
+                () => (guard = SingleInstanceGuard.TryAcquire(name)) is not null,
+                TimeSpan.FromSeconds(1)));
+        }
+        finally
+        {
+            guard?.Dispose();
+            GC.KeepAlive(abandonedGuard);
+        }
     }
 
     [Fact]
