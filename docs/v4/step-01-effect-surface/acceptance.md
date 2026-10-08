@@ -14,13 +14,30 @@
 - [ ] [gate] During animation with active drawing, hook event-to-callback delay is no more than 25 ms at p95 and 100 ms maximum. Record at least 1,000 keyboard and mouse events in total across the 100 invocations, with both input types represented; confirm both hooks still respond after 100 effect cycles. Exceeding either delay threshold blocks the current renderer.
 - [ ] [record] Record first appearance across the 100 warm invocations as a renderer estimate against the 100 ms p95 release target. It is not an S4-01 pass/fail gate because the temporary trigger omits the shortcut path; S4-12 owns the full shortcut-to-present measurement.
 - [ ] [gate] Fill in the **Renderer decision** below with the chosen option, measurements and desktop evidence, and why each other roadmap option was rejected or skipped. If the WPF UI thread fails the render-callback or hook-delay threshold, prove a separate effect UI thread or another renderer against the same criteria before S4-02. Limit each fallback proof to two working days, then escalate to the sign-off owner. If no option meets the criteria, stop and revise the roadmap thresholds or scope before S4-02.
-- [ ] [record] A locally published Windows x64 build contains the temporary S4-01 trigger in `src/DrawEM.App/Presentation/Effects/EffectSurfaceProbe.cs`, wired only when `DRAWEM_EFFECT_PROBE=1` in `App.xaml.cs`. Record its exact executable path, version, hash, and trigger setting; S4-06 removes this trigger.
+- [x] [record] A locally published Windows x64 build contains the temporary S4-01 trigger in `src/DrawEM.App/Presentation/Effects/EffectSurfaceProbe.cs`, wired only when `DRAWEM_EFFECT_PROBE=1` in `App.xaml.cs`. Record its exact executable path, version, hash, and trigger setting; S4-06 removes this trigger.
+  - Executable: `src\DrawEM.App\bin\Release\net8.0-windows\win-x64\publish\DrawEM.App.exe` in the `S4-01-effect-surface` worktree, published with `dotnet publish .\src\DrawEM.App\DrawEM.App.csproj -c Release -p:PublishProfile=win-x64`.
+  - Version: `1.0.0+4898034e1db46d7e9d813e0efb706757096608d5` (commit `4898034`). SHA-256: `899b2ccd4f2a17717f36f172f23b219528990deca3040fa5c410f242e1f044a8`.
+  - Trigger setting: `DRAWEM_EFFECT_PROBE=1` in the environment of the process. Any other value, or no value, leaves the probe, its hooks, and its hotkeys out.
+  - The hotkey registration is in `src/DrawEM.App/Infrastructure/Effects/EffectProbeHotkeys.cs` and the measurement hooks in `EffectProbeInputLoad.cs` next to it, because Presentation must not own global input. S4-06 removes both with the probe.
 - [ ] [gate] After 100 effect cycles, the probe has no `CompositionTarget.Rendering` subscription or effect window left. Record process handle, GDI object, and USER object counts after warm-up and after the cycles; each final count is within 5% of its warm-up count.
 
 ## Validation
 
-- Automated checks: unverified. Add `EffectSurfaceCoordinateTests` under `tests/DrawEM.Tests/Presentation/Effects/` for physical-to-DIP mapping and clipping with negative coordinates at 100%, 150%, and 200% scaling; record the exact test command and result.
+- Automated checks, 2026-10-08, commit `4898034`:
+  - `dotnet build DrawEM.sln -warnaserror`: succeeded, no warnings.
+  - `dotnet test DrawEM.sln --no-build --filter "FullyQualifiedName~EffectSurfaceCoordinateTests"`: 29 passed, 0 failed. The tests cover physical-to-DIP mapping of a monitor at negative desktop coordinates at 100%, 150%, and 200% scaling, points on the neighboring monitor, clipping at the right edge and the top-left corner, and invalid scales.
+  - `dotnet test DrawEM.sln --no-build`: 501 passed, 0 failed, including the layer dependency tests.
+- Published-app smoke check, 2026-10-08, the build above on the development PC (one 1920x1200 monitor at 100%, 120 Hz): one Ctrl+Alt+F9 invocation sent with `keybd_event` from a script. The probe drew 240 frames in 2 seconds, its first drawing callback ended 62 ms after the hotkey (cold start, renderer estimate only), the window covered exactly the monitor, the foreground window did not change, and the process kept running. This is not a substitute for the desktop checks below.
 - Published-app Windows desktop checks: unverified. Record setup and observations separately from automated results.
+
+## Run the probe
+
+1. Close any running drawEM, then start the probe build from PowerShell:
+   `$env:DRAWEM_EFFECT_PROBE = '1'; & '<publish directory>\DrawEM.App.exe'`
+2. Press `Ctrl+Alt+F9` to show one effect on the monitor containing the cursor: a blue circle crosses the monitor in 2 seconds and touches its top and bottom edges, so clipping is visible. Pressing it again replaces the running effect.
+3. Press `Ctrl+Alt+F10` and release all keys within 3 seconds to run the benchmark. Do not touch the mouse or keyboard for about 5 minutes: any key event ends the probe's draw mode. The benchmark runs 5 warm-up invocations (the process's first invocation is recorded as cold), then 100 measured invocations with draw mode active. During each measured invocation, a background thread injects mouse moves along a 40 px circle and presses of an unassigned key (VK 0x97); the moves draw a stroke under the effect. Clear those strokes afterwards with `Ctrl+Alt+X`.
+4. Read the report in `%LOCALAPPDATA%\drawEM\effect-probe\effect-probe-<time>.md`. It records the build, Windows, CPU, GPU, monitors and DPI scales, the timing method and its error, and pass/fail for each automated gate: render callback p95, hook delay p95 and maximum with at least 1,000 events of both types, effect windows and rendering subscriptions left, handle, GDI, and USER counts against the warm-up counts, foreground changes, and window placement. Raw samples are in the `.csv` next to it. Single-invocation failures go to `effect-probe-errors.log` in the same directory.
+5. Record the manual checks separately: visible order above strokes, click-through, typing and scrolling into another application, Alt+Tab and Win+Tab, monitor clipping and mixed DPI on two monitors, disconnect/reconnect during an effect, and a screen recording for stutter and missed strokes. Run the benchmark once per monitor configuration, starting with the cursor on the monitor to measure.
 
 ## Renderer decision
 
