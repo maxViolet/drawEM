@@ -25,6 +25,7 @@ namespace DrawEM.App.Presentation.Effects;
 /// <param name="StartInputLoad">Starts injecting measured keyboard and mouse events around the point.</param>
 /// <param name="StopInputLoad">Stops the injection; returns the number of events no hook received in time.</param>
 /// <param name="ReportDirectory">Where benchmark reports are written.</param>
+/// <param name="ProductionHookEvents">Running counts of events the production keyboard and mouse hooks received.</param>
 public sealed record EffectProbePorts(
     Func<ScreenPoint?> CursorPosition,
     Func<ScreenPoint, MonitorBounds?> MonitorAt,
@@ -33,7 +34,8 @@ public sealed record EffectProbePorts(
     Func<bool> IsDrawing,
     Action<ScreenPoint, MonitorBounds> StartInputLoad,
     Func<int> StopInputLoad,
-    string ReportDirectory);
+    string ReportDirectory,
+    Func<(int Keyboard, int Mouse)> ProductionHookEvents);
 
 /// <summary>
 /// Temporary S4-01 experiment (docs/v4/step-01-effect-surface): shows an animated shape in an
@@ -215,7 +217,7 @@ public sealed class EffectSurfaceProbe : IDisposable
 
     /// <summary>
     /// Injects input for <see cref="PostCycleCheckDuration"/> with no effect and no draw mode, and counts the
-    /// events of each type the probe hooks receive. The production hooks follow them on the same thread.
+    /// events of each type that the probe hooks and the production hooks receive.
     /// </summary>
     private async Task CheckHooksAfterCycles(BenchmarkRecord record)
     {
@@ -226,6 +228,7 @@ public sealed class EffectSurfaceProbe : IDisposable
 
         record.PostCycleCheck = true;
         benchmark = record;
+        var before = ports.ProductionHookEvents();
         try
         {
             ports.StartInputLoad(target.Cursor, target.Monitor);
@@ -236,6 +239,9 @@ public sealed class EffectSurfaceProbe : IDisposable
             benchmark = null;
             record.PostCycleTimeouts = ports.StopInputLoad();
             record.PostCycleCheck = false;
+            var after = ports.ProductionHookEvents();
+            record.PostCycleProductionKeyboard = after.Keyboard - before.Keyboard;
+            record.PostCycleProductionMouse = after.Mouse - before.Mouse;
         }
     }
 
@@ -503,6 +509,10 @@ public sealed class EffectSurfaceProbe : IDisposable
 
         public int PostCycleTimeouts { get; set; } = -1;
 
+        public int PostCycleProductionKeyboard { get; set; }
+
+        public int PostCycleProductionMouse { get; set; }
+
         public ResourceCounts? WarmUpResources { get; set; }
 
         public ResourceCounts? FinalResources { get; set; }
@@ -632,10 +642,14 @@ public sealed class EffectSurfaceProbe : IDisposable
             Gate(report, "Hook events after draw mode closed early", Invariant($"{notDrawingCount}"), "0",
                 notDrawingCount == 0);
             Gate(report, "Injected events never received", Invariant($"{InputTimeouts}"), "0", InputTimeouts == 0);
-            Gate(report, "Hooks after the cycles (keyboard / mouse / not received)",
+            Gate(report, "Probe hooks after the cycles (keyboard / mouse / not received)",
                 PostCycleTimeouts < 0 ? "not run" : Invariant($"{PostCycleKeyboard} / {PostCycleMouse} / {PostCycleTimeouts}"),
                 "both types received, 0 missed",
                 PostCycleKeyboard > 0 && PostCycleMouse > 0 && PostCycleTimeouts == 0);
+            Gate(report, "Production hooks after the cycles (keyboard / mouse)",
+                PostCycleTimeouts < 0 ? "not run" : Invariant($"{PostCycleProductionKeyboard} / {PostCycleProductionMouse}"),
+                "both received events",
+                PostCycleTimeouts >= 0 && PostCycleProductionKeyboard > 0 && PostCycleProductionMouse > 0);
             Gate(report, "Effect windows left", Invariant($"{FinalOpenWindows}"), "0", FinalOpenWindows == 0);
             Gate(report, "Rendering subscriptions left", Invariant($"{FinalRenderingSubscriptions}"), "0",
                 FinalRenderingSubscriptions == 0);

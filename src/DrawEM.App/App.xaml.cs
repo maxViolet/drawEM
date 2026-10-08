@@ -103,7 +103,7 @@ public partial class App : System.Windows.Application
 
             // Temporary S4-01 renderer experiment; S4-06 removes it with its trigger.
             effectProbe = EffectSurfaceProbe.IsEnabled(Environment.GetEnvironmentVariable(EffectSurfaceProbe.EnableVariable))
-                ? StartEffectProbe(controller, inputGate, monitorBoundsSource)
+                ? StartEffectProbe(controller, inputGate, monitorBoundsSource, keyboardHookSource, mouseHookSource)
                 : new CompositeDisposable();
 
             trayApplication = new TrayApplication(
@@ -186,9 +186,15 @@ public partial class App : System.Windows.Application
     /// with drawing active. Its hooks are installed after the production hooks they measure against.
     /// </summary>
     private static IDisposable StartEffectProbe(
-        DrawingSessionController drawing, DrawingModeInputGate inputGate, IMonitorBoundsSource monitors)
+        DrawingSessionController drawing, DrawingModeInputGate inputGate, IMonitorBoundsSource monitors,
+        Win32KeyboardHookSource keyboardHook, Win32MouseHookSource mouseHook)
     {
         var cursor = new Win32CursorPositionSource();
+
+        // Keyboard and mouse events the production hooks received, for the check after the benchmark cycles.
+        var productionEvents = new int[2];
+        keyboardHook.EventObserved += () => Interlocked.Increment(ref productionEvents[0]);
+        mouseHook.PointerMoved += _ => Interlocked.Increment(ref productionEvents[1]);
         var load = new EffectProbeInputLoad();
         try
         {
@@ -208,7 +214,8 @@ public partial class App : System.Windows.Application
                 () => inputGate.IsActive,
                 load.Start,
                 load.Stop,
-                EffectSurfaceProbe.DefaultReportDirectory));
+                EffectSurfaceProbe.DefaultReportDirectory,
+                () => (Volatile.Read(ref productionEvents[0]), Volatile.Read(ref productionEvents[1]))));
             load.DelayMeasured += probe.RecordHookDelay;
             var hotkeys = new EffectProbeHotkeys(probe.Invoke, probe.RunBenchmark);
             return new CompositeDisposable(hotkeys, probe, load);
