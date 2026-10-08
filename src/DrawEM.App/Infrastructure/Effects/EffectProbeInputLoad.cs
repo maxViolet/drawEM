@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using DrawEM.App.Domain.Drawing;
+using SharedNative = DrawEM.App.Infrastructure.NativeMethods;
 
 namespace DrawEM.App.Infrastructure.Effects;
 
@@ -42,15 +43,22 @@ public sealed class EffectProbeInputLoad : IDisposable
     /// <summary>Pause after each received event. About 100 events per second with the sleep granularity.</summary>
     private static readonly TimeSpan PauseBetweenEvents = TimeSpan.FromMilliseconds(5);
 
+    private static readonly int InputSize = Marshal.SizeOf<SharedNative.INPUT>();
+
     private readonly NativeMethods.LowLevelHookProc keyboardProc;
     private readonly NativeMethods.LowLevelHookProc mouseProc;
     private readonly AutoResetEvent received = new(false);
+
+    /// <summary>Set by <see cref="Stop"/>, so the injector's pause ends at once instead of after a timer tick.</summary>
+    private readonly ManualResetEvent stopping = new(false);
+
     private IntPtr keyboardHook;
     private IntPtr mouseHook;
     private Thread? injector;
-    private volatile bool running;
     private long pendingTimestamp;
     private int pendingKind;
+    private int keyboardReceived;
+    private int mouseReceived;
     private int timeouts;
 
     /// <summary>Installs the measuring hooks on the calling thread, which must run a message loop.</summary>
@@ -81,70 +89,80 @@ public sealed class EffectProbeInputLoad : IDisposable
         var circleCenter = new ScreenPoint(
             Math.Clamp(center.X, monitor.Left + CircleRadius, monitor.Right - 1 - CircleRadius),
             Math.Clamp(center.Y, monitor.Top + CircleRadius, monitor.Bottom - 1 - CircleRadius));
-        running = true;
-        injector = new Thread(() => Inject(circleCenter)) { IsBackground = true, Name = "drawEM effect probe input" };
+        var desktop = VirtualDesktop.Read();
+        stopping.Reset();
+        injector = new Thread(() => Inject(circleCenter, desktop)) { IsBackground = true, Name = "drawEM effect probe input" };
         injector.Start();
     }
 
-    /// <summary>Stops injecting and returns how many events no hook received within the timeout.</summary>
-    public int Stop()
+    /// <summary>
+    /// Stops injecting. Returns the keyboard and mouse events the hooks received since <see cref="Start"/>,
+    /// and the events no hook received within the timeout.
+    /// </summary>
+    public (int Keyboard, int Mouse, int Timeouts) Stop()
     {
-        running = false;
+        stopping.Set();
         received.Set();
         injector?.Join(ReceiptTimeout * 2);
         injector = null;
         Volatile.Write(ref pendingKind, NonePending);
-        return Interlocked.Exchange(ref timeouts, 0);
+        return (Interlocked.Exchange(ref keyboardReceived, 0),
+            Interlocked.Exchange(ref mouseReceived, 0),
+            Interlocked.Exchange(ref timeouts, 0));
     }
 
     public void Dispose()
     {
         Stop();
-        if (keyboardHook != IntPtr.Zero)
-        {
-            NativeMethods.UnhookWindowsHookEx(keyboardHook);
-            keyboardHook = IntPtr.Zero;
-        }
+        Unhook(ref keyboardHook);
+        Unhook(ref mouseHook);
+    }
 
-        if (mouseHook != IntPtr.Zero)
+    private static void Unhook(ref IntPtr hook)
+    {
+        if (hook != IntPtr.Zero)
         {
-            NativeMethods.UnhookWindowsHookEx(mouseHook);
-            mouseHook = IntPtr.Zero;
+            NativeMethods.UnhookWindowsHookEx(hook);
+            hook = IntPtr.Zero;
         }
     }
 
-    private void Inject(ScreenPoint center)
+    private void Inject(ScreenPoint center, VirtualDesktop desktop)
     {
         var angle = 0d;
         var keyboard = false;
-        while (running)
+        while (!stopping.WaitOne(0))
         {
             keyboard = !keyboard;
-            NativeMethods.INPUT[] inputs;
+            SharedNative.INPUT[] inputs;
             if (keyboard)
             {
-                inputs = [Key(keyUp: false), Key(keyUp: true)];
+                inputs =
+                [
+                    SharedNative.INPUT.Key(ProbeKey, keyUp: false, KeyboardHookEvents.NeutralKeyTag),
+                    SharedNative.INPUT.Key(ProbeKey, keyUp: true, KeyboardHookEvents.NeutralKeyTag),
+                ];
             }
             else
             {
                 angle += CircleStep;
-                inputs = [MoveTo(center.X + (int)Math.Round(CircleRadius * Math.Cos(angle)),
+                inputs = [desktop.MoveTo(center.X + (int)Math.Round(CircleRadius * Math.Cos(angle)),
                     center.Y + (int)Math.Round(CircleRadius * Math.Sin(angle)))];
             }
 
             received.Reset();
             Volatile.Write(ref pendingTimestamp, Stopwatch.GetTimestamp());
             Volatile.Write(ref pendingKind, keyboard ? KeyboardPending : MousePending);
-            var sent = NativeMethods.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<NativeMethods.INPUT>());
+            var sent = SharedNative.SendInput((uint)inputs.Length, inputs, InputSize);
             if (sent == 0 || !received.WaitOne(ReceiptTimeout))
             {
-                if (running && Interlocked.Exchange(ref pendingKind, NonePending) != NonePending)
+                if (!stopping.WaitOne(0) && Interlocked.Exchange(ref pendingKind, NonePending) != NonePending)
                 {
                     Interlocked.Increment(ref timeouts);
                 }
             }
 
-            Thread.Sleep(PauseBetweenEvents);
+            stopping.WaitOne(PauseBetweenEvents);
         }
     }
 
@@ -189,39 +207,30 @@ public sealed class EffectProbeInputLoad : IDisposable
         }
 
         var delayMs = (now - Volatile.Read(ref pendingTimestamp)) * 1000d / Stopwatch.Frequency;
+        Interlocked.Increment(ref kind == KeyboardPending ? ref keyboardReceived : ref mouseReceived);
         DelayMeasured?.Invoke(kind == KeyboardPending, delayMs);
         received.Set();
     }
 
-    private static NativeMethods.INPUT Key(bool keyUp) => new()
+    /// <summary>The virtual desktop in physical pixels, read once per <see cref="Start"/>.</summary>
+    private readonly record struct VirtualDesktop(int Left, int Top, int Width, int Height)
     {
-        type = NativeMethods.INPUT_KEYBOARD,
-        u = new NativeMethods.InputUnion
-        {
-            ki = new NativeMethods.KEYBDINPUT
-            {
-                wVk = ProbeKey,
-                dwFlags = keyUp ? NativeMethods.KEYEVENTF_KEYUP : 0,
-                dwExtraInfo = (IntPtr)KeyboardHookEvents.NeutralKeyTag,
-            },
-        },
-    };
+        public static VirtualDesktop Read() => new(
+            NativeMethods.GetSystemMetrics(NativeMethods.SM_XVIRTUALSCREEN),
+            NativeMethods.GetSystemMetrics(NativeMethods.SM_YVIRTUALSCREEN),
+            Math.Max(2, NativeMethods.GetSystemMetrics(NativeMethods.SM_CXVIRTUALSCREEN)),
+            Math.Max(2, NativeMethods.GetSystemMetrics(NativeMethods.SM_CYVIRTUALSCREEN)));
 
-    private static NativeMethods.INPUT MoveTo(int x, int y)
-    {
-        var left = NativeMethods.GetSystemMetrics(NativeMethods.SM_XVIRTUALSCREEN);
-        var top = NativeMethods.GetSystemMetrics(NativeMethods.SM_YVIRTUALSCREEN);
-        var width = Math.Max(2, NativeMethods.GetSystemMetrics(NativeMethods.SM_CXVIRTUALSCREEN));
-        var height = Math.Max(2, NativeMethods.GetSystemMetrics(NativeMethods.SM_CYVIRTUALSCREEN));
-        return new NativeMethods.INPUT
+        /// <summary>An absolute probe mouse move to a physical desktop point.</summary>
+        public SharedNative.INPUT MoveTo(int x, int y) => new()
         {
             type = NativeMethods.INPUT_MOUSE,
-            u = new NativeMethods.InputUnion
+            u = new SharedNative.InputUnion
             {
-                mi = new NativeMethods.MOUSEINPUT
+                mi = new SharedNative.MOUSEINPUT
                 {
-                    dx = (int)Math.Round((x - left) * (double)NormalizedMaximum / (width - 1)),
-                    dy = (int)Math.Round((y - top) * (double)NormalizedMaximum / (height - 1)),
+                    dx = (int)Math.Round((x - Left) * (double)NormalizedMaximum / (Width - 1)),
+                    dy = (int)Math.Round((y - Top) * (double)NormalizedMaximum / (Height - 1)),
                     dwFlags = NativeMethods.MOUSEEVENTF_MOVE | NativeMethods.MOUSEEVENTF_ABSOLUTE
                         | NativeMethods.MOUSEEVENTF_VIRTUALDESK,
                     dwExtraInfo = (IntPtr)MouseTag,

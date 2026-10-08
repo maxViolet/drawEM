@@ -37,14 +37,8 @@ internal static class NativeMethods
     /// <summary>RegisterHotKey modifier: auto-repeat does not post another WM_HOTKEY.</summary>
     internal const uint MOD_NOREPEAT = 0x4000;
 
-    /// <summary>INPUT.type value for mouse input.</summary>
+    /// <summary>INPUT.type value for mouse input; the INPUT structure itself is shared from Infrastructure.NativeMethods.</summary>
     internal const uint INPUT_MOUSE = 0;
-
-    /// <summary>INPUT.type value for keyboard input.</summary>
-    internal const uint INPUT_KEYBOARD = 1;
-
-    /// <summary>KEYBDINPUT.dwFlags value for a key release.</summary>
-    internal const uint KEYEVENTF_KEYUP = 0x0002;
 
     /// <summary>MOUSEINPUT.dwFlags: movement occurred.</summary>
     internal const uint MOUSEEVENTF_MOVE = 0x0001;
@@ -89,48 +83,6 @@ internal static class NativeMethods
         public uint time;
         public IntPtr dwExtraInfo;
     }
-
-    /// <summary>One event for SendInput; the union is sized by MOUSEINPUT, its largest member.</summary>
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct INPUT
-    {
-        public uint type;
-        public InputUnion u;
-    }
-
-    [StructLayout(LayoutKind.Explicit)]
-    internal struct InputUnion
-    {
-        [FieldOffset(0)]
-        public MOUSEINPUT mi;
-
-        [FieldOffset(0)]
-        public KEYBDINPUT ki;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MOUSEINPUT
-    {
-        public int dx;
-        public int dy;
-        public uint mouseData;
-        public uint dwFlags;
-        public uint time;
-        public IntPtr dwExtraInfo;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct KEYBDINPUT
-    {
-        public ushort wVk;
-        public ushort wScan;
-        public uint dwFlags;
-        public uint time;
-        public IntPtr dwExtraInfo;
-    }
-
-    [DllImport("user32.dll", SetLastError = true)]
-    internal static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern IntPtr SetWindowsHookEx(int idHook, LowLevelHookProc lpfn, IntPtr hMod, uint dwThreadId);

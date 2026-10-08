@@ -10,9 +10,9 @@ namespace DrawEM.App.Infrastructure.Effects;
 /// </summary>
 public sealed class EffectProbeHotkeys : IDisposable
 {
-    public const int InvokeKey = 0x78; // F9
+    private const int InvokeKey = 0x78; // F9
 
-    public const int BenchmarkKey = 0x79; // F10
+    private const int BenchmarkKey = 0x79; // F10
 
     private const int InvokeId = 1;
     private const int BenchmarkId = 2;

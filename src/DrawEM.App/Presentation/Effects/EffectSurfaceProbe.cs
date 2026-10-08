@@ -23,7 +23,10 @@ namespace DrawEM.App.Presentation.Effects;
 /// <param name="EndDrawing">Closes draw mode and completes the stroke.</param>
 /// <param name="IsDrawing">Whether the drawing input gate is open.</param>
 /// <param name="StartInputLoad">Starts injecting measured keyboard and mouse events around the point.</param>
-/// <param name="StopInputLoad">Stops the injection; returns the number of events no hook received in time.</param>
+/// <param name="StopInputLoad">
+/// Stops the injection; returns the keyboard and mouse events the probe hooks received and the events
+/// no hook received in time.
+/// </param>
 /// <param name="ReportDirectory">Where benchmark reports are written.</param>
 /// <param name="ProductionHookEvents">Running counts of events the production keyboard and mouse hooks received.</param>
 public sealed record EffectProbePorts(
@@ -33,7 +36,7 @@ public sealed record EffectProbePorts(
     Action EndDrawing,
     Func<bool> IsDrawing,
     Action<ScreenPoint, MonitorBounds> StartInputLoad,
-    Func<int> StopInputLoad,
+    Func<(int Keyboard, int Mouse, int Timeouts)> StopInputLoad,
     string ReportDirectory,
     Func<(int Keyboard, int Mouse)> ProductionHookEvents);
 
@@ -82,8 +85,8 @@ public sealed class EffectSurfaceProbe : IDisposable
     /// <summary>How long the hooks are exercised after the last cycle.</summary>
     private static readonly TimeSpan PostCycleCheckDuration = TimeSpan.FromSeconds(1);
 
-    /// <summary>Time past the effect duration after which an invocation without frames fails.</summary>
-    private static readonly TimeSpan DeadlineMargin = TimeSpan.FromSeconds(3);
+    /// <summary>An invocation still running this long after its trigger fails: its rendering callbacks stopped.</summary>
+    private static readonly TimeSpan InvocationDeadline = EffectDuration + TimeSpan.FromSeconds(3);
 
     private static readonly Brush ShapeFill = Freeze(new SolidColorBrush(Color.FromArgb(0xC0, 0x1E, 0x90, 0xFF)));
     private static readonly Pen ShapeOutline = Freeze(new Pen(Brushes.White, OutlineThickness));
@@ -149,15 +152,13 @@ public sealed class EffectSurfaceProbe : IDisposable
             await Task.Delay(KeyReleaseDelay);
             for (var i = 1; i <= WarmUpInvocations && !disposed; i++)
             {
-                if (TargetAtCursor() is { } target)
+                // Without every warm-up, the cold start or the resource baseline would fall into the measured part.
+                if (TargetAtCursor() is not { } target)
                 {
-                    record.Add(await Start(target.Monitor, Stopwatch.GetTimestamp(), -i));
-                }
-                else
-                {
-                    record.SkippedWarmUp++;
+                    throw new InvalidOperationException($"Warm-up invocation {i}: no monitor contains the cursor.");
                 }
 
+                record.Add(await Start(target.Monitor, Stopwatch.GetTimestamp(), -i));
                 await Task.Delay(PauseBetweenInvocations);
             }
 
@@ -179,12 +180,16 @@ public sealed class EffectSurfaceProbe : IDisposable
                 {
                     ports.BeginDrawing(target.Cursor, target.Monitor);
                     ports.StartInputLoad(target.Cursor, target.Monitor);
-                    record.Add(await Start(target.Monitor, trigger, i));
+                    var result = await Start(target.Monitor, trigger, i);
+
+                    // A physical key event closes the probe's draw mode; its hook delays then were not measured while drawing.
+                    result.DrawModeClosedEarly = !ports.IsDrawing();
+                    record.Add(result);
                 }
                 finally
                 {
                     benchmark = null;
-                    record.InputTimeouts += ports.StopInputLoad();
+                    record.InputTimeouts += ports.StopInputLoad().Timeouts;
                     ports.EndDrawing();
                 }
 
@@ -211,8 +216,7 @@ public sealed class EffectSurfaceProbe : IDisposable
     }
 
     /// <summary>Records one hook event-to-callback delay while a measured invocation runs.</summary>
-    public void RecordHookDelay(bool keyboard, double delayMs) =>
-        benchmark?.AddHookDelay(keyboard, delayMs, ports.IsDrawing());
+    public void RecordHookDelay(bool keyboard, double delayMs) => benchmark?.AddHookDelay(keyboard, delayMs);
 
     public void Dispose()
     {
@@ -231,8 +235,6 @@ public sealed class EffectSurfaceProbe : IDisposable
             return;
         }
 
-        record.PostCycleCheck = true;
-        benchmark = record;
         var before = ports.ProductionHookEvents();
         try
         {
@@ -241,12 +243,9 @@ public sealed class EffectSurfaceProbe : IDisposable
         }
         finally
         {
-            benchmark = null;
-            record.PostCycleTimeouts = ports.StopInputLoad();
-            record.PostCycleCheck = false;
+            record.PostCycleProbe = ports.StopInputLoad();
             var after = ports.ProductionHookEvents();
-            record.PostCycleProductionKeyboard = after.Keyboard - before.Keyboard;
-            record.PostCycleProductionMouse = after.Mouse - before.Mouse;
+            record.PostCycleProduction = (after.Keyboard - before.Keyboard, after.Mouse - before.Mouse);
         }
     }
 
@@ -328,7 +327,6 @@ public sealed class EffectSurfaceProbe : IDisposable
         private readonly MonitorBounds monitor;
         private readonly long trigger;
         private readonly TaskCompletionSource<InvocationResult> completion = new();
-        private readonly InvocationResult result;
         private EffectSurfaceWindow? window;
         private IntPtr foregroundBefore;
         private TimeSpan lastRenderingTime = TimeSpan.MinValue;
@@ -342,12 +340,12 @@ public sealed class EffectSurfaceProbe : IDisposable
             this.owner = owner;
             this.monitor = monitor;
             this.trigger = trigger;
-            result = new InvocationResult(index, cold, monitor);
+            Result = new InvocationResult(index, cold, monitor);
         }
 
         public Task<InvocationResult> Completion => completion.Task;
 
-        public InvocationResult Result => result;
+        public InvocationResult Result { get; }
 
         public void Start()
         {
@@ -358,26 +356,26 @@ public sealed class EffectSurfaceProbe : IDisposable
                 owner.OpenWindows++;
                 window.Closed += (_, _) => owner.OpenWindows--;
                 window.ShowOnMonitor();
-                result.DpiScale = window.Layout.DpiScale;
-                result.PlacementMatches = window.PlacementMatchesMonitor;
-                result.ForegroundUnchanged = NativeMethods.GetForegroundWindow() == foregroundBefore;
+                Result.DpiScale = window.Layout.DpiScale;
+                Result.PlacementMatches = window.PlacementMatchesMonitor;
+                Result.ForegroundUnchanged = NativeMethods.GetForegroundWindow() == foregroundBefore;
                 CompositionTarget.Rendering += OnRendering;
                 subscribed = true;
                 owner.RenderingSubscriptions++;
 
                 // Rendering stops, for example, while the session is locked; the invocation must still end.
-                deadline = new DispatcherTimer { Interval = EffectDuration + DeadlineMargin };
+                deadline = new DispatcherTimer { Interval = InvocationDeadline };
                 deadline.Tick += (_, _) =>
                 {
-                    result.Failure = new TimeoutException(
-                        $"The effect did not finish within {(EffectDuration + DeadlineMargin).TotalSeconds} s; rendering callbacks stopped.");
+                    Result.Failure = new TimeoutException(
+                        $"The effect did not finish within {InvocationDeadline.TotalSeconds} s; rendering callbacks stopped.");
                     Finish();
                 };
                 deadline.Start();
             }
             catch (Exception exception)
             {
-                result.Failure = exception;
+                Result.Failure = exception;
                 Finish();
             }
         }
@@ -398,7 +396,7 @@ public sealed class EffectSurfaceProbe : IDisposable
 
             if (window is not null)
             {
-                result.ForegroundUnchanged &= NativeMethods.GetForegroundWindow() == foregroundBefore;
+                Result.ForegroundUnchanged &= NativeMethods.GetForegroundWindow() == foregroundBefore;
                 window.Close();
                 window = null;
             }
@@ -410,7 +408,7 @@ public sealed class EffectSurfaceProbe : IDisposable
                 owner.RenderingSubscriptions--;
             }
 
-            completion.TrySetResult(result);
+            completion.TrySetResult(Result);
         }
 
         private void OnRendering(object? sender, EventArgs e)
@@ -433,28 +431,30 @@ public sealed class EffectSurfaceProbe : IDisposable
 
             try
             {
-                window!.Draw((context, layout) => DrawShape(context, layout, progress));
+                // No closure: an allocation per frame would add GC pauses to the measured callback time.
+                using var context = window!.RenderOpen();
+                DrawShape(context, window.Layout, progress);
             }
             catch (Exception exception)
             {
-                result.Failure = exception;
+                Result.Failure = exception;
                 Finish();
                 return;
             }
 
             var callbackEnd = Stopwatch.GetTimestamp();
-            result.CallbackMs.Add(ToMilliseconds(callbackEnd - callbackStart));
+            Result.CallbackMs.Add(ToMilliseconds(callbackEnd - callbackStart));
             if (lastFrame != 0)
             {
-                result.FrameIntervalMs.Add(ToMilliseconds(callbackStart - lastFrame));
+                Result.FrameIntervalMs.Add(ToMilliseconds(callbackStart - lastFrame));
             }
             else
             {
-                result.FirstAppearanceMs = ToMilliseconds(callbackEnd - trigger);
+                Result.FirstAppearanceMs = ToMilliseconds(callbackEnd - trigger);
             }
 
             lastFrame = callbackStart;
-            result.FrameCount++;
+            Result.FrameCount++;
         }
     }
 
@@ -483,6 +483,9 @@ public sealed class EffectSurfaceProbe : IDisposable
         public List<double> FrameIntervalMs { get; } = [];
 
         public Exception? Failure { get; set; }
+
+        /// <summary>Whether draw mode was already closed when a measured invocation ended.</summary>
+        public bool DrawModeClosedEarly { get; set; }
     }
 
     private readonly record struct ResourceCounts(int Handles, uint GdiObjects, uint UserObjects)
@@ -498,12 +501,15 @@ public sealed class EffectSurfaceProbe : IDisposable
         }
     }
 
-    private readonly record struct HookDelay(int Invocation, bool Keyboard, double DelayMs, bool Drawing);
+    private readonly record struct HookDelay(int Invocation, bool Keyboard, double DelayMs);
 
     private sealed class BenchmarkRecord(DateTimeOffset started)
     {
+        /// <summary>Room for every hook sample, so the list never grows inside a hook callback.</summary>
+        private const int ExpectedHookDelays = MeasuredInvocations * 256;
+
         private readonly List<InvocationResult> invocations = [];
-        private readonly List<HookDelay> hookDelays = [];
+        private readonly List<HookDelay> hookDelays = new(ExpectedHookDelays);
 
         public DateTimeOffset Started { get; } = started;
 
@@ -511,23 +517,13 @@ public sealed class EffectSurfaceProbe : IDisposable
 
         public int SkippedNoMonitor { get; set; }
 
-        /// <summary>Warm-up invocations skipped because no monitor contained the cursor.</summary>
-        public int SkippedWarmUp { get; set; }
-
         public int InputTimeouts { get; set; }
 
-        /// <summary>Whether hook events count toward the check after the last cycle.</summary>
-        public bool PostCycleCheck { get; set; }
+        /// <summary>Events the probe hooks received, and missed, in the check after the last cycle.</summary>
+        public (int Keyboard, int Mouse, int Timeouts)? PostCycleProbe { get; set; }
 
-        public int PostCycleKeyboard { get; private set; }
-
-        public int PostCycleMouse { get; private set; }
-
-        public int PostCycleTimeouts { get; set; } = -1;
-
-        public int PostCycleProductionKeyboard { get; set; }
-
-        public int PostCycleProductionMouse { get; set; }
+        /// <summary>Events the production hooks received in the check after the last cycle.</summary>
+        public (int Keyboard, int Mouse)? PostCycleProduction { get; set; }
 
         public ResourceCounts? WarmUpResources { get; set; }
 
@@ -542,8 +538,7 @@ public sealed class EffectSurfaceProbe : IDisposable
         /// <summary>The process's first invocation, from Ctrl+Alt+F9 or the benchmark's warm-up.</summary>
         public InvocationResult? ColdStart { get; set; }
 
-        private IEnumerable<InvocationResult> Measured =>
-            invocations.Where(invocation => invocation.Index > 0 && !invocation.Cold);
+        private IEnumerable<InvocationResult> Measured => invocations.Where(invocation => invocation.Index > 0);
 
         /// <summary>Benchmark invocations, preceded by the cold start when it happened before the benchmark.</summary>
         private IEnumerable<InvocationResult> AllInvocations =>
@@ -551,48 +546,29 @@ public sealed class EffectSurfaceProbe : IDisposable
 
         public void Add(InvocationResult invocation) => invocations.Add(invocation);
 
-        public void AddHookDelay(bool keyboard, double delayMs, bool drawing)
-        {
-            if (!PostCycleCheck)
-            {
-                hookDelays.Add(new HookDelay(CurrentInvocation, keyboard, delayMs, drawing));
-            }
-            else if (keyboard)
-            {
-                PostCycleKeyboard++;
-            }
-            else
-            {
-                PostCycleMouse++;
-            }
-        }
+        public void AddHookDelay(bool keyboard, double delayMs) =>
+            hookDelays.Add(new HookDelay(CurrentInvocation, keyboard, delayMs));
 
         public string SamplesCsv()
         {
-            var csv = new StringBuilder("kind,invocation,cold,value_ms,drawing\n");
+            var csv = new StringBuilder("kind,invocation,cold,value_ms\n");
+            void Row(string kind, int invocation, bool cold, double value) =>
+                csv.Append(Invariant($"{kind},{invocation},{(cold ? 1 : 0)},{value:F3}\n"));
+
             foreach (var invocation in AllInvocations)
             {
-                var cold = invocation.Cold ? 1 : 0;
                 if (invocation.FirstAppearanceMs is { } appearance)
                 {
-                    csv.Append(Invariant($"first-appearance,{invocation.Index},{cold},{appearance:F3},\n"));
+                    Row("first-appearance", invocation.Index, invocation.Cold, appearance);
                 }
 
-                foreach (var value in invocation.CallbackMs)
-                {
-                    csv.Append(Invariant($"render-callback,{invocation.Index},{cold},{value:F3},\n"));
-                }
-
-                foreach (var value in invocation.FrameIntervalMs)
-                {
-                    csv.Append(Invariant($"frame-interval,{invocation.Index},{cold},{value:F3},\n"));
-                }
+                invocation.CallbackMs.ForEach(value => Row("render-callback", invocation.Index, invocation.Cold, value));
+                invocation.FrameIntervalMs.ForEach(value => Row("frame-interval", invocation.Index, invocation.Cold, value));
             }
 
             foreach (var delay in hookDelays)
             {
-                var kind = delay.Keyboard ? "hook-keyboard" : "hook-mouse";
-                csv.Append(Invariant($"{kind},{delay.Invocation},0,{delay.DelayMs:F3},{(delay.Drawing ? 1 : 0)}\n"));
+                Row(delay.Keyboard ? "hook-keyboard" : "hook-mouse", delay.Invocation, false, delay.DelayMs);
             }
 
             return csv.ToString();
@@ -605,15 +581,12 @@ public sealed class EffectSurfaceProbe : IDisposable
             var intervals = measured.SelectMany(invocation => invocation.FrameIntervalMs).ToList();
             var appearances = measured.Where(invocation => invocation.FirstAppearanceMs is not null)
                 .Select(invocation => invocation.FirstAppearanceMs!.Value).ToList();
-            // The gates require delays measured while drawing; a key press closes the probe's draw mode early.
-            var drawingDelays = hookDelays.Where(delay => delay.Drawing).ToList();
-            var delays = drawingDelays.Select(delay => delay.DelayMs).ToList();
-            var keyboardCount = drawingDelays.Count(delay => delay.Keyboard);
-            var mouseCount = drawingDelays.Count - keyboardCount;
-            var notDrawingCount = hookDelays.Count - drawingDelays.Count;
+            var delays = hookDelays.Select(delay => delay.DelayMs).ToList();
+            var keyboardCount = hookDelays.Count(delay => delay.Keyboard);
+            var mouseCount = hookDelays.Count - keyboardCount;
+            var closedEarly = measured.Count(invocation => invocation.DrawModeClosedEarly);
             var medianInterval = Percentile(intervals, 0.5);
             var longFrames = medianInterval is { } median ? intervals.Count(value => value > median * LongFrameFactor) : 0;
-            var cold = ColdStart;
             var failures = AllInvocations.Where(invocation => invocation.Failure is not null).ToList();
 
             var report = new StringBuilder();
@@ -650,34 +623,32 @@ public sealed class EffectSurfaceProbe : IDisposable
             report.AppendLine("| Check | Measured | Limit | Result |");
             report.AppendLine("|---|---|---|---|");
             var callbackP95 = Percentile(callbacks, 0.95);
-            // Without every warm-up, the resource baseline and the warm results start from a colder state.
             var warmUpCount = invocations.Count(invocation => invocation.Index < 0);
             Gate(report, "Warm-up invocations completed", Invariant($"{warmUpCount}"), Invariant($"{WarmUpInvocations}"),
-                warmUpCount == WarmUpInvocations && SkippedWarmUp == 0);
+                warmUpCount == WarmUpInvocations);
             Gate(report, "Measured invocations completed", Invariant($"{measured.Count}"), Invariant($"{MeasuredInvocations}"),
                 measured.Count == MeasuredInvocations && SkippedNoMonitor == 0);
             Gate(report, "Render callback p95", Ms(callbackP95), Invariant($"<= {RenderCallbackP95LimitMs} ms"),
                 callbackP95 <= RenderCallbackP95LimitMs);
             var delayP95 = Percentile(delays, 0.95);
-            var delayMax = delays.Count > 0 ? delays.Max() : (double?)null;
+            var delayMax = Percentile(delays, 1);
             Gate(report, "Hook delay p95", Ms(delayP95), Invariant($"<= {HookDelayP95LimitMs} ms"), delayP95 <= HookDelayP95LimitMs);
             Gate(report, "Hook delay max", Ms(delayMax), Invariant($"<= {HookDelayMaxLimitMs} ms"),
                 delayMax <= HookDelayMaxLimitMs && InputTimeouts == 0);
-            Gate(report, "Hook events while drawing (keyboard / mouse)",
-                Invariant($"{drawingDelays.Count} ({keyboardCount} / {mouseCount})"),
+            Gate(report, "Hook events (keyboard / mouse)",
+                Invariant($"{hookDelays.Count} ({keyboardCount} / {mouseCount})"),
                 Invariant($">= {MinimumHookEvents}, both types"),
-                drawingDelays.Count >= MinimumHookEvents && keyboardCount > 0 && mouseCount > 0);
-            Gate(report, "Hook events after draw mode closed early", Invariant($"{notDrawingCount}"), "0",
-                notDrawingCount == 0);
+                hookDelays.Count >= MinimumHookEvents && keyboardCount > 0 && mouseCount > 0);
+            Gate(report, "Invocations whose draw mode closed early", Invariant($"{closedEarly}"), "0", closedEarly == 0);
             Gate(report, "Injected events never received", Invariant($"{InputTimeouts}"), "0", InputTimeouts == 0);
             Gate(report, "Probe hooks after the cycles (keyboard / mouse / not received)",
-                PostCycleTimeouts < 0 ? "not run" : Invariant($"{PostCycleKeyboard} / {PostCycleMouse} / {PostCycleTimeouts}"),
+                PostCycleProbe is { } probe ? Invariant($"{probe.Keyboard} / {probe.Mouse} / {probe.Timeouts}") : "not run",
                 "both types received, 0 missed",
-                PostCycleKeyboard > 0 && PostCycleMouse > 0 && PostCycleTimeouts == 0);
+                PostCycleProbe is { Keyboard: > 0, Mouse: > 0, Timeouts: 0 });
             Gate(report, "Production hooks after the cycles (keyboard / mouse)",
-                PostCycleTimeouts < 0 ? "not run" : Invariant($"{PostCycleProductionKeyboard} / {PostCycleProductionMouse}"),
+                PostCycleProduction is { } production ? Invariant($"{production.Keyboard} / {production.Mouse}") : "not run",
                 "both received events",
-                PostCycleTimeouts >= 0 && PostCycleProductionKeyboard > 0 && PostCycleProductionMouse > 0);
+                PostCycleProduction is { Keyboard: > 0, Mouse: > 0 });
             Gate(report, "Effect windows left", Invariant($"{FinalOpenWindows}"), "0", FinalOpenWindows == 0);
             Gate(report, "Rendering subscriptions left", Invariant($"{FinalRenderingSubscriptions}"), "0",
                 FinalRenderingSubscriptions == 0);
@@ -695,15 +666,15 @@ public sealed class EffectSurfaceProbe : IDisposable
             report.AppendLine("## Records");
             report.AppendLine();
             report.AppendLine(Invariant($"- First appearance, {appearances.Count} warm invocations (estimate against the {FirstAppearanceTargetMs} ms release target, not a gate): ") +
-                Invariant($"median {Ms(Percentile(appearances, 0.5))}, p95 {Ms(Percentile(appearances, 0.95))}, max {Ms(appearances.Count > 0 ? appearances.Max() : null)}."));
-            report.AppendLine(cold is null
+                Invariant($"median {Ms(Percentile(appearances, 0.5))}, p95 {Ms(Percentile(appearances, 0.95))}, max {Ms(Percentile(appearances, 1))}."));
+            report.AppendLine(ColdStart is not { } cold
                 ? "- Cold start: not recorded; the process showed no effect."
                 : Invariant($"- Cold start ({DescribeSource(cold)}): first appearance {Ms(cold.FirstAppearanceMs)}, ") +
-                  Invariant($"render callback max {Ms(cold.CallbackMs.Count > 0 ? cold.CallbackMs.Max() : null)}."));
+                  Invariant($"render callback max {Ms(Percentile(cold.CallbackMs, 1))}."));
             report.AppendLine(Invariant($"- Render callbacks: {callbacks.Count} samples; median {Ms(Percentile(callbacks, 0.5))}, ") +
-                Invariant($"p99 {Ms(Percentile(callbacks, 0.99))}, max {Ms(callbacks.Count > 0 ? callbacks.Max() : null)}."));
+                Invariant($"p99 {Ms(Percentile(callbacks, 0.99))}, max {Ms(Percentile(callbacks, 1))}."));
             report.AppendLine(Invariant($"- Frame pacing: {intervals.Count} intervals; median {Ms(medianInterval)}, p95 {Ms(Percentile(intervals, 0.95))}, ") +
-                Invariant($"max {Ms(intervals.Count > 0 ? intervals.Max() : null)}; {longFrames} intervals over {LongFrameFactor}x the median."));
+                Invariant($"max {Ms(Percentile(intervals, 1))}; {longFrames} intervals over {LongFrameFactor}x the median."));
             report.AppendLine(Invariant($"- Hook delay: median {Ms(Percentile(delays, 0.5))}, p99 {Ms(Percentile(delays, 0.99))}."));
             report.AppendLine(Invariant($"- Resources after warm-up: {Describe(WarmUpResources)}; after the cycles: {Describe(FinalResources)}."));
             if (Failure is not null)
@@ -736,12 +707,9 @@ public sealed class EffectSurfaceProbe : IDisposable
         private static void Gate(StringBuilder report, string check, string measured, string limit, bool passed) =>
             report.AppendLine($"| {check} | {measured} | {limit} | {(passed ? "pass" : "FAIL")} |");
 
-        private static string DescribeSource(InvocationResult invocation) => invocation.Index switch
-        {
-            0 => "Ctrl+Alt+F9 before the benchmark",
-            < 0 => Invariant($"warm-up invocation {-invocation.Index}"),
-            _ => Invariant($"measured invocation {invocation.Index}, excluded from the warm results"),
-        };
+        private static string DescribeSource(InvocationResult invocation) => invocation.Index == 0
+            ? "Ctrl+Alt+F9 before the benchmark"
+            : Invariant($"warm-up invocation {-invocation.Index}");
 
         private static string Describe(ResourceCounts? counts) => counts is { } value
             ? Invariant($"{value.Handles} handles, {value.GdiObjects} GDI, {value.UserObjects} USER")
@@ -749,7 +717,7 @@ public sealed class EffectSurfaceProbe : IDisposable
 
         private static string Ms(double? value) => value is { } ms ? Invariant($"{ms:0.###} ms") : "n/a";
 
-        /// <summary>Nearest-rank percentile, or <c>null</c> without samples.</summary>
+        /// <summary>Nearest-rank percentile (fraction 1 gives the maximum), or <c>null</c> without samples.</summary>
         private static double? Percentile(List<double> values, double fraction)
         {
             if (values.Count == 0)

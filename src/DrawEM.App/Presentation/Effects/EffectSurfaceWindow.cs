@@ -63,11 +63,8 @@ public sealed class EffectSurfaceWindow : Window
         RefreshLayout();
     }
 
-    public void Draw(Action<DrawingContext, EffectSurfaceLayout> draw)
-    {
-        using var context = host.Visual.RenderOpen();
-        draw(context, Layout);
-    }
+    /// <summary>Replaces the window content with what is drawn into the returned context before it is closed.</summary>
+    public DrawingContext RenderOpen() => host.Visual.RenderOpen();
 
     protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
     {

@@ -192,9 +192,9 @@ public partial class App : System.Windows.Application
         var cursor = new Win32CursorPositionSource();
 
         // Keyboard and mouse events the production hooks received, for the check after the benchmark cycles.
-        var productionEvents = new int[2];
-        keyboardHook.EventObserved += () => Interlocked.Increment(ref productionEvents[0]);
-        mouseHook.PointerMoved += _ => Interlocked.Increment(ref productionEvents[1]);
+        int keyboardEvents = 0, mouseEvents = 0;
+        keyboardHook.EventObserved += () => Interlocked.Increment(ref keyboardEvents);
+        mouseHook.PointerMoved += _ => Interlocked.Increment(ref mouseEvents);
         var load = new EffectProbeInputLoad();
         try
         {
@@ -215,7 +215,7 @@ public partial class App : System.Windows.Application
                 load.Start,
                 load.Stop,
                 EffectSurfaceProbe.DefaultReportDirectory,
-                () => (Volatile.Read(ref productionEvents[0]), Volatile.Read(ref productionEvents[1]))));
+                () => (Volatile.Read(ref keyboardEvents), Volatile.Read(ref mouseEvents))));
             load.DelayMeasured += probe.RecordHookDelay;
             var hotkeys = new EffectProbeHotkeys(probe.Invoke, probe.RunBenchmark);
             return new CompositeDisposable(hotkeys, probe, load);
