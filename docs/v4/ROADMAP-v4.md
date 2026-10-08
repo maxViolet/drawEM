@@ -172,7 +172,10 @@ Compare these options in S4-01:
 | DirectComposition/Direct2D adapter | Alternative if WPF misses measured requirements | Additional native interop and lifecycle work; investigate only if the WPF experiment fails |
 
 If WPF fails, record the measurements and a renderer decision before expanding
-implementation. Do not ship a new renderer based only on a theoretical advantage.
+implementation. Timebox each fallback proof to two working days and escalate to
+the drawEM project owner when the limit is reached. If no option meets the
+criteria, stop and revise thresholds or scope before S4-02. Do not ship a new
+renderer based only on a theoretical advantage.
 
 ### Input ordering and interruption
 
