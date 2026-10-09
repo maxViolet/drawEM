@@ -41,7 +41,7 @@ public sealed record EffectProbePorts(
     Func<(int Keyboard, int Mouse)> ProductionHookEvents);
 
 /// <summary>
-/// Temporary S4-01 experiment (docs/v4/step-01-effect-surface): shows an animated shape in an
+/// Temporary S4-01 experiment (docs/v4/visual-effects/step-01-effect-surface): shows an animated shape in an
 /// <see cref="EffectSurfaceWindow"/> on the monitor containing the cursor, above the drawing overlay, and
 /// measures the WPF renderer. Enabled only with <c>DRAWEM_EFFECT_PROBE=1</c>; S4-06 removes it with its trigger.
 /// <list type="bullet">
