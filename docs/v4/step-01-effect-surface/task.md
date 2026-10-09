@@ -1,6 +1,6 @@
 # v4 / S4-01: prove the effect window
 
-**Status:** in progress: the probe build is ready; desktop checks and the renderer decision are pending. **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
+**Status:** done on 2026-10-09 by project owner decision. Desktop checks and benchmark gates were not run; see the [renderer decision](acceptance.md#renderer-decision). **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
 
 ## Task
 
