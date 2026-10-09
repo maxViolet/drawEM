@@ -5,8 +5,10 @@
 ## S4-03.1: speed gate
 
 - [ ] The probe's measured render path plays a Lottie file through the Skottie player, not the S4-01 code-drawn shape, and its report names the placement and window bounds.
-- [ ] Render callback p95, hook delay p95 and maximum, and resource counts are recorded for a Monitor effect and a Cursor effect against the roadmap targets.
-- [ ] If the Monitor effect missed 4 ms p95, the half-resolution result is recorded; if that also missed, the roadmap is revised to Cursor effects only with the project owner's confirmation before S4-03 continues.
+- [ ] Skia draws inside the measured `CompositionTarget.Rendering` handler into the effect's own `WriteableBitmap`; `SKElement` is not used.
+- [ ] Render callback p95, frame interval p95, dropped frames, hook delay p95 and maximum, and resource counts are recorded for a Monitor effect and a Cursor effect against the roadmap targets.
+- [ ] `LayerDependencyTests` passes with `SkiaSharp` allowed in Presentation only.
+- [ ] If the Monitor effect missed a target, the half-resolution result is recorded; if that also missed, the roadmap is revised to Cursor effects only with the project owner's confirmation before S4-03 continues.
 
 ## S4-03: built-in effects
 

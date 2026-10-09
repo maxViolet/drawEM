@@ -186,21 +186,36 @@ that window type with different bounds:
   bounds. The intersection clips the effect; the window never extends onto a
   neighboring monitor. A small window renders far fewer pixels than a monitor-sized one.
 
-Play Lottie files with `SkiaSharp.Skottie`, drawn through `SkiaSharp.Views.WPF`.
+Play Lottie files with `SkiaSharp.Skottie`. Do not use `SKElement` from
+`SkiaSharp.Views.WPF`: it draws in `OnRender`, after the
+`CompositionTarget.Rendering` handler returns, so a handler that only calls
+`InvalidateVisual()` measures about 0 ms however slow Skia is. Instead, inside
+the `Rendering` handler, lock a `WriteableBitmap` owned by the effect, draw the
+Skottie frame into it with an `SKSurface` over its back buffer, mark only the
+changed area dirty, and unlock. The callback time then includes Skia's work.
 This adds the first media dependency to drawEM; [ADR 0001](../adr/0001-lottie-built-in-effects.md)
 records why. Load and parse each built-in file once, outside the hook callback,
-and reuse it. Render one frame per `CompositionTarget.Rendering` callback while
-an effect is active; unsubscribe on every stop/failure path. Compute the frame
-from monotonic elapsed time, so a slow frame does not lengthen the effect.
-Enforce the 10-second instance deadline even if the player fails to report completion.
+and reuse it. Render one frame per `Rendering` callback while an effect is
+active; unsubscribe on every stop/failure path. Compute the frame from monotonic
+elapsed time, so a slow frame does not lengthen the effect. Enforce the
+10-second instance deadline even if the player fails to report completion.
 
-Skia renders into a bitmap on the CPU, and WPF copies that bitmap each frame.
-Copy cost grows with surface size, so Monitor effects carry the highest risk
-against the 4 ms render-callback target. S4-03.1 measures both placements
-before S4-03 continues. The project owner approved this fallback order on 2026-10-09. If a Monitor
-effect misses the target:
+A frame has two costs. Skia drawing into the bitmap runs inside the callback
+and grows with bitmap size. WPF composition and presentation run after the
+callback and are not in callback time. The effect window sets
+`AllowsTransparency` and `WS_EX_LAYERED`; a layered window is likely copied
+back to the CPU at full window size on every frame (inferred, not measured).
+Both costs grow with surface size, so Monitor effects carry the highest risk.
+Callback time alone therefore cannot pass the gate: S4-03.1 also gates on frame
+interval and dropped frames, which the probe already records as
+`FrameIntervalMs`. S4-03.1 measures both placements before S4-03 continues.
+The project owner approved this fallback order on 2026-10-09. If a Monitor
+effect misses the targets:
 
 1. Render Monitor effects at half resolution and let WPF scale the bitmap up.
+   This cuts Skia drawing and the bitmap upload to about a quarter. It does not
+   shrink the window, so the layered-window cost at monitor size stays the same;
+   if frame interval was the failing measure, expect half resolution not to fix it.
    Cursor effects keep full resolution. This needs no contract change.
 2. If half resolution still misses the target, stop S4-03 and revise this
    roadmap before continuing: v4 ships Cursor effects only, confetti becomes a
@@ -351,7 +366,11 @@ Release targets, measured on a recorded reference PC for each placement:
 - First appearance within 100 ms at p95 over 100 warm shortcut invocations,
   from the hook event timestamp to the first presented frame containing effect
   pixels. Record the timing method and its error. Record cold starts separately.
-- Render callback time within 4 ms at p95.
+- Render callback time within 4 ms at p95, with Skia drawing inside the callback.
+- Frame interval within 1.5 display refresh intervals at p95 (25 ms at 60 Hz).
+  A frame is dropped when its interval exceeds 1.5 refresh intervals; at most
+  1% of frames are dropped. These two thresholds are proposed defaults; S4-03.1
+  may revise them with a recorded rationale.
 - Hook event-to-callback delay during animation and active drawing within 25 ms
   at p95 and 100 ms maximum; the hooks still work after 100 cycles.
 - No sustained stutter or drawing slowdown in a recording. Callback timing

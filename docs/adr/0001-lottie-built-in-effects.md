@@ -14,6 +14,7 @@ Built-in screen effects are authored in a visual animation editor, or selected f
 
 ## Consequences
 
-- Skia renders on the CPU and WPF copies the bitmap each frame, so a monitor-sized effect may miss the 4 ms render target. The fallback order is half resolution for Monitor effects, then a roadmap revision to Cursor effects only for v4, confirmed by the project owner. A GPU renderer is outside v4.
+- Skia renders on the CPU into a bitmap drawn inside the frame callback (not through `SKElement`, whose drawing falls outside the measured callback), and the layered effect window adds a per-frame cost that grows with window size. A monitor-sized effect may miss the render-callback or frame-interval targets. The fallback order is half resolution for Monitor effects, then a roadmap revision to Cursor effects only for v4, confirmed by the project owner. A GPU renderer is outside v4.
+- `SkiaSharp` is allowed in Presentation only by the layer dependency test.
 - Placement is not saved in settings; it comes from the built-in catalog.
 - User-imported Lottie files stay deferred: they need validation of unsupported Lottie features and a placement choice.

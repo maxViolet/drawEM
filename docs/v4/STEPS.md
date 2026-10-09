@@ -38,13 +38,15 @@ the instance and its resources.
 
 ### S4-03.1: prove Lottie speed for both placements
 
-**Do:** Add `SkiaSharp.Skottie` and change the S4-01 probe so its measured
-render path plays a Lottie file instead of the code-drawn shape. Add a
-cursor-centered, clipped window next to the monitor-sized one. Run the benchmark
-once per placement; the report names the placement.
+**Do:** Add `SkiaSharp.Skottie` and allow `SkiaSharp` in Presentation only in
+the layer dependency test. Change the S4-01 probe so its `Rendering` handler
+draws a Lottie frame with Skia into the effect's own `WriteableBitmap`, not
+through `SKElement`. Add a cursor-centered, clipped window next to the
+monitor-sized one. Run the benchmark once per placement; the report names the placement.
 
-**Done when:** Render callback p95 and hook delay are recorded for each placement
-against the roadmap targets. If Monitor misses 4 ms p95, measure half resolution.
+**Done when:** Render callback p95, frame interval p95, dropped frames, and hook
+delay are recorded for each placement against the roadmap targets. If Monitor
+misses a target, measure half resolution.
 If that also misses, stop and revise the roadmap to Cursor effects only, with
 owner confirmation, before S4-03. Estimated time: half a day.
 
