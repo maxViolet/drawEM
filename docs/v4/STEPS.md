@@ -1,6 +1,6 @@
 # v4: simple implementation steps
 
-**Status:** proposed; all steps are pending.
+**Status:** S4-01 is done by owner decision, with its measurement gates unverified; later steps are pending.
 **Contract:** [v4 roadmap](ROADMAP-v4.md). Its product rules, technical boundaries,
 and acceptance requirements apply to every step below.
 

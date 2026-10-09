@@ -253,7 +253,7 @@ including when a draft changes a sound slot to an effect and is then cancelled.
 
 Follow the [simple implementation steps](STEPS.md). Each step has one outcome
 and a completion check. These twelve proposed task IDs replace the original
-six broad planning tasks; no implementation is recorded as complete.
+six broad planning tasks; only S4-01 is recorded as complete, by owner decision.
 
 | Task | Outcome |
 |---|---|

@@ -45,9 +45,9 @@ Complete this section after the Windows experiment; it is not a preselected deci
 
 **Sign-off owner:** drawEM project owner (`maxViolet`). Record approval here before S4-02.
 
-- Chosen option and reason: pending.
-- Evidence: reference PC, build identity, 100-invocation measurements, hook-delay samples, visible frame pacing, input/focus and mixed-DPI observations: pending.
-- Dedicated WPF effect surface — chosen, rejected, or skipped, with reason: pending.
-- Effects in the virtual-desktop drawing window — chosen, rejected, or skipped, with reason: pending.
-- DirectComposition/Direct2D adapter — chosen, rejected, or skipped, with reason: pending.
-- Decision on proceeding to S4-02, including any separate-thread or renderer proof, two-working-day fallback timeboxes, and the project owner's sign-off: pending. If no option meets the criteria, stop and revise the roadmap thresholds or scope before S4-02.
+- Chosen option and reason: dedicated WPF effect surface, the renderer the S4-01 probe already uses. The project owner accepted it on 2026-10-09 without the benchmark or desktop measurements.
+- Evidence: only the automated checks and the single published-app smoke check under Validation. The 100-invocation benchmark was started once on 2026-10-09 and stopped before it wrote a report. Hook-delay samples, frame pacing, input/focus, task-switcher, and mixed-DPI observations were not recorded. The `[gate]` items above stay unchecked because nothing verified them.
+- Dedicated WPF effect surface — chosen: the probe implements it, and the smoke check showed no foreground-window change.
+- Effects in the virtual-desktop drawing window — skipped: not evaluated.
+- DirectComposition/Direct2D adapter — skipped: not evaluated.
+- Decision on proceeding to S4-02: approved by the project owner (`maxViolet`) on 2026-10-09 with the gates unverified. No separate-thread or alternative renderer proof was run. Risk: the render-callback, hook-delay, cleanup, and mixed-DPI thresholds are unproven; the S4-12 publish checks must cover them before release.
