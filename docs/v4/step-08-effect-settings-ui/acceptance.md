@@ -2,7 +2,7 @@
 
 **Task:** [choose effects in Settings](task.md). **Plan:** [implementation](plan.md).
 
-- [ ] All eight rows can display and edit sound, effect, or empty actions; the effect list shows both presets.
+- [ ] All eight rows can display and edit sound, effect, or empty actions; the effect list shows both built-in effects, each under its placement group. The user cannot choose a placement.
 - [ ] Selecting or changing type does not change running bindings before Save.
 - [ ] Default shortcut proposal, preservation, conflict errors, and clearing behave consistently across action types.
 - [ ] Cancel after Sound -> Effect preserves the saved sound assignment and managed copy; editor/view-model tests record results.

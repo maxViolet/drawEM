@@ -1,10 +1,10 @@
-# v4 / S4-03: render confetti and focus ring
+# v4 / S4-03: play built-in Lottie effects
 
 **Status:** planned. **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
 
 ## Task
 
-Deliver the two fixed, silent effect presets through the effect surface.
+Play the built-in Lottie effects on a Monitor surface and a Cursor surface: confetti (Monitor) and focus ring (Cursor). The part step S4-03.1 proves Lottie speed for both placements first.
 
 **Depends on:** S4-02. **Next:** [S4-04](../step-04-effect-action-model/task.md).
 

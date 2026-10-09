@@ -2,7 +2,7 @@
 
 **Task:** [stop effects when switching monitors](task.md). **Plan:** [implementation](plan.md).
 
-- [ ] Moving within the target monitor continues the effect; entering another connected monitor stops it and returning does not restart it.
+- [ ] Moving within the target monitor continues the effect, and a Cursor effect stays at its captured point; entering another connected monitor stops it and returning does not restart it. Both placements behave the same.
 - [ ] A -> B -> A transitions cannot let the old effect survive, even if UI dispatch is delayed.
 - [ ] Touching an outside edge without entering a monitor does not stop the effect.
 - [ ] A display-change listener, monitor identity/generation, and surface rebuild are present before this step completes.

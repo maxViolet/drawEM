@@ -2,7 +2,8 @@
 
 **Task:** [launch effects through shortcuts](task.md). **Plan:** [implementation](plan.md).
 
-- [ ] A bound effect launches once on first key-down; holding does not retrigger and a released/repressed shortcut restarts it.
+- [ ] A bound effect of either placement launches once on first key-down; holding does not retrigger and a released/repressed shortcut restarts it.
+- [ ] A Cursor effect appears centered on the cursor point captured at key-down, not a later position.
 - [ ] Prepared bindings include sound and effect slots from one settings snapshot without dropping either type.
 - [ ] A stale queued invocation cannot publish under a newer configuration.
 - [ ] Automated hook/binding checks cover suppression, key-up, AltGr, capture, conflict, position capture, and sound independence.
