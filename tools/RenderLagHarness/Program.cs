@@ -18,7 +18,7 @@ namespace RenderLagHarness;
 /// <summary>
 /// Synthetic harness for F03: reproduces adapter -> Dispatcher -> controller -> renderer
 /// chain with a fake mouse source and measures dispatch queue age and per-event redraw
-/// cost under controlled event rates. See docs/steps/F03-render-lag-investigation-plan.md
+/// cost under controlled event rates. See docs/v1/steps/F03-render-lag-investigation-plan.md
 /// step 3. Not a replacement for a real Win32/screen measurement.
 /// </summary>
 internal static class Program
@@ -74,7 +74,7 @@ internal static class Program
         }
 
         Console.WriteLine("The curated, hand-written comparison lives at " +
-                           "docs/steps/F03-render-lag-harness-results.md and is never touched by this tool.");
+                           "docs/v1/steps/F03-render-lag-harness-results.md and is never touched by this tool.");
     }
 
     private static (RunResult Result, List<Sample> Samples) RunScenario(
@@ -264,7 +264,7 @@ internal static class Program
     }
 
     // Auto-generated output lives under harness-raw/ and is overwritten on every run.
-    // The curated docs/steps/F03-render-lag-harness-results.md comparison is hand-written
+    // The curated docs/v1/steps/F03-render-lag-harness-results.md comparison is hand-written
     // and must never be a write target here (reviewer finding: a harness re-run silently
     // destroyed the curated before/after report and its explanatory notes).
     private static string WriteMarkdownReport(List<RunResult> results, RunResult? worst)
@@ -279,7 +279,7 @@ internal static class Program
             $"Сгенерировано: {DateTime.Now:yyyy-MM-dd HH:mm:ss}. Инструмент: tools/RenderLagHarness.",
             "Запуск: `dotnet run --project tools/RenderLagHarness -c Release`.",
             "Этот файл перезаписывается при каждом запуске. Курируемое сравнение до/после — " +
-            "docs/steps/F03-render-lag-harness-results.md, его нужно обновлять вручную.",
+            "docs/v1/steps/F03-render-lag-harness-results.md, его нужно обновлять вручную.",
             "",
             "Ограничение: harness воспроизводит цепочку adapter -> Dispatcher -> controller -> " +
             "renderer синтетически, без реального Win32-хука и композиции окна. Он не заменяет " +
@@ -347,7 +347,7 @@ internal static class Program
             throw new InvalidOperationException("Could not locate repository root (DrawEM.sln) from harness output directory.");
         }
 
-        var rawDir = Path.Combine(dir.FullName, "docs", "steps", "harness-raw");
+        var rawDir = Path.Combine(dir.FullName, "docs", "v1", "steps", "harness-raw");
         Directory.CreateDirectory(rawDir);
         return rawDir;
     }
