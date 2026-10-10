@@ -4,7 +4,7 @@
 
 ## Task
 
-Preview the selected draft effect at full desktop size without saving it.
+Preview the selected draft effect at its normal desktop size and placement without saving it.
 
 **Depends on:** S4-08. **Next:** [S4-10](../step-10-effect-save-runtime/task.md).
 
