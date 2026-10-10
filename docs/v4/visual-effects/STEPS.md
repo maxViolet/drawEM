@@ -174,5 +174,6 @@ screen sharing, and lifecycle checks are recorded separately from automated
 results. The 100-invocation latency, resource, and hook-delay checks meet the
 roadmap targets for each placement. Mark unrun cases unverified. Complete the
 v3 Step 8 baseline before releasing v4.
+
 **First action:** start S4-03.1: add `SkiaSharp.Skottie` and draw one Lottie frame in the S4-01 probe.
 Estimated time: half a day.
