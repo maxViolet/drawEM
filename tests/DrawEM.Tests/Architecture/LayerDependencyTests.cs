@@ -20,8 +20,9 @@ public class LayerDependencyTests
         { Infrastructure, ["System", "Microsoft", Domain, Application, Infrastructure] },
         // OverlayWindow implements this existing tray-lifecycle port. Other infrastructure
         // dependencies remain forbidden; do not exempt the whole window or namespace.
+        // SkiaSharp plays Lottie effects (ADR 0001); only Presentation may use it.
         { Presentation, ["System", "Microsoft", Domain, Application, Presentation,
-            "DrawEM.App.Infrastructure.IOverlayLifetime"] },
+            "DrawEM.App.Infrastructure.IOverlayLifetime", "SkiaSharp"] },
     };
 
     [Theory]

@@ -16,11 +16,16 @@
 
   <ItemGroup>
     <Resource Include="Assets\drawEM.ico" />
+    <EmbeddedResource Include="Presentation\Effects\ProbeAnimations\*.json" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Remove="System.Drawing" />
     <Using Remove="System.Windows.Forms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp.Skottie" Version="4.153.1" />
   </ItemGroup>
 
 </Project>

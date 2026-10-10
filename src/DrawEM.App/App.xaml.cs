@@ -215,7 +215,8 @@ public partial class App : System.Windows.Application
                 load.Start,
                 load.Stop,
                 EffectSurfaceProbe.DefaultReportDirectory,
-                () => (Volatile.Read(ref keyboardEvents), Volatile.Read(ref mouseEvents))));
+                () => (Volatile.Read(ref keyboardEvents), Volatile.Read(ref mouseEvents))),
+                EffectProbeMode.Parse(Environment.GetEnvironmentVariable(EffectProbeMode.Variable)));
             load.DelayMeasured += probe.RecordHookDelay;
             var hotkeys = new EffectProbeHotkeys(probe.Invoke, probe.RunBenchmark);
             return new CompositeDisposable(hotkeys, probe, load);
