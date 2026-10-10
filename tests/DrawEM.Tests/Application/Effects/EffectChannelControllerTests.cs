@@ -105,6 +105,36 @@ public class EffectChannelControllerTests
     }
 
     [Fact]
+    public void Deadline_CountsTimeSpentInsideShow()
+    {
+        var fixture = new Fixture();
+        fixture.OnShow = () => fixture.Time.Advance(TimeSpan.FromSeconds(3));
+        var instance = fixture.Controller.Start(Command(Confetti));
+
+        fixture.Time.Advance(TimeSpan.FromSeconds(7) - TimeSpan.FromMilliseconds(1));
+        Assert.Same(instance, fixture.Controller.ActiveInstance);
+
+        fixture.Time.Advance(TimeSpan.FromMilliseconds(1));
+
+        Assert.Equal(1, fixture.Playbacks[0].DisposeCount);
+        Assert.Null(fixture.Controller.ActiveInstance);
+    }
+
+    [Fact]
+    public void ShowOutlastingDeadline_ReleasesPlaybackImmediately()
+    {
+        var fixture = new Fixture();
+        fixture.OnShow = () => fixture.Time.Advance(EffectChannelController.MaxDuration);
+
+        fixture.Controller.Start(Command(Confetti));
+
+        Assert.Equal(1, fixture.Playbacks[0].DisposeCount);
+        Assert.Null(fixture.Controller.ActiveInstance);
+        Assert.Equal(0, fixture.Time.ActiveTimerCount);
+        Assert.Empty(fixture.Failures);
+    }
+
+    [Fact]
     public void Deadline_IsDispatchedToControllerThread()
     {
         var queued = new List<Action>();
@@ -305,12 +335,15 @@ public class EffectChannelControllerTests
 
         public List<(EffectInstance Instance, string Reason)> Failures { get; } = [];
 
+        public Action? OnShow { get; set; }
+
         public void FailShowFor(EffectId effect, string reason) => showFailures[effect] = reason;
 
         public IEffectPlayback Show(EffectInstance instance)
         {
             var effect = instance.Command.Effect;
             Log.Add("show " + effect.Value);
+            OnShow?.Invoke();
             if (showFailures.TryGetValue(effect, out var reason))
             {
                 throw new EffectPlaybackException(reason);

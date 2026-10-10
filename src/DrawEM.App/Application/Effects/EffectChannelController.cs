@@ -4,8 +4,8 @@ namespace DrawEM.App.Application.Effects;
 /// The global effect channel: Idle -> Running(instance) -> Idle. Owns at most one effect instance across the
 /// application, whatever its placement; a new start releases the active instance first, even for the same
 /// effect. Each instance ends at its natural end, on failure, on Stop, or <see cref="MaxDuration"/> after it
-/// starts. Call every member on one thread; timer callbacks are marshalled to that thread through the
-/// dispatch delegate.
+/// starts; time spent inside <see cref="IEffectSurface.Show"/> counts. Call every member on one thread;
+/// timer callbacks are marshalled to that thread through the dispatch delegate.
 /// </summary>
 public sealed class EffectChannelController : IDisposable
 {
@@ -65,8 +65,16 @@ public sealed class EffectChannelController : IDisposable
         playback.Failed += run.OnFailed;
         active = run;
 
+        // The deadline counts from StartedAt, so time spent inside Show shortens what remains.
+        var remaining = MaxDuration - (time.GetUtcNow() - instance.StartedAt);
+        if (remaining <= TimeSpan.Zero)
+        {
+            End(run);
+            return instance;
+        }
+
         run.Deadline = time.CreateTimer(
-            _ => dispatch(() => End(run)), null, MaxDuration, Timeout.InfiniteTimeSpan);
+            _ => dispatch(() => End(run)), null, remaining, Timeout.InfiniteTimeSpan);
         return instance;
     }
 

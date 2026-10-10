@@ -16,5 +16,5 @@
 
 ## Validation
 
-- `dotnet test tests/DrawEM.Tests`: 522 passed, 0 failed (2026-10-10).
+- `dotnet test tests/DrawEM.Tests`: 524 passed, 0 failed (2026-10-10).
 - `dotnet build src/DrawEM.App -c Release`: 0 warnings, 0 errors.
