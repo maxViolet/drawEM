@@ -41,6 +41,7 @@ public class LayerDependencyTests
 
     [Theory]
     [InlineData(Domain + ".Drawing")]
+    [InlineData(Domain + ".Effects")]
     [InlineData(Domain + ".Sound")]
     public void DomainEntities_DoNotDependOnSettings(string module)
     {
