@@ -1,6 +1,6 @@
 # v4: simple implementation steps
 
-**Status:** S4-01 is done by owner decision, with its measurement gates unverified; later steps are pending.
+**Status:** S4-01 is done by owner decision, with its measurement gates unverified. S4-02 is done; later steps are pending.
 **Contract:** [v4 roadmap](ROADMAP-v4.md). Its product rules, technical boundaries,
 and acceptance requirements apply to every step below. Terms follow the
 [glossary](../../../CONTEXT.md).
@@ -24,7 +24,7 @@ A development-only trigger in
 **Done when:** Done on 2026-10-09 by owner decision: the dedicated WPF effect
 surface is chosen. Its measurement gates are unverified; S4-03.1 and S4-12 measure them.
 
-### S4-02: control one running effect
+### S4-02: control one running effect (done)
 
 **Do:** Add an application controller with Start and Stop operations, a unique
 ID for each invocation, a clock, and a replaceable rendering port. An invocation
@@ -175,5 +175,5 @@ results. The 100-invocation latency, resource, and hook-delay checks meet the
 roadmap targets for each placement. Mark unrun cases unverified. Complete the
 v3 Step 8 baseline before releasing v4.
 
-**First action:** start S4-02 with a fake surface and fake clock. Estimated time:
-2-3 engineering hours.
+**First action:** start S4-03.1: add `SkiaSharp.Skottie` and draw one Lottie frame in the S4-01 probe.
+Estimated time: half a day.
