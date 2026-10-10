@@ -1,37 +1,37 @@
-# Правила для drawEM
+# drawEM rules
 
-## Общение
+## Communication
 
-- Не общайся комплиментарно.
-- На старте каждой сессии применяй навык `C:\Users\max\.codex\skills\i-have-adhd\SKILL.md` до команды `stop adhd mode` или `normal mode`.
+- Do not use compliments.
+- At the start of every session, apply the skill `C:\Users\max\.codex\skills\i-have-adhd\SKILL.md` until the user says `stop adhd mode` or `normal mode`.
 
-## Разработка
+## Development
 
-- Пиши тесты до кода: сначала добавь тест, который описывает нужное поведение, и запусти его. Убедись, что он падает по ожидаемой причине. Только после этого пиши код, пока тест не пройдёт.
-- Исправление ошибки начинай с теста, который воспроизводит ошибку.
-- Если поведение нельзя проверить автоматическим тестом (например, вид окна на экране), опиши ручную проверку в разделе `## Validation` PR и пометь её как unverified, пока она не выполнена.
+- Write tests before code: first add a test that describes the required behavior and run it. Make sure it fails for the expected reason. Only then write the code, until the test passes.
+- Start a bug fix with a test that reproduces the bug.
+- If an automated test cannot check the behavior (for example, how a window looks on screen), describe the manual check in the PR's `## Validation` section and mark it unverified until it is done.
 
-## Названия веток
+## Branch names
 
-- Работа вне задачи из документации: `<ТИП>-<NNN>-<краткое-описание>`, например `DOC-007-branch-naming`. Типы:
-  - `DOC` — только документация: docs, планы, roadmap, правила.
-  - `FIX` — исправление существующего поведения кода.
-  - `TEST` — только добавление или изменение тестов.
-  - `FEAT` — новое поведение, которое не покрывает ни одна задача из документации.
-- `NNN` — три цифры: наибольший существующий номер того же типа плюс один. Ищи его в `git branch -a` и `gh pr list --state all`. Первая ветка типа получает `001`. Продолжение той же работы добавляет `.N`, например `DOC-005.1-…`.
-- Работа по задаче из документации: `<идентификатор-задачи>-<краткое-описание>`, где идентификатор взят из документации без изменений, например `S1-02-sound-channel`. Часть задачи добавляет `.N`, например `S1-02.1-…`. Такая ветка не расходует номер типа.
-- Описание пиши на английском в нижнем регистре, слова разделяй дефисами.
-- Перед созданием ветки проверь имя по этим правилам.
-- Существующие ветки, созданные до этих правил, сохраняют свои имена. Переименовывай ветку только по явному запросу пользователя.
+- Work outside a documented task: `<TYPE>-<NNN>-<short-description>`, for example `DOC-007-branch-naming`. Types:
+  - `DOC` — documentation only: docs, plans, roadmap, rules.
+  - `FIX` — a fix to existing code behavior.
+  - `TEST` — only adds or changes tests.
+  - `FEAT` — new behavior that no documented task covers.
+- `NNN` — three digits: the highest existing number of the same type plus one. Find it with `git branch -a` and `gh pr list --state all`. The first branch of a type gets `001`. A continuation of the same work adds `.N`, for example `DOC-005.1-…`.
+- Work on a documented task: `<task-id>-<short-description>`, where the ID is copied from the documentation unchanged, for example `S1-02-sound-channel`. Part of a task adds `.N`, for example `S1-02.1-…`. Such a branch does not use up a type number.
+- Write the description in lowercase English, with words separated by hyphens.
+- Check the name against these rules before you create a branch.
+- Branches created before these rules keep their names. Rename a branch only when the user explicitly asks.
 
 ## Pull requests
 
-- Заголовок: идентификатор работы из имени ветки, двоеточие, пробел и краткое описание — `<ТИП>-<NNN>: <summary>` или `<идентификатор-задачи>: <summary>` (с `.N`, если он есть в ветке). Примеры: `DOC-007: add branch rules and disable Claude attribution`, `S1-02: implement global sound channel`, `TEST-001: enforce layer dependencies`.
-- Описание в заголовке пиши на английском, в повелительном наклонении, в нижнем регистре после двоеточия и без точки в конце. Не используй префикс Conventional Commits (`docs:`, `feat:`, `fix:`) в заголовке; в сообщениях коммитов он допустим.
-- Разделы тела PR, по порядку:
-  - `## Summary` — зачем нужно изменение, от одного до трёх пунктов.
-  - `## Changes` — изменённые файлы или области и что изменилось в каждой.
-  - `## Validation` — выполненные команды и их результаты; всё невыполненное помечай как unverified.
-  - Ссылки на задачу из документации и связанные PR, если они есть.
-- Не добавляй в тело PR строку атрибуции "Generated with Claude Code".
-- Pull requests от Dependabot относятся к типу `FIX`. Dependabot не может задать номер и имя ветки, поэтому заголовок у них — `FIX: <summary>` без номера (префикс задан в `.github/dependabot.yml`), а ветка `dependabot/...` не проверяется. Workflow `PR lint` проверяет у них только заголовок.
+- Title: the work ID from the branch name, a colon, a space, and a short summary — `<TYPE>-<NNN>: <summary>` or `<task-id>: <summary>` (with `.N` if the branch has it). Examples: `DOC-007: add branch rules and disable Claude attribution`, `S1-02: implement global sound channel`, `TEST-001: enforce layer dependencies`.
+- Write the title summary in English, in the imperative mood, lowercase after the colon, with no trailing period. Do not use a Conventional Commits prefix (`docs:`, `feat:`, `fix:`) in the title; it is allowed in commit messages.
+- PR body sections, in order:
+  - `## Summary` — why the change is needed, one to three bullets.
+  - `## Changes` — the changed files or areas and what changed in each.
+  - `## Validation` — commands run and their results; mark everything not run as unverified.
+  - Links to the documented task and related PRs, if any.
+- Do not add the "Generated with Claude Code" attribution line to the PR body.
+- Dependabot pull requests are `FIX` work. Dependabot cannot set a branch number and name, so their title is `FIX: <summary>` without a number (the prefix is set in `.github/dependabot.yml`), and the `dependabot/...` branch is not checked. The `PR lint` workflow checks only their title.

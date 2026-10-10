@@ -1,149 +1,144 @@
-# F03: локализация задержки рисования
+# F03: locating the drawing delay
 
-Дата: 2026-09-22. Ветка: `F03-render-lag-investigation`.
+Date: 2026-09-22. Branch: `F03-render-lag-investigation`.
 
-## Статус (обновлено 2026-09-22)
+## Status (updated 2026-09-22)
 
-Шаги 2–3 выполнены синтетическим harness (`../../../tools/RenderLagHarness`, без реального
-Win32/экрана — шаг 1 остаётся открытым). Шаг 4: гипотеза 2 (полная перерисовка на каждую
-точку) подтверждена измерениями — стоимость перерисовки росла линейно с числом точек (до
-50–60 мс), из-за чего поток событий на частоте 500–1000/с не успевал обрабатываться в
-реальном времени (секунда растягивалась до 2–28.6 секунды в зависимости от сценария).
-Гипотезы 3–5 не проверялись (нужен профилировщик и реальный рабочий стол). Шаг 5: применён
-фикс — инкрементальный рендер в `StrokeRenderElement` (кэш завершённых линий, дозапись
-только новых сегментов активной). После фикса рост стоимости перерисовки исчез,
-длительность прогонов harness совпадает с номиналом. Детали и цифры:
-`F03-render-lag-harness-results.md`.
+Steps 2–3 were done with a synthetic harness (`../../../tools/RenderLagHarness`, without a real
+Win32 hook or screen; step 1 stays open). Step 4: hypothesis 2 (full redraw on every point) is
+confirmed by measurements. The redraw cost grew linearly with the number of points (up to
+50–60 ms), so an event stream at 500–1000/s was not processed in real time (one second stretched
+to 2–28.6 seconds, depending on the scenario). Hypotheses 3–5 were not checked (they need a
+profiler and a real desktop). Step 5: a fix was applied, incremental rendering in
+`StrokeRenderElement` (cached completed lines, only new segments of the active line are appended).
+After the fix, the redraw cost no longer grows, and harness run durations match the nominal value.
+Details and numbers: `F03-render-lag-harness-results.md`.
 
-Ревью (второй раунд) нашло 2 критичных корректностных бага в первой версии фикса —
-`CompletedStrokes.Count` не отличает "ничего не изменилось" от "clear + новый штрих той же
-длины", и завершение штриха с непросмотренной точкой оставляло устаревший active-tracking,
-способный ошибочно продолжить следующий, не связанный штрих. Оба исправлены: добавлен
-`DrawingState.Generation` как авторитетный признак сброса, active-tracking теперь
-безусловно снимается при появлении любого нового завершённого штриха. Также найдены и
-исправлены методологические проблемы harness: сырой отчёт/трасса перезаписывали
-курируемый файл сравнения (теперь пишутся отдельно, в `w`, вне git),
-а Duration для не до конца обработанных (по таймауту) прогонов подавался как полное время
-обработки потока — теперь ДО-цифры получены без обрезки по таймауту (все прогоны
-завершились полностью).
+Review (second round) found 2 critical correctness bugs in the first version of the fix.
+`CompletedStrokes.Count` does not distinguish "nothing changed" from "clear + a new stroke of the
+same length", and completing a stroke with an unseen point left stale active tracking, which could
+wrongly continue the next, unrelated stroke. Both are fixed: `DrawingState.Generation` was added as
+the authoritative reset signal, and active tracking is now unconditionally cleared when any new
+completed stroke appears. Methodology problems in the harness were also found and fixed: the raw
+report/trace overwrote the curated comparison file (they are now written separately, to
+`harness-raw/`, outside git), and Duration for runs not fully processed (cut off by the timeout)
+was presented as the full stream processing time. The BEFORE numbers are now taken without
+timeout cut-off (all runs completed).
 
-Шаг 6 (регрессии) — 32/32 unit-тестов (5 новых на инкрементальный рендер), ручной прогон
-на реальном рабочем столе не выполнялся.
+Step 6 (regressions): 32/32 unit tests (5 new ones for incremental rendering); a manual run on a
+real desktop has not been done.
 
-## Симптом и статус
+## Symptom and status
 
-По наблюдению пользователя, линия иногда появляется с большим лагом; устойчивой
-зависимости пока нет. Не установлено, задерживается ли начало линии, продолжение
-или оба этапа. Анализ ниже основан на текущем коде, а не на воспроизведённом лаге.
-Причина не подтверждена. В рамках этого документа приложение не изменяется.
+The user observes that a line sometimes appears with a large lag; there is no stable pattern yet.
+It is not established whether the start of the line, its continuation, or both are delayed.
+The analysis below is based on the current code, not on a reproduced lag.
+The cause is not confirmed. This document does not change the application.
 
-## Что установлено по коду
+## What the code shows
 
-- `App.xaml.cs`: оба глобальных хука создаются в `OnStartup`, на UI-потоке.
-  Команды передаются через `Dispatcher.BeginInvoke(action)`.
-- `Infrastructure/GlobalMouseInputAdapter.cs`: каждое движение в draw-mode
-  создаёт отдельную задачу Dispatcher; объединения входящих точек нет.
-- `Application/DrawingSessionController.cs`: каждое движение вызывает
-  `PublishState`, копирующий массив точек активной линии и список завершённых
-  линий. Точки завершённых линий здесь повторно не копируются.
-- `Presentation/OverlayWindow.xaml.cs`: на UI-потоке `Render` сразу вызывает
-  `UpdateState`. В обычной цепочке контроллер уже работает на UI-потоке, поэтому
-  ветка `pendingState` с объединением обновлений не используется.
-- `Presentation/StrokeRenderElement.cs`: каждое обновление открывает единственный
-  `DrawingVisual` заново и записывает все сегменты всех линий. Стоимость одного
-  обновления растёт с общим количеством точек. Для одной растущей линии суммарная
-  работа копирования и записи сегментов имеет квадратичный рост по числу точек.
-- Прозрачное окно покрывает весь виртуальный рабочий стол. Цена композиции на
-  конкретных мониторах и GPU пока не измерена.
-- Тест одиночной точки проверяет пиксель через `RenderTargetBitmap`, но не время
-  доставки реального ввода и появления кадра на экране.
+- `App.xaml.cs`: both global hooks are created in `OnStartup`, on the UI thread.
+  Commands are passed through `Dispatcher.BeginInvoke(action)`.
+- `Infrastructure/GlobalMouseInputAdapter.cs`: each move in draw mode
+  creates a separate Dispatcher task; incoming points are not merged.
+- `Application/DrawingSessionController.cs`: each move calls
+  `PublishState`, which copies the active line's point array and the list of completed
+  lines. The points of completed lines are not copied again here.
+- `Presentation/OverlayWindow.xaml.cs`: on the UI thread, `Render` calls
+  `UpdateState` immediately. In the normal chain the controller already runs on the UI thread, so
+  the `pendingState` branch that merges updates is not used.
+- `Presentation/StrokeRenderElement.cs`: each update reopens the single
+  `DrawingVisual` and writes all segments of all lines. The cost of one
+  update grows with the total number of points. For one growing line, the total
+  work of copying and writing segments grows quadratically with the number of points.
+- The transparent window covers the whole virtual desktop. The composition cost on
+  specific monitors and GPUs is not measured yet.
+- The single-point test checks a pixel through `RenderTargetBitmap`, but not the time
+  from real input delivery to the frame appearing on screen.
 
-## Гипотезы в порядке проверки
+## Hypotheses in order of checking
 
-| Приоритет | Возможная причина | Проверяемое предсказание |
+| Priority | Possible cause | Testable prediction |
 | --- | --- | --- |
-| 1 | UI-очередь перегружается задачами мыши; обработка событий вытесняет подготовку кадров | Во время лага растут возраст задачи и число ожидающих задач; уменьшение частоты событий или пакетная обработка снижает задержку |
-| 2 | Полная перезапись рисунка на каждую точку | Время `UpdateState` растёт с числом сегментов; после очистки при той же частоте событий существенно уменьшается |
-| 3 | Копирование снимков создаёт давление на GC | Пики задержки совпадают с паузами GC и ростом аллокаций; длинная линия хуже короткой при одинаковом числе завершённых линий |
-| 4 | Занятый UI-поток задерживает доставку глобальных хуков | Растёт возраст Win32-события уже на входе в callback, до нашей очереди; отдельно измеренная задержка Dispatcher не объясняет весь лаг |
-| 5 | Композиция окна, GPU или внешняя нагрузка/цепочка хуков | Внутренние этапы быстрые, а визуальный лаг остаётся; воспроизводимость меняется при контролируемом изменении одного внешнего фактора |
+| 1 | The UI queue is overloaded with mouse tasks; event processing crowds out frame preparation | During the lag, task age and the number of pending tasks grow; lowering the event rate or batching reduces the delay |
+| 2 | The whole drawing is rewritten on every point | `UpdateState` time grows with the number of segments; after a clear, at the same event rate, it drops substantially |
+| 3 | Snapshot copying creates GC pressure | Delay spikes coincide with GC pauses and allocation growth; a long line is worse than a short one with the same number of completed lines |
+| 4 | A busy UI thread delays global hook delivery | The Win32 event age grows already on entry to the callback, before our queue; a separately measured Dispatcher delay does not explain the whole lag |
+| 5 | Window composition, GPU, or external load/hook chain | Internal stages are fast but the visual lag remains; reproducibility changes when one external factor is changed in a controlled way |
 
-Первые четыре механизма могут усиливать друг друга. Случайный характер симптома
-совместим с кратковременными всплесками нагрузки, но сам по себе ничего не доказывает.
-PowerToys не считается причиной без сравнения; его отключение — отдельный ручной
-эксперимент, только если внутренние измерения укажут на внешнюю задержку.
+The first four mechanisms can reinforce each other. The random nature of the symptom
+is consistent with short load spikes, but proves nothing by itself.
+PowerToys is not considered a cause without a comparison; disabling it is a separate manual
+experiment, only if internal measurements point to an external delay.
 
-Microsoft указывает, что `Normal` имеет приоритет выше `Render`, а low-level mouse
-callback исполняется в потоке, установившем хук. Поэтому отсутствие рисования внутри
-callback само по себе не изолирует доставку ввода от занятого UI-потока.
+Microsoft states that `Normal` has a higher priority than `Render`, and that a low-level mouse
+callback runs on the thread that installed the hook. So not drawing inside the
+callback does not by itself isolate input delivery from a busy UI thread.
 
-Источники:
+Sources:
 - [DispatcherPriority](https://learn.microsoft.com/en-us/dotnet/api/system.windows.threading.dispatcherpriority)
 - [LowLevelMouseProc](https://learn.microsoft.com/en-us/windows/win32/winmsg/lowlevelmouseproc)
 
-## План работ
+## Work plan
 
-1. **Зафиксировать исходное поведение.** Записать commit, путь и версию реально
-   запущенной Release-сборки, число процессов, мониторы, DPI, частоту экрана,
-   доступную частоту опроса мыши. Различать задержку старта, отставание линии и
-   догоняющую отрисовку после остановки/отпускания. Начать с свежего запуска,
-   пустого рисунка и того же сценария после накопления линий.
+1. **Record the baseline behavior.** Record the commit, path and version of the Release build
+   that actually runs, the number of processes, monitors, DPI, screen refresh rate, and the
+   available mouse polling rate. Distinguish start delay, line lag, and catch-up drawing after
+   stopping/releasing. Start with a fresh launch and an empty drawing, then repeat the same
+   scenario after lines have accumulated.
 
-2. **Добавить ограниченные измерения.** Идентификаторы сессии и последовательности
-   событий связать с метками: вход в hook, постановка/начало задачи Dispatcher,
-   начало/конец обновления контроллера, начало/конец `UpdateState`, ближайший
-   `CompositionTarget.Rendering`. Собирать глубину очереди, события/с, точки,
-   сегменты, p50/p95/p99/max задержек; GC исследовать профилировщиком при корреляции.
-   Использовать монотонный `Stopwatch`; возраст `MSLLHOOKSTRUCT.time` считать в
-   соответствующей Win32 шкале с учётом переполнения, не вычитать из Stopwatch.
-   Данные хранить в ограниченном буфере, выгружать вне callback и горячего пути.
-   Измерить накладные расходы диагностики. Маркер Rendering не доказывает показ
-   пикселя: визуальную задержку проверять записью экрана/камерой или трассой показа.
+2. **Add bounded measurements.** Link session and event sequence IDs with timestamps: hook entry,
+   Dispatcher task queue/start, controller update start/end, `UpdateState` start/end, and the
+   nearest `CompositionTarget.Rendering`. Collect queue depth, events/s, points, segments, and
+   p50/p95/p99/max delays; investigate GC with a profiler when there is a correlation.
+   Use the monotonic `Stopwatch`; compute the age of `MSLLHOOKSTRUCT.time` in the matching Win32
+   time base, accounting for wraparound, and do not subtract it from Stopwatch.
+   Keep the data in a bounded buffer and export it outside the callback and the hot path.
+   Measure the diagnostics overhead. The Rendering marker does not prove that a pixel is shown:
+   check the visual delay with a screen/camera recording or a presentation trace.
 
-3. **Построить повторяемый сценарий.** В STA/WPF harness воспроизвести реальную
-   цепочку adapter → Dispatcher → controller → OverlayWindow → renderer.
-   Подавать фиксированные траектории с контролируемыми частотами, например
-   125/500/1000 событий/с; отдельно прогреть код и проверить холодный запуск.
-   Сравнить пустое полотно, длинную линию и много завершённых линий. В harness
-   явно проверять возраст очереди/обновления и отсутствие неограниченного роста,
-   а не только успешное завершение. Он не заменяет реальный Win32/экранный прогон.
-   Сохранить команду запуска, конфигурацию, исходный результат и трассу хотя бы
-   одного наблюдаемого лага. Если harness не повторяет симптом, использовать
-   измерения реальной сборки и не объявлять близкую синтетическую проблему причиной.
+3. **Build a repeatable scenario.** In an STA/WPF harness, reproduce the real chain
+   adapter → Dispatcher → controller → OverlayWindow → renderer.
+   Feed fixed trajectories at controlled rates, for example 125/500/1000 events/s; warm up the
+   code separately and check a cold start.
+   Compare an empty canvas, a long line, and many completed lines. In the harness,
+   explicitly check queue/update age and the absence of unbounded growth, not only successful
+   completion. It does not replace a real Win32/screen run.
+   Save the run command, configuration, baseline result, and the trace of at least one observed
+   lag. If the harness does not reproduce the symptom, use measurements from the real build and
+   do not declare a similar synthetic problem the cause.
 
-4. **Проверить гипотезы по одной.** Сначала очередь и стоимость перерисовки,
-   затем GC и возраст callback. Сравнения делать на одинаковой траектории и
-   одинаковом количестве точек. Внешние факторы проверять только после локализации
-   задержки: один монитор/текущая конфигурация, текущая нагрузка/спокойная система,
-   отдельное приложение с hook включено/выключено. Сохранять до/после и разброс.
+4. **Check the hypotheses one at a time.** First the queue and the redraw cost, then GC and
+   callback age. Compare on the same trajectory and the same number of points. Check external
+   factors only after the delay is located: one monitor/current configuration, current
+   load/idle system, another application with a hook enabled/disabled. Keep before/after results
+   and their spread.
 
-5. **Выбрать исправление по измерениям.** При подтверждении перегрузки очереди —
-   пакетная обработка точек и ограниченное число ожидающих задач, публикация
-   состояния под частоту кадров. При дорогой перерисовке — кэш завершённой
-   геометрии и отдельное обновление активной линии. При GC — уменьшение копий
-   с сохранением неизменяемости опубликованных данных. При задержке hook —
-   рассмотреть выделенный поток с message loop и явным порядком команд.
-   Изменение приоритета само по себе не устраняет лишнюю работу. Не терять
-   промежуточные точки простым выбором последней позиции: это может срезать углы.
+5. **Choose the fix based on measurements.** If queue overload is confirmed, batch points, bound
+   the number of pending tasks, and publish state at the frame rate. If the redraw is expensive,
+   cache completed geometry and update the active line separately. If GC is the cause, reduce
+   copies while keeping published data immutable. If the hook is delayed, consider a dedicated
+   thread with a message loop and an explicit command order.
+   Changing priority alone does not remove extra work. Do not lose intermediate points by simply
+   taking the last position: that can cut corners.
 
-6. **Проверить результат и регрессии.** Повторить исходный сценарий и сравнить
-   распределения задержек, максимумы, очередь и аллокации. Зафиксировать бюджет
-   по частоте экрана до оценки исправления: ориентир — обновление в пределах
-   1–2 кадров при обычной нагрузке, без накопления очереди; абсолютные значения
-   и стресс-режим записать отдельно. Проверить стартовую точку без движения,
-   форму/последнюю точку линии, порядок start/move/end/clear при очереди,
-   отсутствие возврата очищенных линий, Ctrl+Alt+Z/X, блокировку ввода только
-   во время рисования и click-through после выхода. Выполнить подходящие тесты,
-   свежий publish и ручной прогон на пользовательском рабочем столе.
+6. **Check the result and regressions.** Repeat the baseline scenario and compare delay
+   distributions, maximums, queue, and allocations. Set a budget based on the screen refresh rate
+   before evaluating the fix: the target is an update within 1–2 frames under normal load, with no
+   queue buildup; record absolute values and stress mode separately. Check the start point without
+   movement, the shape/last point of a line, the start/move/end/clear order under queueing,
+   that cleared lines do not come back, Ctrl+Alt+Z/X, input blocking only while drawing, and
+   click-through after exit. Run the relevant tests, a fresh publish, and a manual run on the
+   user's desktop.
 
-## Ожидаемые изменения при реализации
+## Expected changes during implementation
 
-Измерения: `App.xaml.cs`, `Infrastructure/Win32MouseHookSource.cs`,
+Measurements: `App.xaml.cs`, `Infrastructure/Win32MouseHookSource.cs`,
 `Infrastructure/GlobalMouseInputAdapter.cs`, `Application/DrawingSessionController.cs`,
 `Presentation/OverlayWindow.xaml.cs`, `Presentation/StrokeRenderElement.cs`;
-при измерении старта также keyboard hook/shortcut adapter. Отдельный диагностический
-harness и файл результатов. Точные файлы исправления определяются после замеров.
+when measuring the start, also the keyboard hook/shortcut adapter. A separate diagnostic
+harness and a results file. The exact files for the fix are decided after measurement.
 
-Готовность: конкретный этап задержки подтверждён трассой, исправление улучшает
-тот же сценарий, регрессии проверены, свежая сборка проверена вручную. До этого
-проблема остаётся открытой, даже если обычные unit-тесты проходят.
+Done when: a specific delay stage is confirmed by a trace, the fix improves the same scenario,
+regressions are checked, and a fresh build is checked manually. Until then the problem stays
+open, even if the regular unit tests pass.
