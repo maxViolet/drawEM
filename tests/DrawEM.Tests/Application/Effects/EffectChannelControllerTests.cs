@@ -203,6 +203,22 @@ public class EffectChannelControllerTests
     }
 
     [Fact]
+    public void FailureThenReleaseFailure_ReportsBothInOrderAfterRelease()
+    {
+        var fixture = new Fixture();
+        var instance = fixture.Controller.Start(Command(Confetti));
+        fixture.Playbacks[0].DisposeFailure = "window gone";
+
+        fixture.Playbacks[0].Fail("bad frame");
+
+        Assert.Equal(
+            ["show confetti", "dispose confetti", "report confetti", "report confetti"],
+            fixture.Log);
+        Assert.Equal([(instance!, "bad frame"), (instance!, "window gone")], fixture.Failures);
+        Assert.Null(fixture.Controller.ActiveInstance);
+    }
+
+    [Fact]
     public void ShowFailure_ReportsAndLeavesChannelIdleAndUsable()
     {
         var fixture = new Fixture();
