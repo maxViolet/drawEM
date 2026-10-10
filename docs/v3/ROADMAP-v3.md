@@ -14,7 +14,7 @@ v3 settings and is not a prerequisite.
 
 Only sound is an assignable action type in v3. The eight numbered action slots
 must allow other types in a later version without redefining what a slot is.
-The [v4 roadmap](../v4/ROADMAP-v4.md) proposes built-in screen effects after
+The [v4 roadmap](../v4/visual-effects/ROADMAP-v4.md) proposes built-in screen effects after
 settings. Imported video remains a later phase.
 
 ## User-visible contract

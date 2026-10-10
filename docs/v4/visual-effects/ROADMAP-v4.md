@@ -417,10 +417,10 @@ across monitors.
 
 ## Related plans
 
-- [v3 settings roadmap](../v3/ROADMAP-v3.md)
-- [v3 Windows publish and verification](../v3/step-8-publish/task.md)
-- [Existing screen-action architecture proposal](../ARCHITECTURE.md#proposed-evolution-screen-actions)
-- [v2 sound and microphone roadmap](../v2/ROADMAP-v2.md)
+- [v3 settings roadmap](../../v3/ROADMAP-v3.md)
+- [v3 Windows publish and verification](../../v3/step-8-publish/task.md)
+- [Existing screen-action architecture proposal](../../ARCHITECTURE.md#proposed-evolution-screen-actions)
+- [v2 sound and microphone roadmap](../../v2/ROADMAP-v2.md)
 
 This document specifies proposed work. No Lottie renderer, performance results,
 or desktop acceptance is claimed by writing this plan.
