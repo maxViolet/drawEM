@@ -6,7 +6,7 @@ decision with its measurement gates unverified; later steps are pending.
 **Prerequisite for release:** finish the v3 Step 8 Windows acceptance work.
 Its task file records verification on one 100% monitor, with seven
 environment-dependent checks still unverified.
-**Terms:** [glossary](../../CONTEXT.md). **Decision:** [ADR 0001](../adr/0001-lottie-built-in-effects.md).
+**Terms:** [glossary](../../../CONTEXT.md). **Decision:** [ADR 0001](../../adr/0001-lottie-built-in-effects.md).
 
 ## Product decision
 
@@ -131,7 +131,7 @@ Paths in this table are relative to `src/DrawEM.App/`.
 
 ### Domain and application ownership
 
-Terms follow the [glossary](../../CONTEXT.md):
+Terms follow the [glossary](../../../CONTEXT.md):
 
 - **Built-in effect:** a catalog entry with a stable effect ID (`confetti`,
   `focus-ring`), a display name, a placement, and a Lottie resource. Display
@@ -193,7 +193,7 @@ Play Lottie files with `SkiaSharp.Skottie`. Do not use `SKElement` from
 the `Rendering` handler, lock a `WriteableBitmap` owned by the effect, draw the
 Skottie frame into it with an `SKSurface` over its back buffer, mark only the
 changed area dirty, and unlock. The callback time then includes Skia's work.
-This adds the first media dependency to drawEM; [ADR 0001](../adr/0001-lottie-built-in-effects.md)
+This adds the first media dependency to drawEM; [ADR 0001](../../adr/0001-lottie-built-in-effects.md)
 records why. Load and parse each built-in file once, outside the hook callback,
 and reuse it. Render one frame per `Rendering` callback while an effect is
 active; unsubscribe on every stop/failure path. Compute the frame from monotonic

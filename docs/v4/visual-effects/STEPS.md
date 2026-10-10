@@ -3,7 +3,7 @@
 **Status:** S4-01 is done by owner decision, with its measurement gates unverified; later steps are pending.
 **Contract:** [v4 roadmap](ROADMAP-v4.md). Its product rules, technical boundaries,
 and acceptance requirements apply to every step below. Terms follow the
-[glossary](../../CONTEXT.md).
+[glossary](../../../CONTEXT.md).
 
 Build built-in Lottie effects with two placements: **Monitor** (covers the
 monitor) and **Cursor** (fixed size, centered on the captured cursor point).
