@@ -274,24 +274,24 @@ internal static class Program
 
         var lines = new List<string>
         {
-            "# F03: сырой вывод последнего прогона harness",
+            "# F03: raw output of the latest harness run",
             "",
-            $"Сгенерировано: {DateTime.Now:yyyy-MM-dd HH:mm:ss}. Инструмент: tools/RenderLagHarness.",
-            "Запуск: `dotnet run --project tools/RenderLagHarness -c Release`.",
-            "Этот файл перезаписывается при каждом запуске. Курируемое сравнение до/после — " +
-            "docs/steps/F03-render-lag-harness-results.md, его нужно обновлять вручную.",
+            $"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}. Tool: tools/RenderLagHarness.",
+            "Run: `dotnet run --project tools/RenderLagHarness -c Release`.",
+            "This file is overwritten on every run. The curated before/after comparison is " +
+            "docs/v1/steps/F03-render-lag-harness-results.md; update it by hand.",
             "",
-            "Ограничение: harness воспроизводит цепочку adapter -> Dispatcher -> controller -> " +
-            "renderer синтетически, без реального Win32-хука и композиции окна. Он не заменяет " +
-            "измерение на реальной сборке (план, шаг 1/3).",
+            "Limitation: the harness reproduces the adapter -> Dispatcher -> controller -> " +
+            "renderer chain synthetically, without a real Win32 hook or window composition. It does not " +
+            "replace a measurement on a real build (plan, steps 1/3).",
             "",
-            "Queue age / Max pending ops не показательны (пейсер шлёт события с приоритетом " +
-            "Send, очередь Normal не дренируется параллельно) — см. пояснение в курируемом отчёте.",
-            "Duration для строк с TIMEOUT — не полное время обработки потока, а время до " +
-            "срабатывания 8-секундного предохранителя дренажа; Completed < Requested показывает, " +
-            "что поток не был обработан целиком.",
+            "Queue age / Max pending ops are not meaningful (the pacer sends events at " +
+            "Send priority, so the Normal queue does not drain in parallel); see the explanation in the curated report.",
+            "Duration for TIMEOUT rows is not the full stream processing time but the time until " +
+            "the 8-second drain safeguard fires; Completed < Requested shows " +
+            "that the stream was not fully processed.",
             "",
-            "| Сценарий | Rate (ev/s) | Completed/Requested | Duration (мс) | Queue age p50/p95/p99/max (мс) | Обработка p50/p95/p99/max (мс) | Max pending ops | Рост обработки (первые 10% -> последние 10%, мс) |",
+            "| Scenario | Rate (ev/s) | Completed/Requested | Duration (ms) | Queue age p50/p95/p99/max (ms) | Processing p50/p95/p99/max (ms) | Max pending ops | Processing growth (first 10% -> last 10%, ms) |",
             "| --- | --- | --- | --- | --- | --- | --- | --- |",
         };
 
@@ -308,10 +308,10 @@ internal static class Program
         lines.Add("");
         if (worst is not null)
         {
-            lines.Add($"Худший случай по стоимости обработки (p99): `{worst.Scenario}` @ {worst.Rate} ev/s, " +
-                      $"processing p99 {worst.ProcessingP99:F2} мс, max {worst.ProcessingMax:F2} мс" +
-                      (worst.DrainTimedOut ? ", drain TIMEOUT (неполный прогон)" : "") +
-                      ". Полная трасса: F03-render-lag-harness-latest-trace.csv.");
+            lines.Add($"Worst case by processing cost (p99): `{worst.Scenario}` @ {worst.Rate} ev/s, " +
+                      $"processing p99 {worst.ProcessingP99:F2} ms, max {worst.ProcessingMax:F2} ms" +
+                      (worst.DrainTimedOut ? ", drain TIMEOUT (incomplete run)" : "") +
+                      ". Full trace: F03-render-lag-harness-latest-trace.csv.");
         }
 
         File.WriteAllLines(path, lines);
