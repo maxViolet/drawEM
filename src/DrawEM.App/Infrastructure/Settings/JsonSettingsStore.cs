@@ -7,12 +7,17 @@ namespace DrawEM.App.Infrastructure.Settings;
 
 /// <summary>
 /// Stores <c>settings.json</c> in one directory. Save writes a flushed temporary file, then moves it over
-/// the saved file, so a failed save leaves the previous file intact. Load never writes the settings file;
-/// when it cannot use the file it keeps a timestamped copy of the bytes beside it.
+/// the saved file, so a failed save leaves the previous file intact. The first Save over a schema 1 file
+/// first keeps its bytes as <see cref="Schema1BackupFileName"/>, which no later Save overwrites. Load never
+/// writes the settings file; when it cannot use the file it keeps a timestamped copy of the bytes beside it.
 /// </summary>
 public sealed class JsonSettingsStore : ISettingsStore
 {
     public const string FileName = "settings.json";
+
+    /// <summary>The schema 1 file as an older drawEM wrote it, for rollback.</summary>
+    public const string Schema1BackupFileName = "settings.schema1-backup.json";
+
     private const string TempSuffix = ".tmp";
     private const string RecoveryPattern = "settings.unreadable-*.json";
 
@@ -63,6 +68,7 @@ public sealed class JsonSettingsStore : ISettingsStore
         try
         {
             Directory.CreateDirectory(directory);
+            BackUpSchema1File();
             WriteFlushed(temp, SettingsJson.Serialize(snapshot), FileMode.Create);
             File.Move(temp, SettingsPath, overwrite: true);
         }
@@ -70,6 +76,55 @@ public sealed class JsonSettingsStore : ISettingsStore
         {
             TryDelete(temp);
             throw new SettingsStoreException($"Settings could not be saved: {failure.Message}", failure);
+        }
+    }
+
+    /// <summary>
+    /// Keeps the current file's bytes before Save replaces a schema 1 file, unless a backup already exists.
+    /// The backup appears complete or not at all.
+    /// </summary>
+    /// <exception cref="SettingsStoreException">The backup could not be made; nothing was saved.</exception>
+    private void BackUpSchema1File()
+    {
+        var backup = Path.Combine(directory, Schema1BackupFileName);
+        if (File.Exists(backup))
+        {
+            return;
+        }
+
+        byte[] current;
+        try
+        {
+            current = File.ReadAllBytes(SettingsPath);
+        }
+        catch (FileNotFoundException)
+        {
+            return;
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            throw new SettingsStoreException(
+                $"Settings could not be saved: the current settings could not be read for a backup: {failure.Message}",
+                failure);
+        }
+
+        if (SettingsJson.ReadSchemaVersion(current) != 1)
+        {
+            return;
+        }
+
+        var temp = backup + TempSuffix;
+        try
+        {
+            WriteFlushed(temp, current, FileMode.Create);
+            File.Move(temp, backup, overwrite: false);
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            TryDelete(temp);
+            throw new SettingsStoreException(
+                $"Settings could not be saved: the schema 1 backup {backup} could not be created: {failure.Message}",
+                failure);
         }
     }
 

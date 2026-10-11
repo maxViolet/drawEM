@@ -1,7 +1,7 @@
 # drawEM v4 roadmap: built-in Monitor and Cursor effects
 
 **Status:** proposed product and implementation plan. S4-01 is done by owner
-decision with its measurement gates unverified. S4-02 and S4-04 are done; other steps are pending.
+decision with its measurement gates unverified. S4-02, S4-04, and S4-05 are done; other steps are pending.
 **Date:** 2026-10-07; revised 2026-10-09 for Lottie effects with two placements.
 **Prerequisite for release:** finish the v3 Step 8 Windows acceptance work.
 Its task file records verification on one 100% monitor, with seven
@@ -317,7 +317,7 @@ and a completion check. S4-01 is recorded as complete by owner decision; S4-02 a
 | [S4-02](step-02-effect-channel/task.md) | Start, replace, and stop one effect of either placement safely (done) |
 | [S4-03](step-03-built-in-effects/task.md) | Play built-in Lottie effects on Monitor and Cursor surfaces; S4-03.1 is its speed gate |
 | [S4-04](step-04-effect-action-model/task.md) | Represent an effect in an action slot (done) |
-| [S4-05](step-05-effect-settings-schema/task.md) | Save and load effect assignments |
+| [S4-05](step-05-effect-settings-schema/task.md) | Save and load effect assignments (done) |
 | [S4-06](step-06-effect-shortcuts/task.md) | Launch effects through shortcuts |
 | [S4-07](step-07-effect-monitor-transitions/task.md) | Stop effects when switching monitors |
 | [S4-08](step-08-effect-settings-ui/task.md) | Choose effects in Settings, grouped by placement |
