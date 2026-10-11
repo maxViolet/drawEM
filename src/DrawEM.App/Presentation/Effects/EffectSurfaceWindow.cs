@@ -1,24 +1,25 @@
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using DrawEM.App.Domain.Drawing;
 
 namespace DrawEM.App.Presentation.Effects;
 
 /// <summary>
-/// A transparent window that covers exactly one monitor above the drawing overlay. It never takes focus,
-/// is absent from Alt+Tab and Win+Tab, and passes mouse input to the windows below it in any process.
-/// Content is drawn into one <see cref="DrawingVisual"/> without layout, and clipped to the monitor.
+/// A transparent window above the drawing overlay that covers one monitor or a part of it. It never takes
+/// focus, is absent from Alt+Tab and Win+Tab, and passes mouse input to the windows below it in any process.
+/// Content is drawn into one <see cref="DrawingVisual"/> without layout, and clipped to the window.
 /// </summary>
 public sealed class EffectSurfaceWindow : Window
 {
-    private readonly MonitorBounds monitor;
     private readonly EffectSurfaceHost host = new();
+    private MonitorBounds bounds;
     private IntPtr handle;
 
     public EffectSurfaceWindow(MonitorBounds monitor)
     {
-        this.monitor = monitor;
+        bounds = monitor;
         Title = "drawEM effect";
         WindowStyle = WindowStyle.None;
         ResizeMode = ResizeMode.NoResize;
@@ -41,16 +42,21 @@ public sealed class EffectSurfaceWindow : Window
         };
     }
 
+    /// <summary>Maps physical pixels to window DIPs; its bounds are the window's, which lie on the monitor.</summary>
     public EffectSurfaceLayout Layout { get; private set; }
 
-    /// <summary>Whether the native window covers exactly the target monitor in physical pixels.</summary>
-    public bool PlacementMatchesMonitor =>
-        NativeMethods.GetWindowRect(handle, out var rect)
-        && rect.Left == monitor.Left && rect.Top == monitor.Top
-        && rect.Right == monitor.Right && rect.Bottom == monitor.Bottom;
+    /// <summary>The window's physical desktop bounds: the monitor, or the part chosen when it was shown.</summary>
+    public MonitorBounds Bounds => bounds;
 
-    /// <summary>Shows the window on its monitor without activating it.</summary>
-    public void ShowOnMonitor()
+    /// <summary>Whether the native window covers exactly <see cref="Bounds"/> in physical pixels.</summary>
+    public bool PlacementMatchesBounds =>
+        NativeMethods.GetWindowRect(handle, out var rect)
+        && rect.Left == bounds.Left && rect.Top == bounds.Top
+        && rect.Right == bounds.Right && rect.Bottom == bounds.Bottom;
+
+    /// <summary>Shows the window without activating it, covering its monitor or the part <paramref name="part"/> chooses.</summary>
+    /// <param name="part">Maps the monitor's DPI scale to physical bounds on the monitor; <c>null</c> covers the monitor.</param>
+    public void ShowOnMonitor(Func<double, MonitorBounds>? part = null)
     {
         new WindowInteropHelper(this).EnsureHandle();
 
@@ -58,9 +64,36 @@ public sealed class EffectSurfaceWindow : Window
         // system's suggested size for the new DPI, so the second placement restores the exact bounds.
         Place();
         Place();
+        if (part is not null)
+        {
+            // The window now has the monitor's DPI; moving within the monitor keeps it.
+            bounds = part(NativeMethods.GetDpiForWindow(handle) / 96d);
+            Place();
+        }
+
         Show();
         Place();
         RefreshLayout();
+    }
+
+    /// <summary>
+    /// Creates a bitmap that fills the window, with <paramref name="renderScale"/> bitmap pixels per physical
+    /// pixel, and makes it the window content. WPF scales it to the window and shows each change to it.
+    /// </summary>
+    public WriteableBitmap ShowBitmap(double renderScale)
+    {
+        var dpi = 96d * Layout.DpiScale * renderScale;
+        var bitmap = new WriteableBitmap(
+            Math.Max(1, (int)Math.Ceiling((bounds.Right - bounds.Left) * renderScale)),
+            Math.Max(1, (int)Math.Ceiling((bounds.Bottom - bounds.Top) * renderScale)),
+            dpi,
+            dpi,
+            PixelFormats.Pbgra32,
+            null);
+        RenderOptions.SetBitmapScalingMode(host.Visual, BitmapScalingMode.Linear);
+        using var context = RenderOpen();
+        context.DrawImage(bitmap, Layout.LocalBounds);
+        return bitmap;
     }
 
     /// <summary>Replaces the window content with what is drawn into the returned context before it is closed.</summary>
@@ -76,15 +109,15 @@ public sealed class EffectSurfaceWindow : Window
         NativeMethods.SetWindowPos(
             handle,
             NativeMethods.HWND_TOPMOST,
-            monitor.Left,
-            monitor.Top,
-            monitor.Right - monitor.Left,
-            monitor.Bottom - monitor.Top,
+            bounds.Left,
+            bounds.Top,
+            bounds.Right - bounds.Left,
+            bounds.Bottom - bounds.Top,
             NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_NOOWNERZORDER);
 
     private void RefreshLayout()
     {
-        Layout = new EffectSurfaceLayout(monitor, VisualTreeHelper.GetDpi(this).DpiScaleX);
+        Layout = new EffectSurfaceLayout(bounds, VisualTreeHelper.GetDpi(this).DpiScaleX);
         host.Clip = new RectangleGeometry(Layout.LocalBounds);
     }
 

@@ -1,6 +1,6 @@
 # v4 / S4-03: play built-in Lottie effects
 
-**Status:** planned. **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
+**Status:** S4-03.1 in progress: probe code done, benchmarks not run. **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
 
 ## Task
 
