@@ -286,11 +286,13 @@ file without migrating settings.
 
 Read schema 1 into the new model without modifying its sounds, shortcuts, or
 files. Every v4 Save writes schema 2, including when all slots contain only
-sounds. Before the first such Save, make one immutable backup of the current
-schema 1 file; never overwrite an existing migration backup on later upgrades.
-If backup creation fails, do not save. An older binary cannot read schema 2,
-so rollback requires restoring the backup while drawEM is closed. The backup
-does not restore sound copies deleted by later saves or sounds imported after
+sounds. Before replacing a valid schema 1 file, keep an immutable backup:
+`settings.schema1-backup.json` is number 1; each later migration adds the next
+numbered backup unless the highest-numbered backup already has the same bytes.
+Never overwrite a backup. If backup creation fails, do not save. An older binary
+cannot read schema 2, so rollback requires restoring the highest-numbered
+backup while drawEM is closed. The backup does not restore sound copies deleted
+by any v4 Save, including the migration Save, or sounds imported after
 the backup; the older app's startup cleanup may also remove copies not named
 by restored settings. Document these limits.
 

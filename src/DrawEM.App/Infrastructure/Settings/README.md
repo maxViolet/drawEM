@@ -96,8 +96,8 @@ and starts with defaults. To return to v3 with the settings v4 replaced:
 1. Exit drawEM from the tray icon, and check that no `DrawEM.App.exe` process
    is running. A running drawEM may save over the restored file.
 2. In `%LOCALAPPDATA%\drawEM`, rename `settings.json` to `settings.v4.json` to
-   keep the v4 settings. To upgrade again later with them, rename it back
-   before starting v4.
+   keep the v4 settings. If that name already exists, use a new unused name,
+   such as `settings.v4-<date-time>.json`; keep every previous copy.
 3. Copy the backup with the highest number to `settings.json`: the
    `settings.schema1-backup-<N>.json` with the largest `N`, or
    `settings.schema1-backup.json` when there is no numbered backup. Keep the
@@ -108,17 +108,30 @@ With no backup, v4 never replaced a v3 file. A schema 1 `settings.json` needs
 no change. A schema 2 one was created by v4; v3 starts with defaults and
 removes no sounds.
 
+To upgrade again, exit drawEM first. Start v4 with the current v3
+`settings.json` and Save to migrate those settings with an automatic backup.
+To resume the saved v4 settings instead, first rename the current v3
+`settings.json` to an unused `settings.v3-<date-time>.json`, then copy the
+chosen saved v4 file to `settings.json`. This path skips migration of the v3
+file, so keep that copy yourself. Settings copies do not include managed sound
+files; see the cleanup limits below before switching versions.
+
 Limits:
 
 - A backup holds the settings from just before a v4 Save replaced a schema 1
   file. Changes saved in v4 after that, including effect slots, are not in it.
-- A v4 Save removes managed sound copies that its settings no longer reference.
-  If a later v4 Save removed a copy that the backup names, that slot's sound is
-  missing after the rollback: the slot stays assigned, and each press logs a
+- Any v4 Save, including the one that made the backup, can remove managed sound
+  copies that its settings no longer reference. If that removed a copy the
+  backup names, that slot's sound is missing after the rollback: the slot stays
+  assigned, and each press logs a
   failure to `logs\sound.log` until a file is chosen again.
 - Sounds imported after the backup are not named by it. The v3 startup cleanup
   removes every managed copy that the loaded settings do not reference, so
   those copies are deleted at the first v3 launch, even if `settings.v4.json`
   still uses them.
+- When resuming saved v4 settings, the first v4 startup cleanup removes managed
+  sounds imported in v3 that those v4 settings do not reference, even if a
+  saved `settings.v3-<date-time>.json` still uses them. Copy any sounds you want
+  to retain outside the managed sound library before starting that version.
 - If the restored file cannot be loaded, v3 starts with defaults and removes
   nothing.
