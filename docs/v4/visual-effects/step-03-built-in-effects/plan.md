@@ -13,7 +13,7 @@
 
 ## S4-03: built-in effects
 
-1. Add the built-in catalog in `Domain/Effects`: effect ID, display name, placement, and resource name for `confetti` (Monitor) and `focus-ring` (Cursor). Add `Domain.Effects` to the `DomainEntities_DoNotDependOnSettings` test cases.
+1. The built-in catalog already exists: S4-04 added `Domain/Effects/EffectCatalog.cs` with `confetti` (Monitor, `confetti.json`) and `focus-ring` (Cursor, `focus-ring.json`). Embed the Lottie files under those resource names, or change the names in the catalog and its test.
 2. Embed the two Lottie files, selected from LottieFiles and adapted where needed, with a record of each file's source URL, author, and license. Confetti must end within 3 seconds and focus ring within 2 seconds, with no rapid flashing. Load and parse each file once, outside the hook callback.
 3. Build the Monitor surface: cover the target monitor, scale the canvas to cover it, keep proportions, crop the overflow.
 4. Build the Cursor surface: canvas size in DIP at the monitor's DPI, centered on the captured cursor point, intersected with the monitor bounds. Never shift it inward.

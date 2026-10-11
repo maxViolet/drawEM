@@ -1,6 +1,6 @@
 # v4 / S4-04: add effects to action slots
 
-**Status:** planned. **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
+**Status:** done. **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
 
 ## Task
 

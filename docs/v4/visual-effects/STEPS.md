@@ -1,6 +1,6 @@
 # v4: simple implementation steps
 
-**Status:** S4-01 is done by owner decision, with its measurement gates unverified. S4-02 is done; later steps are pending.
+**Status:** S4-01 is done by owner decision, with its measurement gates unverified. S4-02 and S4-04 are done; other steps are pending.
 **Contract:** [v4 roadmap](ROADMAP-v4.md). Its product rules, technical boundaries,
 and acceptance requirements apply to every step below. Terms follow the
 [glossary](../../../CONTEXT.md).
@@ -68,7 +68,7 @@ lasts no more than 10 seconds and no more than its specified length (confetti
 bounds and clipping. Check appearance at monitor edges, no rapid flashing, and drawing/audio
 coexistence on Windows. Keep failures local to the effect.
 
-### S4-04: add effects to the action model
+### S4-04: add effects to the action model (done)
 
 **Do:** Add EffectAction with a stable effect ID to the existing eight-slot model.
 Keep one action and one shortcut per occupied slot. Validate known effect IDs
