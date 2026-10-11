@@ -76,6 +76,87 @@ internal static class NativeMethods
     [DllImport("kernel32.dll")]
     internal static extern IntPtr GetCurrentProcess();
 
+    /// <summary>EnumDisplaySettings mode index: the display's current settings.</summary>
+    internal const int ENUM_CURRENT_SETTINGS = -1;
+
+    /// <summary>MonitorFromPoint flag: return null when no monitor contains the point.</summary>
+    internal const uint MONITOR_DEFAULTTONULL = 0;
+
+    /// <summary>The window's DPI: 96 at 100% scaling. Per-monitor-aware windows report their monitor's DPI.</summary>
+    [DllImport("user32.dll")]
+    internal static extern uint GetDpiForWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    internal static extern IntPtr MonitorFromPoint(POINT point, uint flags);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool GetMonitorInfo(IntPtr monitor, ref MONITORINFOEX info);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool EnumDisplaySettings(string deviceName, int modeNumber, ref DEVMODE mode);
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct POINT
+    {
+        internal int X;
+        internal int Y;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct MONITORINFOEX
+    {
+        internal int Size;
+        internal RECT Monitor;
+        internal RECT WorkArea;
+        internal uint Flags;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        internal string DeviceName;
+    }
+
+    /// <summary>DEVMODEW, display fields only.</summary>
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct DEVMODE
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        internal string DeviceName;
+
+        internal short SpecVersion;
+        internal short DriverVersion;
+        internal short Size;
+        internal short DriverExtra;
+        internal int Fields;
+        internal int PositionX;
+        internal int PositionY;
+        internal int DisplayOrientation;
+        internal int DisplayFixedOutput;
+        internal short Color;
+        internal short Duplex;
+        internal short YResolution;
+        internal short TTOption;
+        internal short Collate;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        internal string FormName;
+
+        internal short LogPixels;
+        internal int BitsPerPel;
+        internal int PelsWidth;
+        internal int PelsHeight;
+        internal int DisplayFlags;
+        internal int DisplayFrequency;
+        internal int ICMMethod;
+        internal int ICMIntent;
+        internal int MediaType;
+        internal int DitherType;
+        internal int Reserved1;
+        internal int Reserved2;
+        internal int PanningWidth;
+        internal int PanningHeight;
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     internal struct RECT
     {

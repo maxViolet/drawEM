@@ -6,13 +6,14 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using DrawEM.App.Domain.Drawing;
 using Microsoft.Win32;
-using Brush = System.Windows.Media.Brush;
-using Brushes = System.Windows.Media.Brushes;
-using Pen = System.Windows.Media.Pen;
-using Point = System.Windows.Point;
+using SkiaSharp;
+using SkiaSharp.Skottie;
+using Rect = System.Windows.Rect;
+using Size = System.Windows.Size;
 
 namespace DrawEM.App.Presentation.Effects;
 
@@ -41,13 +42,18 @@ public sealed record EffectProbePorts(
     Func<(int Keyboard, int Mouse)> ProductionHookEvents);
 
 /// <summary>
-/// Temporary S4-01 experiment (docs/v4/visual-effects/step-01-effect-surface): shows an animated shape in an
-/// <see cref="EffectSurfaceWindow"/> on the monitor containing the cursor, above the drawing overlay, and
-/// measures the WPF renderer. Enabled only with <c>DRAWEM_EFFECT_PROBE=1</c>; S4-06 removes it with its trigger.
+/// Temporary S4-01 and S4-03.1 experiment (docs/v4/visual-effects/step-01-effect-surface and
+/// step-03-built-in-effects): plays a probe Lottie animation with Skottie in an <see cref="EffectSurfaceWindow"/>
+/// on the monitor containing the cursor, above the drawing overlay, and measures the renderer. The
+/// <see cref="EffectProbeMode"/> chooses a Monitor surface (cover scaling, optionally at half resolution) or a
+/// Cursor surface (canvas size in DIP, centered on the cursor, clipped to the monitor). Enabled only with
+/// <c>DRAWEM_EFFECT_PROBE=1</c>; S4-06 removes it with its trigger.
 /// <list type="bullet">
 /// <item><see cref="Invoke"/> shows one effect, replacing a running one.</item>
-/// <item><see cref="RunBenchmark"/> runs warm-up and 100 measured invocations with drawing active and
-/// injected input, then writes a report with the automated gate results.</item>
+/// <item><see cref="RunBenchmark"/> runs warm-up and measured invocations with drawing active and injected
+/// input, within <see cref="RunBudget"/>, then writes a report with the automated gate results.</item>
+/// <item><see cref="RunCursorBenchmark"/> runs the same benchmark for <see cref="EffectProbeMode.Cursor"/>,
+/// so one process measures both placements.</item>
 /// </list>
 /// All members run on the UI thread.
 /// </summary>
@@ -56,9 +62,10 @@ public sealed class EffectSurfaceProbe : IDisposable
     public const string EnableVariable = "DRAWEM_EFFECT_PROBE";
 
     /// <summary>Invocations before the resource baseline; the process's first one is recorded as cold.</summary>
-    public const int WarmUpInvocations = 5;
+    public const int WarmUpInvocations = 2;
 
-    public const int MeasuredInvocations = 100;
+    /// <summary>The whole benchmark, from the shortcut to the report, fits in this time.</summary>
+    public static readonly TimeSpan RunBudget = TimeSpan.FromSeconds(30);
 
     // Automated thresholds from the S4-01 acceptance criteria.
     private const double RenderCallbackP95LimitMs = 4;
@@ -68,13 +75,11 @@ public sealed class EffectSurfaceProbe : IDisposable
     private const double ResourceGrowthLimit = 0.05;
     private const double FirstAppearanceTargetMs = 100;
 
-    /// <summary>A frame interval this many times the median counts as a long frame in the pacing record.</summary>
-    private const double LongFrameFactor = 1.5;
+    /// <summary>Roadmap target: a frame interval over this many refresh intervals is a dropped frame.</summary>
+    private const double DroppedFrameFactor = 1.5;
 
-    private const double ShapeDiameter = 160;
-    private const double OutlineThickness = 4;
-
-    private static readonly TimeSpan EffectDuration = TimeSpan.FromSeconds(2);
+    /// <summary>Roadmap target: at most this fraction of frame intervals are dropped frames.</summary>
+    private const double DroppedFrameLimit = 0.01;
 
     /// <summary>Time to release the benchmark shortcut: a key event closes the draw mode the benchmark opens.</summary>
     private static readonly TimeSpan KeyReleaseDelay = TimeSpan.FromSeconds(3);
@@ -85,23 +90,45 @@ public sealed class EffectSurfaceProbe : IDisposable
     /// <summary>How long the hooks are exercised after the last cycle.</summary>
     private static readonly TimeSpan PostCycleCheckDuration = TimeSpan.FromSeconds(1);
 
-    /// <summary>An invocation still running this long after its trigger fails: its rendering callbacks stopped.</summary>
-    private static readonly TimeSpan InvocationDeadline = EffectDuration + TimeSpan.FromSeconds(3);
-
-    private static readonly Brush ShapeFill = Freeze(new SolidColorBrush(Color.FromArgb(0xC0, 0x1E, 0x90, 0xFF)));
-    private static readonly Pen ShapeOutline = Freeze(new Pen(Brushes.White, OutlineThickness));
+    /// <summary>An invocation still running this long after the animation should have ended fails: its rendering callbacks stopped.</summary>
+    private static readonly TimeSpan DeadlineMargin = TimeSpan.FromSeconds(3);
 
     private readonly EffectProbePorts ports;
+    private readonly EffectProbeMode mode;
+    private readonly IReadOnlyDictionary<EffectProbePlacement, Animation> animations;
+    private readonly double animationLoadMs;
     private ProbeInvocation? current;
     private BenchmarkRecord? benchmark;
     private InvocationResult? coldStart;
     private bool benchmarkRunning;
     private bool disposed;
 
-    public EffectSurfaceProbe(EffectProbePorts ports)
+    public EffectSurfaceProbe(EffectProbePorts ports, EffectProbeMode mode)
     {
         this.ports = ports;
+        this.mode = mode;
+
+        // Parsed once at startup, outside the hook callback, and reused by every invocation.
+        var start = Stopwatch.GetTimestamp();
+        animations = EffectProbeAnimations.LoadAll();
+        animationLoadMs = ToMilliseconds(Stopwatch.GetTimestamp() - start);
     }
+
+    /// <summary>Measured invocations that fit in <see cref="RunBudget"/>; at least one.</summary>
+    public static int MeasuredInvocationsFor(TimeSpan animationDuration)
+    {
+        var cycle = animationDuration + PauseBetweenInvocations;
+        var left = RunBudget - FixedRunTime - (WarmUpInvocations * cycle);
+        return Math.Max(1, (int)(left / cycle));
+    }
+
+    /// <summary>The benchmark's planned length without window and report overhead.</summary>
+    public static TimeSpan PlannedRunTime(TimeSpan animationDuration) =>
+        FixedRunTime + ((WarmUpInvocations + MeasuredInvocationsFor(animationDuration))
+            * (animationDuration + PauseBetweenInvocations));
+
+    /// <summary>Waits outside the invocations: key release, two idle settles, and the hook check.</summary>
+    private static TimeSpan FixedRunTime => KeyReleaseDelay + IdleSettleDelay + PostCycleCheckDuration + IdleSettleDelay;
 
     public static string DefaultReportDirectory { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "drawEM", "effect-probe");
@@ -129,7 +156,7 @@ public sealed class EffectSurfaceProbe : IDisposable
             return;
         }
 
-        var result = await Start(target.Monitor, trigger, invocationIndex: 0);
+        var result = await Start(target, trigger, invocationIndex: 0, mode);
         if (result.Failure is not null)
         {
             AppendError($"Effect on monitor {result.Monitor} failed: {result.Failure}");
@@ -137,7 +164,13 @@ public sealed class EffectSurfaceProbe : IDisposable
     }
 
     /// <summary>Runs the 100-invocation benchmark and writes its report. Ignored while one is running.</summary>
-    public async void RunBenchmark()
+    public void RunBenchmark() => RunBenchmark(mode);
+
+    /// <summary>Runs the benchmark for a Cursor effect, whatever the startup mode is.</summary>
+    public void RunCursorBenchmark() => RunBenchmark(EffectProbeMode.Cursor);
+
+    /// <summary>Runs the benchmark for <paramref name="benchmarkMode"/> and writes its report. Ignored while one is running.</summary>
+    private async void RunBenchmark(EffectProbeMode benchmarkMode)
     {
         if (disposed || benchmarkRunning)
         {
@@ -146,7 +179,11 @@ public sealed class EffectSurfaceProbe : IDisposable
 
         benchmarkRunning = true;
         current?.Finish();
-        var record = new BenchmarkRecord(DateTimeOffset.Now);
+        var record = new BenchmarkRecord(
+            DateTimeOffset.Now,
+            benchmarkMode,
+            DescribeAnimation(benchmarkMode.Placement),
+            MeasuredInvocationsFor(animations[benchmarkMode.Placement].Duration));
         try
         {
             await Task.Delay(KeyReleaseDelay);
@@ -158,14 +195,14 @@ public sealed class EffectSurfaceProbe : IDisposable
                     throw new InvalidOperationException($"Warm-up invocation {i}: no monitor contains the cursor.");
                 }
 
-                record.Add(await Start(target.Monitor, Stopwatch.GetTimestamp(), -i));
+                record.Add(await Start(target, Stopwatch.GetTimestamp(), -i, benchmarkMode));
                 await Task.Delay(PauseBetweenInvocations);
             }
 
             await Task.Delay(IdleSettleDelay);
             record.WarmUpResources = ResourceCounts.Read();
 
-            for (var i = 1; i <= MeasuredInvocations && !disposed; i++)
+            for (var i = 1; i <= record.PlannedMeasured && !disposed; i++)
             {
                 if (TargetAtCursor() is not { } target)
                 {
@@ -180,7 +217,7 @@ public sealed class EffectSurfaceProbe : IDisposable
                 {
                     ports.BeginDrawing(target.Cursor, target.Monitor);
                     ports.StartInputLoad(target.Cursor, target.Monitor);
-                    var result = await Start(target.Monitor, trigger, i);
+                    var result = await Start(target, trigger, i, benchmarkMode);
 
                     // A physical key event closes the probe's draw mode; its hook delays then were not measured while drawing.
                     result.DrawModeClosedEarly = !ports.IsDrawing();
@@ -220,8 +257,17 @@ public sealed class EffectSurfaceProbe : IDisposable
 
     public void Dispose()
     {
+        if (disposed)
+        {
+            return;
+        }
+
         disposed = true;
         current?.Finish();
+        foreach (var animation in animations.Values)
+        {
+            animation.Dispose();
+        }
     }
 
     /// <summary>
@@ -252,11 +298,13 @@ public sealed class EffectSurfaceProbe : IDisposable
     private (MonitorBounds Monitor, ScreenPoint Cursor)? TargetAtCursor() =>
         ports.CursorPosition() is { } cursor && ports.MonitorAt(cursor) is { } monitor ? (monitor, cursor) : null;
 
-    private Task<InvocationResult> Start(MonitorBounds monitor, long trigger, int invocationIndex)
+    private Task<InvocationResult> Start(
+        (MonitorBounds Monitor, ScreenPoint Cursor) target, long trigger, int invocationIndex, EffectProbeMode invocationMode)
     {
         current?.Finish();
         var cold = coldStart is null;
-        var invocation = new ProbeInvocation(this, monitor, trigger, invocationIndex, cold);
+        var invocation = new ProbeInvocation(
+            this, invocationMode, animations[invocationMode.Placement], target.Monitor, target.Cursor, trigger, invocationIndex, cold);
         if (cold)
         {
             // Kept for the benchmark report even when the cold invocation came from Ctrl+Alt+F9.
@@ -301,33 +349,49 @@ public sealed class EffectSurfaceProbe : IDisposable
         }
     }
 
-    private static T Freeze<T>(T freezable)
-        where T : Freezable
-    {
-        freezable.Freeze();
-        return freezable;
-    }
-
     private static double ToMilliseconds(long ticks) => ticks * 1000d / Stopwatch.Frequency;
 
-    private static void DrawShape(DrawingContext context, EffectSurfaceLayout layout, double progress)
+    private string DescribeAnimation(EffectProbePlacement placement)
     {
-        // Crosses the monitor left to right and reaches its top and bottom edges, so clipping is visible.
-        var size = layout.LocalSize;
-        var center = new Point(
-            size.Width * progress,
-            (size.Height / 2) - ((size.Height / 2) * Math.Sin(2 * Math.PI * progress)));
-        context.DrawEllipse(ShapeFill, ShapeOutline, center, ShapeDiameter / 2, ShapeDiameter / 2);
+        var animation = animations[placement];
+        return FormattableString.Invariant(
+            $"{animation.Size.Width}x{animation.Size.Height} canvas, {animation.Duration.TotalSeconds:0.##} s at {animation.Fps:0.##} fps; all probe animations parsed in {animationLoadMs:0.#} ms");
     }
 
-    /// <summary>One shown effect: its window, its rendering subscription, and its measurements.</summary>
+    /// <summary>The display refresh rate of the monitor containing <paramref name="point"/>, or <c>null</c> when unknown.</summary>
+    private static int? RefreshRateAt(ScreenPoint point)
+    {
+        var monitor = NativeMethods.MonitorFromPoint(
+            new NativeMethods.POINT { X = point.X, Y = point.Y }, NativeMethods.MONITOR_DEFAULTTONULL);
+        var info = new NativeMethods.MONITORINFOEX { Size = System.Runtime.InteropServices.Marshal.SizeOf<NativeMethods.MONITORINFOEX>() };
+        if (monitor == IntPtr.Zero || !NativeMethods.GetMonitorInfo(monitor, ref info))
+        {
+            return null;
+        }
+
+        var settings = new NativeMethods.DEVMODE { Size = (short)System.Runtime.InteropServices.Marshal.SizeOf<NativeMethods.DEVMODE>() };
+        return NativeMethods.EnumDisplaySettings(info.DeviceName, NativeMethods.ENUM_CURRENT_SETTINGS, ref settings)
+            && settings.DisplayFrequency > 1
+            ? settings.DisplayFrequency
+            : null;
+    }
+
+    /// <summary>One shown effect: its window, bitmap, Skia surface, rendering subscription, and measurements.</summary>
     private sealed class ProbeInvocation
     {
         private readonly EffectSurfaceProbe owner;
+        private readonly EffectProbeMode mode;
+        private readonly Animation animation;
         private readonly MonitorBounds monitor;
+        private readonly ScreenPoint cursor;
         private readonly long trigger;
         private readonly TaskCompletionSource<InvocationResult> completion = new();
         private EffectSurfaceWindow? window;
+        private WriteableBitmap? bitmap;
+        private SKSurface? surface;
+        private IntPtr surfaceBuffer;
+        private SKRect destination;
+        private Int32Rect dirty;
         private IntPtr foregroundBefore;
         private TimeSpan lastRenderingTime = TimeSpan.MinValue;
         private long lastFrame;
@@ -335,15 +399,28 @@ public sealed class EffectSurfaceProbe : IDisposable
         private bool subscribed;
         private bool finished;
 
-        public ProbeInvocation(EffectSurfaceProbe owner, MonitorBounds monitor, long trigger, int index, bool cold)
+        public ProbeInvocation(
+            EffectSurfaceProbe owner,
+            EffectProbeMode mode,
+            Animation animation,
+            MonitorBounds monitor,
+            ScreenPoint cursor,
+            long trigger,
+            int index,
+            bool cold)
         {
             this.owner = owner;
+            this.mode = mode;
+            this.animation = animation;
             this.monitor = monitor;
+            this.cursor = cursor;
             this.trigger = trigger;
-            Result = new InvocationResult(index, cold, monitor);
+            Result = new InvocationResult(index, cold, monitor, mode.Name);
         }
 
         public Task<InvocationResult> Completion => completion.Task;
+
+        private TimeSpan InvocationDeadline => animation.Duration + DeadlineMargin;
 
         public InvocationResult Result { get; }
 
@@ -352,13 +429,38 @@ public sealed class EffectSurfaceProbe : IDisposable
             try
             {
                 foregroundBefore = NativeMethods.GetForegroundWindow();
+                Result.RefreshRate = RefreshRateAt(cursor);
                 window = new EffectSurfaceWindow(monitor);
                 owner.OpenWindows++;
                 window.Closed += (_, _) => owner.OpenWindows--;
-                window.ShowOnMonitor();
+                var canvas = new Size(animation.Size.Width, animation.Size.Height);
+                var renderScale = mode.RenderScale;
+                CursorSurfaceBounds? cursorBounds = null;
+                if (mode.Placement == EffectProbePlacement.Cursor)
+                {
+                    window.ShowOnMonitor(dpiScale =>
+                    {
+                        cursorBounds = EffectCanvasPlacement.Cursor(monitor, dpiScale, canvas, cursor);
+                        return cursorBounds.Value.Window;
+                    });
+                }
+                else
+                {
+                    window.ShowOnMonitor();
+                }
+
+                Result.Window = window.Bounds;
                 Result.DpiScale = window.Layout.DpiScale;
-                Result.PlacementMatches = window.PlacementMatchesMonitor;
+                Result.PlacementMatches = window.PlacementMatchesBounds;
                 Result.ForegroundUnchanged = NativeMethods.GetForegroundWindow() == foregroundBefore;
+
+                bitmap = window.ShowBitmap(renderScale);
+                dirty = new Int32Rect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight);
+                var target = cursorBounds is { } placed
+                    ? placed.CanvasRectInWindow(renderScale)
+                    : EffectCanvasPlacement.Cover(canvas, new Size(bitmap.PixelWidth, bitmap.PixelHeight));
+                destination = SKRect.Create((float)target.X, (float)target.Y, (float)target.Width, (float)target.Height);
+
                 CompositionTarget.Rendering += OnRendering;
                 subscribed = true;
                 owner.RenderingSubscriptions++;
@@ -394,13 +496,6 @@ public sealed class EffectSurfaceProbe : IDisposable
                 owner.current = null;
             }
 
-            if (window is not null)
-            {
-                Result.ForegroundUnchanged &= NativeMethods.GetForegroundWindow() == foregroundBefore;
-                window.Close();
-                window = null;
-            }
-
             if (subscribed)
             {
                 CompositionTarget.Rendering -= OnRendering;
@@ -408,6 +503,16 @@ public sealed class EffectSurfaceProbe : IDisposable
                 owner.RenderingSubscriptions--;
             }
 
+            if (window is not null)
+            {
+                Result.ForegroundUnchanged &= NativeMethods.GetForegroundWindow() == foregroundBefore;
+                window.Close();
+                window = null;
+            }
+
+            surface?.Dispose();
+            surface = null;
+            bitmap = null;
             completion.TrySetResult(Result);
         }
 
@@ -422,8 +527,10 @@ public sealed class EffectSurfaceProbe : IDisposable
 
             lastRenderingTime = renderingTime;
             var callbackStart = Stopwatch.GetTimestamp();
-            var progress = ToMilliseconds(callbackStart - trigger) / EffectDuration.TotalMilliseconds;
-            if (progress >= 1)
+
+            // Monotonic elapsed time picks the frame, so a slow frame never lengthens the effect.
+            var elapsedSeconds = (callbackStart - trigger) / (double)Stopwatch.Frequency;
+            if (elapsedSeconds >= animation.Duration.TotalSeconds)
             {
                 Finish();
                 return;
@@ -431,9 +538,7 @@ public sealed class EffectSurfaceProbe : IDisposable
 
             try
             {
-                // No closure: an allocation per frame would add GC pauses to the measured callback time.
-                using var context = window!.RenderOpen();
-                DrawShape(context, window.Layout, progress);
+                DrawFrame(elapsedSeconds);
             }
             catch (Exception exception)
             {
@@ -456,16 +561,58 @@ public sealed class EffectSurfaceProbe : IDisposable
             lastFrame = callbackStart;
             Result.FrameCount++;
         }
+
+        /// <summary>Draws the Skottie frame into the bitmap's back buffer inside the measured callback.</summary>
+        private void DrawFrame(double elapsedSeconds)
+        {
+            var target = bitmap!;
+            target.Lock();
+            try
+            {
+                // The back buffer normally keeps its address; a new address needs a new surface over it.
+                if (surface is null || surfaceBuffer != target.BackBuffer)
+                {
+                    surface?.Dispose();
+                    var info = new SKImageInfo(
+                        target.PixelWidth, target.PixelHeight, SKColorType.Bgra8888, SKAlphaType.Premul);
+                    surface = SKSurface.Create(info, target.BackBuffer, target.BackBufferStride)
+                        ?? throw new InvalidOperationException("Skia could not create a surface over the bitmap.");
+                    surfaceBuffer = target.BackBuffer;
+                }
+
+                var canvas = surface.Canvas;
+                canvas.Clear(SKColors.Transparent);
+                animation.SeekFrameTime(elapsedSeconds);
+                animation.Render(canvas, destination);
+                canvas.Flush();
+
+                // The whole bitmap: the upper bound of the upload cost.
+                target.AddDirtyRect(dirty);
+            }
+            finally
+            {
+                target.Unlock();
+            }
+        }
     }
 
-    private sealed class InvocationResult(int index, bool cold, MonitorBounds monitor)
+    private sealed class InvocationResult(int index, bool cold, MonitorBounds monitor, string mode)
     {
+        /// <summary>The probe mode that showed this invocation.</summary>
+        public string Mode { get; } = mode;
+
         /// <summary>Negative for warm-up invocations, 0 for a single invocation, 1-100 when measured.</summary>
         public int Index { get; } = index;
 
         public bool Cold { get; } = cold;
 
         public MonitorBounds Monitor { get; } = monitor;
+
+        /// <summary>The effect window's physical bounds: the monitor, or the clipped Cursor canvas.</summary>
+        public MonitorBounds? Window { get; set; }
+
+        /// <summary>The monitor's display refresh rate in Hz, or <c>null</c> when unknown.</summary>
+        public int? RefreshRate { get; set; }
 
         public double DpiScale { get; set; }
 
@@ -503,15 +650,17 @@ public sealed class EffectSurfaceProbe : IDisposable
 
     private readonly record struct HookDelay(int Invocation, bool Keyboard, double DelayMs);
 
-    private sealed class BenchmarkRecord(DateTimeOffset started)
+    private sealed class BenchmarkRecord(DateTimeOffset started, EffectProbeMode mode, string animation, int plannedMeasured)
     {
         /// <summary>Room for every hook sample, so the list never grows inside a hook callback.</summary>
-        private const int ExpectedHookDelays = MeasuredInvocations * 256;
+        private const int ExpectedHookDelays = 25_600;
 
         private readonly List<InvocationResult> invocations = [];
         private readonly List<HookDelay> hookDelays = new(ExpectedHookDelays);
 
         public DateTimeOffset Started { get; } = started;
+
+        public int PlannedMeasured { get; } = plannedMeasured;
 
         public int CurrentInvocation { get; set; }
 
@@ -586,13 +735,25 @@ public sealed class EffectSurfaceProbe : IDisposable
             var mouseCount = hookDelays.Count - keyboardCount;
             var closedEarly = measured.Count(invocation => invocation.DrawModeClosedEarly);
             var medianInterval = Percentile(intervals, 0.5);
-            var longFrames = medianInterval is { } median ? intervals.Count(value => value > median * LongFrameFactor) : 0;
+
+            // Each interval in refresh intervals of its monitor; an unknown rate fails the frame gates below.
+            var refreshUnknown = measured.Count(invocation => invocation.RefreshRate is null);
+            var intervalRatios = measured.Where(invocation => invocation.RefreshRate is not null)
+                .SelectMany(invocation => invocation.FrameIntervalMs.Select(value => value * invocation.RefreshRate!.Value / 1000))
+                .ToList();
+            var intervalRatioP95 = Percentile(intervalRatios, 0.95);
+            var dropped = intervalRatios.Count(ratio => ratio > DroppedFrameFactor);
+            var droppedShare = intervalRatios.Count == 0 ? (double?)null : (double)dropped / intervalRatios.Count;
             var failures = AllInvocations.Where(invocation => invocation.Failure is not null).ToList();
 
             var report = new StringBuilder();
-            report.AppendLine("# drawEM S4-01 effect probe report");
+            report.AppendLine($"# drawEM effect probe report: {mode.Name}");
             report.AppendLine();
             report.AppendLine(Invariant($"Started: {Started:yyyy-MM-dd HH:mm:ss zzz}. Raw samples: `{samplesPath}`."));
+            report.AppendLine();
+            report.AppendLine(Invariant($"Placement: {mode.Placement}, render scale {mode.RenderScale:0.##} (`{EffectProbeMode.Variable}={mode.Name}`). ") +
+                $"Animation: {animation}. Skia draws inside the measured `Rendering` handler into the effect's own " +
+                "`WriteableBitmap`; the whole bitmap is marked dirty every frame.");
             report.AppendLine();
             report.AppendLine("Automated results only. Visible rendering, click-through, focus, task switching, clipping on");
             report.AppendLine("neighbor monitors, stutter in a recording, and missed strokes remain manual checks.");
@@ -605,8 +766,11 @@ public sealed class EffectSurfaceProbe : IDisposable
                 report.AppendLine($"- {line}");
             }
 
-            report.AppendLine("- Monitors used (physical bounds @ DPI scale): " + string.Join("; ", AllInvocations
-                .Select(invocation => Invariant($"({invocation.Monitor.Left}, {invocation.Monitor.Top}, {invocation.Monitor.Right}, {invocation.Monitor.Bottom}) @ {invocation.DpiScale:0.##}"))
+            report.AppendLine("- Monitors used (physical bounds @ DPI scale, refresh rate): " + string.Join("; ", AllInvocations
+                .Select(invocation => Invariant($"{Bounds(invocation.Monitor)} @ {invocation.DpiScale:0.##}, {(invocation.RefreshRate is { } hz ? $"{hz} Hz" : "unknown")}"))
+                .Distinct()));
+            report.AppendLine("- Effect windows (physical bounds): " + string.Join("; ", AllInvocations
+                .Select(invocation => invocation.Window is { } window ? Bounds(window) : "not shown")
                 .Distinct()));
             report.AppendLine("- Timing: `Stopwatch` (QueryPerformanceCounter, " +
                 Invariant($"{1e9 / Stopwatch.Frequency:0.#} ns resolution)."));
@@ -626,12 +790,18 @@ public sealed class EffectSurfaceProbe : IDisposable
             var warmUpCount = invocations.Count(invocation => invocation.Index < 0);
             Gate(report, "Warm-up invocations completed", Invariant($"{warmUpCount}"), Invariant($"{WarmUpInvocations}"),
                 warmUpCount == WarmUpInvocations);
-            Gate(report, "Measured invocations completed", Invariant($"{measured.Count}"), Invariant($"{MeasuredInvocations}"),
-                measured.Count == MeasuredInvocations && SkippedNoMonitor == 0);
+            Gate(report, "Measured invocations completed", Invariant($"{measured.Count}"), Invariant($"{PlannedMeasured}"),
+                measured.Count == PlannedMeasured && SkippedNoMonitor == 0);
             Gate(report, "Render callback p95", Ms(callbackP95), Invariant($"<= {RenderCallbackP95LimitMs} ms"),
                 callbackP95 <= RenderCallbackP95LimitMs);
             var delayP95 = Percentile(delays, 0.95);
             var delayMax = Percentile(delays, 1);
+            Gate(report, "Frame interval p95 (refresh intervals)", Ratio(intervalRatioP95), Invariant($"<= {DroppedFrameFactor}"),
+                intervalRatioP95 <= DroppedFrameFactor && refreshUnknown == 0);
+            Gate(report, Invariant($"Dropped frames (interval over {DroppedFrameFactor} refresh intervals)"),
+                droppedShare is { } share ? Invariant($"{dropped} of {intervalRatios.Count} ({share:P2})") : "n/a",
+                Invariant($"<= {DroppedFrameLimit:P0}"),
+                droppedShare <= DroppedFrameLimit && refreshUnknown == 0);
             Gate(report, "Hook delay p95", Ms(delayP95), Invariant($"<= {HookDelayP95LimitMs} ms"), delayP95 <= HookDelayP95LimitMs);
             Gate(report, "Hook delay max", Ms(delayMax), Invariant($"<= {HookDelayMaxLimitMs} ms"),
                 delayMax <= HookDelayMaxLimitMs && InputTimeouts == 0);
@@ -659,7 +829,7 @@ public sealed class EffectSurfaceProbe : IDisposable
             Gate(report, "Invocations that changed the foreground window", Invariant($"{foregroundChanged}"), "0",
                 foregroundChanged == 0);
             var misplaced = AllInvocations.Count(invocation => !invocation.PlacementMatches);
-            Gate(report, "Windows not covering exactly the target monitor", Invariant($"{misplaced}"), "0", misplaced == 0);
+            Gate(report, "Windows not covering exactly their target bounds", Invariant($"{misplaced}"), "0", misplaced == 0);
             Gate(report, "Invocation failures", Invariant($"{failures.Count}"), "0", failures.Count == 0 && Failure is null);
             report.AppendLine();
 
@@ -669,12 +839,12 @@ public sealed class EffectSurfaceProbe : IDisposable
                 Invariant($"median {Ms(Percentile(appearances, 0.5))}, p95 {Ms(Percentile(appearances, 0.95))}, max {Ms(Percentile(appearances, 1))}."));
             report.AppendLine(ColdStart is not { } cold
                 ? "- Cold start: not recorded; the process showed no effect."
-                : Invariant($"- Cold start ({DescribeSource(cold)}): first appearance {Ms(cold.FirstAppearanceMs)}, ") +
+                : Invariant($"- Cold start ({DescribeSource(cold)}, mode {cold.Mode}): first appearance {Ms(cold.FirstAppearanceMs)}, ") +
                   Invariant($"render callback max {Ms(Percentile(cold.CallbackMs, 1))}."));
             report.AppendLine(Invariant($"- Render callbacks: {callbacks.Count} samples; median {Ms(Percentile(callbacks, 0.5))}, ") +
                 Invariant($"p99 {Ms(Percentile(callbacks, 0.99))}, max {Ms(Percentile(callbacks, 1))}."));
             report.AppendLine(Invariant($"- Frame pacing: {intervals.Count} intervals; median {Ms(medianInterval)}, p95 {Ms(Percentile(intervals, 0.95))}, ") +
-                Invariant($"max {Ms(Percentile(intervals, 1))}; {longFrames} intervals over {LongFrameFactor}x the median."));
+                Invariant($"max {Ms(Percentile(intervals, 1))}; {refreshUnknown} measured invocations without a known refresh rate."));
             report.AppendLine(Invariant($"- Hook delay: median {Ms(Percentile(delays, 0.5))}, p99 {Ms(Percentile(delays, 0.99))}."));
             report.AppendLine(Invariant($"- Resources after warm-up: {Describe(WarmUpResources)}; after the cycles: {Describe(FinalResources)}."));
             if (Failure is not null)
@@ -716,6 +886,11 @@ public sealed class EffectSurfaceProbe : IDisposable
             : "not measured";
 
         private static string Ms(double? value) => value is { } ms ? Invariant($"{ms:0.###} ms") : "n/a";
+
+        private static string Ratio(double? value) => value is { } ratio ? Invariant($"{ratio:0.###}") : "n/a";
+
+        private static string Bounds(MonitorBounds bounds) =>
+            Invariant($"({bounds.Left}, {bounds.Top}, {bounds.Right}, {bounds.Bottom})");
 
         /// <summary>Nearest-rank percentile (fraction 1 gives the maximum), or <c>null</c> without samples.</summary>
         private static double? Percentile(List<double> values, double fraction)
