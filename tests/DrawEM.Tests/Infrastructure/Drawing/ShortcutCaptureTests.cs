@@ -614,8 +614,10 @@ public class ShortcutCaptureTests
                         (Shortcut.Create(CtrlShift, three), Drumroll),
                         (Shortcut.Create(AltShift, three), Drumroll),
                         (Shortcut.Create(CtrlAlt | ShortcutModifiers.Shift, three), Drumroll),
-                    ]),
-                Played.Add);
+                    ],
+                    []),
+                Played.Add,
+                _ => { });
         }
 
         public GlobalShortcutAdapter Adapter { get; }
