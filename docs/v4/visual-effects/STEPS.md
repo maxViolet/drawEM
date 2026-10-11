@@ -48,7 +48,10 @@ monitor-sized one. Run the benchmark once per placement; the report names the pl
 delay are recorded for each placement against the roadmap targets. If Monitor
 misses a target, measure half resolution.
 If that also misses, stop and revise the roadmap to Cursor effects only, with
-owner confirmation, before S4-03. Estimated time: half a day.
+owner confirmation, before S4-03. If Cursor misses a target, stop; the owner
+revises the roadmap targets or scope and confirms it before S4-03. S4-03 starts
+only when both placements meet the targets or a confirmed revision covers each
+miss. Estimated time: half a day.
 
 ### S4-03: play the built-in effects
 
@@ -172,7 +175,9 @@ and settings rollback.
 Drawing, sound, shortcuts, focus, mixed DPI, Cursor effects at monitor edges,
 screen sharing, and lifecycle checks are recorded separately from automated
 results. The 100-invocation latency, resource, and hook-delay checks meet the
-roadmap targets for each placement. Mark unrun cases unverified. Complete the
+roadmap targets for each placement; a miss blocks the release until the owner
+revises the roadmap with a recorded rationale. Mark unrun cases unverified; any
+unverified roadmap check except window-only sharing blocks the release. Complete the
 v3 Step 8 baseline before releasing v4.
 
 **First action:** start S4-03.1: add `SkiaSharp.Skottie` and draw one Lottie frame in the S4-01 probe.

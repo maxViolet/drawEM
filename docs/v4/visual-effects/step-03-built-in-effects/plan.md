@@ -9,6 +9,7 @@
 3. Add a second window type: sized to the Lottie canvas in DIP, centered on the cursor, clipped to the monitor. The monitor-sized window uses cover scaling.
 4. Run the probe benchmark once per placement; the report names the placement and the window bounds. Record render callback p95, frame interval p95, dropped frames, hook delay p95 and maximum, and resource counts against the roadmap targets.
 5. If the Monitor surface misses a target, render it at half resolution in the same monitor-sized window and measure again. Half resolution reduces Skia drawing and bitmap upload; it does not reduce the layered-window cost, which stays at monitor size. If that also misses, stop: revise the roadmap to Cursor effects only and get the project owner's confirmation before S4-03 continues.
+6. If the Cursor surface misses a target, stop: there is no fallback. Give the measurements to the project owner, who revises the roadmap targets or scope and confirms the revision before S4-03 continues.
 
 ## S4-03: built-in effects
 
