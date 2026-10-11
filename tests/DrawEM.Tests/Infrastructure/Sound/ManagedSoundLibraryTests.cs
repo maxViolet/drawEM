@@ -1,5 +1,6 @@
 using System.Text;
 using DrawEM.App.Application.Settings;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Domain.Sound;
 using DrawEM.App.Infrastructure.Settings;
@@ -230,6 +231,44 @@ public sealed class ManagedSoundLibraryTests : IDisposable
     }
 
     [Fact]
+    public void CommitSave_SlotChangedFromSoundToEffect_RemovesCopyOnlyAfterLastSoundReference()
+    {
+        var library = Library();
+        var shared = library.Import(WriteSource("shared.wav", "shared"));
+        var sounds = Snapshot((1, shared), (2, shared));
+        library.CommitSave(SettingsSnapshot.Default, sounds, removeUnreferencedCopies: true);
+        var oneEffect = WithEffect(sounds, 1, "confetti");
+
+        library.CommitSave(sounds, oneEffect, removeUnreferencedCopies: true);
+        Assert.True(File.Exists(CopyPath(shared)));
+
+        var failures = library.CommitSave(oneEffect, WithEffect(oneEffect, 2, "focus-ring"), removeUnreferencedCopies: true);
+
+        Assert.Empty(failures);
+        Assert.Empty(LibraryFiles());
+    }
+
+    [Fact]
+    public void Startup_WithSavedSoundAndEffectSlots_KeepsSavedSoundCopies()
+    {
+        var store = new JsonSettingsStore(root);
+        var library = Library();
+        var saved = library.Import(WriteSource("saved.wav", "saved"));
+        var savedSettings = WithEffect(Snapshot((1, saved), (3, saved)), 2, "confetti");
+        store.Save(savedSettings);
+        library.CommitSave(SettingsSnapshot.Default, savedSettings, removeUnreferencedCopies: true);
+        var draft = library.Import(WriteSource("draft.wav", "draft"));
+
+        var startup = SettingsStartup.Load(store, new NoReporter());
+        var failures = SettingsStartup.RemoveOrphanSounds(startup, Library());
+
+        Assert.Equal(savedSettings, startup.Active);
+        Assert.Empty(failures);
+        Assert.Equal([saved.LibraryFileName], LibraryFiles());
+        Assert.False(File.Exists(CopyPath(draft)));
+    }
+
+    [Fact]
     public void CommitSave_RemovesDraftImportsReplacedBeforeSave()
     {
         var library = Library();
@@ -403,6 +442,14 @@ public sealed class ManagedSoundLibraryTests : IDisposable
 
         var defaults = SettingsSnapshot.Default;
         return SettingsSnapshot.Validate(defaults.Style, defaults.DrawShortcut, defaults.ClearShortcut, slots).Snapshot!;
+    }
+
+    private static SettingsSnapshot WithEffect(SettingsSnapshot snapshot, int slot, string effect)
+    {
+        var shortcut = Shortcut.Create(ShortcutModifiers.Control | ShortcutModifiers.Alt, ShortcutKey.Digit(slot));
+        var slots = snapshot.Slots.ToArray();
+        slots[slot - 1] = new ActionSlot(slot, new EffectAction(new EffectId(effect), shortcut));
+        return SettingsSnapshot.Validate(snapshot.Style, snapshot.DrawShortcut, snapshot.ClearShortcut, slots).Snapshot!;
     }
 
     private sealed class NoReporter : ISettingsFailureReporter

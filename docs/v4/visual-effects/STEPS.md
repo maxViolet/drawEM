@@ -1,6 +1,6 @@
 # v4: simple implementation steps
 
-**Status:** S4-01 is done by owner decision, with its measurement gates unverified. S4-02 and S4-04 are done; other steps are pending.
+**Status:** S4-01 is done by owner decision, with its measurement gates unverified. S4-02, S4-04, and S4-05 are done; other steps are pending.
 **Contract:** [v4 roadmap](ROADMAP-v4.md). Its product rules, technical boundaries,
 and acceptance requirements apply to every step below. Terms follow the
 [glossary](../../../CONTEXT.md).
@@ -82,7 +82,7 @@ slots retain their behavior. Placement is not part of the action.
 
 ## Part 2: connect effects to the app
 
-### S4-05: save and load effect assignments
+### S4-05: save and load effect assignments (done)
 
 **Do:** Add schema 2 with an effect action payload holding only the effect ID.
 Read schema 1 without changing its sound assignments. Back up the old settings
