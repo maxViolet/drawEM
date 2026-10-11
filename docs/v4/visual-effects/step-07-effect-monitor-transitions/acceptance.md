@@ -6,7 +6,8 @@
 - [ ] A -> B -> A transitions cannot let the old effect survive, even if UI dispatch is delayed.
 - [ ] Touching an outside edge without entering a monitor does not stop the effect.
 - [ ] A display-change listener, monitor identity/generation, and surface rebuild are present before this step completes.
-- [ ] Tests cover movement outside draw mode, unreported cursor movement caught by the frame check, no target monitor, queued-start ordering, and topology change; two-monitor Windows checks are recorded.
+- [ ] Tests cover movement outside draw mode, unreported cursor movement caught by the frame check, no target monitor, queued-start ordering, and topology change.
+- [ ] Two-monitor Windows checks confirm the expected behavior, not only record it: the effect stops on entering the other monitor, does not restart on return, survives movement inside its monitor and at an outside edge, and a Cursor effect does not move. Any deviation is a failure of this step.
 - [ ] Ordinary pointer movement on one monitor does not enqueue per-move UI work while an effect runs; with no effect running/queued it adds no monitor lookup to the hook.
 
 ## Validation
