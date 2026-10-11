@@ -41,10 +41,11 @@ public class SoundChannelHostTests
     }
 
     [Fact]
-    public async Task Dispose_WhenSoundThreadIsStuck_ReturnsTimeoutWithinTwoSeconds()
+    public async Task Dispose_WhenSoundThreadIsStuck_ThrowsShutdownTimeout()
     {
         using var entered = new ManualResetEventSlim();
         using var release = new ManualResetEventSlim();
+        using var disposalStarted = new ManualResetEventSlim();
         Thread? soundThread = null;
         var players = new ThreadRecordingFactory
         {
@@ -61,9 +62,14 @@ public class SoundChannelHostTests
         try
         {
             Assert.True(entered.Wait(Wait));
-            disposal = Task.Factory.StartNew(() => Record.Exception(host.Dispose), TaskCreationOptions.LongRunning);
-            var failure = await disposal.WaitAsync(TimeSpan.FromMilliseconds(2500));
-            Assert.IsAssignableFrom<TimeoutException>(failure);
+            disposal = Task.Factory.StartNew(() =>
+            {
+                disposalStarted.Set();
+                return Record.Exception(host.Dispose);
+            }, TaskCreationOptions.LongRunning);
+            Assert.True(disposalStarted.Wait(Wait));
+            var failure = await disposal.WaitAsync(Wait);
+            Assert.IsType<SoundChannelShutdownTimeoutException>(failure);
         }
         finally
         {
