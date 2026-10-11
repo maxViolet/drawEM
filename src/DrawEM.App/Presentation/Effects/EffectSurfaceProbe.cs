@@ -52,6 +52,8 @@ public sealed record EffectProbePorts(
 /// <item><see cref="Invoke"/> shows one effect, replacing a running one.</item>
 /// <item><see cref="RunBenchmark"/> runs warm-up and measured invocations with drawing active and injected
 /// input, within <see cref="RunBudget"/>, then writes a report with the automated gate results.</item>
+/// <item><see cref="RunCursorBenchmark"/> runs the same benchmark for <see cref="EffectProbeMode.Cursor"/>,
+/// so one process measures both placements.</item>
 /// </list>
 /// All members run on the UI thread.
 /// </summary>
@@ -93,7 +95,7 @@ public sealed class EffectSurfaceProbe : IDisposable
 
     private readonly EffectProbePorts ports;
     private readonly EffectProbeMode mode;
-    private readonly Animation animation;
+    private readonly IReadOnlyDictionary<EffectProbePlacement, Animation> animations;
     private readonly double animationLoadMs;
     private ProbeInvocation? current;
     private BenchmarkRecord? benchmark;
@@ -108,11 +110,9 @@ public sealed class EffectSurfaceProbe : IDisposable
 
         // Parsed once at startup, outside the hook callback, and reused by every invocation.
         var start = Stopwatch.GetTimestamp();
-        animation = EffectProbeAnimations.Load(mode.Placement);
+        animations = EffectProbeAnimations.LoadAll();
         animationLoadMs = ToMilliseconds(Stopwatch.GetTimestamp() - start);
     }
-
-    private TimeSpan InvocationDeadline => animation.Duration + DeadlineMargin;
 
     /// <summary>Measured invocations that fit in <see cref="RunBudget"/>; at least one.</summary>
     public static int MeasuredInvocationsFor(TimeSpan animationDuration)
@@ -156,7 +156,7 @@ public sealed class EffectSurfaceProbe : IDisposable
             return;
         }
 
-        var result = await Start(target, trigger, invocationIndex: 0);
+        var result = await Start(target, trigger, invocationIndex: 0, mode);
         if (result.Failure is not null)
         {
             AppendError($"Effect on monitor {result.Monitor} failed: {result.Failure}");
@@ -164,7 +164,13 @@ public sealed class EffectSurfaceProbe : IDisposable
     }
 
     /// <summary>Runs the 100-invocation benchmark and writes its report. Ignored while one is running.</summary>
-    public async void RunBenchmark()
+    public void RunBenchmark() => RunBenchmark(mode);
+
+    /// <summary>Runs the benchmark for a Cursor effect, whatever the startup mode is.</summary>
+    public void RunCursorBenchmark() => RunBenchmark(EffectProbeMode.Cursor);
+
+    /// <summary>Runs the benchmark for <paramref name="benchmarkMode"/> and writes its report. Ignored while one is running.</summary>
+    private async void RunBenchmark(EffectProbeMode benchmarkMode)
     {
         if (disposed || benchmarkRunning)
         {
@@ -174,7 +180,10 @@ public sealed class EffectSurfaceProbe : IDisposable
         benchmarkRunning = true;
         current?.Finish();
         var record = new BenchmarkRecord(
-            DateTimeOffset.Now, mode, DescribeAnimation(), MeasuredInvocationsFor(animation.Duration));
+            DateTimeOffset.Now,
+            benchmarkMode,
+            DescribeAnimation(benchmarkMode.Placement),
+            MeasuredInvocationsFor(animations[benchmarkMode.Placement].Duration));
         try
         {
             await Task.Delay(KeyReleaseDelay);
@@ -186,7 +195,7 @@ public sealed class EffectSurfaceProbe : IDisposable
                     throw new InvalidOperationException($"Warm-up invocation {i}: no monitor contains the cursor.");
                 }
 
-                record.Add(await Start(target, Stopwatch.GetTimestamp(), -i));
+                record.Add(await Start(target, Stopwatch.GetTimestamp(), -i, benchmarkMode));
                 await Task.Delay(PauseBetweenInvocations);
             }
 
@@ -208,7 +217,7 @@ public sealed class EffectSurfaceProbe : IDisposable
                 {
                     ports.BeginDrawing(target.Cursor, target.Monitor);
                     ports.StartInputLoad(target.Cursor, target.Monitor);
-                    var result = await Start(target, trigger, i);
+                    var result = await Start(target, trigger, i, benchmarkMode);
 
                     // A physical key event closes the probe's draw mode; its hook delays then were not measured while drawing.
                     result.DrawModeClosedEarly = !ports.IsDrawing();
@@ -255,7 +264,10 @@ public sealed class EffectSurfaceProbe : IDisposable
 
         disposed = true;
         current?.Finish();
-        animation.Dispose();
+        foreach (var animation in animations.Values)
+        {
+            animation.Dispose();
+        }
     }
 
     /// <summary>
@@ -286,11 +298,13 @@ public sealed class EffectSurfaceProbe : IDisposable
     private (MonitorBounds Monitor, ScreenPoint Cursor)? TargetAtCursor() =>
         ports.CursorPosition() is { } cursor && ports.MonitorAt(cursor) is { } monitor ? (monitor, cursor) : null;
 
-    private Task<InvocationResult> Start((MonitorBounds Monitor, ScreenPoint Cursor) target, long trigger, int invocationIndex)
+    private Task<InvocationResult> Start(
+        (MonitorBounds Monitor, ScreenPoint Cursor) target, long trigger, int invocationIndex, EffectProbeMode invocationMode)
     {
         current?.Finish();
         var cold = coldStart is null;
-        var invocation = new ProbeInvocation(this, target.Monitor, target.Cursor, trigger, invocationIndex, cold);
+        var invocation = new ProbeInvocation(
+            this, invocationMode, animations[invocationMode.Placement], target.Monitor, target.Cursor, trigger, invocationIndex, cold);
         if (cold)
         {
             // Kept for the benchmark report even when the cold invocation came from Ctrl+Alt+F9.
@@ -337,8 +351,12 @@ public sealed class EffectSurfaceProbe : IDisposable
 
     private static double ToMilliseconds(long ticks) => ticks * 1000d / Stopwatch.Frequency;
 
-    private string DescribeAnimation() => FormattableString.Invariant(
-        $"{animation.Size.Width}x{animation.Size.Height} canvas, {animation.Duration.TotalSeconds:0.##} s at {animation.Fps:0.##} fps, parsed in {animationLoadMs:0.#} ms");
+    private string DescribeAnimation(EffectProbePlacement placement)
+    {
+        var animation = animations[placement];
+        return FormattableString.Invariant(
+            $"{animation.Size.Width}x{animation.Size.Height} canvas, {animation.Duration.TotalSeconds:0.##} s at {animation.Fps:0.##} fps; all probe animations parsed in {animationLoadMs:0.#} ms");
+    }
 
     /// <summary>The display refresh rate of the monitor containing <paramref name="point"/>, or <c>null</c> when unknown.</summary>
     private static int? RefreshRateAt(ScreenPoint point)
@@ -362,6 +380,8 @@ public sealed class EffectSurfaceProbe : IDisposable
     private sealed class ProbeInvocation
     {
         private readonly EffectSurfaceProbe owner;
+        private readonly EffectProbeMode mode;
+        private readonly Animation animation;
         private readonly MonitorBounds monitor;
         private readonly ScreenPoint cursor;
         private readonly long trigger;
@@ -380,16 +400,27 @@ public sealed class EffectSurfaceProbe : IDisposable
         private bool finished;
 
         public ProbeInvocation(
-            EffectSurfaceProbe owner, MonitorBounds monitor, ScreenPoint cursor, long trigger, int index, bool cold)
+            EffectSurfaceProbe owner,
+            EffectProbeMode mode,
+            Animation animation,
+            MonitorBounds monitor,
+            ScreenPoint cursor,
+            long trigger,
+            int index,
+            bool cold)
         {
             this.owner = owner;
+            this.mode = mode;
+            this.animation = animation;
             this.monitor = monitor;
             this.cursor = cursor;
             this.trigger = trigger;
-            Result = new InvocationResult(index, cold, monitor);
+            Result = new InvocationResult(index, cold, monitor, mode.Name);
         }
 
         public Task<InvocationResult> Completion => completion.Task;
+
+        private TimeSpan InvocationDeadline => animation.Duration + DeadlineMargin;
 
         public InvocationResult Result { get; }
 
@@ -402,10 +433,10 @@ public sealed class EffectSurfaceProbe : IDisposable
                 window = new EffectSurfaceWindow(monitor);
                 owner.OpenWindows++;
                 window.Closed += (_, _) => owner.OpenWindows--;
-                var canvas = new Size(owner.animation.Size.Width, owner.animation.Size.Height);
-                var renderScale = owner.mode.RenderScale;
+                var canvas = new Size(animation.Size.Width, animation.Size.Height);
+                var renderScale = mode.RenderScale;
                 CursorSurfaceBounds? cursorBounds = null;
-                if (owner.mode.Placement == EffectProbePlacement.Cursor)
+                if (mode.Placement == EffectProbePlacement.Cursor)
                 {
                     window.ShowOnMonitor(dpiScale =>
                     {
@@ -435,11 +466,11 @@ public sealed class EffectSurfaceProbe : IDisposable
                 owner.RenderingSubscriptions++;
 
                 // Rendering stops, for example, while the session is locked; the invocation must still end.
-                deadline = new DispatcherTimer { Interval = owner.InvocationDeadline };
+                deadline = new DispatcherTimer { Interval = InvocationDeadline };
                 deadline.Tick += (_, _) =>
                 {
                     Result.Failure = new TimeoutException(
-                        $"The effect did not finish within {owner.InvocationDeadline.TotalSeconds} s; rendering callbacks stopped.");
+                        $"The effect did not finish within {InvocationDeadline.TotalSeconds} s; rendering callbacks stopped.");
                     Finish();
                 };
                 deadline.Start();
@@ -499,7 +530,7 @@ public sealed class EffectSurfaceProbe : IDisposable
 
             // Monotonic elapsed time picks the frame, so a slow frame never lengthens the effect.
             var elapsedSeconds = (callbackStart - trigger) / (double)Stopwatch.Frequency;
-            if (elapsedSeconds >= owner.animation.Duration.TotalSeconds)
+            if (elapsedSeconds >= animation.Duration.TotalSeconds)
             {
                 Finish();
                 return;
@@ -551,8 +582,8 @@ public sealed class EffectSurfaceProbe : IDisposable
 
                 var canvas = surface.Canvas;
                 canvas.Clear(SKColors.Transparent);
-                owner.animation.SeekFrameTime(elapsedSeconds);
-                owner.animation.Render(canvas, destination);
+                animation.SeekFrameTime(elapsedSeconds);
+                animation.Render(canvas, destination);
                 canvas.Flush();
 
                 // The whole bitmap: the upper bound of the upload cost.
@@ -565,8 +596,11 @@ public sealed class EffectSurfaceProbe : IDisposable
         }
     }
 
-    private sealed class InvocationResult(int index, bool cold, MonitorBounds monitor)
+    private sealed class InvocationResult(int index, bool cold, MonitorBounds monitor, string mode)
     {
+        /// <summary>The probe mode that showed this invocation.</summary>
+        public string Mode { get; } = mode;
+
         /// <summary>Negative for warm-up invocations, 0 for a single invocation, 1-100 when measured.</summary>
         public int Index { get; } = index;
 
@@ -805,7 +839,7 @@ public sealed class EffectSurfaceProbe : IDisposable
                 Invariant($"median {Ms(Percentile(appearances, 0.5))}, p95 {Ms(Percentile(appearances, 0.95))}, max {Ms(Percentile(appearances, 1))}."));
             report.AppendLine(ColdStart is not { } cold
                 ? "- Cold start: not recorded; the process showed no effect."
-                : Invariant($"- Cold start ({DescribeSource(cold)}): first appearance {Ms(cold.FirstAppearanceMs)}, ") +
+                : Invariant($"- Cold start ({DescribeSource(cold)}, mode {cold.Mode}): first appearance {Ms(cold.FirstAppearanceMs)}, ") +
                   Invariant($"render callback max {Ms(Percentile(cold.CallbackMs, 1))}."));
             report.AppendLine(Invariant($"- Render callbacks: {callbacks.Count} samples; median {Ms(Percentile(callbacks, 0.5))}, ") +
                 Invariant($"p99 {Ms(Percentile(callbacks, 0.99))}, max {Ms(Percentile(callbacks, 1))}."));

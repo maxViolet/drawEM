@@ -9,6 +9,30 @@ namespace DrawEM.App.Presentation.Effects;
 /// </summary>
 public static class EffectProbeAnimations
 {
+    /// <summary>Parses the animation of every placement; the caller disposes them.</summary>
+    public static IReadOnlyDictionary<EffectProbePlacement, Animation> LoadAll()
+    {
+        var animations = new Dictionary<EffectProbePlacement, Animation>();
+        try
+        {
+            foreach (var placement in Enum.GetValues<EffectProbePlacement>())
+            {
+                animations[placement] = Load(placement);
+            }
+
+            return animations;
+        }
+        catch
+        {
+            foreach (var animation in animations.Values)
+            {
+                animation.Dispose();
+            }
+
+            throw;
+        }
+    }
+
     public static Animation Load(EffectProbePlacement placement)
     {
         var name = placement == EffectProbePlacement.Cursor ? "probe-focus-ring.json" : "probe-confetti.json";

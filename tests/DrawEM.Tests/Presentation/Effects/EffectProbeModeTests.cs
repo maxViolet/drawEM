@@ -21,6 +21,12 @@ public class EffectProbeModeTests
         Assert.Equal(name, mode.Name);
     }
 
+    [Fact]
+    public void Cursor_IsTheFullResolutionCursorMode()
+    {
+        Assert.Equal(EffectProbeMode.Parse("cursor"), EffectProbeMode.Cursor);
+    }
+
     [Theory]
     [InlineData("cursor-half")]
     [InlineData("monitors")]

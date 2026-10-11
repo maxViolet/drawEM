@@ -15,11 +15,14 @@ public sealed record EffectProbeMode(EffectProbePlacement Placement, double Rend
 {
     public const string Variable = "DRAWEM_EFFECT_PROBE_PLACEMENT";
 
+    /// <summary>The mode of the Ctrl+Alt+F11 benchmark, whatever <see cref="Variable"/> chooses.</summary>
+    public static EffectProbeMode Cursor { get; } = new(EffectProbePlacement.Cursor, 1.0, "cursor");
+
     public static EffectProbeMode Parse(string? value) => value?.ToLowerInvariant() switch
     {
         null or "" or "monitor" => new(EffectProbePlacement.Monitor, 1.0, "monitor"),
         "monitor-half" => new(EffectProbePlacement.Monitor, 0.5, "monitor-half"),
-        "cursor" => new(EffectProbePlacement.Cursor, 1.0, "cursor"),
+        "cursor" => Cursor,
         _ => throw new ArgumentException(
             $"{Variable} must be monitor, monitor-half, or cursor; got '{value}'.", nameof(value)),
     };

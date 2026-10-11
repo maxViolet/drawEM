@@ -16,4 +16,22 @@ public class EffectProbeAnimationsTests
         Assert.Equal(height, animation.Size.Height);
         Assert.Equal(seconds, animation.Duration.TotalSeconds, precision: 3);
     }
+
+    [Fact]
+    public void LoadAll_ParsesOneAnimationPerPlacement()
+    {
+        var animations = EffectProbeAnimations.LoadAll();
+        try
+        {
+            Assert.Equal(Enum.GetValues<EffectProbePlacement>(), animations.Keys.Order());
+            Assert.Equal(240, animations[EffectProbePlacement.Cursor].Size.Width);
+        }
+        finally
+        {
+            foreach (var animation in animations.Values)
+            {
+                animation.Dispose();
+            }
+        }
+    }
 }
