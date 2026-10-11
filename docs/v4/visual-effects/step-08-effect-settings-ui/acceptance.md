@@ -6,7 +6,9 @@
 - [ ] Selecting or changing type does not change running bindings before Save.
 - [ ] Default shortcut proposal, preservation, conflict errors, and clearing behave consistently across action types.
 - [ ] Cancel after Sound -> Effect preserves the saved sound assignment and managed copy; editor/view-model tests record results.
+- [ ] In the running app, Settings shows the Monitor and Cursor groups with the right effect in each, and no placement control. Record this visual check separately from automated results.
 
 ## Validation
 
 - Automated checks: unverified. Record exact commands and results during implementation.
+- Running-app visual check: unverified. Record the build and observations.
