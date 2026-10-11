@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace DrawEM.App.Domain.Effects;
 
 /// <summary>The built-in effects. Settings name an effect by ID; placement and file come from here.</summary>
@@ -10,7 +12,7 @@ public static class EffectCatalog
     ]);
 
     /// <summary>Finds the entry with exactly this ID; IDs are case-sensitive.</summary>
-    public static bool TryFind(EffectId id, out BuiltInEffect? effect)
+    public static bool TryFind(EffectId id, [NotNullWhen(true)] out BuiltInEffect? effect)
     {
         effect = BuiltIn.FirstOrDefault(entry => entry.Id == id);
         return effect is not null;

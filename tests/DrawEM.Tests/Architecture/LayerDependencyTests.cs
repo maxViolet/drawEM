@@ -45,7 +45,7 @@ public class LayerDependencyTests
     [InlineData(Domain + ".Sound")]
     public void DomainEntities_DoNotDependOnSettings(string module)
     {
-        // Settings store values of drawing and sound types; those types do not know how settings are organized.
+        // Settings store values of drawing, effect, and sound types; those types do not know how settings are organized.
         var result = Types.InAssembly(typeof(DrawingState).Assembly)
             .That().ResideInNamespaceStartingWith(module)
             .ShouldNot().HaveDependencyOn(Domain + ".Settings")

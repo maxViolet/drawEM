@@ -51,11 +51,18 @@ public enum SettingsErrorCode
     /// <summary>An effect slot has no effect ID.</summary>
     MissingEffect,
 
-    /// <summary>An effect slot names an ID that is not in <see cref="EffectCatalog"/>.</summary>
+    /// <summary>
+    /// An effect slot names an ID that is not in <see cref="EffectCatalog"/>. <see cref="SettingsError.Effect"/>
+    /// names the ID.
+    /// </summary>
     UnknownEffect,
 }
 
-public sealed record SettingsError(SettingsErrorCode Code, SettingsCommand? Command = null, SettingsCommand? Other = null)
+public sealed record SettingsError(
+    SettingsErrorCode Code,
+    SettingsCommand? Command = null,
+    SettingsCommand? Other = null,
+    EffectId? Effect = null)
 {
     public override string ToString() => Describe(command => command.ToString());
 
@@ -72,7 +79,7 @@ public sealed record SettingsError(SettingsErrorCode Code, SettingsCommand? Comm
             SettingsErrorCode.MissingSound => $"{Name(Command)} requires a sound.",
             SettingsErrorCode.InvalidShortcut => $"{Name(Command)} has an invalid shortcut.",
             SettingsErrorCode.MissingEffect => $"{Name(Command)} requires an effect.",
-            SettingsErrorCode.UnknownEffect => $"{Name(Command)} uses an unsupported effect.",
+            SettingsErrorCode.UnknownEffect => $"{Name(Command)} uses unsupported effect \"{Effect?.Value}\".",
             _ => $"Settings must contain exactly slots 1–{ActionSlot.Count} in order.",
         };
     }
@@ -152,7 +159,7 @@ public sealed record SettingsSnapshot
                 }
                 else if (!EffectCatalog.TryFind(effect, out _))
                 {
-                    errors.Add(new SettingsError(SettingsErrorCode.UnknownEffect, SettingsCommand.ForSlot(slot.Number)));
+                    errors.Add(new SettingsError(SettingsErrorCode.UnknownEffect, SettingsCommand.ForSlot(slot.Number), Effect: effect));
                 }
             }
         }

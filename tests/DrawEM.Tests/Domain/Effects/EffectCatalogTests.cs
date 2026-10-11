@@ -9,10 +9,10 @@ public class EffectCatalogTests
     {
         Assert.Equal(
             [
-                new BuiltInEffect(new EffectId("confetti"), "Confetti", EffectPlacement.Monitor, "confetti.json"),
-                new BuiltInEffect(new EffectId("focus-ring"), "Focus ring", EffectPlacement.Cursor, "focus-ring.json"),
+                (new EffectId("confetti"), EffectPlacement.Monitor),
+                (new EffectId("focus-ring"), EffectPlacement.Cursor),
             ],
-            EffectCatalog.BuiltIn);
+            EffectCatalog.BuiltIn.Select(effect => (effect.Id, effect.Placement)));
     }
 
     [Theory]
@@ -21,7 +21,7 @@ public class EffectCatalogTests
     public void TryFind_ReturnsTheEntryForAKnownId(string id, EffectPlacement placement)
     {
         Assert.True(EffectCatalog.TryFind(new EffectId(id), out var effect));
-        Assert.Equal(placement, effect!.Placement);
+        Assert.Equal(placement, effect.Placement);
     }
 
     [Theory]

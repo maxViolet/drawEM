@@ -8,7 +8,9 @@ and acceptance requirements apply to every step below. Terms follow the
 Build built-in Lottie effects with two placements: **Monitor** (covers the
 monitor) and **Cursor** (fixed size, centered on the captured cursor point).
 Imported effects and video come later. Follow these steps in order; each step
-assumes the previous ones are complete. Keep incomplete paths internal until
+assumes the previous ones are complete. Exception: S4-04 was done before S4-03,
+because the action model needs only the catalog data, not playback; S4-04 added
+the catalog. Keep incomplete paths internal until
 their settings and lifecycle integration is ready.
 
 ## Part 1: make effects work
@@ -57,9 +59,9 @@ miss. Estimated time: half a day.
 
 **Do:** Build the Monitor surface (cover scaling) and the Cursor surface (canvas
 size in DIP, centered on the captured point, clipped to the monitor) behind the
-rendering port. Add the built-in catalog with confetti (Monitor) and focus ring
-(Cursor) as embedded Lottie files selected from LottieFiles, each with its
-recorded source and license. Play each file once, from elapsed time; disconnect the frame callback when idle.
+rendering port. Embed the confetti (Monitor) and focus ring (Cursor) Lottie
+files, selected from LottieFiles, under the resource names in the catalog that
+S4-04 added, each with its recorded source and license. Play each file once, from elapsed time; disconnect the frame callback when idle.
 
 **Done when:** Both effects finish and disappear, can be replaced midway, and
 leave no render subscription running. Tests check that every built-in file loads,

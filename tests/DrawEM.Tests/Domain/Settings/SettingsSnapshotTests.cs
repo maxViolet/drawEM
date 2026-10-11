@@ -163,8 +163,10 @@ public class SettingsSnapshotTests
         var result = SettingsSnapshot.Validate(Style, Draw, Clear, slots);
 
         Assert.False(result.IsValid);
-        Assert.Equal([new SettingsError(SettingsErrorCode.UnknownEffect, SettingsCommand.ForSlot(4))], result.Errors);
-        Assert.Equal("Slot 4 uses an unsupported effect.", result.Errors[0].ToString());
+        Assert.Equal(
+            [new SettingsError(SettingsErrorCode.UnknownEffect, SettingsCommand.ForSlot(4), Effect: new EffectId("sparkles"))],
+            result.Errors);
+        Assert.Equal("Slot 4 uses unsupported effect \"sparkles\".", result.Errors[0].ToString());
     }
 
     [Fact]
