@@ -1,6 +1,6 @@
 # v4: simple implementation steps
 
-**Status:** S4-01 is done by owner decision, with its measurement gates unverified. S4-02 is done; later steps are pending.
+**Status:** S4-01 is done by owner decision, with its measurement gates unverified. S4-02 and S4-04 are done; other steps are pending.
 **Contract:** [v4 roadmap](ROADMAP-v4.md). Its product rules, technical boundaries,
 and acceptance requirements apply to every step below. Terms follow the
 [glossary](../../../CONTEXT.md).
@@ -8,7 +8,9 @@ and acceptance requirements apply to every step below. Terms follow the
 Build built-in Lottie effects with two placements: **Monitor** (covers the
 monitor) and **Cursor** (fixed size, centered on the captured cursor point).
 Imported effects and video come later. Follow these steps in order; each step
-assumes the previous ones are complete. Keep incomplete paths internal until
+assumes the previous ones are complete. Exception: S4-04 was done before S4-03,
+because the action model needs only the catalog data, not playback; S4-04 added
+the catalog. Keep incomplete paths internal until
 their settings and lifecycle integration is ready.
 
 ## Part 1: make effects work
@@ -57,9 +59,9 @@ miss. Estimated time: half a day.
 
 **Do:** Build the Monitor surface (cover scaling) and the Cursor surface (canvas
 size in DIP, centered on the captured point, clipped to the monitor) behind the
-rendering port. Add the built-in catalog with confetti (Monitor) and focus ring
-(Cursor) as embedded Lottie files selected from LottieFiles, each with its
-recorded source and license. Play each file once, from elapsed time; disconnect the frame callback when idle.
+rendering port. Embed the confetti (Monitor) and focus ring (Cursor) Lottie
+files, selected from LottieFiles, under the resource names in the catalog that
+S4-04 added, each with its recorded source and license. Play each file once, from elapsed time; disconnect the frame callback when idle.
 
 **Done when:** Both effects finish and disappear, can be replaced midway, and
 leave no render subscription running. Tests check that every built-in file loads,
@@ -68,7 +70,7 @@ lasts no more than 10 seconds and no more than its specified length (confetti
 bounds and clipping. Check appearance at monitor edges, no rapid flashing, and drawing/audio
 coexistence on Windows. Keep failures local to the effect.
 
-### S4-04: add effects to the action model
+### S4-04: add effects to the action model (done)
 
 **Do:** Add EffectAction with a stable effect ID to the existing eight-slot model.
 Keep one action and one shortcut per occupied slot. Validate known effect IDs
