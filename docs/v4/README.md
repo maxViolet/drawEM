@@ -24,6 +24,8 @@ IDs, and branches, so one developer or agent can work on each at the same time.
     the work is done.
 - Each file links to the other two in its header. See
   [S4-02](visual-effects/step-02-effect-channel/task.md) as the example.
+- A package that is not groomed yet, such as release publishing, may have
+  only a scope seed. It gets its roadmap and step folders during grooming.
 
 ## Rules for parallel work
 
