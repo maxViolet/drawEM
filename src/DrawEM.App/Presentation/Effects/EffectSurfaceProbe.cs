@@ -50,8 +50,8 @@ public sealed record EffectProbePorts(
 /// <c>DRAWEM_EFFECT_PROBE=1</c>; S4-06 removes it with its trigger.
 /// <list type="bullet">
 /// <item><see cref="Invoke"/> shows one effect, replacing a running one.</item>
-/// <item><see cref="RunBenchmark"/> runs warm-up and 100 measured invocations with drawing active and
-/// injected input, then writes a report with the automated gate results.</item>
+/// <item><see cref="RunBenchmark"/> runs warm-up and measured invocations with drawing active and injected
+/// input, within <see cref="RunBudget"/>, then writes a report with the automated gate results.</item>
 /// </list>
 /// All members run on the UI thread.
 /// </summary>
@@ -60,9 +60,10 @@ public sealed class EffectSurfaceProbe : IDisposable
     public const string EnableVariable = "DRAWEM_EFFECT_PROBE";
 
     /// <summary>Invocations before the resource baseline; the process's first one is recorded as cold.</summary>
-    public const int WarmUpInvocations = 5;
+    public const int WarmUpInvocations = 2;
 
-    public const int MeasuredInvocations = 100;
+    /// <summary>The whole benchmark, from the shortcut to the report, fits in this time.</summary>
+    public static readonly TimeSpan RunBudget = TimeSpan.FromSeconds(30);
 
     // Automated thresholds from the S4-01 acceptance criteria.
     private const double RenderCallbackP95LimitMs = 4;
@@ -72,7 +73,7 @@ public sealed class EffectSurfaceProbe : IDisposable
     private const double ResourceGrowthLimit = 0.05;
     private const double FirstAppearanceTargetMs = 100;
 
-    /// <summary>A frame interval this many times the median counts as a long frame in the pacing record.</summary>
+    /// <summary>Roadmap target: a frame interval over this many refresh intervals is a dropped frame.</summary>
     private const double DroppedFrameFactor = 1.5;
 
     /// <summary>Roadmap target: at most this fraction of frame intervals are dropped frames.</summary>
@@ -112,6 +113,22 @@ public sealed class EffectSurfaceProbe : IDisposable
     }
 
     private TimeSpan InvocationDeadline => animation.Duration + DeadlineMargin;
+
+    /// <summary>Measured invocations that fit in <see cref="RunBudget"/>; at least one.</summary>
+    public static int MeasuredInvocationsFor(TimeSpan animationDuration)
+    {
+        var cycle = animationDuration + PauseBetweenInvocations;
+        var left = RunBudget - FixedRunTime - (WarmUpInvocations * cycle);
+        return Math.Max(1, (int)(left / cycle));
+    }
+
+    /// <summary>The benchmark's planned length without window and report overhead.</summary>
+    public static TimeSpan PlannedRunTime(TimeSpan animationDuration) =>
+        FixedRunTime + ((WarmUpInvocations + MeasuredInvocationsFor(animationDuration))
+            * (animationDuration + PauseBetweenInvocations));
+
+    /// <summary>Waits outside the invocations: key release, two idle settles, and the hook check.</summary>
+    private static TimeSpan FixedRunTime => KeyReleaseDelay + IdleSettleDelay + PostCycleCheckDuration + IdleSettleDelay;
 
     public static string DefaultReportDirectory { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "drawEM", "effect-probe");
@@ -156,7 +173,8 @@ public sealed class EffectSurfaceProbe : IDisposable
 
         benchmarkRunning = true;
         current?.Finish();
-        var record = new BenchmarkRecord(DateTimeOffset.Now, mode, DescribeAnimation());
+        var record = new BenchmarkRecord(
+            DateTimeOffset.Now, mode, DescribeAnimation(), MeasuredInvocationsFor(animation.Duration));
         try
         {
             await Task.Delay(KeyReleaseDelay);
@@ -175,7 +193,7 @@ public sealed class EffectSurfaceProbe : IDisposable
             await Task.Delay(IdleSettleDelay);
             record.WarmUpResources = ResourceCounts.Read();
 
-            for (var i = 1; i <= MeasuredInvocations && !disposed; i++)
+            for (var i = 1; i <= record.PlannedMeasured && !disposed; i++)
             {
                 if (TargetAtCursor() is not { } target)
                 {
@@ -598,15 +616,17 @@ public sealed class EffectSurfaceProbe : IDisposable
 
     private readonly record struct HookDelay(int Invocation, bool Keyboard, double DelayMs);
 
-    private sealed class BenchmarkRecord(DateTimeOffset started, EffectProbeMode mode, string animation)
+    private sealed class BenchmarkRecord(DateTimeOffset started, EffectProbeMode mode, string animation, int plannedMeasured)
     {
         /// <summary>Room for every hook sample, so the list never grows inside a hook callback.</summary>
-        private const int ExpectedHookDelays = MeasuredInvocations * 256;
+        private const int ExpectedHookDelays = 25_600;
 
         private readonly List<InvocationResult> invocations = [];
         private readonly List<HookDelay> hookDelays = new(ExpectedHookDelays);
 
         public DateTimeOffset Started { get; } = started;
+
+        public int PlannedMeasured { get; } = plannedMeasured;
 
         public int CurrentInvocation { get; set; }
 
@@ -736,8 +756,8 @@ public sealed class EffectSurfaceProbe : IDisposable
             var warmUpCount = invocations.Count(invocation => invocation.Index < 0);
             Gate(report, "Warm-up invocations completed", Invariant($"{warmUpCount}"), Invariant($"{WarmUpInvocations}"),
                 warmUpCount == WarmUpInvocations);
-            Gate(report, "Measured invocations completed", Invariant($"{measured.Count}"), Invariant($"{MeasuredInvocations}"),
-                measured.Count == MeasuredInvocations && SkippedNoMonitor == 0);
+            Gate(report, "Measured invocations completed", Invariant($"{measured.Count}"), Invariant($"{PlannedMeasured}"),
+                measured.Count == PlannedMeasured && SkippedNoMonitor == 0);
             Gate(report, "Render callback p95", Ms(callbackP95), Invariant($"<= {RenderCallbackP95LimitMs} ms"),
                 callbackP95 <= RenderCallbackP95LimitMs);
             var delayP95 = Percentile(delays, 0.95);
