@@ -10,6 +10,7 @@
 - Write tests before code: first add a test that describes the required behavior and run it. Make sure it fails for the expected reason. Only then write the code, until the test passes.
 - Start a bug fix with a test that reproduces the bug.
 - If an automated test cannot check the behavior (for example, how a window looks on screen), describe the manual check in the PR's `## Validation` section and mark it unverified until it is done.
+- Structure v4 work as [package structure](docs/v4/README.md#package-structure) says: every step or task folder has `task.md`, `plan.md`, and `acceptance.md`. Put v4 tasks outside the roadmap steps in [out of scope](docs/v4/out-of-scope/README.md).
 
 ## Branch names
 
