@@ -15,7 +15,7 @@
 - Validation: `SettingsSnapshot.Validate` reports `UnknownEffect` and `MissingEffect`; shortcut checks are shared with draw, clear, and sound slots.
 - Typed invocation command: `StartEffectCommand` (Application, from S4-02) is unchanged.
 - Tests: `tests/DrawEM.Tests/Domain/Effects/EffectCatalogTests.cs` and the effect cases in `tests/DrawEM.Tests/Domain/Settings/SettingsSnapshotTests.cs`. `LayerDependencyTests` keeps WPF and Win32 types out of Domain and Application.
-- Not yet connected: settings JSON (S4-05), shortcut bindings (S4-06), and the Settings window (S4-08) still handle only sound actions.
+- Not connected by S4-04: shortcut bindings (S4-06) and the Settings window (S4-08) still handle only sound actions. Settings JSON was connected in [S4-05](../step-05-effect-settings-schema/acceptance.md).
 
 ## Validation
 

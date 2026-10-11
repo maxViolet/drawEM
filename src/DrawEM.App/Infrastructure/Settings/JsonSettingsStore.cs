@@ -7,19 +7,21 @@ namespace DrawEM.App.Infrastructure.Settings;
 
 /// <summary>
 /// Stores <c>settings.json</c> in one directory. Save writes a flushed temporary file, then moves it over
-/// the saved file, so a failed save leaves the previous file intact. The first Save over a schema 1 file
-/// first keeps its bytes as <see cref="Schema1BackupFileName"/>, which no later Save overwrites. Load never
-/// writes the settings file; when it cannot use the file it keeps a timestamped copy of the bytes beside it.
+/// the saved file, so a failed save leaves the previous file intact. Before Save replaces a valid schema 1
+/// file it keeps the file's bytes as a backup for rollback; the first backup, <see cref="Schema1BackupFileName"/>,
+/// is never overwritten. Load never writes the settings file; when it cannot use the file it keeps a
+/// timestamped copy of the bytes beside it.
 /// </summary>
 public sealed class JsonSettingsStore : ISettingsStore
 {
     public const string FileName = "settings.json";
 
-    /// <summary>The schema 1 file as an older drawEM wrote it, for rollback.</summary>
+    /// <summary>The first schema 1 file a Save replaced, for rollback.</summary>
     public const string Schema1BackupFileName = "settings.schema1-backup.json";
 
     private const string TempSuffix = ".tmp";
     private const string RecoveryPattern = "settings.unreadable-*.json";
+    private const string Schema1BackupPattern = "settings.schema1-backup*.json";
 
     private readonly string directory;
     private readonly TimeProvider time;
@@ -80,18 +82,14 @@ public sealed class JsonSettingsStore : ISettingsStore
     }
 
     /// <summary>
-    /// Keeps the current file's bytes before Save replaces a schema 1 file, unless a backup already exists.
-    /// The backup appears complete or not at all.
+    /// Keeps the current file's bytes before Save replaces a valid schema 1 file. The first such file becomes
+    /// <see cref="Schema1BackupFileName"/>; a different schema 1 file saved later (after a rollback and a
+    /// second upgrade) gets a timestamped backup beside it. Bytes already in a backup are not copied again.
+    /// Each backup appears complete or not at all.
     /// </summary>
     /// <exception cref="SettingsStoreException">The backup could not be made; nothing was saved.</exception>
     private void BackUpSchema1File()
     {
-        var backup = Path.Combine(directory, Schema1BackupFileName);
-        if (File.Exists(backup))
-        {
-            return;
-        }
-
         byte[] current;
         try
         {
@@ -108,11 +106,15 @@ public sealed class JsonSettingsStore : ISettingsStore
                 failure);
         }
 
-        if (SettingsJson.ReadSchemaVersion(current) != 1)
+        if (!SettingsJson.IsValidSchema1(current) || FindCopy(Schema1BackupPattern, current) is not null)
         {
             return;
         }
 
+        var first = Path.Combine(directory, Schema1BackupFileName);
+        var backup = File.Exists(first)
+            ? Path.Combine(directory, $"settings.schema1-backup-{Stamp()}.json")
+            : first;
         var temp = backup + TempSuffix;
         try
         {
@@ -130,13 +132,13 @@ public sealed class JsonSettingsStore : ISettingsStore
 
     private string? TryKeepRecoveryCopy(byte[] data)
     {
-        var existing = FindRecoveryCopy(data);
+        var existing = FindCopy(RecoveryPattern, data);
         if (existing is not null)
         {
             return existing;
         }
 
-        var stamp = time.GetUtcNow().ToString("yyyyMMdd'T'HHmmssfff'Z'", CultureInfo.InvariantCulture);
+        var stamp = Stamp();
         for (var attempt = 0; attempt < 100; attempt++)
         {
             var suffix = attempt == 0 ? "" : "-" + attempt.ToString(CultureInfo.InvariantCulture);
@@ -159,12 +161,15 @@ public sealed class JsonSettingsStore : ISettingsStore
         return null;
     }
 
-    /// <summary>Reuses a copy of the same bytes, so repeated launches with one damaged file keep one copy.</summary>
-    private string? FindRecoveryCopy(byte[] data)
+    /// <summary>
+    /// A file matching <paramref name="pattern"/> with exactly these bytes, so repeated launches or saves with
+    /// one file keep one copy.
+    /// </summary>
+    private string? FindCopy(string pattern, byte[] data)
     {
         try
         {
-            return Directory.EnumerateFiles(directory, RecoveryPattern)
+            return Directory.EnumerateFiles(directory, pattern)
                 .FirstOrDefault(path => new FileInfo(path).Length == data.Length &&
                     File.ReadAllBytes(path).AsSpan().SequenceEqual(data));
         }
@@ -173,6 +178,8 @@ public sealed class JsonSettingsStore : ISettingsStore
             return null;
         }
     }
+
+    private string Stamp() => time.GetUtcNow().ToString("yyyyMMdd'T'HHmmssfff'Z'", CultureInfo.InvariantCulture);
 
     private static void WriteFlushed(string path, byte[] data, FileMode mode)
     {

@@ -67,17 +67,20 @@ Schema 1 (v3) has the same layout and allows only `sound` actions.
   deletes the temporary file when possible, and leaves the previous
   `settings.json` unchanged. A temporary file left by a crash is overwritten by
   the next Save.
-- Before Save replaces a schema 1 `settings.json`, it copies the file's bytes
-  to `settings.schema1-backup.json` (through a flushed temporary file, so the
-  backup is complete or absent). If the backup cannot be made, or the current
-  file cannot be read to check its version, Save raises
-  `SettingsStoreException` and writes nothing. An existing backup is never
-  overwritten, so after a rollback and a second upgrade it still holds the
-  first schema 1 file. A missing, damaged, or schema 2 file gets no backup.
+- Before Save replaces a schema 1 `settings.json` that passes every Load check,
+  it copies the file's bytes to a backup through a flushed temporary file, so
+  each backup is complete or absent. The first backup is
+  `settings.schema1-backup.json` and is never overwritten. After a rollback to
+  v3, a different schema 1 file saved there is backed up on the next v4 Save as
+  `settings.schema1-backup-<UTC timestamp>.json`; bytes already in a backup are
+  not copied again. If the backup cannot be made, or the current file cannot be
+  read to check it, Save raises `SettingsStoreException` and writes nothing. A
+  missing, schema 2, or damaged file gets no backup: a damaged file was already
+  kept by Load as an unreadable copy.
 - Load never writes `settings.json` and never creates the backup. A missing
   file means first launch. A file that cannot be read (for example, locked) is
-  reported without a copy. A malformed, invalid, or unsupported file is
-  reported, and its bytes are kept as
+  reported without a copy. A malformed (including a string that is not valid
+  UTF-8), invalid, or unsupported file is reported, and its bytes are kept as
   `settings.unreadable-<UTC timestamp>.json`; the same bytes reuse one copy
   across launches. The damaged `settings.json` stays until the user saves.
 - `SettingsStartup` falls back to defaults on a missing or unusable file, reports
@@ -86,24 +89,34 @@ Schema 1 (v3) has the same layout and allows only `sound` actions.
 ## Rolling back to a v3 drawEM
 
 A v3 drawEM reads only schema 1, so it reports a schema 2 file as unsupported
-and starts with defaults. To return to v3 with the last v3 settings:
+and starts with defaults. To return to v3 with the settings v4 replaced:
 
 1. Exit drawEM from the tray icon, and check that no `DrawEM.App.exe` process
    is running. A running drawEM may save over the restored file.
-2. In `%LOCALAPPDATA%\drawEM`, copy `settings.schema1-backup.json` to
-   `settings.json`, replacing it. Keep the backup.
-3. Start the v3 drawEM.
+2. In `%LOCALAPPDATA%\drawEM`, rename `settings.json` to `settings.v4.json` to
+   keep the v4 settings. To upgrade again later with them, rename it back
+   before starting v4.
+3. Copy the newest backup to `settings.json`: the
+   `settings.schema1-backup-<UTC timestamp>.json` with the latest timestamp, or
+   `settings.schema1-backup.json` when there is no timestamped backup. Keep the
+   backups.
+4. Start the v3 drawEM.
+
+With no backup, v4 never replaced a v3 file. A schema 1 `settings.json` needs
+no change. A schema 2 one was created by v4; v3 starts with defaults and
+removes no sounds.
 
 Limits:
 
-- The backup holds the settings from before the first v4 Save. Changes saved in
-  v4 after that, including effect slots, are lost.
+- A backup holds the settings from just before a v4 Save replaced a schema 1
+  file. Changes saved in v4 after that, including effect slots, are not in it.
 - A v4 Save removes managed sound copies that its settings no longer reference.
   If a later v4 Save removed a copy that the backup names, that slot's sound is
   missing after the rollback: the slot stays assigned, and each press logs a
   failure to `logs\sound.log` until a file is chosen again.
-- Sounds imported in v4 after the backup are not named by the backup. The v3
-  startup cleanup removes every managed copy that the loaded settings do not
-  reference, so those copies are deleted at the first v3 launch.
+- Sounds imported after the backup are not named by it. The v3 startup cleanup
+  removes every managed copy that the loaded settings do not reference, so
+  those copies are deleted at the first v3 launch, even if `settings.v4.json`
+  still uses them.
 - If the restored file cannot be loaded, v3 starts with defaults and removes
   nothing.

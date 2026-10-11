@@ -272,19 +272,69 @@ public sealed class JsonSettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public void LaterSaves_NeverOverwriteTheMigrationBackup()
+    public void SecondUpgrade_KeepsFirstBackupAndBacksUpNewerSchema1File()
     {
         WriteSettings(Schema1CustomJson());
         var original = File.ReadAllBytes(SettingsPath);
         Store().Save(Custom());
         Store().Save(Mixed());
 
-        // A rollback restored an older schema 1 file, then the user upgraded again.
+        // The user rolled back, saved different settings in v3, then upgraded again.
         WriteSettings(ValidJson());
+        var savedInV3 = File.ReadAllBytes(SettingsPath);
         Store().Save(Mixed());
 
         Assert.Equal(original, File.ReadAllBytes(BackupPath));
+        var second = Path.Combine(directory, "settings.schema1-backup-20260925T120000000Z.json");
+        Assert.Equal(savedInV3, File.ReadAllBytes(second));
+        Assert.Equal(
+            new[] { BackupPath, second }.Order(),
+            Directory.GetFiles(directory, "settings.schema1-backup*").Order());
         Assert.Equal(Mixed(), Loaded(Store().Load()));
+    }
+
+    [Fact]
+    public void SecondUpgrade_AfterRestoringTheBackupUnchanged_KeepsOneBackup()
+    {
+        WriteSettings(Schema1CustomJson());
+        var original = File.ReadAllBytes(SettingsPath);
+        Store().Save(Mixed());
+
+        File.Copy(BackupPath, SettingsPath, overwrite: true);
+        Store().Save(Mixed());
+
+        Assert.Equal([BackupPath], Directory.GetFiles(directory, "settings.schema1-backup*"));
+        Assert.Equal(original, File.ReadAllBytes(BackupPath));
+    }
+
+    [Theory]
+    [InlineData("\"width\": 4", "\"width\": 99")]
+    [InlineData("\"type\": \"sound\"", "\"type\": \"video\"")]
+    [InlineData("\"drawing\": {", "\"drawing2\": {")]
+    public void Save_OverInvalidSchema1File_CreatesNoBackup(string find, string replace)
+    {
+        WriteSettings(ValidJson().Replace(find, replace));
+
+        Store().Save(Mixed());
+
+        Assert.False(File.Exists(BackupPath));
+        Assert.Equal(Mixed(), Loaded(Store().Load()));
+    }
+
+    [Fact]
+    public void Load_InvalidUtf8InAString_IsUnreadableWithRecoveryCopy()
+    {
+        var bytes = Encoding.UTF8.GetBytes(Schema2Json());
+        var at = bytes.AsSpan().IndexOf("confetti"u8);
+        bytes[at] = 0xFF;
+        Directory.CreateDirectory(directory);
+        File.WriteAllBytes(SettingsPath, bytes);
+
+        var result = Assert.IsType<SettingsLoadResult.Unreadable>(Store().Load());
+
+        Assert.Contains("'effectId' is not valid UTF-8", result.Reason);
+        Assert.Equal(bytes, File.ReadAllBytes(result.RecoveryCopy!));
+        Assert.Equal(bytes, File.ReadAllBytes(SettingsPath));
     }
 
     [Fact]

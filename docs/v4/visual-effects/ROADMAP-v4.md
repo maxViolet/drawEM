@@ -309,7 +309,7 @@ effect and is then cancelled.
 ## Delivery order and completion criteria
 
 Follow the [simple implementation steps](STEPS.md). Each step has one outcome
-and a completion check. S4-01 is recorded as complete by owner decision; S4-02 and S4-04 are complete.
+and a completion check. S4-01 is recorded as complete by owner decision; S4-02, S4-04, and S4-05 are complete.
 
 | Task | Outcome |
 |---|---|

@@ -92,7 +92,26 @@ public static class SettingsJson
     /// <exception cref="SettingsFormatException">
     /// The data is not JSON, has an unsupported schema version, or does not describe valid settings.
     /// </exception>
-    public static SettingsSnapshot Deserialize(ReadOnlyMemory<byte> data)
+    public static SettingsSnapshot Deserialize(ReadOnlyMemory<byte> data) => Deserialize(data, out _);
+
+    /// <summary>
+    /// <c>true</c> when the data is a schema 1 file that passes every check <see cref="Deserialize(ReadOnlyMemory{byte})"/>
+    /// makes, so a drawEM that reads only schema 1 can load it.
+    /// </summary>
+    public static bool IsValidSchema1(ReadOnlyMemory<byte> data)
+    {
+        try
+        {
+            Deserialize(data, out var version);
+            return version == 1;
+        }
+        catch (SettingsFormatException)
+        {
+            return false;
+        }
+    }
+
+    private static SettingsSnapshot Deserialize(ReadOnlyMemory<byte> data, out int version)
     {
         JsonDocument document;
         try
@@ -107,7 +126,7 @@ public static class SettingsJson
         using (document)
         {
             var root = Object(document.RootElement, "settings");
-            var version = Int(root, "schemaVersion");
+            version = Int(root, "schemaVersion");
             if (version is < 1 or > CurrentSchemaVersion)
             {
                 throw new SettingsFormatException(
@@ -138,32 +157,11 @@ public static class SettingsJson
                 throw new SettingsFormatException("slots must be an array.");
             }
 
-            var slots = slotsElement.EnumerateArray().Select(element => ReadSlot(element, version)).ToArray();
+            var schema = version;
+            var slots = slotsElement.EnumerateArray().Select(element => ReadSlot(element, schema)).ToArray();
             var validation = SettingsSnapshot.Validate(style, draw, clear, slots);
             return validation.Snapshot ?? throw new SettingsFormatException(
                 "Settings are invalid: " + string.Join(" ", validation.Errors));
-        }
-    }
-
-    /// <summary>
-    /// The integer <c>schemaVersion</c> of a settings file, or <c>null</c> when the data is not a JSON object
-    /// with one. Does not validate the rest of the file.
-    /// </summary>
-    public static int? ReadSchemaVersion(ReadOnlyMemory<byte> data)
-    {
-        try
-        {
-            using var document = JsonDocument.Parse(data);
-            return document.RootElement.ValueKind == JsonValueKind.Object &&
-                document.RootElement.TryGetProperty("schemaVersion", out var version) &&
-                version.ValueKind == JsonValueKind.Number &&
-                version.TryGetInt32(out var number)
-                    ? number
-                    : null;
-        }
-        catch (JsonException)
-        {
-            return null;
         }
     }
 
@@ -246,9 +244,19 @@ public static class SettingsJson
     private static string String(JsonElement element, string name)
     {
         var value = Property(element, name);
-        return value.ValueKind == JsonValueKind.String
-            ? value.GetString()!
-            : throw new SettingsFormatException($"'{name}' must be a string.");
+        if (value.ValueKind != JsonValueKind.String)
+        {
+            throw new SettingsFormatException($"'{name}' must be a string.");
+        }
+
+        try
+        {
+            return value.GetString()!;
+        }
+        catch (InvalidOperationException failure)
+        {
+            throw new SettingsFormatException($"'{name}' is not valid UTF-8.", failure);
+        }
     }
 
     private static int Int(JsonElement element, string name)
