@@ -14,8 +14,8 @@
 - Migration backup: `JsonSettingsStore.Save` copies a schema 1 `settings.json` to `settings.schema1-backup.json` before the first replacement, through a flushed temporary file. A failed backup, or a current file that cannot be read, stops the Save before anything is written. An existing backup is kept.
 - Sound accounting: `ManagedSoundLibrary` counts only `SoundAction` slots, so changing a slot to an effect removes the copy only after its last saved sound reference; startup cleanup with a mixed schema 2 file keeps saved sound copies.
 - Rollback: "Rolling back to a v3 drawEM" in `src/DrawEM.App/Infrastructure/Settings/README.md`.
+- Tests: `tests/DrawEM.Tests/Infrastructure/Settings/JsonSettingsStoreTests.cs` (schema 1 load without writes, schema 2 round-trip and payload shape, invalid schema 2 files, effect in schema 1, backup creation, backup kept on later saves and after a rollback, no backup without a schema 1 file, backup failure, replace failure after backup) and `tests/DrawEM.Tests/Infrastructure/Sound/ManagedSoundLibraryTests.cs` (sound-to-effect slot change, startup with mixed slots).
 - Not yet connected: shortcut bindings (S4-06) ignore effect slots, so a saved effect slot's shortcut does nothing yet; the Settings window (S4-08) cannot assign effects.
-- Not yet connected: shortcut bindings (S4-06) ignore effect slots, and the Settings window (S4-08) cannot assign effects; a saved effect slot keeps its shortcut reserved.
 
 ## Validation
 
