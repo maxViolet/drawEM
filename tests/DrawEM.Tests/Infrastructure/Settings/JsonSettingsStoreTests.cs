@@ -285,12 +285,32 @@ public sealed class JsonSettingsStoreTests : IDisposable
         Store().Save(Mixed());
 
         Assert.Equal(original, File.ReadAllBytes(BackupPath));
-        var second = Path.Combine(directory, "settings.schema1-backup-20260925T120000000Z.json");
+        var second = Path.Combine(directory, "settings.schema1-backup-2.json");
         Assert.Equal(savedInV3, File.ReadAllBytes(second));
         Assert.Equal(
             new[] { BackupPath, second }.Order(),
             Directory.GetFiles(directory, "settings.schema1-backup*").Order());
         Assert.Equal(Mixed(), Loaded(Store().Load()));
+    }
+
+    [Fact]
+    public void UpgradeAfterRestoringAnOlderBackup_MakesItTheHighestNumberedBackup()
+    {
+        WriteSettings(Schema1CustomJson());
+        var a = File.ReadAllBytes(SettingsPath);
+        Store().Save(Mixed());
+        WriteSettings(ValidJson());
+        var b = File.ReadAllBytes(SettingsPath);
+        Store().Save(Mixed());
+
+        // The user restored the first backup (A) instead of the newest (B), then upgraded again.
+        File.Copy(BackupPath, SettingsPath, overwrite: true);
+        Store().Save(Mixed());
+
+        Assert.Equal(a, File.ReadAllBytes(BackupPath));
+        Assert.Equal(b, File.ReadAllBytes(Path.Combine(directory, "settings.schema1-backup-2.json")));
+        Assert.Equal(a, File.ReadAllBytes(Path.Combine(directory, "settings.schema1-backup-3.json")));
+        Assert.Equal(3, Directory.GetFiles(directory, "settings.schema1-backup*").Length);
     }
 
     [Fact]

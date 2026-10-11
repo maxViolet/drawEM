@@ -21,7 +21,7 @@ public sealed class JsonSettingsStore : ISettingsStore
 
     private const string TempSuffix = ".tmp";
     private const string RecoveryPattern = "settings.unreadable-*.json";
-    private const string Schema1BackupPattern = "settings.schema1-backup*.json";
+    private const string NumberedBackupPrefix = "settings.schema1-backup-";
 
     private readonly string directory;
     private readonly TimeProvider time;
@@ -82,10 +82,11 @@ public sealed class JsonSettingsStore : ISettingsStore
     }
 
     /// <summary>
-    /// Keeps the current file's bytes before Save replaces a valid schema 1 file. The first such file becomes
-    /// <see cref="Schema1BackupFileName"/>; a different schema 1 file saved later (after a rollback and a
-    /// second upgrade) gets a timestamped backup beside it. Bytes already in a backup are not copied again.
-    /// Each backup appears complete or not at all.
+    /// Keeps the current file's bytes before Save replaces a valid schema 1 file. The first backup is
+    /// <see cref="Schema1BackupFileName"/> (number 1); each later one is <c>settings.schema1-backup-N.json</c>
+    /// with the next number, so the highest number always holds the file the latest migration replaced.
+    /// Nothing is copied when the highest-numbered backup already has these bytes. No backup is overwritten,
+    /// and each appears complete or not at all.
     /// </summary>
     /// <exception cref="SettingsStoreException">The backup could not be made; nothing was saved.</exception>
     private void BackUpSchema1File()
@@ -106,15 +107,31 @@ public sealed class JsonSettingsStore : ISettingsStore
                 failure);
         }
 
-        if (!SettingsJson.IsValidSchema1(current) || FindCopy(Schema1BackupPattern, current) is not null)
+        if (!SettingsJson.IsValidSchema1(current))
         {
             return;
         }
 
-        var first = Path.Combine(directory, Schema1BackupFileName);
-        var backup = File.Exists(first)
-            ? Path.Combine(directory, $"settings.schema1-backup-{Stamp()}.json")
-            : first;
+        string backup;
+        try
+        {
+            var (latest, number) = LatestSchema1Backup();
+            if (latest is not null && SameBytes(latest, current))
+            {
+                return;
+            }
+
+            backup = number == 0
+                ? Path.Combine(directory, Schema1BackupFileName)
+                : Path.Combine(directory, $"{NumberedBackupPrefix}{(number + 1).ToString(CultureInfo.InvariantCulture)}.json");
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            throw new SettingsStoreException(
+                $"Settings could not be saved: the schema 1 backups could not be read: {failure.Message}",
+                failure);
+        }
+
         var temp = backup + TempSuffix;
         try
         {
@@ -130,15 +147,33 @@ public sealed class JsonSettingsStore : ISettingsStore
         }
     }
 
+    /// <summary>The highest-numbered schema 1 backup and its number, or <c>(null, 0)</c> when there is none.</summary>
+    private (string? Path, int Number) LatestSchema1Backup()
+    {
+        var first = Path.Combine(directory, Schema1BackupFileName);
+        (string? Path, int Number) latest = File.Exists(first) ? (first, 1) : (null, 0);
+        foreach (var path in Directory.EnumerateFiles(directory, NumberedBackupPrefix + "*.json"))
+        {
+            var suffix = Path.GetFileNameWithoutExtension(path)[NumberedBackupPrefix.Length..];
+            if (int.TryParse(suffix, NumberStyles.None, CultureInfo.InvariantCulture, out var number) &&
+                number > latest.Number)
+            {
+                latest = (path, number);
+            }
+        }
+
+        return latest;
+    }
+
     private string? TryKeepRecoveryCopy(byte[] data)
     {
-        var existing = FindCopy(RecoveryPattern, data);
+        var existing = FindRecoveryCopy(data);
         if (existing is not null)
         {
             return existing;
         }
 
-        var stamp = Stamp();
+        var stamp = time.GetUtcNow().ToString("yyyyMMdd'T'HHmmssfff'Z'", CultureInfo.InvariantCulture);
         for (var attempt = 0; attempt < 100; attempt++)
         {
             var suffix = attempt == 0 ? "" : "-" + attempt.ToString(CultureInfo.InvariantCulture);
@@ -161,17 +196,13 @@ public sealed class JsonSettingsStore : ISettingsStore
         return null;
     }
 
-    /// <summary>
-    /// A file matching <paramref name="pattern"/> with exactly these bytes, so repeated launches or saves with
-    /// one file keep one copy.
-    /// </summary>
-    private string? FindCopy(string pattern, byte[] data)
+    /// <summary>Reuses a copy of the same bytes, so repeated launches with one damaged file keep one copy.</summary>
+    private string? FindRecoveryCopy(byte[] data)
     {
         try
         {
-            return Directory.EnumerateFiles(directory, pattern)
-                .FirstOrDefault(path => new FileInfo(path).Length == data.Length &&
-                    File.ReadAllBytes(path).AsSpan().SequenceEqual(data));
+            return Directory.EnumerateFiles(directory, RecoveryPattern)
+                .FirstOrDefault(path => SameBytes(path, data));
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -179,7 +210,8 @@ public sealed class JsonSettingsStore : ISettingsStore
         }
     }
 
-    private string Stamp() => time.GetUtcNow().ToString("yyyyMMdd'T'HHmmssfff'Z'", CultureInfo.InvariantCulture);
+    private static bool SameBytes(string path, byte[] data) =>
+        new FileInfo(path).Length == data.Length && File.ReadAllBytes(path).AsSpan().SequenceEqual(data);
 
     private static void WriteFlushed(string path, byte[] data, FileMode mode)
     {

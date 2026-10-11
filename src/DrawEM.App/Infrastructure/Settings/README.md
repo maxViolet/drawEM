@@ -70,13 +70,15 @@ Schema 1 (v3) has the same layout and allows only `sound` actions.
 - Before Save replaces a schema 1 `settings.json` that passes every Load check,
   it copies the file's bytes to a backup through a flushed temporary file, so
   each backup is complete or absent. The first backup is
-  `settings.schema1-backup.json` and is never overwritten. After a rollback to
-  v3, a different schema 1 file saved there is backed up on the next v4 Save as
-  `settings.schema1-backup-<UTC timestamp>.json`; bytes already in a backup are
-  not copied again. If the backup cannot be made, or the current file cannot be
-  read to check it, Save raises `SettingsStoreException` and writes nothing. A
-  missing, schema 2, or damaged file gets no backup: a damaged file was already
-  kept by Load as an unreadable copy.
+  `settings.schema1-backup.json` (number 1). Each later migration (after a
+  rollback to v3) writes `settings.schema1-backup-<N>.json` with the next
+  number, so the highest number always holds the file the latest migration
+  replaced. Nothing is copied when the highest-numbered backup already has the
+  same bytes, and no backup is overwritten. If the backup cannot be made, or the
+  current file or the backups cannot be read, Save raises
+  `SettingsStoreException` and writes nothing. A missing, schema 2, or damaged
+  file gets no backup: a damaged file was already kept by Load as an
+  unreadable copy.
 - Load never writes `settings.json` and never creates the backup. A missing
   file means first launch. A file that cannot be read (for example, locked) is
   reported without a copy. A malformed (including a string that is not valid
@@ -96,10 +98,10 @@ and starts with defaults. To return to v3 with the settings v4 replaced:
 2. In `%LOCALAPPDATA%\drawEM`, rename `settings.json` to `settings.v4.json` to
    keep the v4 settings. To upgrade again later with them, rename it back
    before starting v4.
-3. Copy the newest backup to `settings.json`: the
-   `settings.schema1-backup-<UTC timestamp>.json` with the latest timestamp, or
-   `settings.schema1-backup.json` when there is no timestamped backup. Keep the
-   backups.
+3. Copy the backup with the highest number to `settings.json`: the
+   `settings.schema1-backup-<N>.json` with the largest `N`, or
+   `settings.schema1-backup.json` when there is no numbered backup. Keep the
+   backups. Older numbers hold v3 settings replaced by earlier migrations.
 4. Start the v3 drawEM.
 
 With no backup, v4 never replaced a v3 file. A schema 1 `settings.json` needs
