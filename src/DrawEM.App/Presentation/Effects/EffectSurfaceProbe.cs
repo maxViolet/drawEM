@@ -47,7 +47,7 @@ public sealed record EffectProbePorts(
 /// on the monitor containing the cursor, above the drawing overlay, and measures the renderer. The
 /// <see cref="EffectProbeMode"/> chooses a Monitor surface (cover scaling, optionally at half resolution) or a
 /// Cursor surface (canvas size in DIP, centered on the cursor, clipped to the monitor). Enabled only with
-/// <c>DRAWEM_EFFECT_PROBE=1</c>; S4-06 removes it with its trigger.
+/// <c>DRAWEM_EFFECT_PROBE=1</c>; S4-03 removes it with its trigger.
 /// <list type="bullet">
 /// <item><see cref="Invoke"/> shows one effect, replacing a running one.</item>
 /// <item><see cref="RunBenchmark"/> runs warm-up and measured invocations with drawing active and injected

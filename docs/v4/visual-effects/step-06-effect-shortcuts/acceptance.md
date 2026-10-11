@@ -2,19 +2,21 @@
 
 **Task:** [launch effects through shortcuts](task.md). **Plan:** [implementation](plan.md).
 
-- [x] A bound effect of either placement launches once on first key-down; holding does not retrigger and a released/repressed shortcut restarts it. Checked against the start delegate with a fake dispatcher; no effect shows on screen until S4-03 adds a surface (see Scope).
-- [x] A Cursor effect appears centered on the cursor point captured at key-down, not a later position. The start request carries the key-down point and the monitor that contains it; the surface centers on that point in S4-03.
+- [x] A bound effect of either placement sends one start request on first key-down; holding does not send another, and a released and repressed shortcut sends a new one, which restarts the effect. Checked against the start delegate with a fake dispatcher.
+- [x] The start request for a Cursor effect carries the cursor point captured at key-down, not a later position, and the monitor that contains that point.
+- [ ] On screen: a bound effect of either placement launches, and a Cursor effect appears centered on the key-down point. Moved to [S4-03](../step-03-built-in-effects/acceptance.md) with the surface (see Scope).
 - [x] Prepared bindings include sound and effect slots from one settings snapshot without dropping either type.
 - [x] A stale queued invocation cannot publish under a newer configuration.
-- [ ] The S4-01 probe is removed: `EffectSurfaceProbe.cs`, `EffectProbeHotkeys.cs`, `EffectProbeInputLoad.cs`, and the `DRAWEM_EFFECT_PROBE` wiring in `App.xaml.cs` no longer exist, and a search of `src/` for `DRAWEM_EFFECT_PROBE` finds nothing. Deferred by owner decision on 2026-10-11 (see Scope).
-- [x] Automated hook/binding checks cover suppression, key-up, AltGr, capture, conflict, position capture, and sound independence.
+- [ ] The S4-01 probe is removed: `EffectSurfaceProbe.cs`, `EffectProbeHotkeys.cs`, `EffectProbeInputLoad.cs`, and the `DRAWEM_EFFECT_PROBE` wiring in `App.xaml.cs` no longer exist, and a search of `src/` for `DRAWEM_EFFECT_PROBE` finds nothing. Moved to [S4-03](../step-03-built-in-effects/acceptance.md) by owner decision on 2026-10-11 (see Scope).
+- [x] Automated hook/binding checks cover suppression, key-up, AltGr, capture, conflict, position capture, layout protection under Alt+Shift, and sound independence.
 
 ## Scope
 
 S4-06 ran before S4-03 was done: S4-03.1 had not run its benchmarks, and no `IEffectSurface` exists yet. On 2026-10-11 the owner chose to build the shortcut path now and keep the probe:
 
 - `App.xaml.cs` passes a start delegate that does nothing, because there is no surface for `EffectChannelController` yet. A saved effect slot's shortcut is now recognized and hidden from other applications, but shows nothing. S4-03 composes `EffectChannelController.Start` at that point.
-- The probe trigger stays, because the S4-03.1 benchmarks and the S4-03 visual checks use it. Remove it when S4-03 is done, as the unchecked criterion above describes.
+- The probe trigger stays, because the S4-03.1 benchmarks and the S4-03 visual checks use it.
+- Both items are unchecked criteria in the [S4-03 acceptance](../step-03-built-in-effects/acceptance.md) and steps in its plan. STEPS.md and ROADMAP-v4.md now name S4-03 as the step that removes the probe.
 
 ## Implementation
 
@@ -25,6 +27,11 @@ S4-06 ran before S4-03 was done: S4-03.1 had not run its benchmarks, and no `IEf
 ## Validation
 
 - Test first: the new tests in `EffectShortcutTests.cs` and `ShortcutBindingsTests.cs` first failed to build for the expected reason: no effect binding API (`EffectBinding`, `ShortcutBindings.Effects`, the four-argument `ShortcutBindings` constructor, and the ten-argument `GlobalShortcutAdapter` constructor did not exist).
-- Tests: `tests/DrawEM.Tests/Infrastructure/Drawing/EffectShortcutTests.cs` and the effect cases in `ShortcutBindingsTests.cs`.
-- `dotnet test tests/DrawEM.Tests`: 601 passed, 0 failed.
+- Tests: `tests/DrawEM.Tests/Infrastructure/Drawing/EffectShortcutTests.cs`, the effect cases in `ShortcutBindingsTests.cs`, and `EffectShortcutUnderShiftPair_EmitsOneNeutralKeyBeforeModifierRelease_AndStartsOnlyTheEffect` in `ShortcutCaptureTests.cs`.
+- `dotnet test tests/DrawEM.Tests`: 602 passed, 0 failed.
 - Unverified: pressing an effect shortcut in the published app. Nothing is visible until S4-03 composes the surface.
+
+## Review
+
+- `/simplify` (Claude Code): moved the test snapshot builder into `TestSettings.WithEffects`. Its change to `GlobalShortcutAdapter.DispatchCommand` (an `Action<int>` overload so the generation is read once) was reverted. Both reads already run back to back on the hook thread, and the overload added a second closure to every drawing dispatch.
+- Role reviews (correctness, security, spec, test quality): correctness and security found nothing. Fixed: an assertion that could never fail in the cursor-unavailable test; on-screen claims checked off before a surface exists; deferred items not recorded in S4-03, STEPS.md, or ROADMAP-v4.md; no layout-protection test for effect shortcuts.

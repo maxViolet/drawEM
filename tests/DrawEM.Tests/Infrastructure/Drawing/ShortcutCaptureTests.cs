@@ -1,7 +1,9 @@
 using DrawEM.App.Application.Drawing;
+using DrawEM.App.Application.Effects;
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Application.Sound;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Infrastructure.Drawing;
 using DrawEM.App.Infrastructure;
@@ -381,6 +383,28 @@ public class ShortcutCaptureTests
     }
 
     [Fact]
+    public void EffectShortcutUnderShiftPair_EmitsOneNeutralKeyBeforeModifierRelease_AndStartsOnlyTheEffect()
+    {
+        var hook = new Harness();
+
+        hook.Press(VirtualKeys.LeftMenu);
+        hook.Press(VirtualKeys.LeftShift);
+        Assert.True(hook.Press(VirtualKeys.D4));
+        Assert.True(hook.Press(VirtualKeys.D4));
+        hook.Release(VirtualKeys.D4);
+        hook.Release(VirtualKeys.LeftShift);
+        hook.Release(VirtualKeys.LeftMenu);
+        hook.RunQueued();
+
+        Assert.Equal(
+            [$"down {VirtualKeys.LeftMenu:X}", $"down {VirtualKeys.LeftShift:X}", "down 34", "neutral", "down 34", "up 34",
+                $"up {VirtualKeys.LeftShift:X}", $"up {VirtualKeys.LeftMenu:X}"],
+            hook.Log);
+        Assert.Equal(new EffectId("focus-ring"), Assert.Single(hook.Started).Effect);
+        Assert.Empty(hook.Played);
+    }
+
+    [Fact]
     public void ActionMode_EachSuppressedPressUnderShiftPair_EmitsItsOwnNeutralKey()
     {
         var hook = new Harness();
@@ -576,8 +600,8 @@ public class ShortcutCaptureTests
         new ShortcutCaptureResult.Rejected(reason);
 
     /// <summary>
-    /// Default draw and clear, <c>Ctrl+Alt+1</c> for applause, and <c>Ctrl+Shift+3</c>, <c>Alt+Shift+3</c>,
-    /// and <c>Ctrl+Alt+Shift+3</c> for drumroll.
+    /// Default draw and clear, <c>Ctrl+Alt+1</c> for applause, <c>Ctrl+Shift+3</c>, <c>Alt+Shift+3</c>, and
+    /// <c>Ctrl+Alt+Shift+3</c> for drumroll, and <c>Alt+Shift+4</c> for the focus ring.
     /// </summary>
     private sealed class Harness
     {
@@ -615,9 +639,9 @@ public class ShortcutCaptureTests
                         (Shortcut.Create(AltShift, three), Drumroll),
                         (Shortcut.Create(CtrlAlt | ShortcutModifiers.Shift, three), Drumroll),
                     ],
-                    []),
+                    [(Shortcut.Create(AltShift, ShortcutKey.Digit(4)), EffectCatalog.BuiltIn.Single(effect => effect.Id.Value == "focus-ring"))]),
                 Played.Add,
-                _ => { });
+                Started.Add);
         }
 
         public GlobalShortcutAdapter Adapter { get; }
@@ -627,6 +651,8 @@ public class ShortcutCaptureTests
         public List<DrawingState> States { get; } = [];
 
         public List<PlaySoundCommand> Played { get; } = [];
+
+        public List<StartEffectCommand> Started { get; } = [];
 
         public List<ShortcutCaptureResult> Results { get; } = [];
 

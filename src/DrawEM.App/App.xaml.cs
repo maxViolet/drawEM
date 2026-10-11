@@ -104,7 +104,7 @@ public partial class App : System.Windows.Application
 
             overlayWindow.Show();
 
-            // Temporary S4-01 renderer experiment; S4-06 removes it with its trigger.
+            // Temporary S4-01 renderer experiment; S4-03 removes it with its trigger.
             effectProbe = EffectSurfaceProbe.IsEnabled(Environment.GetEnvironmentVariable(EffectSurfaceProbe.EnableVariable))
                 ? StartEffectProbe(controller, inputGate, monitorBoundsSource, keyboardHookSource, mouseHookSource)
                 : new CompositeDisposable();

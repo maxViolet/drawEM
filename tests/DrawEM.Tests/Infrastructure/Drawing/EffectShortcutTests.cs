@@ -84,9 +84,9 @@ public class EffectShortcutTests
         harness.Cursor.Available = false;
 
         Assert.True(harness.PressChord(EffectKey));
+        Assert.Empty(harness.Queued);
         harness.RunQueued();
 
-        Assert.Empty(harness.Queued);
         Assert.Empty(harness.Started);
         Assert.True(harness.Source.ReleaseKey(EffectKey));
     }
@@ -113,7 +113,7 @@ public class EffectShortcutTests
 
         harness.PressChord(EffectKey);
         harness.Adapter.Interrupt();
-        harness.Adapter.Bind(WithEffectInSlot2(Confetti), _ => Applause);
+        harness.Adapter.Bind(TestSettings.WithEffects((2, Confetti.Id)), _ => Applause);
         harness.Source.Release(EffectKey, VirtualKeys.LeftMenu, VirtualKeys.LeftControl);
         harness.PressChord(EffectKey);
         harness.RunQueued();
@@ -196,15 +196,6 @@ public class EffectShortcutTests
 
     private static BuiltInEffect Find(string id) =>
         EffectCatalog.TryFind(new EffectId(id), out var effect) ? effect : throw new ArgumentException(id);
-
-    private static SettingsSnapshot WithEffectInSlot2(BuiltInEffect effect) =>
-        SettingsSnapshot.Validate(
-            SettingsSnapshot.Default.Style,
-            SettingsSnapshot.Default.DrawShortcut,
-            SettingsSnapshot.Default.ClearShortcut,
-            Enumerable.Range(1, ActionSlot.Count).Select(number => number == 2
-                ? new ActionSlot(2, new EffectAction(effect.Id, Shortcut.Create(CtrlAlt, ShortcutKey.Digit(2))))
-                : ActionSlot.Empty(number))).Snapshot!;
 
     /// <summary>Ctrl+Alt+1 plays a sound and Ctrl+Alt+2 starts the effect; dispatcher work waits in <see cref="Queued"/>.</summary>
     private sealed class Harness
