@@ -9,6 +9,8 @@
 - [ ] Render callback p95, frame interval p95, dropped frames, hook delay p95 and maximum, and resource counts are recorded for a Monitor effect and a Cursor effect against the roadmap targets.
 - [ ] `LayerDependencyTests` passes with `SkiaSharp` allowed in Presentation only.
 - [ ] If the Monitor effect missed a target, the half-resolution result is recorded; if that also missed, the roadmap is revised to Cursor effects only with the project owner's confirmation before S4-03 continues.
+- [ ] If the Cursor effect missed a target, S4-03 stops: no fallback exists, because the Cursor window is already the smallest surface. The result goes to the project owner, who revises the roadmap targets or scope; the revision and the owner's confirmation are recorded before S4-03 continues.
+- [ ] S4-03 starts only when each placement meets every target, or when the recorded roadmap revision with the owner's confirmation covers each missed target.
 
 ## S4-03: built-in effects
 
