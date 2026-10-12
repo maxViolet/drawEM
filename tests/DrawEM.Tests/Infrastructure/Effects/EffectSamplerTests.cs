@@ -182,6 +182,20 @@ public class EffectSamplerTests
     }
 
     [Fact]
+    public void SampleThatCannotStart_KeepsTheEarlierSampleOwned_SoStopStillStopsIt()
+    {
+        var fixture = new Fixture();
+        var editor = fixture.Editor();
+        editor.Sample(Confetti);
+        fixture.Cursor.Available = false;
+
+        editor.Sample(FocusRing);
+        editor.Sampler.StopSamples();
+
+        Assert.Null(fixture.Channel.ActiveInstance);
+    }
+
+    [Fact]
     public void Sample_StopsWhenTheCursorEntersAnotherMonitor()
     {
         var fixture = new Fixture();
