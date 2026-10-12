@@ -20,8 +20,9 @@ public class LayerDependencyTests
         { Infrastructure, ["System", "Microsoft", Domain, Application, Infrastructure] },
         // OverlayWindow implements this existing tray-lifecycle port. Other infrastructure
         // dependencies remain forbidden; do not exempt the whole window or namespace.
+        // SkiaSharp plays Lottie effects (ADR 0001); only Presentation may use it.
         { Presentation, ["System", "Microsoft", Domain, Application, Presentation,
-            "DrawEM.App.Infrastructure.IOverlayLifetime"] },
+            "DrawEM.App.Infrastructure.IOverlayLifetime", "SkiaSharp"] },
     };
 
     [Theory]
@@ -41,10 +42,11 @@ public class LayerDependencyTests
 
     [Theory]
     [InlineData(Domain + ".Drawing")]
+    [InlineData(Domain + ".Effects")]
     [InlineData(Domain + ".Sound")]
     public void DomainEntities_DoNotDependOnSettings(string module)
     {
-        // Settings store values of drawing and sound types; those types do not know how settings are organized.
+        // Settings store values of drawing, effect, and sound types; those types do not know how settings are organized.
         var result = Types.InAssembly(typeof(DrawingState).Assembly)
             .That().ResideInNamespaceStartingWith(module)
             .ShouldNot().HaveDependencyOn(Domain + ".Settings")

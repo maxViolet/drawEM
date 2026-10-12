@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Effects;
 
 namespace DrawEM.App.Domain.Settings;
 
@@ -46,9 +47,22 @@ public enum SettingsErrorCode
 
     /// <summary>A shortcut fails <see cref="Shortcut.TryCreate"/> rules.</summary>
     InvalidShortcut,
+
+    /// <summary>An effect slot has no effect ID.</summary>
+    MissingEffect,
+
+    /// <summary>
+    /// An effect slot names an ID that is not in <see cref="EffectCatalog"/>. <see cref="SettingsError.Effect"/>
+    /// names the ID.
+    /// </summary>
+    UnknownEffect,
 }
 
-public sealed record SettingsError(SettingsErrorCode Code, SettingsCommand? Command = null, SettingsCommand? Other = null)
+public sealed record SettingsError(
+    SettingsErrorCode Code,
+    SettingsCommand? Command = null,
+    SettingsCommand? Other = null,
+    EffectId? Effect = null)
 {
     public override string ToString() => Describe(command => command.ToString());
 
@@ -64,6 +78,8 @@ public sealed record SettingsError(SettingsErrorCode Code, SettingsCommand? Comm
             SettingsErrorCode.InvalidWidth => $"Width must be {StrokeWidth.Min}–{StrokeWidth.Max} physical pixels.",
             SettingsErrorCode.MissingSound => $"{Name(Command)} requires a sound.",
             SettingsErrorCode.InvalidShortcut => $"{Name(Command)} has an invalid shortcut.",
+            SettingsErrorCode.MissingEffect => $"{Name(Command)} requires an effect.",
+            SettingsErrorCode.UnknownEffect => $"{Name(Command)} uses unsupported effect \"{Effect?.Value}\".",
             _ => $"Settings must contain exactly slots 1–{ActionSlot.Count} in order.",
         };
     }
@@ -131,6 +147,21 @@ public sealed record SettingsSnapshot
         foreach (var slot in slotList.Where(slot => slot.Action is SoundAction { Sound: null }))
         {
             errors.Add(new SettingsError(SettingsErrorCode.MissingSound, SettingsCommand.ForSlot(slot.Number)));
+        }
+
+        foreach (var slot in slotList)
+        {
+            if (slot.Action is EffectAction { Effect: var effect })
+            {
+                if (effect is null)
+                {
+                    errors.Add(new SettingsError(SettingsErrorCode.MissingEffect, SettingsCommand.ForSlot(slot.Number)));
+                }
+                else if (!EffectCatalog.TryFind(effect, out _))
+                {
+                    errors.Add(new SettingsError(SettingsErrorCode.UnknownEffect, SettingsCommand.ForSlot(slot.Number), Effect: effect));
+                }
+            }
         }
 
         var active = new List<(SettingsCommand Command, Shortcut? Shortcut)>

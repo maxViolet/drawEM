@@ -1,6 +1,6 @@
 # v4: simple implementation steps
 
-**Status:** S4-01 is done by owner decision, with its measurement gates unverified; later steps are pending.
+**Status:** S4-01 is done by owner decision, with its measurement gates unverified. S4-02, S4-04, and S4-05 are done; other steps are pending.
 **Contract:** [v4 roadmap](ROADMAP-v4.md). Its product rules, technical boundaries,
 and acceptance requirements apply to every step below. Terms follow the
 [glossary](../../../CONTEXT.md).
@@ -8,7 +8,9 @@ and acceptance requirements apply to every step below. Terms follow the
 Build built-in Lottie effects with two placements: **Monitor** (covers the
 monitor) and **Cursor** (fixed size, centered on the captured cursor point).
 Imported effects and video come later. Follow these steps in order; each step
-assumes the previous ones are complete. Keep incomplete paths internal until
+assumes the previous ones are complete. Exception: S4-04 was done before S4-03,
+because the action model needs only the catalog data, not playback; S4-04 added
+the catalog. Keep incomplete paths internal until
 their settings and lifecycle integration is ready.
 
 ## Part 1: make effects work
@@ -19,12 +21,13 @@ their settings and lifecycle integration is ready.
 window on the monitor containing the cursor, alongside the real drawing overlay.
 A development-only trigger in
 `src/DrawEM.App/Presentation/Effects/EffectSurfaceProbe.cs`, enabled only with
-`DRAWEM_EFFECT_PROBE=1`, may be used through S4-03 and is removed in S4-06.
+`DRAWEM_EFFECT_PROBE=1`, may be used through S4-03, which removes it (moved
+from S4-06 by owner decision on 2026-10-11, because S4-06 ran before S4-03).
 
 **Done when:** Done on 2026-10-09 by owner decision: the dedicated WPF effect
 surface is chosen. Its measurement gates are unverified; S4-03.1 and S4-12 measure them.
 
-### S4-02: control one running effect
+### S4-02: control one running effect (done)
 
 **Do:** Add an application controller with Start and Stop operations, a unique
 ID for each invocation, a clock, and a replaceable rendering port. An invocation
@@ -48,15 +51,18 @@ monitor-sized one. Run the benchmark once per placement; the report names the pl
 delay are recorded for each placement against the roadmap targets. If Monitor
 misses a target, measure half resolution.
 If that also misses, stop and revise the roadmap to Cursor effects only, with
-owner confirmation, before S4-03. Estimated time: half a day.
+owner confirmation, before S4-03. If Cursor misses a target, stop; the owner
+revises the roadmap targets or scope and confirms it before S4-03. S4-03 starts
+only when both placements meet the targets or a confirmed revision covers each
+miss. Estimated time: half a day.
 
 ### S4-03: play the built-in effects
 
 **Do:** Build the Monitor surface (cover scaling) and the Cursor surface (canvas
 size in DIP, centered on the captured point, clipped to the monitor) behind the
-rendering port. Add the built-in catalog with confetti (Monitor) and focus ring
-(Cursor) as embedded Lottie files selected from LottieFiles, each with its
-recorded source and license. Play each file once, from elapsed time; disconnect the frame callback when idle.
+rendering port. Embed the confetti (Monitor) and focus ring (Cursor) Lottie
+files, selected from LottieFiles, under the resource names in the catalog that
+S4-04 added, each with its recorded source and license. Play each file once, from elapsed time; disconnect the frame callback when idle.
 
 **Done when:** Both effects finish and disappear, can be replaced midway, and
 leave no render subscription running. Tests check that every built-in file loads,
@@ -65,7 +71,7 @@ lasts no more than 10 seconds and no more than its specified length (confetti
 bounds and clipping. Check appearance at monitor edges, no rapid flashing, and drawing/audio
 coexistence on Windows. Keep failures local to the effect.
 
-### S4-04: add effects to the action model
+### S4-04: add effects to the action model (done)
 
 **Do:** Add EffectAction with a stable effect ID to the existing eight-slot model.
 Keep one action and one shortcut per occupied slot. Validate known effect IDs
@@ -77,7 +83,7 @@ slots retain their behavior. Placement is not part of the action.
 
 ## Part 2: connect effects to the app
 
-### S4-05: save and load effect assignments
+### S4-05: save and load effect assignments (done)
 
 **Do:** Add schema 2 with an effect action payload holding only the effect ID.
 Read schema 1 without changing its sound assignments. Back up the old settings
@@ -92,7 +98,8 @@ rewrites settings. Document how to restore the backup for an older app version.
 **Do:** Extend prepared slot commands and bindings to dispatch Sound or Effect.
 Capture the invocation cursor position and configuration generation. Keep
 rendering outside the hook callback and preserve existing capture/suppression
-rules. Remove the S4-01 probe trigger.
+rules. The probe trigger removal and the `EffectChannelController.Start` wiring
+moved to S4-03 (owner decision, 2026-10-11).
 
 **Done when:** A configured effect of either placement starts once per press;
 holding the shortcut does not repeat it, and a fresh press restarts it. A Cursor
@@ -172,8 +179,10 @@ and settings rollback.
 Drawing, sound, shortcuts, focus, mixed DPI, Cursor effects at monitor edges,
 screen sharing, and lifecycle checks are recorded separately from automated
 results. The 100-invocation latency, resource, and hook-delay checks meet the
-roadmap targets for each placement. Mark unrun cases unverified. Complete the
+roadmap targets for each placement; a miss blocks the release until the owner
+revises the roadmap with a recorded rationale. Mark unrun cases unverified; any
+unverified roadmap check except window-only sharing blocks the release. Complete the
 v3 Step 8 baseline before releasing v4.
 
-**First action:** start S4-02 with a fake surface and fake clock. Estimated time:
-2-3 engineering hours.
+**First action:** start S4-03.1: add `SkiaSharp.Skottie` and draw one Lottie frame in the S4-01 probe.
+Estimated time: half a day.

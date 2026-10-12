@@ -1,4 +1,5 @@
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Domain.Sound;
 
@@ -130,6 +131,98 @@ public class SettingsSnapshotTests
     }
 
     [Fact]
+    public void Validate_AcceptsBothBuiltInEffectsAlongsideSoundSlots()
+    {
+        var slots = EmptySlots();
+        slots[0] = Sound(1, "Ctrl+Alt+1");
+        slots[1] = Effect(2, "Ctrl+Alt+2", "confetti");
+        slots[2] = Effect(3, "Ctrl+Alt+3", "focus-ring");
+
+        var result = SettingsSnapshot.Validate(Style, Draw, Clear, slots);
+
+        Assert.True(result.IsValid);
+        Assert.Equal(new SoundReference("a.wav", "a.wav"), Assert.IsType<SoundAction>(result.Snapshot!.Slots[0].Action).Sound);
+        Assert.Equal(new EffectId("confetti"), Assert.IsType<EffectAction>(result.Snapshot.Slots[1].Action).Effect);
+        Assert.Equal(new EffectId("focus-ring"), Assert.IsType<EffectAction>(result.Snapshot.Slots[2].Action).Effect);
+    }
+
+    [Fact]
+    public void EffectAction_StoresOnlyTheEffectIdAndShortcut()
+    {
+        Assert.Equal(
+            ["Effect", "Shortcut"],
+            typeof(EffectAction).GetProperties().Select(property => property.Name).Order());
+    }
+
+    [Fact]
+    public void Validate_RejectsUnknownEffectId()
+    {
+        var slots = EmptySlots();
+        slots[3] = Effect(4, "Ctrl+Alt+4", "sparkles");
+
+        var result = SettingsSnapshot.Validate(Style, Draw, Clear, slots);
+
+        Assert.False(result.IsValid);
+        Assert.Equal(
+            [new SettingsError(SettingsErrorCode.UnknownEffect, SettingsCommand.ForSlot(4), Effect: new EffectId("sparkles"))],
+            result.Errors);
+        Assert.Equal("Slot 4 uses unsupported effect \"sparkles\".", result.Errors[0].ToString());
+    }
+
+    [Fact]
+    public void Validate_RejectsEffectSlotWithoutEffect()
+    {
+        var slots = EmptySlots();
+        var filled = new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+1"));
+        slots[0] = new ActionSlot(1, filled with { Effect = null! });
+
+        var result = SettingsSnapshot.Validate(Style, Draw, Clear, slots);
+
+        Assert.Equal([new SettingsError(SettingsErrorCode.MissingEffect, SettingsCommand.ForSlot(1))], result.Errors);
+        Assert.Equal("Slot 1 requires an effect.", result.Errors[0].ToString());
+    }
+
+    [Fact]
+    public void EffectAction_RejectsNullEffect()
+    {
+        Assert.Throws<ArgumentNullException>(() => new EffectAction(null!, Keys("Ctrl+Alt+1")));
+    }
+
+    [Fact]
+    public void Validate_RequiresShortcutForEveryFilledEffectSlot()
+    {
+        var slots = EmptySlots();
+        slots[5] = new ActionSlot(6, new EffectAction(new EffectId("confetti"), null));
+
+        var result = SettingsSnapshot.Validate(Style, Draw, Clear, slots);
+
+        Assert.Equal([new SettingsError(SettingsErrorCode.MissingShortcut, SettingsCommand.ForSlot(6))], result.Errors);
+    }
+
+    [Fact]
+    public void Validate_RejectsEffectShortcutsThatConflictWithDrawClearAndSound()
+    {
+        var slots = EmptySlots();
+        slots[0] = Sound(1, "Ctrl+Alt+1");
+        slots[1] = Effect(2, "Ctrl+Alt+Z", "confetti");
+        slots[2] = Effect(3, "Ctrl+Alt+X", "focus-ring");
+        slots[3] = Effect(4, "Ctrl+Alt+1", "confetti");
+        slots[4] = Effect(5, "Ctrl+Alt+4", "focus-ring");
+        slots[5] = Effect(6, "Ctrl+Alt+4", "confetti");
+
+        var result = SettingsSnapshot.Validate(Style, Draw, Clear, slots);
+
+        Assert.Equal(
+            [
+                new SettingsError(SettingsErrorCode.DuplicateShortcut, SettingsCommand.ForSlot(2), SettingsCommand.Draw),
+                new SettingsError(SettingsErrorCode.DuplicateShortcut, SettingsCommand.ForSlot(3), SettingsCommand.Clear),
+                new SettingsError(SettingsErrorCode.DuplicateShortcut, SettingsCommand.ForSlot(4), SettingsCommand.ForSlot(1)),
+                new SettingsError(SettingsErrorCode.DuplicateShortcut, SettingsCommand.ForSlot(6), SettingsCommand.ForSlot(5)),
+            ],
+            result.Errors);
+    }
+
+    [Fact]
     public void Validate_AllowsSeveralSlotsToShareOneSound()
     {
         var slots = EmptySlots();
@@ -219,6 +312,9 @@ public class SettingsSnapshotTests
 
     private static ActionSlot Sound(int number, string shortcut, string file = "a.wav") =>
         new(number, new SoundAction(new SoundReference(file, file), Keys(shortcut)));
+
+    private static ActionSlot Effect(int number, string shortcut, string effect) =>
+        new(number, new EffectAction(new EffectId(effect), Keys(shortcut)));
 
     private static ActionSlot[] EmptySlots() => Enumerable.Range(1, 8).Select(ActionSlot.Empty).ToArray();
 }

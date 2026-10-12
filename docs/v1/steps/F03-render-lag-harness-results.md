@@ -1,50 +1,49 @@
-# F03: результаты синтетического harness (до/после фикса)
+# F03: synthetic harness results (before/after the fix)
 
-Инструмент: `../../../tools/RenderLagHarness` (`dotnet run --project tools/RenderLagHarness -c Release`).
-Воспроизводит цепочку adapter → Dispatcher → controller → renderer синтетически, с fake
-mouse source вместо реального Win32-хука и без композиции окна (без реального экрана).
-Не заменяет измерение на реальной сборке (план, шаг 1/3) — тех данных пока нет.
+Tool: `../../../tools/RenderLagHarness` (`dotnet run --project tools/RenderLagHarness -c Release`).
+It reproduces the adapter → Dispatcher → controller → renderer chain synthetically, with a fake
+mouse source instead of the real Win32 hook and without window composition (no real screen).
+It does not replace a measurement on a real build (plan, steps 1/3); that data does not exist yet.
 
-Этот файл — курируемый, рукописный. `../../../tools/RenderLagHarness` его не трогает: каждый
-запуск пишет сырой вывод в `w` (не в git, см. `../../../.gitignore`),
-перезаписывая только эти файлы. Обновлять этот файл нужно вручную после прогона.
+This file is curated and hand-written. `../../../tools/RenderLagHarness` does not touch it: each
+run writes raw output to `harness-raw/` (not in git, see `../../../.gitignore`) and
+overwrites only those files. Update this file by hand after a run.
 
-ДО-числа ниже получены прогоном harness против кода `StrokeRenderElement` из коммита
-`0f1631e` (последний перед фиксом), временно возвращённого на место, с увеличенным до 30с
-предохранителем дренажа — специально, чтобы все 10 сценариев успели обработать весь поток
-целиком (`Completed == Requested` везде), а не обрезались по таймауту, как в первой версии
-этого отчёта. ПОСЛЕ-числа — обычный прогон (8с предохранитель, никто не упирается в него).
+The BEFORE numbers below come from a harness run against the `StrokeRenderElement` code from commit
+`0f1631e` (the last one before the fix), temporarily restored, with the drain safeguard raised
+to 30 s. This was done on purpose so that all 10 scenarios could process the whole stream
+(`Completed == Requested` everywhere) instead of being cut off by the timeout, as in the first
+version of this report. The AFTER numbers are a normal run (8 s safeguard, no run reaches it).
 
-Таблицы ниже — рукописная сводка (после того, как в первой версии этого отчёта в сводке
-перепутались числа из разных строк). Исходный вывод harness, без ручной перепечатки, —
-`F03-render-lag-harness-before-raw.md` и `F03-render-lag-harness-after-raw.md` рядом с этим
-файлом; при правке таблиц сверяться с ними, а не только с текстом здесь.
+The tables below are a hand-written summary (the first version of this report mixed up numbers
+from different rows in its summary). The unedited harness output is in
+`F03-render-lag-harness-before-raw.md` and `F03-render-lag-harness-after-raw.md` next to this
+file; when you edit the tables, check them against those files, not only against the text here.
 
-## Как читать метрики
+## How to read the metrics
 
-- **Duration не измеряет способность успевать за вводом в реальном времени.** Harness
-  сначала ставит все события в очередь (инъекция: каждый `Invoke(..., Send)` возвращается
-  сразу после постановки, не дожидаясь обработки), и только потом одним вызовом
-  дренирует накопленную очередь `Normal`-приоритета — инъекция и обработка не перекрываются
-  по времени, в отличие от реального message loop, где новые события продолжают поступать
-  параллельно с обработкой уже пришедших. Поэтому `Duration ≈ (события / rate) + суммарная
-  стоимость обработки всей пачки` почти всегда, даже если стоимость одного события заведомо
-  укладывается в интервал между событиями и в реальном interleaved-сценарии система бы
-  успевала. Значение этой метрики — сравнить суммарную стоимость обработки пачки ДО и
-  ПОСЛЕ фикса, не сделать вывод о реальном экранном лаге.
-- **Обработка (processing)** — время одного `controller.ReportPointer(...)` + синхронного
-  `StrokeRenderElement.UpdateState(...)`, то есть стоимость одной перерисовки.
-- **Queue age / Max pending ops не показательны в этом harness**: пейсер шлёт события через
-  `Dispatcher.Invoke(..., DispatcherPriority.Send)`, что не даёт очереди `Normal`-приоритета
-  (сами перерисовки) дренироваться параллельно — она дренируется одним вызовом в конце
-  прогона. Поэтому `max pending ops` всегда равен числу событий независимо от реальной
-  перегрузки, а `queue age` — это накопленный долг обработки, растянутый по прогону, а не
-  живая задержка доставки. Не использовать эти два столбца как доказательство; оставлены в
-  сырых таблицах для полноты, не как аргумент.
+- **Duration does not measure the ability to keep up with input in real time.** The harness
+  first queues all events (injection: each `Invoke(..., Send)` returns right after queuing,
+  without waiting for processing), and only then drains the accumulated `Normal`-priority queue
+  in one call. Injection and processing do not overlap in time, unlike a real message loop,
+  where new events keep arriving while earlier ones are processed. Therefore
+  `Duration ≈ (events / rate) + total processing cost of the whole batch` almost always, even when
+  the cost of one event clearly fits in the interval between events and the system would keep up
+  in a real interleaved scenario. Use this metric to compare the total batch processing cost
+  BEFORE and AFTER the fix, not to draw conclusions about real on-screen lag.
+- **Processing** is the time of one `controller.ReportPointer(...)` plus the synchronous
+  `StrokeRenderElement.UpdateState(...)`, that is, the cost of one redraw.
+- **Queue age / Max pending ops are not meaningful in this harness**: the pacer sends events through
+  `Dispatcher.Invoke(..., DispatcherPriority.Send)`, which prevents the `Normal`-priority queue
+  (the redraws themselves) from draining in parallel; it drains in one call at the end of the run.
+  So `max pending ops` always equals the number of events regardless of real overload, and
+  `queue age` is the accumulated processing debt spread over the run, not a live delivery delay.
+  Do not use these two columns as evidence; they stay in the raw tables for completeness, not as
+  an argument.
 
-## ДО фикса (StrokeRenderElement из 0f1631e, 30с предохранитель, все прогоны полные)
+## BEFORE the fix (StrokeRenderElement from 0f1631e, 30 s safeguard, all runs complete)
 
-| Сценарий | Rate | Duration (мс) | Обработка p99 (мс) | Обработка max (мс) | Рост обработки (первые10%→последние10%, мс) |
+| Scenario | Rate | Duration (ms) | Processing p99 (ms) | Processing max (ms) | Processing growth (first 10%→last 10%, ms) |
 | --- | --- | --- | --- | --- | --- |
 | empty-canvas [cold] | 500 | 2203.6 | 6.40 | 7.70 | 0.09 → 2.98 |
 | empty-canvas | 125 | 1011.6 | 0.94 | 1.14 | 0.02 → 0.38 |
@@ -57,22 +56,21 @@ mouse source вместо реального Win32-хука и без компо
 | many-completed-strokes | 500 | 2523.1 | 12.64 | 16.64 | 1.09 → 4.91 |
 | many-completed-strokes | 1000 | **10532.8** | 32.99 | 44.83 | 1.67 → 20.66 |
 
-Точные числа: `F03-render-lag-harness-before-raw.md`. Duration доходил до ~29.6 секунды на
-номинальную секунду ввода — то есть суммарная стоимость обработки пачки (инъекция +
-дренаж, см. "Как читать метрики") доходила до ~28.6 секунды сверх номинала, а не 0.
-Стоимость одной перерисовки росла с числом накопленных точек (для
-`long-completed-line @ 1000ev/s` — 21.73 мс в начале прогона → 39.09 мс к концу, при уже
-1000 предзаполненных точках на линии старт заведомо дороже, чем у пустого холста).
-Подтверждена гипотеза 2 плана (полная перерисовка на каждую точку); напрямую вывод о
-неспособности успевать за реальным вводом эти числа не доказывают (см. выше), но такая
-стоимость обработки заведомо не укладывается в межкадровый бюджет ни при какой разумной
-частоте кадров.
+Exact numbers: `F03-render-lag-harness-before-raw.md`. Duration reached ~29.6 seconds per
+nominal second of input, so the total batch processing cost (injection + drain, see "How to read
+the metrics") reached ~28.6 seconds above nominal, not 0.
+The cost of one redraw grew with the number of accumulated points (for
+`long-completed-line @ 1000ev/s`, 21.73 ms at the start of the run → 39.09 ms by the end; with
+1000 points already pre-filled on the line, the start is clearly more expensive than on an empty
+canvas). Hypothesis 2 of the plan (full redraw on every point) is confirmed. These numbers do not
+directly prove an inability to keep up with real input (see above), but this processing cost
+clearly does not fit the frame budget at any reasonable frame rate.
 
-## ПОСЛЕ фикса (текущий StrokeRenderElement, 8с предохранитель, никто в него не упирается)
+## AFTER the fix (current StrokeRenderElement, 8 s safeguard, no run reaches it)
 
-Точные числа: `F03-render-lag-harness-after-raw.md`.
+Exact numbers: `F03-render-lag-harness-after-raw.md`.
 
-| Сценарий | Rate | Duration (мс) | Обработка p99 (мс) | Обработка max (мс) | Рост обработки (первые10%→последние10%, мс) |
+| Scenario | Rate | Duration (ms) | Processing p99 (ms) | Processing max (ms) | Processing growth (first 10%→last 10%, ms) |
 | --- | --- | --- | --- | --- | --- |
 | empty-canvas [cold] | 500 | 1012.0 | 0.02 | 4.71 | 0.11 → 0.005 |
 | empty-canvas | 125 | 994.0 | 0.02 | 0.14 | 0.01 → 0.002 |
@@ -85,36 +83,34 @@ mouse source вместо реального Win32-хука и без компо
 | many-completed-strokes | 500 | 1004.8 | 0.00 | 4.16 | 0.08 → 0.001 |
 | many-completed-strokes | 1000 | 1007.0 | 0.00 | 0.02 | 0.001 → 0.001 |
 
-После оптимизации обработка накопленного пакета занимает малую долю времени прогона:
-Duration ≈ номинал (`события/rate`) во всех сценариях и частотах — избыток над номиналом
-(суммарная стоимость обработки пачки, см. "Как читать метрики") упал с секунд до
-миллисекунд. Стоимость одной перерисовки не растёт с числом точек (плоский профиль
-~0.00–0.03 мс p99, редкие выбросы до нескольких мс — вероятно GC/JIT, не сама
-перерисовка). Задержка при непрерывном вводе (реальный message loop, где события и
-обработка перекрываются во времени) этим harness не измерена — нужен реальный
-Win32/экранный прогон (план, шаг 1), см. "Ограничения" ниже, он не выполнен.
+After the optimization, processing the accumulated batch takes a small share of the run time:
+Duration ≈ nominal (`events/rate`) in all scenarios and rates. The excess over nominal
+(the total batch processing cost, see "How to read the metrics") fell from seconds to
+milliseconds. The cost of one redraw does not grow with the number of points (flat profile,
+~0.00–0.03 ms p99, rare outliers up to a few ms, probably GC/JIT, not the redraw itself).
+This harness does not measure the delay under continuous input (a real message loop, where events
+and processing overlap in time). That needs a real Win32/screen run (plan, step 1), see
+"Limitations" below; it has not been done.
 
-## Что изменено (план, шаг 5)
+## What changed (plan, step 5)
 
-`src/DrawEM.App/Presentation/StrokeRenderElement.cs`: раньше один `DrawingVisual`
-переоткрывался (`RenderOpen`) и переписывался целиком на каждый `UpdateState` — стоимость
-и суммарная работа росли с общим числом точек (гипотеза 2, подтверждена). Теперь
-используется `VisualCollection`: завершённые линии рисуются один раз и больше не трогаются;
-активная линия дополняется новым `DrawingVisual`, содержащим только новые сегменты с
-прошлого обновления. Стоимость одного обновления теперь O(число новых точек), не
-O(общее число точек).
+`src/DrawEM.App/Presentation/StrokeRenderElement.cs`: previously a single `DrawingVisual`
+was reopened (`RenderOpen`) and fully rewritten on every `UpdateState`, so the cost and the total
+work grew with the total number of points (hypothesis 2, confirmed). It now uses a
+`VisualCollection`: completed lines are drawn once and never touched again; the active line is
+extended with a new `DrawingVisual` that contains only the segments added since the previous
+update. The cost of one update is now O(number of new points), not O(total number of points).
 
-Ревью нашло, что счётчик `CompletedStrokes.Count` — недостаточный сигнал сброса: пропущенное
-через coalescing промежуточное состояние (clear → новый штрих → end одним вызовом) может
-оставить счётчик прежним, и старая линия останется на экране вместо новой. Добавлен
-`DrawingState.Generation` (инкрементируется в `ClearAndExitDrawMode`) как авторитетный
-признак сброса. Также было найдено, что завершение штриха, точки которого рендерер не видел
-как активные целиком (пропущенное движение перед `End`), оставляло устаревший active-tracking
-и могло привязать к нему следующий, никак не связанный штрих. Теперь любой новый
-завершённый штрих безусловно снимает active-tracking — либо помечая визуалы постоянными
-(если они совпали), либо удаляя устаревшие (если нет).
+Review found that the `CompletedStrokes.Count` counter is not a sufficient reset signal: an
+intermediate state skipped by coalescing (clear → new stroke → end in one call) can leave the
+counter unchanged, and the old line stays on screen instead of the new one. `DrawingState.Generation`
+was added (incremented in `ClearAndExitDrawMode`) as the authoritative reset signal. Review also
+found that completing a stroke whose points the renderer had not fully seen as active (a missed
+move before `End`) left stale active tracking, which could attach the next, unrelated stroke to it.
+Now any new completed stroke unconditionally clears active tracking, either by marking the visuals
+permanent (if they matched) or by removing the stale ones (if not).
 
-Регрессионные тесты: `tests/DrawEM.Tests/Presentation/StrokeRenderElementTests.cs` —
+Regression tests: `tests/DrawEM.Tests/Presentation/StrokeRenderElementTests.cs` —
 `UpdateState_GrowingActiveStroke_RendersEachIncrementalSegment`,
 `UpdateState_StrokeCompletesThenNewOneStarts_KeepsCompletedPixelsVisible`,
 `UpdateState_FewerCompletedStrokesThanBefore_ResetsAndDropsOldPixels`,
@@ -123,26 +119,27 @@ O(общее число точек).
 `ClearDuringFirstActiveStroke_DropsPixelsThroughRealController` (integration test wiring a
 real `DrawingSessionController` to a real `StrokeRenderElement`, locking in the
 `Generation` fix for the exact 0 → 0 `CompletedStrokes.Count` case).
-Полный прогон: 33/33 passed.
+Full run: 33/33 passed.
 
-## Ограничения этого прохода
+## Limitations of this pass
 
-- Гипотезы 3 (GC), 4 (задержка самого Win32-хука до диспетчера) и 5 (композиция окна/GPU)
-  не проверялись — нужен профилировщик и реальный интерактивный рабочий стол, недоступные
-  в этой среде выполнения. Harness также не подтверждает и не опровергает их.
-- Реальный Win32/экранный прогон (план, шаг 1) не выполнен — нужна ручная проверка на
-  пользовательской машине со свежей Release-сборкой.
-- Queue age / max pending ops в сырых таблицах harness — методологический артефакт (см.
-  выше), не доказательство перегрузки очереди в реальном приложении.
+- Hypotheses 3 (GC), 4 (delay of the Win32 hook itself before the dispatcher) and 5 (window
+  composition/GPU) were not checked: they need a profiler and a real interactive desktop, which
+  this execution environment does not have. The harness neither confirms nor rules them out.
+- The real Win32/screen run (plan, step 1) has not been done; it needs a manual check on the
+  user's machine with a fresh Release build.
+- Queue age / max pending ops in the raw harness tables are a methodology artifact (see
+  above), not evidence of queue overload in the real application.
 
-## Дальше по плану (шаг 6)
+## Next in the plan (step 6)
 
-Стартовую точку без движения, форму/последнюю точку линии, Ctrl+Alt+Z/X, блокировку ввода
-и click-through проверяли существующие 27 тестов (не тронуты) + 6 новых; ручной прогон на
-пользовательском рабочем столе после фикса ещё не выполнялся — рекомендуется перед мержем.
-До него исходный случайный лаг, о котором сообщил пользователь, нельзя считать устранённым:
-harness подтверждает и устраняет конкретный код-уровневый механизм (гипотеза 2), но не
-измеряет и не воспроизводит сам симптом на реальном экране.
+The start point without movement, the shape/last point of a line, Ctrl+Alt+Z/X, input blocking
+and click-through were checked by the existing 27 tests (unchanged) plus 6 new ones. A manual run
+on the user's desktop after the fix has not been done yet; it is recommended before merge.
+Until then, the original random lag the user reported cannot be considered fixed: the harness
+confirms and removes a specific code-level mechanism (hypothesis 2), but it does not measure or
+reproduce the symptom itself on a real screen.
 
-Необязательный пункт ревью — рост числа `Visual`/`DrawingVisual` в `VisualCollection` при
-долгом рисовании — не измерялся; оставлен как заметка на будущее, не блокирует мерж.
+An optional review item, the growth in the number of `Visual`/`DrawingVisual` objects in the
+`VisualCollection` during long drawing, was not measured; it is left as a note for the future and
+does not block the merge.

@@ -1,7 +1,7 @@
 # drawEM v4 roadmap: built-in Monitor and Cursor effects
 
 **Status:** proposed product and implementation plan. S4-01 is done by owner
-decision with its measurement gates unverified; later steps are pending.
+decision with its measurement gates unverified. S4-02, S4-04, and S4-05 are done; other steps are pending.
 **Date:** 2026-10-07; revised 2026-10-09 for Lottie effects with two placements.
 **Prerequisite for release:** finish the v3 Step 8 Windows acceptance work.
 Its task file records verification on one 100% monitor, with seven
@@ -119,7 +119,7 @@ Inspected on 2026-10-07; S4-01 probe added on 2026-10-08:
 | `Infrastructure/Drawing/GlobalShortcutAdapter.cs` | Dispatches prepared sound commands; owns key/capture behavior | Dispatch typed slot commands, preserving suppression and release bookkeeping |
 | `Infrastructure/Drawing/GlobalMouseInputAdapter.cs` | Reports movement to drawing when draw mode is active | Observe monitor transitions independently of drawing |
 | `Presentation/Effects/EffectSurfaceWindow.cs` | S4-01 probe: monitor-sized, nonactivating, click-through window | Basis for both surfaces: Monitor surface covers the monitor; Cursor surface is sized to the effect and clipped to the monitor |
-| `Presentation/Effects/EffectSurfaceProbe.cs` | Temporary probe behind `DRAWEM_EFFECT_PROBE=1` | Reused by the S4-03.1 Lottie speed gate; removed in S4-06 |
+| `Presentation/Effects/EffectSurfaceProbe.cs` | Temporary probe behind `DRAWEM_EFFECT_PROBE=1` | Reused by the S4-03.1 Lottie speed gate; removed in S4-03 (moved from S4-06 by owner decision on 2026-10-11) |
 | `Application/Settings/SettingsEditor.cs` | Sound selection, sampling, Save/Cancel ownership | Effect selection grouped by placement and sample-instance ownership |
 | `Application/Settings/SettingsSaveOperation.cs` | Durable Save and sound/drawing interruption | Invalidate queued effect starts and stop visible effects on successful Save |
 | `Infrastructure/Settings/SettingsJson.cs` | Schema 1, sound discriminator only | Schema 2, effect discriminator, schema 1 migration |
@@ -286,11 +286,13 @@ file without migrating settings.
 
 Read schema 1 into the new model without modifying its sounds, shortcuts, or
 files. Every v4 Save writes schema 2, including when all slots contain only
-sounds. Before the first such Save, make one immutable backup of the current
-schema 1 file; never overwrite an existing migration backup on later upgrades.
-If backup creation fails, do not save. An older binary cannot read schema 2,
-so rollback requires restoring the backup while drawEM is closed. The backup
-does not restore sound copies deleted by later saves or sounds imported after
+sounds. Before replacing a valid schema 1 file, keep an immutable backup:
+`settings.schema1-backup.json` is number 1; each later migration adds the next
+numbered backup unless the highest-numbered backup already has the same bytes.
+Never overwrite a backup. If backup creation fails, do not save. An older binary
+cannot read schema 2, so rollback requires restoring the highest-numbered
+backup while drawEM is closed. The backup does not restore sound copies deleted
+by any v4 Save, including the migration Save, or sounds imported after
 the backup; the older app's startup cleanup may also remove copies not named
 by restored settings. Document these limits.
 
@@ -309,15 +311,15 @@ effect and is then cancelled.
 ## Delivery order and completion criteria
 
 Follow the [simple implementation steps](STEPS.md). Each step has one outcome
-and a completion check. Only S4-01 is recorded as complete, by owner decision.
+and a completion check. S4-01 is recorded as complete by owner decision; S4-02, S4-04, and S4-05 are complete.
 
 | Task | Outcome |
 |---|---|
 | [S4-01](step-01-effect-surface/task.md) | Prove a transparent effect window works on Windows (done) |
-| [S4-02](step-02-effect-channel/task.md) | Start, replace, and stop one effect of either placement safely |
+| [S4-02](step-02-effect-channel/task.md) | Start, replace, and stop one effect of either placement safely (done) |
 | [S4-03](step-03-built-in-effects/task.md) | Play built-in Lottie effects on Monitor and Cursor surfaces; S4-03.1 is its speed gate |
-| [S4-04](step-04-effect-action-model/task.md) | Represent an effect in an action slot |
-| [S4-05](step-05-effect-settings-schema/task.md) | Save and load effect assignments |
+| [S4-04](step-04-effect-action-model/task.md) | Represent an effect in an action slot (done) |
+| [S4-05](step-05-effect-settings-schema/task.md) | Save and load effect assignments (done) |
 | [S4-06](step-06-effect-shortcuts/task.md) | Launch effects through shortcuts |
 | [S4-07](step-07-effect-monitor-transitions/task.md) | Stop effects when switching monitors |
 | [S4-08](step-08-effect-settings-ui/task.md) | Choose effects in Settings, grouped by placement |

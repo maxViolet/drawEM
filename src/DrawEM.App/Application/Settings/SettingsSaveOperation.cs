@@ -45,9 +45,9 @@ public interface ISettingsSaveNotifications
 public interface IActiveShortcuts
 {
     /// <summary>
-    /// Ends every press in progress: closes the drawing gate, drops drawing commands queued but not yet run,
-    /// ends drawing and clears strokes on every monitor, and ignores keys until all held keys are released,
-    /// so the next command needs a fresh press.
+    /// Ends every press in progress: closes the drawing gate, drops drawing and effect commands queued but not
+    /// yet run, ends drawing and clears strokes on every monitor, and ignores keys until all held keys are
+    /// released, so the next command needs a fresh press.
     /// </summary>
     void Interrupt();
 

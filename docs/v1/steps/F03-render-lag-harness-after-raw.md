@@ -1,15 +1,15 @@
-# F03: сырой вывод последнего прогона harness
+# F03: raw output of the latest harness run
 
-Сгенерировано: 2026-09-22 22:36:16. Инструмент: tools/RenderLagHarness.
-Запуск: `dotnet run --project tools/RenderLagHarness -c Release`.
-Этот файл перезаписывается при каждом запуске. Курируемое сравнение до/после — docs/v1/steps/F03-render-lag-harness-results.md, его нужно обновлять вручную.
+Generated: 2026-09-22 22:36:16. Tool: tools/RenderLagHarness.
+Run: `dotnet run --project tools/RenderLagHarness -c Release`.
+This file is overwritten on every run. The curated before/after comparison is docs/v1/steps/F03-render-lag-harness-results.md; update it by hand.
 
-Ограничение: harness воспроизводит цепочку adapter -> Dispatcher -> controller -> renderer синтетически, без реального Win32-хука и композиции окна. Он не заменяет измерение на реальной сборке (план, шаг 1/3).
+Limitation: the harness reproduces the adapter -> Dispatcher -> controller -> renderer chain synthetically, without a real Win32 hook or window composition. It does not replace a measurement on a real build (plan, steps 1/3).
 
-Queue age / Max pending ops не показательны (пейсер шлёт события с приоритетом Send, очередь Normal не дренируется параллельно) — см. пояснение в курируемом отчёте.
-Duration для строк с TIMEOUT — не полное время обработки потока, а время до срабатывания 8-секундного предохранителя дренажа; Completed < Requested показывает, что поток не был обработан целиком.
+Queue age / Max pending ops are not meaningful (the pacer sends events at Send priority, so the Normal queue does not drain in parallel); see the explanation in the curated report.
+Duration for TIMEOUT rows is not the full stream processing time but the time until the 8-second drain safeguard fires; Completed < Requested shows that the stream was not fully processed.
 
-| Сценарий | Rate (ev/s) | Completed/Requested | Duration (мс) | Queue age p50/p95/p99/max (мс) | Обработка p50/p95/p99/max (мс) | Max pending ops | Рост обработки (первые 10% -> последние 10%, мс) |
+| Scenario | Rate (ev/s) | Completed/Requested | Duration (ms) | Queue age p50/p95/p99/max (ms) | Processing p50/p95/p99/max (ms) | Max pending ops | Processing growth (first 10% -> last 10%, ms) |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | empty-canvas [cold] | 500 | 500/500 | 1012.0 | 508.66/956.65/996.47/1003.10 | 0.00/0.01/0.02/4.71 | 500 | 0.106 -> 0.005 |
 | empty-canvas | 125 | 125/125 | 994.0 | 497.30/944.73/984.68/992.51 | 0.00/0.01/0.02/0.14 | 125 | 0.014 -> 0.002 |
@@ -22,4 +22,4 @@ Duration для строк с TIMEOUT — не полное время обра�
 | many-completed-strokes | 500 | 500/500 | 1004.8 | 503.63/952.58/988.22/998.15 | 0.00/0.00/0.00/4.16 | 500 | 0.084 -> 0.001 |
 | many-completed-strokes | 1000 | 1000/1000 | 1007.0 | 503.90/949.66/989.27/999.15 | 0.00/0.00/0.00/0.02 | 1000 | 0.001 -> 0.001 |
 
-Худший случай по стоимости обработки (p99): `empty-canvas` @ 125 ev/s, processing p99 0.02 мс, max 0.14 мс. Полная трасса: F03-render-lag-harness-latest-trace.csv.
+Worst case by processing cost (p99): `empty-canvas` @ 125 ev/s, processing p99 0.02 ms, max 0.14 ms. Full trace: F03-render-lag-harness-latest-trace.csv.

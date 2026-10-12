@@ -1,7 +1,9 @@
 using System.Text;
+using System.Text.Json;
 using DrawEM.App.Application.Drawing;
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Domain.Sound;
 using DrawEM.App.Infrastructure.Settings;
@@ -14,6 +16,8 @@ public sealed class JsonSettingsStoreTests : IDisposable
     private readonly ManualTimeProvider time = new();
 
     private string SettingsPath => Path.Combine(directory, "settings.json");
+
+    private string BackupPath => Path.Combine(directory, "settings.schema1-backup.json");
 
     public void Dispose()
     {
@@ -103,7 +107,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         var json = File.ReadAllText(SettingsPath);
 
-        Assert.Contains("\"schemaVersion\": 1", json);
+        Assert.Contains("\"schemaVersion\": 2", json);
         Assert.Contains("\"color\": \"#00FF7F\"", json);
         Assert.Contains("\"width\": 12", json);
         Assert.Contains("\"drawShortcut\": \"Ctrl+Shift+D\"", json);
@@ -138,7 +142,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
     }
 
     [Theory]
-    [InlineData(2)]
+    [InlineData(3)]
     [InlineData(0)]
     public void Load_UnsupportedSchemaVersion_IsUnreadableWithVersionInReason(int version)
     {
@@ -173,15 +177,221 @@ public sealed class JsonSettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public void Load_HandWrittenValidFile_Loads()
+    public void Load_Schema1File_KeepsSlotsShortcutsAndFilesAndWritesNothing()
     {
-        WriteSettings(ValidJson());
+        WriteSettings(Schema1CustomJson());
+        var before = File.ReadAllBytes(SettingsPath);
 
         var snapshot = Loaded(Store().Load());
 
-        var sound = Assert.IsType<SoundAction>(snapshot.Slots[0].Action);
-        Assert.Equal(new SoundReference("abc.wav", "applause.wav"), sound.Sound);
-        Assert.Equal("Ctrl+Alt+1", sound.Shortcut!.ToString());
+        Assert.Equal(Custom(), snapshot);
+        Assert.Equal(before, File.ReadAllBytes(SettingsPath));
+        Assert.Equal([SettingsPath], Directory.GetFiles(directory));
+    }
+
+    [Fact]
+    public void Save_ThenLoad_RoundTripsMixedSoundEffectAndEmptySlots()
+    {
+        Store().Save(Mixed());
+
+        Assert.Equal(Mixed(), Loaded(Store().Load()));
+    }
+
+    [Fact]
+    public void Save_WritesEffectAsTypeEffectIdAndShortcutOnly()
+    {
+        Store().Save(Mixed());
+
+        using var document = JsonDocument.Parse(File.ReadAllBytes(SettingsPath));
+        var actions = document.RootElement.GetProperty("slots").EnumerateArray()
+            .Select(slot => slot.GetProperty("action"))
+            .ToArray();
+        var effect = actions[1];
+        Assert.Equal(["effectId", "shortcut", "type"], effect.EnumerateObject().Select(property => property.Name).Order());
+        Assert.Equal("effect", effect.GetProperty("type").GetString());
+        Assert.Equal("confetti", effect.GetProperty("effectId").GetString());
+        Assert.Equal("Ctrl+Alt+2", effect.GetProperty("shortcut").GetString());
+        Assert.Equal("focus-ring", actions[2].GetProperty("effectId").GetString());
+    }
+
+    [Fact]
+    public void Load_HandWrittenSchema2File_Loads()
+    {
+        WriteSettings(Schema2Json());
+
+        var snapshot = Loaded(Store().Load());
+
+        Assert.Equal(new SoundReference("abc.wav", "applause.wav"), Assert.IsType<SoundAction>(snapshot.Slots[0].Action).Sound);
+        var effect = Assert.IsType<EffectAction>(snapshot.Slots[1].Action);
+        Assert.Equal(new EffectId("confetti"), effect.Effect);
+        Assert.Equal("Ctrl+Alt+2", effect.Shortcut!.ToString());
+        Assert.Equal(new EffectId("focus-ring"), Assert.IsType<EffectAction>(snapshot.Slots[2].Action).Effect);
+        Assert.True(snapshot.Slots[3].IsEmpty);
+    }
+
+    [Theory]
+    [InlineData("\"effectId\": \"confetti\"", "\"effectId\": \"sparkles\"", "Slot 2 uses unsupported effect \"sparkles\"")]
+    [InlineData("\"effectId\": \"confetti\"", "\"effectId\": \" \"", "Slot 2 effect is invalid")]
+    [InlineData("\"effectId\": \"confetti\"", "\"effect\": \"confetti\"", "Missing property 'effectId'")]
+    [InlineData("\"type\": \"effect\"", "\"type\": \"video\"", "Slot 2 action type 'video' is not supported")]
+    public void Load_InvalidSchema2Settings_IsUnreadableWithReasonAndKeepsFile(string find, string replace, string reason)
+    {
+        var content = Schema2Json();
+        Assert.Contains(find, content);
+        WriteSettings(content.Replace(find, replace));
+
+        var result = Assert.IsType<SettingsLoadResult.Unreadable>(Store().Load());
+
+        Assert.Contains(reason, result.Reason);
+        Assert.Equal(content.Replace(find, replace), File.ReadAllText(SettingsPath));
+        Assert.Equal(content.Replace(find, replace), File.ReadAllText(result.RecoveryCopy!));
+    }
+
+    [Fact]
+    public void Load_EffectInSchema1File_IsUnreadable()
+    {
+        WriteSettings(Schema2Json().Replace("\"schemaVersion\": 2", "\"schemaVersion\": 1"));
+
+        var result = Assert.IsType<SettingsLoadResult.Unreadable>(Store().Load());
+
+        Assert.Contains("Slot 2 action type 'effect' is not supported in schema version 1", result.Reason);
+    }
+
+    [Fact]
+    public void FirstSaveOverSchema1File_BacksItUpThenWritesSchema2()
+    {
+        WriteSettings(Schema1CustomJson());
+        var original = File.ReadAllBytes(SettingsPath);
+        var loaded = Loaded(Store().Load());
+
+        Store().Save(loaded);
+
+        Assert.Equal(original, File.ReadAllBytes(BackupPath));
+        Assert.Equal(2, SchemaVersion(File.ReadAllBytes(SettingsPath)));
+        Assert.Equal(loaded, Loaded(Store().Load()));
+    }
+
+    [Fact]
+    public void SecondUpgrade_KeepsFirstBackupAndBacksUpNewerSchema1File()
+    {
+        WriteSettings(Schema1CustomJson());
+        var original = File.ReadAllBytes(SettingsPath);
+        Store().Save(Custom());
+        Store().Save(Mixed());
+
+        // The user rolled back, saved different settings in v3, then upgraded again.
+        WriteSettings(ValidJson());
+        var savedInV3 = File.ReadAllBytes(SettingsPath);
+        Store().Save(Mixed());
+
+        Assert.Equal(original, File.ReadAllBytes(BackupPath));
+        var second = Path.Combine(directory, "settings.schema1-backup-2.json");
+        Assert.Equal(savedInV3, File.ReadAllBytes(second));
+        Assert.Equal(
+            new[] { BackupPath, second }.Order(),
+            Directory.GetFiles(directory, "settings.schema1-backup*").Order());
+        Assert.Equal(Mixed(), Loaded(Store().Load()));
+    }
+
+    [Fact]
+    public void UpgradeAfterRestoringAnOlderBackup_MakesItTheHighestNumberedBackup()
+    {
+        WriteSettings(Schema1CustomJson());
+        var a = File.ReadAllBytes(SettingsPath);
+        Store().Save(Mixed());
+        WriteSettings(ValidJson());
+        var b = File.ReadAllBytes(SettingsPath);
+        Store().Save(Mixed());
+
+        // The user restored the first backup (A) instead of the newest (B), then upgraded again.
+        File.Copy(BackupPath, SettingsPath, overwrite: true);
+        Store().Save(Mixed());
+
+        Assert.Equal(a, File.ReadAllBytes(BackupPath));
+        Assert.Equal(b, File.ReadAllBytes(Path.Combine(directory, "settings.schema1-backup-2.json")));
+        Assert.Equal(a, File.ReadAllBytes(Path.Combine(directory, "settings.schema1-backup-3.json")));
+        Assert.Equal(3, Directory.GetFiles(directory, "settings.schema1-backup*").Length);
+    }
+
+    [Fact]
+    public void SecondUpgrade_AfterRestoringTheBackupUnchanged_KeepsOneBackup()
+    {
+        WriteSettings(Schema1CustomJson());
+        var original = File.ReadAllBytes(SettingsPath);
+        Store().Save(Mixed());
+
+        File.Copy(BackupPath, SettingsPath, overwrite: true);
+        Store().Save(Mixed());
+
+        Assert.Equal([BackupPath], Directory.GetFiles(directory, "settings.schema1-backup*"));
+        Assert.Equal(original, File.ReadAllBytes(BackupPath));
+    }
+
+    [Theory]
+    [InlineData("\"width\": 4", "\"width\": 99")]
+    [InlineData("\"type\": \"sound\"", "\"type\": \"video\"")]
+    [InlineData("\"drawing\": {", "\"drawing2\": {")]
+    public void Save_OverInvalidSchema1File_CreatesNoBackup(string find, string replace)
+    {
+        WriteSettings(ValidJson().Replace(find, replace));
+
+        Store().Save(Mixed());
+
+        Assert.False(File.Exists(BackupPath));
+        Assert.Equal(Mixed(), Loaded(Store().Load()));
+    }
+
+    [Fact]
+    public void Load_InvalidUtf8InAString_IsUnreadableWithRecoveryCopy()
+    {
+        var bytes = Encoding.UTF8.GetBytes(Schema2Json());
+        var at = bytes.AsSpan().IndexOf("confetti"u8);
+        bytes[at] = 0xFF;
+        Directory.CreateDirectory(directory);
+        File.WriteAllBytes(SettingsPath, bytes);
+
+        var result = Assert.IsType<SettingsLoadResult.Unreadable>(Store().Load());
+
+        Assert.Contains("'effectId' is not valid UTF-8", result.Reason);
+        Assert.Equal(bytes, File.ReadAllBytes(result.RecoveryCopy!));
+        Assert.Equal(bytes, File.ReadAllBytes(SettingsPath));
+    }
+
+    [Fact]
+    public void Save_WithoutSchema1File_CreatesNoBackup()
+    {
+        Store().Save(Custom());
+        Store().Save(Mixed());
+
+        Assert.Equal([SettingsPath], Directory.GetFiles(directory));
+    }
+
+    [Fact]
+    public void Save_WhenBackupCannotBeCreated_ThrowsAndLeavesSchema1File()
+    {
+        WriteSettings(Schema1CustomJson());
+        var before = File.ReadAllBytes(SettingsPath);
+        Directory.CreateDirectory(BackupPath);
+
+        var failure = Assert.Throws<SettingsStoreException>(() => Store().Save(Mixed()));
+
+        Assert.Contains("backup", failure.Message);
+        Assert.Equal(before, File.ReadAllBytes(SettingsPath));
+        Assert.Equal([SettingsPath], Directory.GetFiles(directory));
+    }
+
+    [Fact]
+    public void Save_WhenReplaceFailsAfterBackup_KeepsSchema1FileAndBackup()
+    {
+        WriteSettings(Schema1CustomJson());
+        var before = File.ReadAllBytes(SettingsPath);
+        File.SetAttributes(SettingsPath, FileAttributes.ReadOnly);
+
+        Assert.Throws<SettingsStoreException>(() => Store().Save(Mixed()));
+
+        Assert.Equal(before, File.ReadAllBytes(SettingsPath));
+        Assert.Equal(before, File.ReadAllBytes(BackupPath));
+        Assert.False(File.Exists(SettingsPath + ".tmp"));
     }
 
     [Fact]
@@ -228,6 +438,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         Assert.Equal(Custom(), Loaded(Store().Load()));
         Assert.Equal("damaged", File.ReadAllText(Assert.Single(Directory.GetFiles(directory, "settings.unreadable-*.json"))));
+        Assert.False(File.Exists(BackupPath));
     }
 
     [Fact]
@@ -295,12 +506,29 @@ public sealed class JsonSettingsStoreTests : IDisposable
     {
         var slots = Enumerable.Range(1, 8).Select(ActionSlot.Empty).ToArray();
         slots[0] = new ActionSlot(1, new SoundAction(new SoundReference("abc.wav", "applause.wav"), Keys("Ctrl+Alt+1")));
-        slots[2] = new ActionSlot(3, new SoundAction(new SoundReference("abc.wav", "applause.wav"), Keys("Alt+Shift+F3")));
+        slots[2] = new ActionSlot(3, new SoundAction(new SoundReference("def.mp3", "horn.mp3"), Keys("Alt+Shift+F3")));
         return SettingsSnapshot.Validate(
             new DrawingStyle(new HexColor(0x00, 0xFF, 0x7F), new StrokeWidth(12)),
             Keys("Ctrl+Shift+D"),
             Keys("Ctrl+Alt+Shift+C"),
             slots).Snapshot!;
+    }
+
+    private static SettingsSnapshot Mixed()
+    {
+        var slots = Enumerable.Range(1, 8).Select(ActionSlot.Empty).ToArray();
+        slots[0] = new ActionSlot(1, new SoundAction(new SoundReference("abc.wav", "applause.wav"), Keys("Ctrl+Alt+1")));
+        slots[1] = new ActionSlot(2, new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+2")));
+        slots[2] = new ActionSlot(3, new EffectAction(new EffectId("focus-ring"), Keys("Alt+Shift+F3")));
+        slots[4] = new ActionSlot(5, new SoundAction(new SoundReference("def.mp3", "horn.mp3"), Keys("Ctrl+Alt+5")));
+        var defaults = SettingsSnapshot.Default;
+        return SettingsSnapshot.Validate(defaults.Style, defaults.DrawShortcut, defaults.ClearShortcut, slots).Snapshot!;
+    }
+
+    private static int SchemaVersion(byte[] json)
+    {
+        using var document = JsonDocument.Parse(json);
+        return document.RootElement.GetProperty("schemaVersion").GetInt32();
     }
 
     private static Shortcut Keys(string text) =>
@@ -319,6 +547,51 @@ public sealed class JsonSettingsStoreTests : IDisposable
             { "slot": 1, "action": { "type": "sound", "file": "abc.wav", "name": "applause.wav", "shortcut": "Ctrl+Alt+1" } },
             { "slot": 2, "action": null },
             { "slot": 3, "action": null },
+            { "slot": 4, "action": null },
+            { "slot": 5, "action": null },
+            { "slot": 6, "action": null },
+            { "slot": 7, "action": null },
+            { "slot": 8, "action": null }
+          ]
+        }
+        """;
+
+    /// <summary><see cref="Custom"/> as a v3 app wrote it.</summary>
+    private static string Schema1CustomJson() => """
+        {
+          "schemaVersion": 1,
+          "drawing": {
+            "color": "#00FF7F",
+            "width": 12,
+            "drawShortcut": "Ctrl+Shift+D",
+            "clearShortcut": "Ctrl+Alt+Shift+C"
+          },
+          "slots": [
+            { "slot": 1, "action": { "type": "sound", "file": "abc.wav", "name": "applause.wav", "shortcut": "Ctrl+Alt+1" } },
+            { "slot": 2, "action": null },
+            { "slot": 3, "action": { "type": "sound", "file": "def.mp3", "name": "horn.mp3", "shortcut": "Alt+Shift+F3" } },
+            { "slot": 4, "action": null },
+            { "slot": 5, "action": null },
+            { "slot": 6, "action": null },
+            { "slot": 7, "action": null },
+            { "slot": 8, "action": null }
+          ]
+        }
+        """;
+
+    private static string Schema2Json() => """
+        {
+          "schemaVersion": 2,
+          "drawing": {
+            "color": "#FF4500",
+            "width": 4,
+            "drawShortcut": "Ctrl+Alt+Z",
+            "clearShortcut": "Ctrl+Alt+X"
+          },
+          "slots": [
+            { "slot": 1, "action": { "type": "sound", "file": "abc.wav", "name": "applause.wav", "shortcut": "Ctrl+Alt+1" } },
+            { "slot": 2, "action": { "type": "effect", "effectId": "confetti", "shortcut": "Ctrl+Alt+2" } },
+            { "slot": 3, "action": { "type": "effect", "effectId": "focus-ring", "shortcut": "Ctrl+Alt+3" } },
             { "slot": 4, "action": null },
             { "slot": 5, "action": null },
             { "slot": 6, "action": null },

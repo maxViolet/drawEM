@@ -2,6 +2,7 @@ using System.IO;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Domain.Sound;
 
@@ -22,12 +23,12 @@ public sealed class SettingsFormatException : Exception
 }
 
 /// <summary>
-/// Reads and writes the settings file schema described in <c>README.md</c>. Writing always produces
-/// <see cref="CurrentSchemaVersion"/>.
+/// Reads and writes the settings file schema described in <c>README.md</c>. Reading accepts schema 1 and
+/// <see cref="CurrentSchemaVersion"/>; writing always produces <see cref="CurrentSchemaVersion"/>.
 /// </summary>
 public static class SettingsJson
 {
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
 
     public static byte[] Serialize(SettingsSnapshot snapshot)
     {
@@ -67,6 +68,13 @@ public static class SettingsJson
                         json.WriteString("shortcut", sound.Shortcut!.ToString());
                         json.WriteEndObject();
                         break;
+                    case EffectAction effect:
+                        json.WriteStartObject("action");
+                        json.WriteString("type", "effect");
+                        json.WriteString("effectId", effect.Effect.Value);
+                        json.WriteString("shortcut", effect.Shortcut!.ToString());
+                        json.WriteEndObject();
+                        break;
                     default:
                         throw new NotSupportedException($"Action type {slot.Action.GetType().Name} has no schema.");
                 }
@@ -84,7 +92,26 @@ public static class SettingsJson
     /// <exception cref="SettingsFormatException">
     /// The data is not JSON, has an unsupported schema version, or does not describe valid settings.
     /// </exception>
-    public static SettingsSnapshot Deserialize(ReadOnlyMemory<byte> data)
+    public static SettingsSnapshot Deserialize(ReadOnlyMemory<byte> data) => Deserialize(data, out _);
+
+    /// <summary>
+    /// <c>true</c> when the data is a schema 1 file that passes every check <see cref="Deserialize(ReadOnlyMemory{byte})"/>
+    /// makes, so a drawEM that reads only schema 1 can load it.
+    /// </summary>
+    public static bool IsValidSchema1(ReadOnlyMemory<byte> data)
+    {
+        try
+        {
+            Deserialize(data, out var version);
+            return version == 1;
+        }
+        catch (SettingsFormatException)
+        {
+            return false;
+        }
+    }
+
+    private static SettingsSnapshot Deserialize(ReadOnlyMemory<byte> data, out int version)
     {
         JsonDocument document;
         try
@@ -99,11 +126,11 @@ public static class SettingsJson
         using (document)
         {
             var root = Object(document.RootElement, "settings");
-            var version = Int(root, "schemaVersion");
-            if (version != CurrentSchemaVersion)
+            version = Int(root, "schemaVersion");
+            if (version is < 1 or > CurrentSchemaVersion)
             {
                 throw new SettingsFormatException(
-                    $"Settings schema version {version} is not supported; this drawEM reads version {CurrentSchemaVersion}.");
+                    $"Settings schema version {version} is not supported; this drawEM reads versions 1–{CurrentSchemaVersion}.");
             }
 
             var drawing = Object(Property(root, "drawing"), "drawing");
@@ -130,14 +157,15 @@ public static class SettingsJson
                 throw new SettingsFormatException("slots must be an array.");
             }
 
-            var slots = slotsElement.EnumerateArray().Select(ReadSlot).ToArray();
+            var schema = version;
+            var slots = slotsElement.EnumerateArray().Select(element => ReadSlot(element, schema)).ToArray();
             var validation = SettingsSnapshot.Validate(style, draw, clear, slots);
             return validation.Snapshot ?? throw new SettingsFormatException(
                 "Settings are invalid: " + string.Join(" ", validation.Errors));
         }
     }
 
-    private static ActionSlot ReadSlot(JsonElement element)
+    private static ActionSlot ReadSlot(JsonElement element, int version)
     {
         var slot = Object(element, "slot entry");
         var number = Int(slot, "slot");
@@ -154,11 +182,18 @@ public static class SettingsJson
 
         Object(action, $"slot {number} action");
         var type = String(action, "type");
-        if (type != "sound")
+        return type switch
         {
-            throw new SettingsFormatException($"Slot {number} action type '{type}' is not supported.");
-        }
+            "sound" => new ActionSlot(number, ReadSound(action, number)),
+            "effect" when version >= 2 => new ActionSlot(number, ReadEffect(action, number)),
+            "effect" => throw new SettingsFormatException(
+                $"Slot {number} action type 'effect' is not supported in schema version {version}."),
+            _ => throw new SettingsFormatException($"Slot {number} action type '{type}' is not supported."),
+        };
+    }
 
+    private static SoundAction ReadSound(JsonElement action, int number)
+    {
         SoundReference sound;
         try
         {
@@ -169,7 +204,23 @@ public static class SettingsJson
             throw new SettingsFormatException($"Slot {number} sound is invalid: {failure.Message}", failure);
         }
 
-        return new ActionSlot(number, new SoundAction(sound, ShortcutProperty(action, "shortcut")));
+        return new SoundAction(sound, ShortcutProperty(action, "shortcut"));
+    }
+
+    /// <summary>An ID missing from the catalog is reported by <see cref="SettingsSnapshot.Validate"/>.</summary>
+    private static EffectAction ReadEffect(JsonElement action, int number)
+    {
+        EffectId effect;
+        try
+        {
+            effect = new EffectId(String(action, "effectId"));
+        }
+        catch (ArgumentException failure)
+        {
+            throw new SettingsFormatException($"Slot {number} effect is invalid: {failure.Message}", failure);
+        }
+
+        return new EffectAction(effect, ShortcutProperty(action, "shortcut"));
     }
 
     private static Shortcut ShortcutProperty(JsonElement element, string name)
@@ -193,9 +244,19 @@ public static class SettingsJson
     private static string String(JsonElement element, string name)
     {
         var value = Property(element, name);
-        return value.ValueKind == JsonValueKind.String
-            ? value.GetString()!
-            : throw new SettingsFormatException($"'{name}' must be a string.");
+        if (value.ValueKind != JsonValueKind.String)
+        {
+            throw new SettingsFormatException($"'{name}' must be a string.");
+        }
+
+        try
+        {
+            return value.GetString()!;
+        }
+        catch (InvalidOperationException failure)
+        {
+            throw new SettingsFormatException($"'{name}' is not valid UTF-8.", failure);
+        }
     }
 
     private static int Int(JsonElement element, string name)

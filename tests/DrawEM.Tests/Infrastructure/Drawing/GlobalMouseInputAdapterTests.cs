@@ -150,7 +150,7 @@ public class GlobalMouseInputAdapterTests
         var queuedActions = new Queue<Action>();
         _ = new GlobalShortcutAdapter(keyboardSource, keyboardSource, controller, inputGate, new FakeCursorPositionSource(default), queuedActions.Enqueue,
             new FakeMonitorBoundsSource(new MonitorBounds(-1000, -1000, 1000, 1000)),
-            new ShortcutBindings(SettingsSnapshot.Default.DrawShortcut, SettingsSnapshot.Default.ClearShortcut, []), _ => { });
+            new ShortcutBindings(SettingsSnapshot.Default.DrawShortcut, SettingsSnapshot.Default.ClearShortcut, [], []), _ => { }, _ => { });
         _ = new GlobalMouseInputAdapter(mouseSource, controller, inputGate, queuedActions.Enqueue, new FakeMonitorBoundsSource(Left));
 
         keyboardSource.PressKey(VirtualKeys.LeftControl);

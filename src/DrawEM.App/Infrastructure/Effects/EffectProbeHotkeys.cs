@@ -5,8 +5,9 @@ namespace DrawEM.App.Infrastructure.Effects;
 
 /// <summary>
 /// Temporary S4-01 trigger, enabled only with <c>DRAWEM_EFFECT_PROBE=1</c>: Ctrl+Alt+F9 shows one probe
-/// effect and Ctrl+Alt+F10 runs the probe benchmark. Registered for the UI thread, outside the low-level
-/// hooks and the shortcut settings. S4-06 removes it when effects get their own shortcuts.
+/// effect, Ctrl+Alt+F10 runs the probe benchmark in the startup mode, and Ctrl+Alt+F11 runs it for a
+/// Cursor effect. Registered for the UI thread, outside the low-level
+/// hooks and the shortcut settings. S4-03 removes it once effect shortcuts reach a real surface.
 /// </summary>
 public sealed class EffectProbeHotkeys : IDisposable
 {
@@ -14,23 +15,29 @@ public sealed class EffectProbeHotkeys : IDisposable
 
     private const int BenchmarkKey = 0x79; // F10
 
+    private const int CursorBenchmarkKey = 0x7A; // F11
+
     private const int InvokeId = 1;
     private const int BenchmarkId = 2;
+    private const int CursorBenchmarkId = 3;
     private const uint Modifiers = NativeMethods.MOD_CONTROL | NativeMethods.MOD_ALT | NativeMethods.MOD_NOREPEAT;
 
     private readonly Action invoke;
     private readonly Action runBenchmark;
+    private readonly Action runCursorBenchmark;
     private bool disposed;
 
-    public EffectProbeHotkeys(Action invoke, Action runBenchmark)
+    public EffectProbeHotkeys(Action invoke, Action runBenchmark, Action runCursorBenchmark)
     {
         this.invoke = invoke;
         this.runBenchmark = runBenchmark;
+        this.runCursorBenchmark = runCursorBenchmark;
         ComponentDispatcher.ThreadFilterMessage += OnThreadMessage;
         try
         {
             Register(InvokeId, InvokeKey, "Ctrl+Alt+F9");
             Register(BenchmarkId, BenchmarkKey, "Ctrl+Alt+F10");
+            Register(CursorBenchmarkId, CursorBenchmarkKey, "Ctrl+Alt+F11");
         }
         catch
         {
@@ -50,6 +57,7 @@ public sealed class EffectProbeHotkeys : IDisposable
         ComponentDispatcher.ThreadFilterMessage -= OnThreadMessage;
         NativeMethods.UnregisterHotKey(IntPtr.Zero, InvokeId);
         NativeMethods.UnregisterHotKey(IntPtr.Zero, BenchmarkId);
+        NativeMethods.UnregisterHotKey(IntPtr.Zero, CursorBenchmarkId);
     }
 
     private static void Register(int id, int key, string name)
@@ -79,6 +87,10 @@ public sealed class EffectProbeHotkeys : IDisposable
             case BenchmarkId:
                 handled = true;
                 runBenchmark();
+                break;
+            case CursorBenchmarkId:
+                handled = true;
+                runCursorBenchmark();
                 break;
         }
     }
