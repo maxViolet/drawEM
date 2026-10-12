@@ -76,3 +76,11 @@ Decided by the project owner on 2026-10-12:
 - Confetti, then focus ring 0.6 s later: the confetti was gone and the ring was shown; 1.5 s later nothing remained.
 - In one capture, a Task Manager window in front covered the ring at (600, 500). The cause (Task Manager's always-on-top or elevation) was not investigated.
 - Unverified: flashing, drawing and sound alongside an effect, mixed-DPI and second-monitor appearance, and 100 restart cycles (S4-12).
+
+## Review
+
+Run once over S4-03 and S4-07 together, on branch `S4-07-effect-monitor-transitions`.
+
+- `/simplify` (Claude Code): its changes to shared composition and test fakes landed in the S4-07 branch. Rejected for S4-03: parsing the Lottie files on first play instead of at startup, merging the effect log types, and dropping `LottiePlayback`'s `subscribed` flag.
+- Role reviews (correctness, security, spec, test quality). Fixed here: the license requires every distribution of the files to carry its terms, so `LICENSE.md` now holds the text and the build copies it with `SOURCES.md` to `licenses\`; `EffectFailureLog` append and unwritable-path tests; the visual-check criterion no longer names the removed probe trigger; the STEPS status line. Security found no issue. Open: the flashing check.
+- Final review (Codex, `codex review --base origin/main`): no actionable code defect.
