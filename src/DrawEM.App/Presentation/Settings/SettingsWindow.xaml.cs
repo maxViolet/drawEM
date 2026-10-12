@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows;
 using DrawEM.App.Domain.Drawing;
@@ -60,7 +61,19 @@ public partial class SettingsWindow : Window, ISoundFilePicker
 
     private void OnChooseFile(object sender, RoutedEventArgs e) => Model<SlotViewModel>(sender).ChooseFile();
 
-    private void OnRemoveSound(object sender, RoutedEventArgs e) => Model<SlotViewModel>(sender).RemoveSound();
+    // SelectedItem is bound one way, and the change runs after this selection change ends: a file dialog
+    // then opens over a closed list, and a choice the model refuses, such as a cancelled dialog, is reverted
+    // by the model's notification. That revert reaches here again as a no-op.
+    private void OnKindChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: SlotViewModel slot } && e.AddedItems.Count == 1 &&
+            e.AddedItems[0] is SlotKind kind)
+        {
+            Dispatcher.BeginInvoke(() => slot.ChangeKind(kind));
+        }
+    }
+
+    private void OnClearSlot(object sender, RoutedEventArgs e) => Model<SlotViewModel>(sender).ClearSlot();
 
     private void OnSample(object sender, RoutedEventArgs e) => Model<SlotViewModel>(sender).Sample();
 

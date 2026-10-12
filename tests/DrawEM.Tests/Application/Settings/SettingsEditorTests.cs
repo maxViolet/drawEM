@@ -1,6 +1,7 @@
 using System.IO;
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Domain.Sound;
 using DrawEM.App.Infrastructure.Sound;
@@ -12,6 +13,8 @@ public sealed class SettingsEditorTests : IDisposable
     private const ShortcutModifiers CtrlAlt = ShortcutModifiers.Control | ShortcutModifiers.Alt;
     private const ShortcutModifiers CtrlShift = ShortcutModifiers.Control | ShortcutModifiers.Shift;
     private static readonly SoundReference Applause = new("applause.wav", "Applause.wav");
+    private static readonly EffectId Confetti = new("confetti");
+    private static readonly EffectId FocusRing = new("focus-ring");
     private readonly string root = Path.Combine(Path.GetTempPath(), "drawEM-editor-" + Guid.NewGuid().ToString("N"));
     private readonly ManagedSoundLibrary library;
     private readonly FakeSettingsSave saver = new();
@@ -51,7 +54,9 @@ public sealed class SettingsEditorTests : IDisposable
         editor.SetWidth(12);
         editor.SetShortcut(SettingsCommand.Draw, Shortcut.Create(CtrlShift, ShortcutKey.Letter('D')));
         editor.SelectSound(2, SourceFile("drumroll.mp3", [1, 2, 3]));
-        editor.RemoveSound(1);
+        editor.SelectEffect(1, Confetti);
+        editor.SelectEffect(3, FocusRing);
+        editor.ClearSlot(2);
         editor.RestoreDefaults();
         editor.Sample(1, _ => { });
 
@@ -165,15 +170,137 @@ public sealed class SettingsEditorTests : IDisposable
     }
 
     [Fact]
-    public void RemoveSound_EmptiesTheSlotAndItsShortcut()
+    public void ClearSlot_EmptiesASoundSlotAndItsShortcut()
     {
         var editor = Editor();
 
-        editor.RemoveSound(1);
+        editor.ClearSlot(1);
 
         Assert.Equal(ActionSlot.Empty(1), editor.Slots[0]);
         Assert.Throws<InvalidOperationException>(() =>
             editor.SetShortcut(SettingsCommand.ForSlot(1), Shortcut.Create(CtrlAlt, ShortcutKey.Digit(1))));
+    }
+
+    [Fact]
+    public void ClearSlot_EmptiesAnEffectSlotAndItsShortcut()
+    {
+        active = TestSettings.WithEffects((4, FocusRing));
+        var editor = Editor();
+
+        editor.ClearSlot(4);
+
+        Assert.Equal(ActionSlot.Empty(4), editor.Slots[3]);
+        Assert.False(editor.AcceptsShortcut(SettingsCommand.ForSlot(4)));
+        Assert.Empty(editor.Validate());
+    }
+
+    [Fact]
+    public void SelectEffect_InEmptySlot_ProposesTheSlotsDefaultShortcut()
+    {
+        var editor = Editor();
+
+        editor.SelectEffect(6, FocusRing);
+
+        Assert.Equal(
+            new ActionSlot(6, new EffectAction(FocusRing, Shortcut.Create(CtrlAlt, ShortcutKey.Digit(6)))),
+            editor.Slots[5]);
+        Assert.Empty(editor.Validate());
+        Assert.True(active.Slots[5].IsEmpty);
+        Assert.Empty(saver.Saved);
+    }
+
+    [Fact]
+    public void SelectEffect_OnASoundSlot_KeepsItsShortcut()
+    {
+        var editor = Editor();
+        var custom = Shortcut.Create(CtrlShift, ShortcutKey.Function(7));
+        editor.SetShortcut(SettingsCommand.ForSlot(1), custom);
+
+        editor.SelectEffect(1, Confetti);
+
+        Assert.Equal(new ActionSlot(1, new EffectAction(Confetti, custom)), editor.Slots[0]);
+        Assert.Equal(Applause, Assert.IsType<SoundAction>(active.Slots[0].Action).Sound);
+    }
+
+    [Fact]
+    public void SelectEffect_OnAnEffectSlot_KeepsItsShortcut()
+    {
+        active = TestSettings.WithEffects((2, Confetti));
+        var editor = Editor();
+        var custom = Shortcut.Create(CtrlShift, ShortcutKey.Letter('E'));
+        editor.SetShortcut(SettingsCommand.ForSlot(2), custom);
+
+        editor.SelectEffect(2, FocusRing);
+
+        Assert.Equal(new ActionSlot(2, new EffectAction(FocusRing, custom)), editor.Slots[1]);
+    }
+
+    [Fact]
+    public void SelectSound_OnAnEffectSlot_KeepsItsShortcut()
+    {
+        active = TestSettings.WithEffects((2, Confetti));
+        var editor = Editor();
+        var custom = Shortcut.Create(CtrlShift, ShortcutKey.Letter('S'));
+        editor.SetShortcut(SettingsCommand.ForSlot(2), custom);
+
+        editor.SelectSound(2, SourceFile("horn.wav", [5]));
+
+        var action = Assert.IsType<SoundAction>(editor.Slots[1].Action);
+        Assert.Equal("horn.wav", action.Sound.DisplayName);
+        Assert.Equal(custom, action.Shortcut);
+    }
+
+    [Fact]
+    public void SelectEffect_WithAProposedShortcutThatConflicts_IsReportedAndNotReassigned()
+    {
+        active = SettingsSnapshot.Validate(
+            SettingsSnapshot.Default.Style,
+            SettingsSnapshot.Default.DrawShortcut,
+            Shortcut.Create(CtrlAlt, ShortcutKey.Digit(3)),
+            SettingsSnapshot.Default.Slots).Snapshot!;
+        var editor = Editor();
+
+        editor.SelectEffect(3, Confetti);
+
+        Assert.Equal(
+            [new SettingsError(SettingsErrorCode.DuplicateShortcut, SettingsCommand.ForSlot(3), SettingsCommand.Clear)],
+            editor.Validate());
+        Assert.Equal(Shortcut.Create(CtrlAlt, ShortcutKey.Digit(3)), editor.ClearShortcut);
+        Assert.IsType<SettingsSaveResult.Invalid>(editor.Save());
+        Assert.Empty(saver.Saved);
+    }
+
+    [Fact]
+    public void SelectEffect_WithAnUnknownId_IsReportedAndBlocksSave()
+    {
+        var editor = Editor();
+        var unknown = new EffectId("Confetti");
+
+        editor.SelectEffect(2, unknown);
+
+        Assert.Equal(
+            [new SettingsError(SettingsErrorCode.UnknownEffect, SettingsCommand.ForSlot(2), Effect: unknown)],
+            editor.Validate());
+        Assert.IsType<SettingsSaveResult.Invalid>(editor.Save());
+        Assert.Empty(saver.Saved);
+    }
+
+    [Fact]
+    public void Cancel_AfterChangingASavedSoundToAnEffect_KeepsTheSoundAndItsCopy()
+    {
+        var first = Editor();
+        first.SelectSound(2, SourceFile("saved.wav", [4]));
+        var saved = SoundIn(first, 2)!;
+        active = Assert.IsType<SettingsSaveResult.Saved>(first.Save()).Snapshot;
+        var editor = Editor();
+
+        editor.SelectEffect(2, Confetti);
+        editor.Cancel();
+
+        Assert.True(File.Exists(library.PathFor(saved.LibraryFileName)));
+        Assert.Equal(saved, Assert.IsType<SoundAction>(active.Slots[1].Action).Sound);
+        Assert.Equal(saved, SoundIn(Editor(), 2));
+        Assert.Empty(cleanupFailures);
     }
 
     [Fact]

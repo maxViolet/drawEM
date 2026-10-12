@@ -84,7 +84,14 @@ internal sealed class FakePicker : ISoundFilePicker
 {
     public string? Next { get; set; }
 
-    public string? Pick() => Next;
+    /// <summary>One entry per dialog shown: the file it returned.</summary>
+    public List<string?> Picks { get; } = [];
+
+    public string? Pick()
+    {
+        Picks.Add(Next);
+        return Next;
+    }
 }
 
 internal sealed class FakeLibrary : ISoundLibrary

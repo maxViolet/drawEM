@@ -1,4 +1,5 @@
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 
 namespace DrawEM.App.Application.Settings;
@@ -102,12 +103,20 @@ public sealed class SettingsEditor
     /// <exception cref="SoundImportException">The file is not a WAV or MP3, or the copy failed. The draft is unchanged.</exception>
     public void SelectSound(int slot, string sourceFile)
     {
-        var shortcut = slots[slot - 1].Action?.Shortcut ?? ProposedShortcut(slot);
+        var shortcut = ShortcutForNewAction(slot);
         Replace(new ActionSlot(slot, new SoundAction(library.Import(sourceFile), shortcut)));
     }
 
+    /// <summary>
+    /// Assigns the effect to the slot. A slot that was empty proposes <see cref="ProposedShortcut"/>; a
+    /// filled slot keeps its shortcut. An ID outside <see cref="EffectCatalog"/> is kept and reported by
+    /// <see cref="Validate"/>. A sound it replaces keeps its managed copy while the active settings use it.
+    /// </summary>
+    public void SelectEffect(int slot, EffectId effect) =>
+        Replace(new ActionSlot(slot, new EffectAction(effect, ShortcutForNewAction(slot))));
+
     /// <summary>Empties the slot, which also removes its shortcut.</summary>
-    public void RemoveSound(int slot) => Replace(ActionSlot.Empty(slot));
+    public void ClearSlot(int slot) => Replace(ActionSlot.Empty(slot));
 
     /// <summary>Replaces the draft with <see cref="SettingsSnapshot.Default"/>. Nothing runs differently until Save.</summary>
     public void RestoreDefaults() => Load(SettingsSnapshot.Default);
@@ -175,6 +184,8 @@ public sealed class SettingsEditor
         ClearShortcut = snapshot.ClearShortcut;
         slots = snapshot.Slots.ToArray();
     }
+
+    private Shortcut ShortcutForNewAction(int slot) => slots[slot - 1].Action?.Shortcut ?? ProposedShortcut(slot);
 
     private void Replace(ActionSlot slot) => slots[slot.Number - 1] = slot;
 

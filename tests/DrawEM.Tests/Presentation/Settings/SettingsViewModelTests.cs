@@ -2,6 +2,7 @@ using DrawEM.App.Application.Drawing;
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Application.Sound;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Domain.Sound;
 using DrawEM.App.Infrastructure.Drawing;
@@ -17,6 +18,8 @@ public sealed class SettingsViewModelTests
     private const ShortcutModifiers CtrlAlt = ShortcutModifiers.Control | ShortcutModifiers.Alt;
     private const ShortcutModifiers CtrlShift = ShortcutModifiers.Control | ShortcutModifiers.Shift;
     private static readonly SoundReference Applause = new("applause.wav", "Applause.wav");
+    private static readonly EffectId Confetti = new("confetti");
+    private static readonly EffectId FocusRing = new("focus-ring");
     private readonly FakeLibrary library = new();
     private readonly FakeSettingsSave saver = new();
     private readonly FakeSampler sampler = new();
@@ -35,11 +38,14 @@ public sealed class SettingsViewModelTests
         Assert.Equal("Ctrl+Alt+X", model.Clear.Text);
         Assert.Equal(8, model.Slots.Count);
         Assert.Equal(["01", "02", "03", "04", "05", "06", "07", "08"], model.Slots.Select(slot => slot.Label));
+        Assert.Equal(SlotKind.Sound, model.Slots[0].Kind);
         Assert.Equal("Applause.wav", model.Slots[0].FileName);
         Assert.Equal("Ctrl+Alt+1", model.Slots[0].Shortcut.Text);
+        Assert.True(model.Slots[0].HasSound);
         Assert.Equal("No sound selected", model.Slots[1].FileName);
         Assert.Equal("No shortcut", model.Slots[1].Shortcut.Text);
         Assert.False(model.Slots[1].Shortcut.IsEnabled);
+        Assert.False(model.Slots[1].HasAction);
         Assert.False(model.Slots[1].HasSound);
         Assert.True(model.CanSave);
     }
@@ -194,7 +200,7 @@ public sealed class SettingsViewModelTests
         model.Slots[3].ChooseFile();
 
         Assert.Empty(library.Imported);
-        Assert.False(model.Slots[3].HasSound);
+        Assert.False(model.Slots[3].HasAction);
     }
 
     [Fact]
@@ -207,20 +213,170 @@ public sealed class SettingsViewModelTests
         model.Slots[2].ChooseFile();
 
         Assert.Equal(library.Failure, model.Slots[2].Message);
-        Assert.False(model.Slots[2].HasSound);
+        Assert.False(model.Slots[2].HasAction);
         Assert.True(model.CanSave);
     }
 
     [Fact]
-    public void RemoveSound_ClearsTheSlot()
+    public void ClearSlot_ClearsASoundSlot()
     {
         var model = Model();
 
-        model.Slots[0].RemoveSound();
+        model.Slots[0].ClearSlot();
 
-        Assert.False(model.Slots[0].HasSound);
+        Assert.False(model.Slots[0].HasAction);
+        Assert.Equal(SlotKind.Sound, model.Slots[0].Kind);
         Assert.Equal("No shortcut", model.Slots[0].Shortcut.Text);
         Assert.True(model.CanSave);
+    }
+
+    [Fact]
+    public void EffectOptions_ListEachBuiltInEffectUnderItsPlacement()
+    {
+        Assert.Equal(
+            [("Monitor", "Confetti", Confetti), ("Cursor", "Focus ring", FocusRing)],
+            EffectOption.All.Select(option => (option.Group, option.Name, option.Id)));
+    }
+
+    [Fact]
+    public void Opens_ShowingAnEffectSlot()
+    {
+        active = TestSettings.WithEffects((2, FocusRing));
+        var model = Model();
+
+        Assert.Equal(SlotKind.Effect, model.Slots[1].Kind);
+        Assert.True(model.Slots[1].IsEffect);
+        Assert.False(model.Slots[1].IsSound);
+        Assert.Equal(FocusRing, model.Slots[1].Effect?.Id);
+        Assert.Equal("Ctrl+Alt+2", model.Slots[1].Shortcut.Text);
+        Assert.True(model.Slots[1].HasAction);
+        Assert.False(model.Slots[1].HasSound);
+    }
+
+    [Fact]
+    public void EmptySlot_ChangedToEffect_ChangesTheDraftOnlyWhenAnEffectIsChosen()
+    {
+        var model = Model();
+
+        model.Slots[4].ChangeKind(SlotKind.Effect);
+
+        Assert.True(model.Slots[4].IsEffect);
+        Assert.Null(model.Slots[4].Effect);
+        Assert.False(model.Slots[4].HasAction);
+        Assert.False(model.Slots[4].Shortcut.IsEnabled);
+        Assert.Empty(picker.Picks);
+
+        model.Slots[4].Effect = EffectOption.All.Single(option => option.Id == Confetti);
+
+        Assert.Equal(Confetti, model.Slots[4].Effect?.Id);
+        Assert.Equal("Ctrl+Alt+5", model.Slots[4].Shortcut.Text);
+        Assert.True(model.CanSave);
+        Assert.True(active.Slots[4].IsEmpty);
+        Assert.Empty(saver.Saved);
+    }
+
+    [Fact]
+    public void SoundSlot_ChangedToEffect_ChoosesTheFirstEffectAndKeepsTheShortcut()
+    {
+        var model = Model();
+        model.Slots[0].Shortcut.BeginCapture();
+        capture.Report(new ShortcutCaptureResult.Captured(Shortcut.Create(CtrlShift, ShortcutKey.Letter('K'))));
+
+        model.Slots[0].ChangeKind(SlotKind.Effect);
+
+        Assert.Equal(SlotKind.Effect, model.Slots[0].Kind);
+        Assert.Equal(EffectOption.All[0], model.Slots[0].Effect);
+        Assert.Equal("Ctrl+Shift+K", model.Slots[0].Shortcut.Text);
+        Assert.False(model.Slots[0].HasSound);
+        Assert.Equal(TestSettings.WithSounds((1, Applause)), active);
+        Assert.Empty(saver.Saved);
+    }
+
+    [Fact]
+    public void EffectSlot_ChangedToSound_UsesThePickedFileAndKeepsTheShortcut()
+    {
+        active = TestSettings.WithEffects((3, Confetti));
+        var model = Model();
+        picker.Next = @"C:\sounds\Horn.wav";
+
+        model.Slots[2].ChangeKind(SlotKind.Sound);
+
+        Assert.Equal(SlotKind.Sound, model.Slots[2].Kind);
+        Assert.Equal("Horn.wav", model.Slots[2].FileName);
+        Assert.Equal("Ctrl+Alt+3", model.Slots[2].Shortcut.Text);
+        Assert.True(model.Slots[2].HasSound);
+    }
+
+    [Fact]
+    public void EffectSlot_ChangedToSound_WithThePickerCancelled_KeepsTheEffect()
+    {
+        active = TestSettings.WithEffects((3, Confetti));
+        var model = Model();
+
+        model.Slots[2].ChangeKind(SlotKind.Sound);
+
+        Assert.Single(picker.Picks);
+        Assert.Empty(library.Imported);
+        Assert.Equal(SlotKind.Effect, model.Slots[2].Kind);
+        Assert.Equal(Confetti, model.Slots[2].Effect?.Id);
+    }
+
+    [Fact]
+    public void EffectSlot_ChangedToAnotherEffect_KeepsTheShortcut()
+    {
+        active = TestSettings.WithEffects((3, Confetti));
+        var model = Model();
+
+        model.Slots[2].Effect = EffectOption.All.Single(option => option.Id == FocusRing);
+
+        Assert.Equal(FocusRing, model.Slots[2].Effect?.Id);
+        Assert.Equal("Ctrl+Alt+3", model.Slots[2].Shortcut.Text);
+    }
+
+    [Fact]
+    public void EffectWithAConflictingProposedShortcut_IsShownOnTheSlotAndBlocksSave()
+    {
+        var model = Model();
+        model.Draw.BeginCapture();
+        capture.Report(new ShortcutCaptureResult.Captured(Shortcut.Create(CtrlAlt, ShortcutKey.Digit(6))));
+        model.Slots[5].ChangeKind(SlotKind.Effect);
+
+        model.Slots[5].Effect = EffectOption.All[1];
+
+        Assert.Equal("Same shortcut as Hold to draw.", model.Slots[5].Shortcut.Error);
+        Assert.Equal("Same shortcut as Slot 6.", model.Draw.Error);
+        Assert.False(model.CanSave);
+        Assert.False(model.Save());
+        Assert.Empty(saver.Saved);
+    }
+
+    [Fact]
+    public void ClearSlot_ClearsAnEffectSlotAndKeepsShowingTheEffectList()
+    {
+        active = TestSettings.WithEffects((7, FocusRing));
+        var model = Model();
+
+        model.Slots[6].ClearSlot();
+
+        Assert.False(model.Slots[6].HasAction);
+        Assert.True(model.Slots[6].IsEffect);
+        Assert.Null(model.Slots[6].Effect);
+        Assert.Equal("No shortcut", model.Slots[6].Shortcut.Text);
+        Assert.False(model.Slots[6].Shortcut.IsEnabled);
+        Assert.True(model.CanSave);
+    }
+
+    [Fact]
+    public void Close_AfterChangingASavedSoundToAnEffect_KeepsTheSavedSound()
+    {
+        var model = Model();
+        model.Slots[0].ChangeKind(SlotKind.Effect);
+
+        model.Close();
+
+        Assert.Equal([TestSettings.WithSounds((1, Applause))], library.Discarded);
+        Assert.Equal(Applause, Assert.IsType<SoundAction>(active.Slots[0].Action).Sound);
+        Assert.Empty(saver.Saved);
     }
 
     [Fact]
@@ -246,7 +402,7 @@ public sealed class SettingsViewModelTests
 
         Assert.Equal("#FF4500", model.HexText);
         Assert.Equal("4", model.WidthText);
-        Assert.All(model.Slots, slot => Assert.False(slot.HasSound));
+        Assert.All(model.Slots, slot => Assert.False(slot.HasAction));
         Assert.True(model.CanSave);
         Assert.Equal(TestSettings.WithSounds((1, Applause)), active);
         Assert.Empty(saver.Saved);
