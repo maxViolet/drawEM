@@ -1,6 +1,6 @@
 # Built-in effect sources
 
-Built-in Lottie effects shipped with drawEM. Both files were downloaded from LottieFiles and are distributed under the Lottie Simple License (not under the drawEM project license); any redistribution or modification of these files must keep the same license terms.
+Built-in Lottie effects shipped with drawEM. Both files were downloaded from LottieFiles and are distributed under the Lottie Simple License in `LICENSE.md` (not under the drawEM project license); any redistribution or modification of these files must keep the same license terms. The build copies both documents to `licenses\` next to the executable.
 
 ## confetti.json
 
