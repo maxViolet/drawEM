@@ -16,6 +16,9 @@ public partial class SettingsWindow : Window, ISoundFilePicker
 {
     private SettingsViewModel? ViewModel => DataContext as SettingsViewModel;
 
+    /// <summary>Set once closing goes ahead; the draft has then ended.</summary>
+    private bool closed;
+
     public SettingsWindow()
     {
         InitializeComponent();
@@ -45,6 +48,7 @@ public partial class SettingsWindow : Window, ISoundFilePicker
         base.OnClosing(e);
         if (!e.Cancel)
         {
+            closed = true;
             ViewModel?.Close();
         }
     }
@@ -63,13 +67,20 @@ public partial class SettingsWindow : Window, ISoundFilePicker
 
     // SelectedItem is bound one way, and the change runs after this selection change ends: a file dialog
     // then opens over a closed list, and a choice the model refuses, such as a cancelled dialog, is reverted
-    // by the model's notification. That revert reaches here again as a no-op.
+    // by the model's notification. That revert reaches here again as a no-op. A change still queued when
+    // the window closes is dropped, so nothing is imported into the ended draft.
     private void OnKindChanged(object sender, SelectionChangedEventArgs e)
     {
         if (e.AddedItems.Count == 1 && e.AddedItems[0] is SlotKind kind)
         {
             var slot = Model<SlotViewModel>(sender);
-            Dispatcher.BeginInvoke(() => slot.ChangeKind(kind));
+            Dispatcher.BeginInvoke(() =>
+            {
+                if (!closed)
+                {
+                    slot.ChangeKind(kind);
+                }
+            });
         }
     }
 

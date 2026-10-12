@@ -89,15 +89,23 @@ public sealed class SettingsWindowTests
             ((TabControl)window.FindName("Tabs")).SelectedIndex = 1;
             Layout(window);
             var kind = ComboBoxes(window, "Action type")[1];
+            var listOpenAtPick = new List<bool>();
+            picker.Picking = () => listOpenAtPick.Add(kind.IsDropDownOpen);
 
-            // As a user's choice does: the one-way SelectedItem binding stays.
+            // As a click on a list item does: select while the list is open, then close it. The selection keeps
+            // the one-way SelectedItem binding.
             void ChooseSound()
             {
+                kind.IsDropDownOpen = true;
+                Layout(window);
                 kind.SetCurrentValue(Selector.SelectedItemProperty, SlotKind.Sound);
+                kind.IsDropDownOpen = false;
                 Layout(window);
             }
 
             ChooseSound();
+
+            Assert.Equal([false], listOpenAtPick);
 
             Assert.Single(picker.Picks);
             Assert.Equal(SlotKind.Effect, kind.SelectedItem);
@@ -111,6 +119,33 @@ public sealed class SettingsWindowTests
             Assert.Equal("Horn.wav", model.Slots[1].FileName);
             Assert.Equal("Ctrl+Alt+2", model.Slots[1].Shortcut.Text);
             window.Close();
+        });
+    }
+
+    [Fact]
+    public void TypeSelector_ChangeQueuedWhenTheWindowCloses_DoesNothing()
+    {
+        StaThread.Run(() =>
+        {
+            var active = TestSettings.WithEffects((2, new EffectId("confetti")));
+            var picker = new FakePicker { Next = @"C:\sounds\Horn.wav" };
+            var library = new FakeLibrary();
+            var window = new SettingsWindow();
+            var model = new SettingsViewModel(
+                new SettingsEditor(() => active, library, new FakeSettingsSave(), new FakeSampler(), _ => { }),
+                new FakeCapture(),
+                picker);
+            Show(window, model);
+            ((TabControl)window.FindName("Tabs")).SelectedIndex = 1;
+            Layout(window);
+
+            ComboBoxes(window, "Action type")[1].SetCurrentValue(Selector.SelectedItemProperty, SlotKind.Sound);
+            window.Close();
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+
+            Assert.Empty(picker.Picks);
+            Assert.Empty(library.Imported);
+            Assert.Equal([active], library.Discarded);
         });
     }
 

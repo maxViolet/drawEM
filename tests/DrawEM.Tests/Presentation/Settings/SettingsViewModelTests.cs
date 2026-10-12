@@ -254,7 +254,7 @@ public sealed class SettingsViewModelTests
     }
 
     [Fact]
-    public void EmptySlot_ChangedToEffect_ChangesTheDraftOnlyWhenAnEffectIsChosen()
+    public void EmptySlot_ChangedToEffect_ChangesTheDraftOnlyWhenAnEffectIsChosen_AndSavesIt()
     {
         var model = Model();
 
@@ -270,9 +270,12 @@ public sealed class SettingsViewModelTests
 
         Assert.Equal(Confetti, model.Slots[4].Effect?.Id);
         Assert.Equal("Ctrl+Alt+5", model.Slots[4].Shortcut.Text);
-        Assert.True(model.CanSave);
         Assert.True(active.Slots[4].IsEmpty);
         Assert.Empty(saver.Saved);
+        Assert.True(model.Save());
+        Assert.Equal(
+            new EffectAction(Confetti, Shortcut.Create(CtrlAlt, ShortcutKey.Digit(5))),
+            Assert.Single(saver.Saved).Slots[4].Action);
     }
 
     [Fact]
@@ -290,6 +293,21 @@ public sealed class SettingsViewModelTests
         Assert.False(model.Slots[0].HasSound);
         Assert.Equal(TestSettings.WithSounds((1, Applause)), active);
         Assert.Empty(saver.Saved);
+    }
+
+    [Fact]
+    public void ChangingTypeDuringShortcutCapture_EndsTheCapture()
+    {
+        var model = Model();
+        model.Slots[0].Shortcut.BeginCapture();
+        var staleReport = capture.Current!;
+
+        model.Slots[0].ChangeKind(SlotKind.Effect);
+        staleReport(new ShortcutCaptureResult.Captured(Shortcut.Create(CtrlShift, ShortcutKey.Letter('K'))));
+
+        Assert.False(model.Slots[0].Shortcut.IsCapturing);
+        Assert.Equal(1, capture.Ended);
+        Assert.Equal("Ctrl+Alt+1", model.Slots[0].Shortcut.Text);
     }
 
     [Fact]
@@ -319,6 +337,22 @@ public sealed class SettingsViewModelTests
         Assert.Empty(library.Imported);
         Assert.Equal(SlotKind.Effect, model.Slots[2].Kind);
         Assert.Equal(Confetti, model.Slots[2].Effect?.Id);
+    }
+
+    [Fact]
+    public void EffectSlot_ChangedToSound_WhenTheCopyFails_KeepsTheEffectAndShowsWhy()
+    {
+        active = TestSettings.WithEffects((3, Confetti));
+        var model = Model();
+        picker.Next = @"C:\sounds\locked.wav";
+        library.Failure = "'locked.wav' could not be copied: access denied";
+
+        model.Slots[2].ChangeKind(SlotKind.Sound);
+
+        Assert.Equal(library.Failure, model.Slots[2].Message);
+        Assert.Equal(SlotKind.Effect, model.Slots[2].Kind);
+        Assert.Equal(Confetti, model.Slots[2].Effect?.Id);
+        Assert.Equal("Ctrl+Alt+3", model.Slots[2].Shortcut.Text);
     }
 
     [Fact]
@@ -397,12 +431,14 @@ public sealed class SettingsViewModelTests
         var model = Model();
         model.HexText = "#000000";
         model.WidthText = "abc";
+        model.Slots[3].ChangeKind(SlotKind.Effect);
 
         model.RestoreDefaults();
 
         Assert.Equal("#FF4500", model.HexText);
         Assert.Equal("4", model.WidthText);
         Assert.All(model.Slots, slot => Assert.False(slot.HasAction));
+        Assert.All(model.Slots, slot => Assert.Equal(SlotKind.Sound, slot.Kind));
         Assert.True(model.CanSave);
         Assert.Equal(TestSettings.WithSounds((1, Applause)), active);
         Assert.Empty(saver.Saved);
