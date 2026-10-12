@@ -8,9 +8,14 @@ namespace DrawEM.App.Application.Effects;
 /// invocation and never resampled. <see cref="ConfigurationGeneration"/> names the configuration that built
 /// the request, so later steps can discard requests a Save invalidated.
 /// </summary>
+/// <param name="MonitorEpoch">
+/// The monitor epoch at invocation. The epoch advances each time the cursor enters another monitor and on
+/// each display topology change; an effect stops once the epoch has moved past its own.
+/// </param>
 public sealed record StartEffectCommand(
     EffectId Effect,
     EffectPlacement Placement,
     MonitorBounds Monitor,
     ScreenPoint CursorPoint,
-    long ConfigurationGeneration);
+    long ConfigurationGeneration,
+    long MonitorEpoch);

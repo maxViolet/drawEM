@@ -314,7 +314,7 @@ public sealed class SettingsViewModelTests
             new FakeMonitorBoundsSource(new MonitorBounds(-100, -100, 100, 100)),
             ShortcutBindings.FromSnapshot(active, _ => applause),
             played.Add,
-            _ => { });
+            new FakeEffectStartQueue());
         var model = new SettingsViewModel(
             new SettingsEditor(() => active, library, saver, sampler, _ => { }), hook, picker);
 

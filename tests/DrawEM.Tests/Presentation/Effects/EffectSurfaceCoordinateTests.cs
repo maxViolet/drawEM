@@ -113,15 +113,4 @@ public class EffectSurfaceCoordinateTests
     {
         Assert.Throws<ArgumentException>(() => new EffectSurfaceLayout(new MonitorBounds(0, 0, 0, 100), 1.0));
     }
-
-    [Theory]
-    [InlineData("1", true)]
-    [InlineData("0", false)]
-    [InlineData("true", false)]
-    [InlineData("", false)]
-    [InlineData(null, false)]
-    public void Probe_IsEnabledOnlyByOne(string? value, bool enabled)
-    {
-        Assert.Equal(enabled, EffectSurfaceProbe.IsEnabled(value));
-    }
 }

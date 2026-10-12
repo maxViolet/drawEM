@@ -215,7 +215,7 @@ public sealed class SettingsSaveStuckSoundTests : IDisposable
                 new FakeMonitorBoundsSource(new MonitorBounds(0, 0, 100, 100)),
                 ShortcutBindings.FromSnapshot(Settings.Current, Settings.CommandFor),
                 host.Play,
-                _ => { });
+                new FakeEffectStartQueue());
             var notifications = new SettingsSaveNotifications(new SettingsFailureDialog(SaveFailures.Add), reporter, library);
             operation = new SettingsSaveOperation(Store, library, Settings, host, shortcuts, notifications);
         }

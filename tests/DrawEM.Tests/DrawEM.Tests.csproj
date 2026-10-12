@@ -25,4 +25,9 @@
     <ProjectReference Include="..\..\src\DrawEM.App\DrawEM.App.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- BuiltInEffectAnimationsTests checks the source and license record of every built-in effect file. -->
+    <None Include="..\..\src\DrawEM.App\Presentation\Effects\BuiltIn\SOURCES.md" Link="BuiltInEffects\SOURCES.md" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

@@ -249,9 +249,9 @@ drawEM runs three kinds of thread:
 
 | Thread | Owner | Runs |
 | --- | --- | --- |
-| WPF UI thread | `App` | keyboard/mouse hook callbacks (including direct sound enqueue), queued drawing commands, drawing controller, overlay |
+| WPF UI thread | `App` | keyboard/mouse hook callbacks (including direct sound enqueue), queued drawing commands, drawing controller, overlay, `EffectChannelController`, effect windows and their `CompositionTarget.Rendering` frames |
 | Sound thread (`drawEM sound`, STA, own `Dispatcher`) | `SoundChannelHost` | `SoundChannelController`, every WPF `MediaPlayer`, deadline callbacks |
-| Log writer (thread-pool task) | `LoggingSoundFailureReporter` | file writes to `sound.log` |
+| Log writers (one background thread each) | `LoggingSoundFailureReporter`, `LoggingEffectFailureReporter` | file writes to `sound.log` and `effect.log` |
 
 WPF `MediaPlayer` can be stopped only on the thread that created it. The sound
 thread therefore owns every player, and a busy UI thread cannot delay the

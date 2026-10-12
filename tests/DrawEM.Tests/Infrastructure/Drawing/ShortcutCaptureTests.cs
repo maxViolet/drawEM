@@ -641,7 +641,7 @@ public class ShortcutCaptureTests
                     ],
                     [(Shortcut.Create(AltShift, ShortcutKey.Digit(4)), EffectCatalog.BuiltIn.Single(effect => effect.Id.Value == "focus-ring"))]),
                 Played.Add,
-                Started.Add);
+                Effects);
         }
 
         public GlobalShortcutAdapter Adapter { get; }
@@ -652,7 +652,9 @@ public class ShortcutCaptureTests
 
         public List<PlaySoundCommand> Played { get; } = [];
 
-        public List<StartEffectCommand> Started { get; } = [];
+        public FakeEffectStartQueue Effects { get; } = new();
+
+        public List<StartEffectCommand> Started => Effects.Started;
 
         public List<ShortcutCaptureResult> Results { get; } = [];
 

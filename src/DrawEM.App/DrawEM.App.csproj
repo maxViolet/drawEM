@@ -16,7 +16,10 @@
 
   <ItemGroup>
     <Resource Include="Assets\drawEM.ico" />
-    <EmbeddedResource Include="Presentation\Effects\ProbeAnimations\*.json" />
+    <EmbeddedResource Include="Presentation\Effects\BuiltIn\*.json" />
+    <!-- The Lottie Simple License requires every distribution of the files to carry its terms. -->
+    <None Include="Presentation\Effects\BuiltIn\LICENSE.md" Link="licenses\lottie-effects-license.md" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Presentation\Effects\BuiltIn\SOURCES.md" Link="licenses\lottie-effects-sources.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

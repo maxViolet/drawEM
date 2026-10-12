@@ -1,7 +1,7 @@
 # drawEM v4 roadmap: built-in Monitor and Cursor effects
 
 **Status:** proposed product and implementation plan. S4-01 is done by owner
-decision with its measurement gates unverified. S4-02, S4-04, and S4-05 are done; other steps are pending.
+decision with its measurement gates unverified. S4-02, S4-04, S4-05, and S4-06 are done; S4-03 is implemented with one visual check unverified; S4-07 is implemented with its two-monitor checks unverified; other steps are pending.
 **Date:** 2026-10-07; revised 2026-10-09 for Lottie effects with two placements.
 **Prerequisite for release:** finish the v3 Step 8 Windows acceptance work.
 Its task file records verification on one 100% monitor, with seven
@@ -117,9 +117,9 @@ Inspected on 2026-10-07; S4-01 probe added on 2026-10-08:
 | `Application/Settings/ActiveSettings.cs` | Builds sound commands from managed references | Prepare typed sound/effect commands from one snapshot |
 | `Infrastructure/Drawing/ShortcutBindings.cs` | Builds bindings only from `SoundAction` | Bind all supported slot types without silently dropping effects |
 | `Infrastructure/Drawing/GlobalShortcutAdapter.cs` | Dispatches prepared sound commands; owns key/capture behavior | Dispatch typed slot commands, preserving suppression and release bookkeeping |
-| `Infrastructure/Drawing/GlobalMouseInputAdapter.cs` | Reports movement to drawing when draw mode is active | Observe monitor transitions independently of drawing |
-| `Presentation/Effects/EffectSurfaceWindow.cs` | S4-01 probe: monitor-sized, nonactivating, click-through window | Basis for both surfaces: Monitor surface covers the monitor; Cursor surface is sized to the effect and clipped to the monitor |
-| `Presentation/Effects/EffectSurfaceProbe.cs` | Temporary probe behind `DRAWEM_EFFECT_PROBE=1` | Reused by the S4-03.1 Lottie speed gate; removed in S4-03 (moved from S4-06 by owner decision on 2026-10-11) |
+| `Infrastructure/Drawing/GlobalMouseInputAdapter.cs` | Reports movement to drawing when draw mode is active | Done in S4-07, beside it: `Infrastructure/Effects/EffectMonitorGuard.cs` observes monitor transitions from the same hook, independently of drawing |
+| `Presentation/Effects/EffectSurfaceWindow.cs` | Nonactivating, click-through effect window from S4-01 | Done in S4-03: `LottieEffectSurface` shows each instance in one; a Monitor window covers the monitor, a Cursor window is sized to the effect and clipped to the monitor |
+| `Presentation/Effects/EffectSurfaceProbe.cs` | Temporary probe behind `DRAWEM_EFFECT_PROBE=1` | Removed in S4-03 after the S4-03.1 speed gate |
 | `Application/Settings/SettingsEditor.cs` | Sound selection, sampling, Save/Cancel ownership | Effect selection grouped by placement and sample-instance ownership |
 | `Application/Settings/SettingsSaveOperation.cs` | Durable Save and sound/drawing interruption | Invalidate queued effect starts and stop visible effects on successful Save |
 | `Infrastructure/Settings/SettingsJson.cs` | Schema 1, sound discriminator only | Schema 2, effect discriminator, schema 1 migration |
@@ -223,6 +223,12 @@ effect misses the targets:
    updates the product decision, the effect table, and the S4-03 to S4-12
    criteria, and the project owner confirms it.
 
+Outcome on 2026-10-12: Monitor missed the render-callback target at full
+resolution, so S4-03 renders Monitor effects at half resolution (fallback 1).
+Both placements missed the refresh-relative frame-interval targets on a 240 Hz
+panel; the owner replaced them with an absolute 25 ms limit (see the release
+targets below), so fallback 2 was not needed.
+
 A GPU path (Skia on Direct3D, or DirectComposition) is outside v4: it costs an
 estimated 2-5 days and adds native interop.
 
@@ -311,17 +317,17 @@ effect and is then cancelled.
 ## Delivery order and completion criteria
 
 Follow the [simple implementation steps](STEPS.md). Each step has one outcome
-and a completion check. S4-01 is recorded as complete by owner decision; S4-02, S4-04, and S4-05 are complete.
+and a completion check. S4-01 is recorded as complete by owner decision; S4-02, S4-04, S4-05, and S4-06 are complete; S4-03 is implemented with one visual check unverified; S4-07 is implemented with its two-monitor checks unverified.
 
 | Task | Outcome |
 |---|---|
 | [S4-01](step-01-effect-surface/task.md) | Prove a transparent effect window works on Windows (done) |
 | [S4-02](step-02-effect-channel/task.md) | Start, replace, and stop one effect of either placement safely (done) |
-| [S4-03](step-03-built-in-effects/task.md) | Play built-in Lottie effects on Monitor and Cursor surfaces; S4-03.1 is its speed gate |
+| [S4-03](step-03-built-in-effects/task.md) | Play built-in Lottie effects on Monitor and Cursor surfaces; S4-03.1 is its speed gate (implemented; flashing check unverified) |
 | [S4-04](step-04-effect-action-model/task.md) | Represent an effect in an action slot (done) |
 | [S4-05](step-05-effect-settings-schema/task.md) | Save and load effect assignments (done) |
-| [S4-06](step-06-effect-shortcuts/task.md) | Launch effects through shortcuts |
-| [S4-07](step-07-effect-monitor-transitions/task.md) | Stop effects when switching monitors |
+| [S4-06](step-06-effect-shortcuts/task.md) | Launch effects through shortcuts (done) |
+| [S4-07](step-07-effect-monitor-transitions/task.md) | Stop effects when switching monitors (implemented; two-monitor checks unverified) |
 | [S4-08](step-08-effect-settings-ui/task.md) | Choose effects in Settings, grouped by placement |
 | [S4-09](step-09-effect-sample/task.md) | Preview draft effects with Sample |
 | [S4-10](step-10-effect-save-runtime/task.md) | Apply settings without leaving an old effect running |
@@ -369,10 +375,13 @@ Release targets, measured on a recorded reference PC for each placement:
   from the hook event timestamp to the first presented frame containing effect
   pixels. Record the timing method and its error. Record cold starts separately.
 - Render callback time within 4 ms at p95, with Skia drawing inside the callback.
-- Frame interval within 1.5 display refresh intervals at p95 (25 ms at 60 Hz).
-  A frame is dropped when its interval exceeds 1.5 refresh intervals; at most
-  1% of frames are dropped. These two thresholds are proposed defaults; S4-03.1
-  may revise them with a recorded rationale.
+- Frame interval within 25 ms at p95. A frame is dropped when its interval
+  exceeds 25 ms; at most 1% of frames are dropped. Revised by S4-03.1 with the
+  project owner on 2026-10-12: the earlier limit of 1.5 display refresh
+  intervals (25 ms at 60 Hz) failed every mode on a 240 Hz panel, including a
+  Cursor effect whose render callback took 0.26 ms median, so it measured WPF
+  composition rate, not effect cost. See the
+  [S4-03.1 results](step-03-built-in-effects/acceptance.md#s4-031-results).
 - Hook event-to-callback delay during animation and active drawing within 25 ms
   at p95 and 100 ms maximum; the hooks still work after 100 cycles.
 - No sustained stutter or drawing slowdown in a recording. Callback timing
