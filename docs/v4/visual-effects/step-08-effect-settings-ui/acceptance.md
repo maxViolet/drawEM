@@ -12,15 +12,22 @@
 
 - `Application/Settings/SettingsEditor.cs`: `SelectEffect(slot, id)` assigns an effect with the same shortcut rule as `SelectSound` (keep a filled slot's shortcut, propose `Ctrl+Alt+N` for an empty one). `RemoveSound` is renamed `ClearSlot`, since it empties either type.
 - `Presentation/Settings/SettingsViewModel.cs`: `EffectOption.All` lists the catalog with its placement as the group, Monitor first. `SlotViewModel` gains `Kind`, `IsSound`, `IsEffect`, `HasAction`, `Effect`, `ChangeKind`, and `ClearSlot`; `HasSound` now means a sound action (Sample stays sound-only until S4-09). An empty slot keeps a row-only type, so choosing Effect there shows the effect list without changing the draft. A sound slot changed to Effect takes the first effect. An effect slot changed to Sound opens the file dialog and stays an effect if no file is copied. Restore defaults resets the row types to Sound.
-- `Presentation/Settings/SettingsWindow.xaml(.cs)`: the type list binds `SelectedItem` one way and calls `ChangeKind` after the selection change ends, so the file dialog opens over a closed list and a refused change shows the kept type again. One `CollectionViewSource` groups the effect list by `Group`; each list sets `IsSynchronizedWithCurrentItem="False"` so rows select independently. The empty-slot file button reads "Choose file…" so it fits beside the type list.
+- `Presentation/Settings/SettingsWindow.xaml(.cs)`: the type list binds `SelectedItem` one way and calls `ChangeKind` after the selection change ends, so the file dialog opens over a closed list and a refused change shows the kept type again. A change still queued when the window closes is dropped. One `CollectionViewSource` groups the effect list by `Group`; each list sets `IsSynchronizedWithCurrentItem="False"` so rows select independently. The empty-slot file button reads "Choose file…" so it fits beside the type list.
 
 ## Validation
 
 - Test first: the new editor, view-model, and window tests first failed to build for the expected reason: `SettingsEditor.SelectEffect`, `SettingsEditor.ClearSlot`, `SlotKind`, `EffectOption`, and the new `SlotViewModel` members did not exist. The window test then failed once more because its binding walk did not read template-set `Visibility`, `SelectedItem`, and `ItemsSource`; those are now in its list. `TypeSelector_WhenTheFileDialogIsCancelled_ShowsTheKeptEffect` drives the real window's type list.
 - `dotnet build DrawEM.sln --no-incremental -warnaserror`: succeeded, no warnings.
-- `dotnet test DrawEM.sln --no-build`: 637 passed, 0 failed.
+- `dotnet test DrawEM.sln --no-build`: 640 passed, 0 failed after the role-review fixes.
+- Mutation check: calling `ChangeKind` synchronously in `OnKindChanged` failed `TypeSelector_WhenTheFileDialogIsCancelled_ShowsTheKeptEffect` (dialog opened over the open list) and `TypeSelector_ChangeQueuedWhenTheWindowCloses_DoesNothing`; reverted.
 - Off-screen render, 2026-10-12, branch `S4-08-effect-settings-ui`: the real `SettingsWindow` with slot 1 Horn.wav, slot 2 Focus ring, slot 3 Confetti, and slot 5 empty with Effect chosen, rendered with `RenderTargetBitmap` from a throwaway test (deleted). Observed: each row shows its type, effect rows show the effect list and no file button, the empty Effect row shows an empty list with Clear and the shortcut disabled, Sample is disabled on effect rows, and the open list shows the headers Monitor (Confetti) and Cursor (Focus ring). No placement control.
 - Unverified: the running-app check.
+
+## Review
+
+- `/simplify` (Claude Code): `ChangeKind` ends every branch at one `Refresh`; `OnKindChanged` reads the slot with the shared `Model<T>` helper; one `ComboBoxes` test helper. Rejected: using `BuiltInEffect` in the view instead of `EffectOption`, making a type change only switch the view, removing the row-only type of an empty slot, one `CollectionViewSource` per row, and merging tests into theories.
+- Role reviews (correctness, security, spec, test quality). Fixed: a type change queued just before the window closed could still open the file dialog and import into the ended draft (`TypeSelector_ChangeQueuedWhenTheWindowCloses_DoesNothing`). Added tests: saving a chosen effect, Restore defaults resetting row types, a failed copy on Effect -> Sound keeping the effect, a type change ending shortcut capture, and the file dialog opening only after the type list closes. Rejected: removing the binding-path assertions in the window test, because they show its binding-error walk reaches the new template bindings, which it missed before. Security and spec found nothing actionable.
+- Final review (Codex, `codex review --base origin/main`): no actionable defect; its independent `dotnet test DrawEM.sln --no-restore` run passed all 640 tests. The running-app check remains unverified.
 
 ## Running-app check
 
