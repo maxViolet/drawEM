@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <Resource Include="Assets\drawEM.ico" />
-    <EmbeddedResource Include="Presentation\Effects\ProbeAnimations\*.json" />
+    <EmbeddedResource Include="Presentation\Effects\BuiltIn\*.json" />
   </ItemGroup>
 
   <ItemGroup>

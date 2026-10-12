@@ -4,10 +4,10 @@
 
 - [x] A bound effect of either placement sends one start request on first key-down; holding does not send another, and a released and repressed shortcut sends a new one, which restarts the effect. Checked against the start delegate with a fake dispatcher.
 - [x] The start request for a Cursor effect carries the cursor point captured at key-down, not a later position, and the monitor that contains that point.
-- [ ] On screen: a bound effect of either placement launches, and a Cursor effect appears centered on the key-down point. Moved to [S4-03](../step-03-built-in-effects/acceptance.md) with the surface (see Scope).
+- [x] On screen: a bound effect of either placement launches, and a Cursor effect appears centered on the key-down point. Moved to [S4-03](../step-03-built-in-effects/acceptance.md) with the surface (see Scope); checked there on 2026-10-12.
 - [x] Prepared bindings include sound and effect slots from one settings snapshot without dropping either type.
 - [x] A stale queued invocation cannot publish under a newer configuration.
-- [ ] The S4-01 probe is removed: `EffectSurfaceProbe.cs`, `EffectProbeHotkeys.cs`, `EffectProbeInputLoad.cs`, and the `DRAWEM_EFFECT_PROBE` wiring in `App.xaml.cs` no longer exist, and a search of `src/` for `DRAWEM_EFFECT_PROBE` finds nothing. Moved to [S4-03](../step-03-built-in-effects/acceptance.md) by owner decision on 2026-10-11 (see Scope).
+- [x] The S4-01 probe is removed: `EffectSurfaceProbe.cs`, `EffectProbeHotkeys.cs`, `EffectProbeInputLoad.cs`, and the `DRAWEM_EFFECT_PROBE` wiring in `App.xaml.cs` no longer exist, and a search of `src/` for `DRAWEM_EFFECT_PROBE` finds nothing. Moved to [S4-03](../step-03-built-in-effects/acceptance.md) by owner decision on 2026-10-11 (see Scope); done there on 2026-10-12.
 - [x] Automated hook/binding checks cover suppression, key-up, AltGr, capture, conflict, position capture, layout protection under Alt+Shift, and sound independence.
 
 ## Scope

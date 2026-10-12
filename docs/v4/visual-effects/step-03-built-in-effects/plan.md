@@ -17,7 +17,7 @@
 2. Embed the two Lottie files, selected from LottieFiles and adapted where needed, with a record of each file's source URL, author, and license. Confetti must end within 3 seconds and focus ring within 2 seconds, with no rapid flashing. Load and parse each file once, outside the hook callback.
 3. Build the Monitor surface: cover the target monitor, scale the canvas to cover it, keep proportions, crop the overflow.
 4. Build the Cursor surface: canvas size in DIP at the monitor's DPI, centered on the captured cursor point, intersected with the monitor bounds. Never shift it inward.
-5. Play once from monotonic elapsed time; subscribe to the frame callback only while rendering. Use the S4-01 probe trigger for the visual checks; S4-06 already routes effect shortcuts to a start delegate.
+5. Play once from monotonic elapsed time; subscribe to the frame callback only while rendering. Visual checks used real effect shortcuts after step 6 composed the channel, so the S4-01 probe trigger was not needed for them.
 6. Carried over from S4-06 by owner decision on 2026-10-11: compose `EffectChannelController` with the new surface in `App.xaml.cs` and pass its `Start` to `GlobalShortcutAdapter` instead of the do-nothing delegate. After the visual checks, remove the S4-01 probe: `EffectSurfaceProbe.cs`, `EffectProbeHotkeys.cs`, `EffectProbeInputLoad.cs`, and the `DRAWEM_EFFECT_PROBE` wiring in `App.xaml.cs`.
 
 Record implementation evidence in [acceptance](acceptance.md) when this step is executed.

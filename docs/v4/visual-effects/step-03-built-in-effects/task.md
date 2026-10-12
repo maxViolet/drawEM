@@ -1,6 +1,6 @@
 # v4 / S4-03: play built-in Lottie effects
 
-**Status:** S4-03.1 in progress: probe code done, benchmarks not run. **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
+**Status:** implemented; the S4-03.1 gate passed after the owner's target revision on 2026-10-12. One criterion remains unverified: the flashing check on screen. **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
 
 ## Task
 

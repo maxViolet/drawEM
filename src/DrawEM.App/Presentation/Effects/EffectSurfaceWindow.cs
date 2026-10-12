@@ -43,16 +43,7 @@ public sealed class EffectSurfaceWindow : Window
     }
 
     /// <summary>Maps physical pixels to window DIPs; its bounds are the window's, which lie on the monitor.</summary>
-    public EffectSurfaceLayout Layout { get; private set; }
-
-    /// <summary>The window's physical desktop bounds: the monitor, or the part chosen when it was shown.</summary>
-    public MonitorBounds Bounds => bounds;
-
-    /// <summary>Whether the native window covers exactly <see cref="Bounds"/> in physical pixels.</summary>
-    public bool PlacementMatchesBounds =>
-        NativeMethods.GetWindowRect(handle, out var rect)
-        && rect.Left == bounds.Left && rect.Top == bounds.Top
-        && rect.Right == bounds.Right && rect.Bottom == bounds.Bottom;
+    private EffectSurfaceLayout Layout { get; set; }
 
     /// <summary>Shows the window without activating it, covering its monitor or the part <paramref name="part"/> chooses.</summary>
     /// <param name="part">Maps the monitor's DPI scale to physical bounds on the monitor; <c>null</c> covers the monitor.</param>
@@ -77,27 +68,18 @@ public sealed class EffectSurfaceWindow : Window
     }
 
     /// <summary>
-    /// Creates a bitmap that fills the window, with <paramref name="renderScale"/> bitmap pixels per physical
-    /// pixel, and makes it the window content. WPF scales it to the window and shows each change to it.
+    /// Creates the bitmap <paramref name="layout"/> describes and makes it the window content. WPF scales it
+    /// to the window and shows each change to it.
     /// </summary>
-    public WriteableBitmap ShowBitmap(double renderScale)
+    public WriteableBitmap ShowBitmap(EffectRenderLayout layout)
     {
-        var dpi = 96d * Layout.DpiScale * renderScale;
-        var bitmap = new WriteableBitmap(
-            Math.Max(1, (int)Math.Ceiling((bounds.Right - bounds.Left) * renderScale)),
-            Math.Max(1, (int)Math.Ceiling((bounds.Bottom - bounds.Top) * renderScale)),
-            dpi,
-            dpi,
-            PixelFormats.Pbgra32,
-            null);
+        var dpi = 96d * Layout.DpiScale * layout.RenderScale;
+        var bitmap = new WriteableBitmap(layout.BitmapWidth, layout.BitmapHeight, dpi, dpi, PixelFormats.Pbgra32, null);
         RenderOptions.SetBitmapScalingMode(host.Visual, BitmapScalingMode.Linear);
-        using var context = RenderOpen();
+        using var context = host.Visual.RenderOpen();
         context.DrawImage(bitmap, Layout.LocalBounds);
         return bitmap;
     }
-
-    /// <summary>Replaces the window content with what is drawn into the returned context before it is closed.</summary>
-    public DrawingContext RenderOpen() => host.Visual.RenderOpen();
 
     protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
     {

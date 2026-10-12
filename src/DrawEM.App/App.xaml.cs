@@ -11,6 +11,7 @@ using DrawEM.App.Presentation.Settings;
 using DrawingSessionController = DrawEM.App.Application.Drawing.DrawingSessionController;
 using MessageBox = System.Windows.MessageBox;
 using SoundChannelController = DrawEM.App.Application.Sound.SoundChannelController;
+using EffectChannelController = DrawEM.App.Application.Effects.EffectChannelController;
 
 namespace DrawEM.App;
 
@@ -26,7 +27,9 @@ public partial class App : System.Windows.Application
     private ApplicationExitPolicy? exitPolicy;
     private SingleInstanceGuard? instanceGuard;
     private SettingsWindow? settingsWindow;
-    private IDisposable? effectProbe;
+    private EffectChannelController? effectChannel;
+    private BuiltInEffectAnimations? effectAnimations;
+    private LoggingEffectFailureReporter? effectFailures;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -81,6 +84,16 @@ public partial class App : System.Windows.Application
             // Bindings and the sound and effect commands they hold come from one snapshot.
             var active = settings.Current;
 
+            // Each built-in file is parsed here, once, outside the hook callback.
+            var effectLog = new LoggingEffectFailureReporter(
+                new EffectFailureLog(EffectFailureLog.DefaultPath).Append, TimeProvider.System);
+            effectFailures = effectLog;
+            var animations = new BuiltInEffectAnimations();
+            effectAnimations = animations;
+            var effects = new EffectChannelController(
+                new LottieEffectSurface(animations), effectLog, TimeProvider.System, action => Dispatcher.BeginInvoke(action));
+            effectChannel = effects;
+
             var inputGate = new DrawingModeInputGate();
             var monitorBoundsSource = new Win32MonitorBoundsSource();
             keyboardHookSource = new Win32KeyboardHookSource();
@@ -94,9 +107,7 @@ public partial class App : System.Windows.Application
                 monitorBoundsSource,
                 ShortcutBindings.FromSnapshot(active, settings.CommandFor),
                 channelHost.Play,
-                // No effect surface exists until S4-03, which composes EffectChannelController.Start here.
-                // Until then an effect shortcut is recognized and hidden, and shows nothing.
-                _ => { });
+                command => effects.Start(command));
 
             mouseHookSource = new Win32MouseHookSource();
             _ = new GlobalMouseInputAdapter(
@@ -104,16 +115,12 @@ public partial class App : System.Windows.Application
 
             overlayWindow.Show();
 
-            // Temporary S4-01 renderer experiment; S4-03 removes it with its trigger.
-            effectProbe = EffectSurfaceProbe.IsEnabled(Environment.GetEnvironmentVariable(EffectSurfaceProbe.EnableVariable))
-                ? StartEffectProbe(controller, inputGate, monitorBoundsSource, keyboardHookSource, mouseHookSource)
-                : new CompositeDisposable();
-
             trayApplication = new TrayApplication(
                 new NotifyIconTrayHost(),
                 // The sound channel reports its last failures while it stops, so the log drains after it.
-                // The effect probe's hooks and windows go first, before the hooks it measures against.
-                new CompositeDisposable(effectProbe, keyboardHookSource, mouseHookSource, channelHost, soundLog),
+                // Effects stop and close their windows before their animations and failure log are released.
+                new CompositeDisposable(
+                    keyboardHookSource, mouseHookSource, channelHost, soundLog, effects, animations, effectLog),
                 overlayWindow,
                 new WpfApplicationLifetime(this),
                 action => Dispatcher.BeginInvoke(action),
@@ -184,53 +191,6 @@ public partial class App : System.Windows.Application
     /// <summary>Discards an open draft, so its imports are removed before the sound library is left.</summary>
     private void CloseSettings() => settingsWindow?.Close();
 
-    /// <summary>
-    /// Starts the S4-01 effect-window probe: Ctrl+Alt+F9 shows one effect, Ctrl+Alt+F10 runs the benchmark
-    /// with drawing active. Its hooks are installed after the production hooks they measure against.
-    /// </summary>
-    private static IDisposable StartEffectProbe(
-        DrawingSessionController drawing, DrawingModeInputGate inputGate, IMonitorBoundsSource monitors,
-        Win32KeyboardHookSource keyboardHook, Win32MouseHookSource mouseHook)
-    {
-        var cursor = new Win32CursorPositionSource();
-
-        // Keyboard and mouse events the production hooks received, for the check after the benchmark cycles.
-        int keyboardEvents = 0, mouseEvents = 0;
-        keyboardHook.EventObserved += () => Interlocked.Increment(ref keyboardEvents);
-        mouseHook.PointerMoved += _ => Interlocked.Increment(ref mouseEvents);
-        var load = new EffectProbeInputLoad();
-        try
-        {
-            var probe = new EffectSurfaceProbe(new EffectProbePorts(
-                () => cursor.TryGetCurrentPosition(out var position) ? position : null,
-                point => monitors.TryGetBounds(point, out var bounds) ? bounds : null,
-                (point, bounds) =>
-                {
-                    inputGate.Begin(bounds);
-                    drawing.EnterDrawMode(point, bounds);
-                },
-                () =>
-                {
-                    inputGate.SetActive(false);
-                    drawing.ExitDrawMode();
-                },
-                () => inputGate.IsActive,
-                load.Start,
-                load.Stop,
-                EffectSurfaceProbe.DefaultReportDirectory,
-                () => (Volatile.Read(ref keyboardEvents), Volatile.Read(ref mouseEvents))),
-                EffectProbeMode.Parse(Environment.GetEnvironmentVariable(EffectProbeMode.Variable)));
-            load.DelayMeasured += probe.RecordHookDelay;
-            var hotkeys = new EffectProbeHotkeys(probe.Invoke, probe.RunBenchmark, probe.RunCursorBenchmark);
-            return new CompositeDisposable(hotkeys, probe, load);
-        }
-        catch
-        {
-            load.Dispose();
-            throw;
-        }
-    }
-
     private void ReleaseStartedResources()
     {
         if (trayApplication is not null)
@@ -241,11 +201,13 @@ public partial class App : System.Windows.Application
 
         CleanupSteps.RunAll(
         [
-            () => effectProbe?.Dispose(),
             () => keyboardHookSource?.Dispose(),
             () => mouseHookSource?.Dispose(),
             () => soundChannel?.Dispose(),
             () => soundFailures?.Dispose(),
+            () => effectChannel?.Dispose(),
+            () => effectAnimations?.Dispose(),
+            () => effectFailures?.Dispose(),
             () => overlayWindow?.Close(),
         ]);
     }

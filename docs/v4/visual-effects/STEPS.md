@@ -21,8 +21,7 @@ their settings and lifecycle integration is ready.
 window on the monitor containing the cursor, alongside the real drawing overlay.
 A development-only trigger in
 `src/DrawEM.App/Presentation/Effects/EffectSurfaceProbe.cs`, enabled only with
-`DRAWEM_EFFECT_PROBE=1`, may be used through S4-03, which removes it (moved
-from S4-06 by owner decision on 2026-10-11, because S4-06 ran before S4-03).
+`DRAWEM_EFFECT_PROBE=1`, served through S4-03.1; S4-03 removed it.
 
 **Done when:** Done on 2026-10-09 by owner decision: the dedicated WPF effect
 surface is chosen. Its measurement gates are unverified; S4-03.1 and S4-12 measure them.
@@ -39,7 +38,7 @@ including Monitor -> Cursor and Cursor -> Monitor, Stop is safe to repeat, and a
 old completion or timeout cannot stop a new effect. Every ending path releases
 the instance and its resources.
 
-### S4-03.1: prove Lottie speed for both placements
+### S4-03.1: prove Lottie speed for both placements (done)
 
 **Do:** Add `SkiaSharp.Skottie` and allow `SkiaSharp` in Presentation only in
 the layer dependency test. Change the S4-01 probe so its `Rendering` handler
@@ -54,9 +53,11 @@ If that also misses, stop and revise the roadmap to Cursor effects only, with
 owner confirmation, before S4-03. If Cursor misses a target, stop; the owner
 revises the roadmap targets or scope and confirms it before S4-03. S4-03 starts
 only when both placements meet the targets or a confirmed revision covers each
-miss. Estimated time: half a day.
+miss. Estimated time: half a day. Result on 2026-10-12: Monitor runs at half
+resolution, and the frame-interval targets became an absolute 25 ms by owner
+decision; see the [S4-03 acceptance](step-03-built-in-effects/acceptance.md#s4-031-results).
 
-### S4-03: play the built-in effects
+### S4-03: play the built-in effects (implemented; flashing check unverified)
 
 **Do:** Build the Monitor surface (cover scaling) and the Cursor surface (canvas
 size in DIP, centered on the captured point, clipped to the monitor) behind the
@@ -93,7 +94,7 @@ before the first migration Save; write the new format only on explicit Save.
 recoverable files. Unsupported types/IDs produce a useful error. Loading never
 rewrites settings. Document how to restore the backup for an older app version.
 
-### S4-06: launch effects from shortcuts
+### S4-06: launch effects from shortcuts (done)
 
 **Do:** Extend prepared slot commands and bindings to dispatch Sound or Effect.
 Capture the invocation cursor position and configuration generation. Keep
