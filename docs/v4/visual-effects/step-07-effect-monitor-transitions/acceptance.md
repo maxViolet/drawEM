@@ -22,11 +22,17 @@
 
 - Test first: `EffectMonitorGuardTests`, the new `EffectShortcutTests` cases, and the `StopStartedBefore` test first failed to build for the expected reason: `EffectMonitorGuard`, `IDisplayChangeSource`, `IEffectStartQueue`, `StartEffectCommand.MonitorEpoch`, and `EffectChannelController.StopStartedBefore` did not exist.
 - `dotnet build DrawEM.sln -warnaserror`: succeeded, no warnings.
-- `dotnet test DrawEM.sln`: 616 passed, 0 failed (after the review fixes below).
+- `dotnet test DrawEM.sln`: 618 passed, 0 failed (after the review fixes below, on top of the S4-03 review fixes).
 - Published-app checks, 2026-10-12, branch `S4-07-effect-monitor-transitions`, one monitor (0, 0, 1920, 1200) at 100%, keys and moves sent with `keybd_event`, `mouse_event`, and `SetCursorPos`:
   - Confetti kept playing after 40 relative pointer moves that pushed past the top-left and bottom-right desktop edges.
   - Confetti was gone 300 ms after a broadcast `WM_DISPLAYCHANGE`. Not conclusive: a full-screen game started during this run and may have changed the display mode itself.
 - Unverified: everything that needs a second monitor.
+
+## Review
+
+- `/simplify` (Claude Code): one shared copy each of the test fakes `FakeMouseHookSource`, `SettableCursor`, and `CountingMonitors`; the guard's `observing` flag replaced by `queuedStarts > 0 || channel.ActiveInstance is not null`; one `dispatchToUi` delegate in `App.xaml.cs`. Rejected: an always-on guard, stopping by instance ID instead of an epoch, polling the cursor from the guard, and smaller moves (see the run's list in the PR).
+- Role reviews (correctness, security, spec, test quality). Fixed: a queued press replaced the guard's cached monitor, so a press on another monitor that a Save then dropped could hide an unreported transition and leave the old effect running; the press point is now checked like a pointer move while observing (`PressOnAnotherMonitorWhileAnEffectRuns_StopsIt_EvenIfThatPressIsDropped`, `TwoQueuedPressesOnDifferentMonitors_OnlyTheLaterOneStarts`). The fake start queue now returns a settable epoch, and `TwoQueuedPresses_EachDequeueWithTheEpochOfItsOwnPress` checks each press keeps its own. Spec: STEPS status and the S4-03 note on the shortcut route updated. Security found nothing. Still open by design: the two-monitor check above.
+- Final review (Codex, `codex review --base origin/main` over S4-03 and S4-07): no actionable code defect.
 
 ## Two-monitor manual check
 
