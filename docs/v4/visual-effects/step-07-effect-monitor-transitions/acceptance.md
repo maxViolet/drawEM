@@ -35,6 +35,7 @@
 - Final review (Codex, `codex review --base origin/main` over S4-03 and S4-07): no actionable code defect.
 - Second `/simplify` pass (Codex): no edits. Rejected: removing monitor epochs, removing the cached monitor, and collapsing the DPI-aware placement steps because each would weaken ordering, add hot-path lookups, or obscure required scaling behavior.
 - Second role review (correctness, security, spec, test quality). Fixed: a scale-only DPI change now feeds the topology-change path from the visible effect window; the dropped-press regression test no longer relies on the frame-check fallback; and the epoch-ordering test now checks a stale lower threshold. Correctness and spec both found the DPI gap; security found no actionable defect. The Windows scale-change check remains unverified on screen.
+- Second final review (Codex, `codex review --base origin/main`): no actionable defect; its independent `dotnet test DrawEM.sln --no-restore` run passed all 618 tests. The two-monitor desktop checks remain unverified.
 
 ## Two-monitor manual check
 
