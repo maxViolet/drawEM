@@ -21,8 +21,8 @@ public sealed class EffectSampler : IEffectSampler
     private readonly IEffectStartQueue starts;
     private readonly EffectChannelController channel;
     private readonly EffectSampleFailureRouter failures;
-    private StartEffectCommand? latest;
-    private EffectInstanceId? latestInstance;
+    /// <summary>This sampler's latest started sample; it may since have ended or been replaced.</summary>
+    private EffectInstance? latest;
 
     public EffectSampler(
         ICursorPositionSource cursor,
@@ -73,17 +73,25 @@ public sealed class EffectSampler : IEffectSampler
 
         // Watched before the start: a window that cannot be shown is reported inside it.
         failures.Watch(command, reportFailure);
-        latest = command;
-        latestInstance = starts.Dequeue(monitorEpoch, command)?.Id;
+        starts.Dequeue(monitorEpoch, command);
+        if (channel.ActiveInstance is { } started && ReferenceEquals(started.Command, command))
+        {
+            latest = started;
+        }
+        else
+        {
+            // Nothing started, so nothing more can be reported for this command.
+            failures.Forget(command);
+        }
     }
 
     public void StopSamples()
     {
-        var instance = latestInstance;
+        var instance = latest;
         Forget();
-        if (instance is { } id)
+        if (instance is not null)
         {
-            channel.Stop(id);
+            channel.Stop(instance.Id);
         }
     }
 
@@ -91,13 +99,12 @@ public sealed class EffectSampler : IEffectSampler
 
     private void Forget()
     {
-        if (latest is { } command)
+        if (latest is not null)
         {
-            failures.Forget(command);
+            failures.Forget(latest.Command);
         }
 
         latest = null;
-        latestInstance = null;
     }
 }
 
@@ -109,8 +116,7 @@ public sealed class EffectSampler : IEffectSampler
 public sealed class EffectSampleFailureRouter : IEffectFailureReporter
 {
     private readonly IEffectFailureReporter inner;
-    private StartEffectCommand? watched;
-    private Action<string>? callback;
+    private (StartEffectCommand Command, Action<string> Report)? route;
 
     public EffectSampleFailureRouter(IEffectFailureReporter inner)
     {
@@ -124,26 +130,24 @@ public sealed class EffectSampleFailureRouter : IEffectFailureReporter
     /// </summary>
     public void Watch(StartEffectCommand command, Action<string> reportFailure)
     {
-        watched = command;
-        callback = reportFailure;
+        route = (command, reportFailure);
     }
 
     /// <summary>Stops routing <paramref name="command"/>; a newer sample keeps its route.</summary>
     public void Forget(StartEffectCommand command)
     {
-        if (ReferenceEquals(command, watched))
+        if (route is { } current && ReferenceEquals(command, current.Command))
         {
-            watched = null;
-            callback = null;
+            route = null;
         }
     }
 
     public void Report(EffectInstance instance, string reason)
     {
         inner.Report(instance, reason);
-        if (ReferenceEquals(instance.Command, watched))
+        if (route is { } current && ReferenceEquals(instance.Command, current.Command))
         {
-            callback?.Invoke(reason);
+            current.Report(reason);
         }
     }
 }

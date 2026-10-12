@@ -150,14 +150,12 @@ internal sealed class FakeEffectStartQueue : IEffectStartQueue
         return NextEpoch;
     }
 
-    public EffectInstance? Dequeue(long monitorEpoch, StartEffectCommand? command)
+    public void Dequeue(long monitorEpoch, StartEffectCommand? command)
     {
         Dequeued.Add((monitorEpoch, command));
         if (command is not null)
         {
             Started.Add(command);
         }
-
-        return null;
     }
 }

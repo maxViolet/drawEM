@@ -232,7 +232,8 @@ public class EffectSamplerTests
             var point = Cursor.Position;
             var epoch = Guard.Enqueue(point);
             Assert.True(Monitors.TryGetBounds(point, out var monitor));
-            return Guard.Dequeue(epoch, new StartEffectCommand(effect, placement, monitor, point, 0, epoch));
+            Guard.Dequeue(epoch, new StartEffectCommand(effect, placement, monitor, point, 0, epoch));
+            return Channel.ActiveInstance;
         }
 
         public void RunQueued()

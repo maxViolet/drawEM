@@ -12,8 +12,7 @@
 
 - `Application/Settings/IEffectSampler.cs`: the port the editor uses to preview an effect: `Sample`, `StopSamples`, `ForgetSamples`.
 - `Application/Settings/SettingsEditor.cs`: `Sample` plays a sound slot or shows an effect slot. `Cancel` stops the effect sample first, so an unconfirmed sound stop cannot skip it. A successful `Save` forgets effect samples; S4-10 makes Save remove the running effect.
-- `Infrastructure/Effects/EffectSampler.cs`: `EffectSampler`, one per Settings window, takes the shortcut path: it reads the cursor at the click, enqueues the start on `EffectMonitorGuard` for the monitor epoch, resolves the monitor, and dequeues the start onto `EffectChannelController`. It keeps the started instance ID, and `StopSamples` stops only that instance. `EffectSampleFailureRouter` wraps the effect log as the channel's failure reporter and routes the failure of the latest sample, matched by command reference, to its window; a window forgets only its own route.
-- `Infrastructure/Effects/IEffectStartQueue.cs`, `EffectMonitorGuard.cs`: `Dequeue` returns the started instance.
+- `Infrastructure/Effects/EffectSampler.cs`: `EffectSampler`, one per Settings window, takes the shortcut path: it reads the cursor at the click, enqueues the start on `EffectMonitorGuard` for the monitor epoch, resolves the monitor, and dequeues the start onto `EffectChannelController`. It keeps the instance it started, found as the channel's active instance with its command, and `StopSamples` stops only that instance. `EffectSampleFailureRouter` wraps the effect log as the channel's failure reporter and routes the failure of the latest sample, matched by command reference, to its window; a window forgets only its own route.
 - `Presentation/Settings/SettingsWindow.xaml`: Sample is enabled for any filled slot; the help text names effects.
 - `App.xaml.cs`: the effect channel reports through the router; each Settings window gets its own `EffectSampler`.
 
@@ -23,6 +22,7 @@
 - `dotnet build DrawEM.sln --no-incremental -warnaserror`: succeeded, no warnings.
 - `dotnet test DrawEM.sln --no-build`: 659 passed, 0 failed.
 - Mutation checks: `StopSamples` calling `channel.Stop()` instead of `channel.Stop(id)` failed `StopSamples_AfterAShortcutReplacedTheSample_KeepsTheShortcutEffect` and `StopSamples_AfterAnotherEditorsSampleReplacedIt_KeepsTheNewerSample`; `Forget` clearing the route unconditionally failed `StopSamples_AfterAnotherEditorsSampleReplacedIt_KeepsTheNewerSample`. Both reverted.
+- `/simplify` (four reviewers): `EffectSampler` keeps one `EffectInstance` field instead of a command and an ID; the router keeps one route tuple; `IEffectStartQueue.Dequeue` stays `void` (the sampler reads the channel's active instance); the Save doc no longer promises that a sample plays on after Save, which S4-10 decides. Skipped: a generic router shared with the sound `SampleFailureRouter` (different threading and forget rule), a shared start helper with `GlobalShortcutAdapter` (its start runs inside a dispatch with a generation check), shared effect test fakes and fixture (a refactor of existing test files), a shared `SettingsEditor` test factory, and a nullable `ConfigurationGeneration` (no consumer until S4-10).
 - Published-app Windows desktop checks: unverified.
 
 ## Windows check
