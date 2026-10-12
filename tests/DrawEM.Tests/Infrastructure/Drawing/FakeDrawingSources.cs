@@ -16,6 +16,65 @@ internal sealed class FakeCursorPositionSource(ScreenPoint point) : ICursorPosit
     }
 }
 
+/// <summary>Reports a settable cursor position, or none while unavailable, and counts the reads.</summary>
+internal sealed class SettableCursor : ICursorPositionSource
+{
+    public ScreenPoint Position { get; set; } = new(100, 100);
+
+    public bool Available { get; set; } = true;
+
+    public int Reads { get; private set; }
+
+    public bool TryGetCurrentPosition(out ScreenPoint position)
+    {
+        Reads++;
+        position = Position;
+        return Available;
+    }
+}
+
+/// <summary>Finds the first monitor that contains the point, counts the queries, and can swap the layout.</summary>
+internal sealed class CountingMonitors(params MonitorBounds[] monitors) : IMonitorBoundsSource
+{
+    private FakeMonitorBoundsSource inner = new(monitors);
+
+    public int Queries { get; private set; }
+
+    public void Replace(params MonitorBounds[] layout) => inner = new FakeMonitorBoundsSource(layout);
+
+    public bool TryGetBounds(ScreenPoint point, out MonitorBounds bounds)
+    {
+        Queries++;
+        return inner.TryGetBounds(point, out bounds);
+    }
+}
+
+/// <summary>Raises pointer moves and asks the button and wheel handlers whether to hide the event.</summary>
+internal sealed class FakeMouseHookSource : IMouseHookSource
+{
+    public event Action<ScreenPoint>? PointerMoved;
+
+    public event Func<bool>? PointerButtonActivity;
+
+    public event Func<bool>? PointerWheelActivity;
+
+    public void Move(ScreenPoint point) => PointerMoved?.Invoke(point);
+
+    public bool ShouldSuppressPointerButton() =>
+        PointerButtonActivity?
+            .GetInvocationList()
+            .Cast<Func<bool>>()
+            .Any(handler => handler())
+        ?? false;
+
+    public bool ShouldSuppressPointerWheel() =>
+        PointerWheelActivity?
+            .GetInvocationList()
+            .Cast<Func<bool>>()
+            .Any(handler => handler())
+        ?? false;
+}
+
 /// <summary>Finds the first monitor that contains the point.</summary>
 internal sealed class FakeMonitorBoundsSource(params MonitorBounds[] monitors) : IMonitorBoundsSource
 {

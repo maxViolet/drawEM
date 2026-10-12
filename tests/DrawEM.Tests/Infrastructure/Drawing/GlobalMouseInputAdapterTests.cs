@@ -166,29 +166,4 @@ public class GlobalMouseInputAdapterTests
         Assert.False(mouseSource.ShouldSuppressPointerWheel());
         Assert.Equal(2, queuedActions.Count);
     }
-
-    private sealed class FakeMouseHookSource : IMouseHookSource
-    {
-        public event Action<ScreenPoint>? PointerMoved;
-
-        public event Func<bool>? PointerButtonActivity;
-
-        public event Func<bool>? PointerWheelActivity;
-
-        public void Move(ScreenPoint point) => PointerMoved?.Invoke(point);
-
-        public bool ShouldSuppressPointerButton() =>
-            PointerButtonActivity?
-                .GetInvocationList()
-                .Cast<Func<bool>>()
-                .Any(handler => handler())
-            ?? false;
-
-        public bool ShouldSuppressPointerWheel() =>
-            PointerWheelActivity?
-                .GetInvocationList()
-                .Cast<Func<bool>>()
-                .Any(handler => handler())
-            ?? false;
-    }
 }

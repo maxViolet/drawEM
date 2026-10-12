@@ -270,30 +270,4 @@ public class EffectShortcutTests
             }
         }
     }
-
-    private sealed class SettableCursor : ICursorPositionSource
-    {
-        public ScreenPoint Position { get; set; } = new(100, 100);
-
-        public bool Available { get; set; } = true;
-
-        public bool TryGetCurrentPosition(out ScreenPoint position)
-        {
-            position = Position;
-            return Available;
-        }
-    }
-
-    private sealed class CountingMonitors(params MonitorBounds[] monitors) : IMonitorBoundsSource
-    {
-        private readonly FakeMonitorBoundsSource inner = new(monitors);
-
-        public int Queries { get; private set; }
-
-        public bool TryGetBounds(ScreenPoint point, out MonitorBounds bounds)
-        {
-            Queries++;
-            return inner.TryGetBounds(point, out bounds);
-        }
-    }
 }

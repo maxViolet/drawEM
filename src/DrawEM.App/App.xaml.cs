@@ -72,9 +72,10 @@ public partial class App : System.Windows.Application
             controller = new DrawingSessionController(() => settings.Current.Style);
             overlayWindow = new OverlayWindow();
             _ = new OverlayWindowAdapter(controller, overlayWindow);
+            Action<Action> dispatchToUi = action => Dispatcher.BeginInvoke(action);
 
             // Failures of a Settings window sample are also shown in the window.
-            var playbackFailures = new SampleFailureRouter(soundLog, action => Dispatcher.BeginInvoke(action));
+            var playbackFailures = new SampleFailureRouter(soundLog, dispatchToUi);
             var channelHost = new SoundChannelHost(dispatch => new SoundChannelController(
                 new MediaSoundPlayerFactory(),
                 playbackFailures,
@@ -93,7 +94,7 @@ public partial class App : System.Windows.Application
             effectAnimations = animations;
             var surface = new LottieEffectSurface(animations);
             var effects = new EffectChannelController(
-                surface, effectLog, TimeProvider.System, action => Dispatcher.BeginInvoke(action));
+                surface, effectLog, TimeProvider.System, dispatchToUi);
             effectChannel = effects;
 
             var inputGate = new DrawingModeInputGate();
@@ -101,12 +102,12 @@ public partial class App : System.Windows.Application
             var cursor = new Win32CursorPositionSource();
             keyboardHookSource = new Win32KeyboardHookSource();
             mouseHookSource = new Win32MouseHookSource();
-            var displays = new Win32DisplayChangeSource(action => Dispatcher.BeginInvoke(action));
+            var displays = new Win32DisplayChangeSource(dispatchToUi);
             displayChanges = displays;
 
             // Stops an effect when the cursor enters another monitor, drawing or not; frames recheck the cursor.
             var monitorGuard = new EffectMonitorGuard(
-                mouseHookSource, displays, monitorBoundsSource, cursor, effects, action => Dispatcher.BeginInvoke(action));
+                mouseHookSource, displays, monitorBoundsSource, cursor, effects, dispatchToUi);
             surface.FrameStarting += monitorGuard.CheckCursor;
             var shortcuts = new GlobalShortcutAdapter(
                 keyboardHookSource.Events,
@@ -114,14 +115,14 @@ public partial class App : System.Windows.Application
                 controller,
                 inputGate,
                 cursor,
-                action => Dispatcher.BeginInvoke(action),
+                dispatchToUi,
                 monitorBoundsSource,
                 ShortcutBindings.FromSnapshot(active, settings.CommandFor),
                 channelHost.Play,
                 monitorGuard);
 
             _ = new GlobalMouseInputAdapter(
-                mouseHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action), monitorBoundsSource);
+                mouseHookSource, controller, inputGate, dispatchToUi, monitorBoundsSource);
 
             overlayWindow.Show();
 
@@ -133,7 +134,7 @@ public partial class App : System.Windows.Application
                     keyboardHookSource, mouseHookSource, displays, channelHost, soundLog, effects, animations, effectLog),
                 overlayWindow,
                 new WpfApplicationLifetime(this),
-                action => Dispatcher.BeginInvoke(action),
+                dispatchToUi,
                 failure => exitPolicy.Report("exit", failure));
 
             var settingsSave = new SettingsSaveOperation(store, library, settings, channelHost, shortcuts, saveNotifications);

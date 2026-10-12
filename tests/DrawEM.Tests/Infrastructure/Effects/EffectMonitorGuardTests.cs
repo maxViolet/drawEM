@@ -230,7 +230,7 @@ public class EffectMonitorGuardTests
             Guard = new EffectMonitorGuard(Mouse, Displays, Monitors, Cursor, Channel, Queued.Enqueue);
         }
 
-        public FakeMouse Mouse { get; } = new();
+        public FakeMouseHookSource Mouse { get; } = new();
 
         public FakeDisplays Displays { get; } = new();
 
@@ -271,59 +271,11 @@ public class EffectMonitorGuardTests
         }
     }
 
-    private sealed class FakeMouse : IMouseHookSource
-    {
-        public event Action<ScreenPoint>? PointerMoved;
-
-        public event Func<bool>? PointerButtonActivity
-        {
-            add { }
-            remove { }
-        }
-
-        public event Func<bool>? PointerWheelActivity
-        {
-            add { }
-            remove { }
-        }
-
-        public void Move(ScreenPoint point) => PointerMoved?.Invoke(point);
-    }
-
     private sealed class FakeDisplays : IDisplayChangeSource
     {
         public event Action? DisplayChanged;
 
         public void Change() => DisplayChanged?.Invoke();
-    }
-
-    private sealed class CountingMonitors(params MonitorBounds[] monitors) : IMonitorBoundsSource
-    {
-        private FakeMonitorBoundsSource inner = new(monitors);
-
-        public int Queries { get; private set; }
-
-        public void Replace(params MonitorBounds[] layout) => inner = new FakeMonitorBoundsSource(layout);
-
-        public bool TryGetBounds(ScreenPoint point, out MonitorBounds bounds)
-        {
-            Queries++;
-            return inner.TryGetBounds(point, out bounds);
-        }
-    }
-
-    private sealed class SettableCursor : ICursorPositionSource
-    {
-        public ScreenPoint Position { get; set; }
-
-        public int Reads { get; private set; }
-
-        public bool TryGetCurrentPosition(out ScreenPoint position)
-        {
-            Reads++;
-            position = Position;
-            return true;
-        }
     }
 
     private sealed class RecordingSurface : IEffectSurface, IEffectFailureReporter

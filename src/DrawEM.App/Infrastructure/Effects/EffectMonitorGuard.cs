@@ -9,7 +9,7 @@ namespace DrawEM.App.Infrastructure.Effects;
 /// runs or a start is queued, each pointer move from the hook and each animation frame's cursor check is tested
 /// against the cached bounds of the cursor's monitor. Only a point outside them costs a monitor lookup, and
 /// only entering another monitor queues UI work. A point outside every monitor is an outside desktop edge, not
-/// another monitor. With nothing running or queued, pointer moves cost one flag check.
+/// another monitor. With nothing running or queued, pointer moves cost two field reads.
 /// </summary>
 /// <remarks>
 /// The monitor epoch advances on each transition and each display topology change, so a monitor is identified
@@ -26,7 +26,6 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
     private readonly Action<Action> dispatch;
     private long epoch;
     private int queuedStarts;
-    private bool observing;
 
     /// <summary>The cursor point of the latest press; its monitor is looked up only when first needed.</summary>
     private ScreenPoint anchor;
@@ -56,7 +55,6 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
     public long Enqueue(ScreenPoint point)
     {
         queuedStarts++;
-        observing = true;
         anchor = point;
         monitorKnown = false;
         return epoch;
@@ -91,15 +89,7 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
         }
     }
 
-    private bool IsObserving()
-    {
-        if (observing && queuedStarts == 0 && channel.ActiveInstance is null)
-        {
-            observing = false;
-        }
-
-        return observing;
-    }
+    private bool IsObserving() => queuedStarts > 0 || channel.ActiveInstance is not null;
 
     private void Observe(ScreenPoint point)
     {
