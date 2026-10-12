@@ -100,6 +100,48 @@ public class EffectMonitorGuardTests
     }
 
     [Fact]
+    public void PressWithNothingRunningOrQueued_DoesNoMonitorLookupInTheHook()
+    {
+        var fixture = new Fixture();
+
+        fixture.Guard.Enqueue(OnLeft);
+
+        Assert.Equal(0, fixture.Monitors.Queries);
+    }
+
+    [Fact]
+    public void PressOnAnotherMonitorWhileAnEffectRuns_StopsIt_EvenIfThatPressIsDropped()
+    {
+        var fixture = new Fixture();
+        fixture.StartAt(OnLeft);
+
+        // The hook reported no move to the right monitor; the press there is the first sign of it.
+        var epoch = fixture.Guard.Enqueue(OnRight);
+        fixture.Guard.Dequeue(epoch, null);
+        fixture.Cursor.Position = OnRight;
+        fixture.Guard.CheckCursor();
+        fixture.RunQueued();
+
+        Assert.Null(fixture.Channel.ActiveInstance);
+    }
+
+    [Fact]
+    public void TwoQueuedPressesOnDifferentMonitors_OnlyTheLaterOneStarts()
+    {
+        var fixture = new Fixture();
+        var first = fixture.Guard.Enqueue(OnLeft);
+        var second = fixture.Guard.Enqueue(OnRight);
+
+        fixture.Guard.Dequeue(first, fixture.Command(OnLeft, first));
+        Assert.Null(fixture.Channel.ActiveInstance);
+
+        fixture.Guard.Dequeue(second, fixture.Command(OnRight, second));
+        fixture.RunQueued();
+
+        Assert.Equal(Right, fixture.Channel.ActiveInstance?.Command.Monitor);
+    }
+
+    [Fact]
     public void QueuedStart_CursorEntersAnotherMonitorBeforeDispatch_StartsNothing()
     {
         var fixture = new Fixture();

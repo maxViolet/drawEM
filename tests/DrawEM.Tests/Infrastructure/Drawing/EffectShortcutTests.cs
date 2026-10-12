@@ -75,7 +75,7 @@ public class EffectShortcutTests
         harness.RunQueued();
 
         Assert.Empty(harness.Started);
-        Assert.Equal([(FakeEffectStartQueue.Epoch, (StartEffectCommand?)null)], harness.Effects.Dequeued);
+        Assert.Equal([(FakeEffectStartQueue.FirstEpoch, (StartEffectCommand?)null)], harness.Effects.Dequeued);
     }
 
     [Fact]
@@ -92,8 +92,23 @@ public class EffectShortcutTests
         harness.RunQueued();
 
         var (epoch, command) = Assert.Single(harness.Effects.Dequeued);
-        Assert.Equal(FakeEffectStartQueue.Epoch, epoch);
-        Assert.Equal(FakeEffectStartQueue.Epoch, command!.MonitorEpoch);
+        Assert.Equal(FakeEffectStartQueue.FirstEpoch, epoch);
+        Assert.Equal(FakeEffectStartQueue.FirstEpoch, command!.MonitorEpoch);
+    }
+
+    [Fact]
+    public void TwoQueuedPresses_EachDequeueWithTheEpochOfItsOwnPress()
+    {
+        var harness = new Harness(Confetti);
+        harness.PressChord(EffectKey);
+        harness.Source.ReleaseKey(EffectKey);
+        harness.Effects.NextEpoch = 11;
+        harness.Source.PressKey(EffectKey);
+
+        harness.RunQueued();
+
+        Assert.Equal([10L, 11L], harness.Effects.Dequeued.Select(entry => entry.Epoch));
+        Assert.Equal([10L, 11L], harness.Effects.Dequeued.Select(entry => entry.Command!.MonitorEpoch));
     }
 
     [Fact]
@@ -139,7 +154,7 @@ public class EffectShortcutTests
 
         var command = Assert.Single(harness.Started);
         Assert.Equal(Confetti.Id, command.Effect);
-        Assert.Equal((FakeEffectStartQueue.Epoch, (StartEffectCommand?)null), harness.Effects.Dequeued[0]);
+        Assert.Equal((FakeEffectStartQueue.FirstEpoch, (StartEffectCommand?)null), harness.Effects.Dequeued[0]);
     }
 
     [Fact]

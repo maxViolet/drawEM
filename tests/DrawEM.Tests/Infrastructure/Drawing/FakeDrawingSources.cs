@@ -129,12 +129,14 @@ internal sealed class FakeKeyboardHookSource : IKeyboardHookSource, INeutralKeyE
 }
 
 /// <summary>
-/// Records effect starts as the shortcut path queues and dequeues them. Every enqueue is in monitor epoch
-/// <see cref="Epoch"/>; <see cref="Started"/> holds every dequeued command that was not dropped.
+/// Records effect starts as the shortcut path queues and dequeues them. Each enqueue returns
+/// <see cref="NextEpoch"/>; <see cref="Started"/> holds every dequeued command that was not dropped.
 /// </summary>
 internal sealed class FakeEffectStartQueue : IEffectStartQueue
 {
-    public const long Epoch = 10;
+    public const long FirstEpoch = 10;
+
+    public long NextEpoch { get; set; } = FirstEpoch;
 
     public List<ScreenPoint> Enqueued { get; } = [];
 
@@ -145,7 +147,7 @@ internal sealed class FakeEffectStartQueue : IEffectStartQueue
     public long Enqueue(ScreenPoint point)
     {
         Enqueued.Add(point);
-        return Epoch;
+        return NextEpoch;
     }
 
     public void Dequeue(long monitorEpoch, StartEffectCommand? command)

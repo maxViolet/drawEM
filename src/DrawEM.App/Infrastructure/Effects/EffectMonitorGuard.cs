@@ -27,7 +27,10 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
     private long epoch;
     private int queuedStarts;
 
-    /// <summary>The cursor point of the latest press; its monitor is looked up only when first needed.</summary>
+    /// <summary>
+    /// The press point that started observing; its monitor is looked up only when first needed, and again after
+    /// a display change.
+    /// </summary>
     private ScreenPoint anchor;
 
     private bool monitorKnown;
@@ -51,12 +54,25 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
         displays.DisplayChanged += OnDisplayChanged;
     }
 
-    /// <remarks>Does no monitor lookup: the hook resolves nothing at key-down.</remarks>
+    /// <remarks>
+    /// With nothing running or queued, does no monitor lookup: the press point becomes the cursor's last known
+    /// position, resolved only when first needed. Otherwise the press point is checked like a pointer move, so
+    /// a press on another monitor stops the running effect even when the hook reported no move there, and the
+    /// new start gets the epoch after that transition.
+    /// </remarks>
     public long Enqueue(ScreenPoint point)
     {
+        if (IsObserving())
+        {
+            Observe(point);
+        }
+        else
+        {
+            anchor = point;
+            monitorKnown = false;
+        }
+
         queuedStarts++;
-        anchor = point;
-        monitorKnown = false;
         return epoch;
     }
 
