@@ -18,6 +18,8 @@
 - Review: code, security, and spec reviewers ran on PR #60. Their findings (damaged schema 1 file taken as the backup, a second upgrade replacing newer v3 settings without a copy, invalid UTF-8 stopping startup, and stale rollback and status text) are fixed in this step. A follow-up review found that restoring an older backup and upgrading again (A → B → A) made no new backup, so "restore the newest backup" restored B; backups are now numbered and compared only with the highest-numbered one.
 - Not yet connected: shortcut bindings (S4-06) ignore effect slots, so a saved effect slot's shortcut does nothing yet; the Settings window (S4-08) cannot assign effects.
 
+- Documentation review: `2867663` clarified preserving separate v3/v4 settings, cleanup on any v4 Save including migration, and numbered backups in the roadmap and plan. A subsequent documentation check clarified backing up the whole hash-named `sounds` folder before either version switch and restoring it before starting the version with matching settings. The manual version-switch check remains unverified.
+
 ## Validation
 
 - New tests ran first and failed for the expected reasons: 15 failed (`NotSupportedException: Action type EffectAction has no schema`, missing backup, schema 2 files rejected). Review-fix tests: 5 failed first (`InvalidOperationException: Cannot transcode invalid UTF-8`, backup made for damaged schema 1 files, no second backup). A → B → A test: failed first (`settings.schema1-backup-2.json` not found).

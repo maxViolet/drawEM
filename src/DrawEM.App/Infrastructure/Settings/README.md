@@ -94,7 +94,10 @@ A v3 drawEM reads only schema 1, so it reports a schema 2 file as unsupported
 and starts with defaults. To return to v3 with the settings v4 replaced:
 
 1. Exit drawEM from the tray icon, and check that no `DrawEM.App.exe` process
-   is running. A running drawEM may save over the restored file.
+   is running. A running drawEM may save over the restored file. Copy the whole
+   `%LOCALAPPDATA%\drawEM\sounds` folder, if present, to a new backup folder
+   outside `%LOCALAPPDATA%\drawEM`. Keep it with the saved v4 settings;
+   library file names are SHA-256 hashes, so preserve their names unchanged.
 2. In `%LOCALAPPDATA%\drawEM`, rename `settings.json` to `settings.v4.json` to
    keep the v4 settings. If that name already exists, use a new unused name,
    such as `settings.v4-<date-time>.json`; keep every previous copy.
@@ -102,19 +105,25 @@ and starts with defaults. To return to v3 with the settings v4 replaced:
    `settings.schema1-backup-<N>.json` with the largest `N`, or
    `settings.schema1-backup.json` when there is no numbered backup. Keep the
    backups. Older numbers hold v3 settings replaced by earlier migrations.
-4. Start the v3 drawEM.
+4. If you have a sound-folder backup for the v3 settings you restored, copy
+   its files back into `%LOCALAPPDATA%\drawEM\sounds`, keeping their names,
+   before starting v3. Start the v3 drawEM.
 
 With no backup, v4 never replaced a v3 file. A schema 1 `settings.json` needs
 no change. A schema 2 one was created by v4; v3 starts with defaults and
 removes no sounds.
 
-To upgrade again, exit drawEM first. Start v4 with the current v3
+To upgrade again, exit drawEM first and copy the whole
+`%LOCALAPPDATA%\drawEM\sounds` folder, if present, to a new external backup
+folder kept with the current v3 settings. Start v4 with the current v3
 `settings.json` and Save to migrate those settings with an automatic backup.
 To resume the saved v4 settings instead, first rename the current v3
 `settings.json` to an unused `settings.v3-<date-time>.json`, then copy the
 chosen saved v4 file to `settings.json`. This path skips migration of the v3
-file, so keep that copy yourself. Settings copies do not include managed sound
-files; see the cleanup limits below before switching versions.
+file, so keep that copy yourself. Before starting v4 with the saved v4 settings,
+copy the files from their matching sound-folder backup back into
+`%LOCALAPPDATA%\drawEM\sounds`, keeping their names. Keep all external
+backups: startup cleanup may remove files used only by the other settings.
 
 Limits:
 
@@ -123,15 +132,16 @@ Limits:
 - Any v4 Save, including the one that made the backup, can remove managed sound
   copies that its settings no longer reference. If that removed a copy the
   backup names, that slot's sound is missing after the rollback: the slot stays
-  assigned, and each press logs a
-  failure to `logs\sound.log` until a file is chosen again.
+  assigned, and each press logs a failure to `logs\sound.log` until a file is
+  chosen again. A sound-folder backup made after deletion cannot recover it.
 - Sounds imported after the backup are not named by it. The v3 startup cleanup
   removes every managed copy that the loaded settings do not reference, so
   those copies are deleted at the first v3 launch, even if `settings.v4.json`
   still uses them.
 - When resuming saved v4 settings, the first v4 startup cleanup removes managed
   sounds imported in v3 that those v4 settings do not reference, even if a
-  saved `settings.v3-<date-time>.json` still uses them. Copy any sounds you want
-  to retain outside the managed sound library before starting that version.
+  saved `settings.v3-<date-time>.json` still uses them. Preserve the whole
+  sound folder before either version switch, and restore its files before
+  starting the version with the matching settings, as described above.
 - If the restored file cannot be loaded, v3 starts with defaults and removes
   nothing.
