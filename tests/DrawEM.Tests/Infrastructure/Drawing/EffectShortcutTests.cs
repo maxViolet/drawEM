@@ -66,7 +66,7 @@ public class EffectShortcutTests
     }
 
     [Fact]
-    public void EffectShortcut_CursorOutsideEveryMonitor_StartsNothing()
+    public void EffectShortcut_CursorOutsideEveryMonitor_StartsNothing_ButDequeuesItsStart()
     {
         var harness = new Harness(Confetti);
         harness.Cursor.Position = new ScreenPoint(5000, 5000);
@@ -75,6 +75,25 @@ public class EffectShortcutTests
         harness.RunQueued();
 
         Assert.Empty(harness.Started);
+        Assert.Equal([(FakeEffectStartQueue.Epoch, (StartEffectCommand?)null)], harness.Effects.Dequeued);
+    }
+
+    [Fact]
+    public void QueuedEffect_IsEnqueuedInTheHookAtItsPoint_AndStartsWithThatMonitorEpoch()
+    {
+        var harness = new Harness(FocusRing);
+        harness.Cursor.Position = new ScreenPoint(-100, 500);
+
+        harness.PressChord(EffectKey);
+
+        Assert.Equal([new ScreenPoint(-100, 500)], harness.Effects.Enqueued);
+        Assert.Empty(harness.Effects.Dequeued);
+
+        harness.RunQueued();
+
+        var (epoch, command) = Assert.Single(harness.Effects.Dequeued);
+        Assert.Equal(FakeEffectStartQueue.Epoch, epoch);
+        Assert.Equal(FakeEffectStartQueue.Epoch, command!.MonitorEpoch);
     }
 
     [Fact]
@@ -120,6 +139,7 @@ public class EffectShortcutTests
 
         var command = Assert.Single(harness.Started);
         Assert.Equal(Confetti.Id, command.Effect);
+        Assert.Equal((FakeEffectStartQueue.Epoch, (StartEffectCommand?)null), harness.Effects.Dequeued[0]);
     }
 
     [Fact]
@@ -216,7 +236,7 @@ public class EffectShortcutTests
                     [(Shortcut.Create(CtrlAlt, ShortcutKey.Digit(1)), Applause)],
                     [(Shortcut.Create(CtrlAlt, ShortcutKey.Digit(2)), effect)]),
                 Played.Add,
-                Started.Add);
+                Effects);
         }
 
         public GlobalShortcutAdapter Adapter { get; }
@@ -231,7 +251,9 @@ public class EffectShortcutTests
 
         public List<PlaySoundCommand> Played { get; } = [];
 
-        public List<StartEffectCommand> Started { get; } = [];
+        public FakeEffectStartQueue Effects { get; } = new();
+
+        public List<StartEffectCommand> Started => Effects.Started;
 
         /// <returns>Whether the hook hid the key-down of <paramref name="key"/>.</returns>
         public bool PressChord(int key)

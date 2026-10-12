@@ -1,6 +1,6 @@
 # v4 / S4-07: stop effects when switching monitors
 
-**Status:** planned. **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
+**Status:** implemented; the two-monitor Windows checks are unverified (the test PC had one monitor). **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
 
 ## Task
 

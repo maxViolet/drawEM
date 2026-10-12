@@ -18,6 +18,7 @@ namespace DrawEM.App.Presentation.Effects;
 internal sealed class LottiePlayback : IEffectPlayback
 {
     private readonly Animation animation;
+    private readonly Action frameStarting;
     private readonly long started = Stopwatch.GetTimestamp();
     private EffectSurfaceWindow? window;
     private WriteableBitmap? bitmap;
@@ -29,9 +30,10 @@ internal sealed class LottiePlayback : IEffectPlayback
     private bool subscribed;
     private bool released;
 
-    private LottiePlayback(Animation animation)
+    private LottiePlayback(Animation animation, Action frameStarting)
     {
         this.animation = animation;
+        this.frameStarting = frameStarting;
     }
 
     public event Action? Completed;
@@ -39,10 +41,11 @@ internal sealed class LottiePlayback : IEffectPlayback
     public event Action<string>? Failed;
 
     /// <summary>Shows the window for <paramref name="command"/> and starts playing from the first frame.</summary>
+    /// <param name="frameStarting">Called before each frame is drawn.</param>
     /// <exception cref="EffectPlaybackException">The window could not be shown; everything created is released.</exception>
-    public static LottiePlayback Start(StartEffectCommand command, Animation animation)
+    public static LottiePlayback Start(StartEffectCommand command, Animation animation, Action frameStarting)
     {
-        var playback = new LottiePlayback(animation);
+        var playback = new LottiePlayback(animation, frameStarting);
         try
         {
             playback.Open(command);
@@ -148,6 +151,8 @@ internal sealed class LottiePlayback : IEffectPlayback
             Completed?.Invoke();
             return;
         }
+
+        frameStarting();
 
         try
         {

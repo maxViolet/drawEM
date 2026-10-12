@@ -289,7 +289,7 @@ public sealed class SettingsSaveOperationTests
                 new FakeMonitorBoundsSource(Left, Right),
                 ShortcutBindings.FromSnapshot(Settings.Current, Settings.CommandFor),
                 Sound.Play,
-                _ => { });
+                new FakeEffectStartQueue());
             _ = new GlobalMouseInputAdapter(Mouse, Controller, Gate, ui.Enqueue, new FakeMonitorBoundsSource(Left, Right));
             Operation = new SettingsSaveOperation(Store, Library, Settings, Sound, shortcuts, Notifications);
         }

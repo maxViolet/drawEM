@@ -6,6 +6,7 @@ using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Domain.Sound;
 using DrawEM.App.Infrastructure;
+using DrawEM.App.Infrastructure.Effects;
 
 namespace DrawEM.App.Infrastructure.Drawing;
 
@@ -23,7 +24,7 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
     private readonly Action<Action> dispatch;
     private ShortcutBindings bindings;
     private readonly Action<PlaySoundCommand> playSound;
-    private readonly Action<StartEffectCommand> startEffect;
+    private readonly IEffectStartQueue effects;
     private readonly HashSet<int> pressedKeys = [];
     private readonly HashSet<int> startedShortcutKeys = [];
 
@@ -52,9 +53,9 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
     /// Queues the command on the sound thread. Called directly inside the hook callback, so it must
     /// return promptly without file access, decoding, or player creation. Production uses SoundChannelHost.Play.
     /// </param>
-    /// <param name="startEffect">
-    /// Starts an effect. Called on the dispatcher thread, only while the request's configuration generation is
-    /// still current. Production uses EffectChannelController.Start.
+    /// <param name="effects">
+    /// Takes each effect start: enqueued inside the hook callback at key-down, dequeued on the dispatcher thread.
+    /// Production uses <see cref="EffectMonitorGuard"/>, which starts it on the EffectChannelController.
     /// </param>
     public GlobalShortcutAdapter(
         IKeyboardHookSource source,
@@ -66,7 +67,7 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
         IMonitorBoundsSource monitorBoundsSource,
         ShortcutBindings bindings,
         Action<PlaySoundCommand> playSound,
-        Action<StartEffectCommand> startEffect)
+        IEffectStartQueue effects)
     {
         this.neutralKeys = neutralKeys;
         this.controller = controller;
@@ -76,7 +77,7 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
         this.dispatch = dispatch;
         this.bindings = bindings;
         this.playSound = playSound;
-        this.startEffect = startEffect;
+        this.effects = effects;
         source.SetKeyHandler(HandleKey);
     }
 
@@ -285,17 +286,23 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
 
     /// <summary>
     /// Queues an effect start at the cursor point captured at key-down. The monitor is resolved on the
-    /// dispatcher, outside the hook; a point outside every monitor starts nothing.
+    /// dispatcher, outside the hook; a point outside every monitor, or a Save before dispatch, starts nothing.
+    /// The start is dequeued either way, so the guard knows when nothing is queued.
     /// </summary>
     private void DispatchEffect(EffectBinding effect, ScreenPoint point)
     {
         var generation = configurationGeneration;
-        DispatchCommand(() =>
+        var monitorEpoch = effects.Enqueue(point);
+        dispatch(() =>
         {
-            if (monitorBoundsSource.TryGetBounds(point, out var monitor))
+            StartEffectCommand? command = null;
+            if (generation == Volatile.Read(ref configurationGeneration)
+                && monitorBoundsSource.TryGetBounds(point, out var monitor))
             {
-                startEffect(new StartEffectCommand(effect.Effect, effect.Placement, monitor, point, generation));
+                command = new StartEffectCommand(effect.Effect, effect.Placement, monitor, point, generation, monitorEpoch);
             }
+
+            effects.Dequeue(monitorEpoch, command);
         });
     }
 
@@ -368,8 +375,9 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
     }
 
     /// <summary>
-    /// Queues a command that is dropped if <see cref="Interrupt"/> runs before it, so a press made under the
-    /// previous shortcuts cannot draw or start an effect under the new configuration.
+    /// Queues a drawing command that is dropped if <see cref="Interrupt"/> runs before it, so a press made under
+    /// the previous shortcuts cannot draw under the new configuration. Effect starts use the same check in
+    /// <see cref="DispatchEffect"/>.
     /// </summary>
     private void DispatchCommand(Action command)
     {

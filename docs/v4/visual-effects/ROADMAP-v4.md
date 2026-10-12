@@ -1,7 +1,7 @@
 # drawEM v4 roadmap: built-in Monitor and Cursor effects
 
 **Status:** proposed product and implementation plan. S4-01 is done by owner
-decision with its measurement gates unverified. S4-02, S4-04, S4-05, and S4-06 are done; S4-03 is implemented with one visual check unverified; other steps are pending.
+decision with its measurement gates unverified. S4-02, S4-04, S4-05, and S4-06 are done; S4-03 is implemented with one visual check unverified; S4-07 is implemented with its two-monitor checks unverified; other steps are pending.
 **Date:** 2026-10-07; revised 2026-10-09 for Lottie effects with two placements.
 **Prerequisite for release:** finish the v3 Step 8 Windows acceptance work.
 Its task file records verification on one 100% monitor, with seven
@@ -117,7 +117,7 @@ Inspected on 2026-10-07; S4-01 probe added on 2026-10-08:
 | `Application/Settings/ActiveSettings.cs` | Builds sound commands from managed references | Prepare typed sound/effect commands from one snapshot |
 | `Infrastructure/Drawing/ShortcutBindings.cs` | Builds bindings only from `SoundAction` | Bind all supported slot types without silently dropping effects |
 | `Infrastructure/Drawing/GlobalShortcutAdapter.cs` | Dispatches prepared sound commands; owns key/capture behavior | Dispatch typed slot commands, preserving suppression and release bookkeeping |
-| `Infrastructure/Drawing/GlobalMouseInputAdapter.cs` | Reports movement to drawing when draw mode is active | Observe monitor transitions independently of drawing |
+| `Infrastructure/Drawing/GlobalMouseInputAdapter.cs` | Reports movement to drawing when draw mode is active | Done in S4-07, beside it: `Infrastructure/Effects/EffectMonitorGuard.cs` observes monitor transitions from the same hook, independently of drawing |
 | `Presentation/Effects/EffectSurfaceWindow.cs` | Nonactivating, click-through effect window from S4-01 | Done in S4-03: `LottieEffectSurface` shows each instance in one; a Monitor window covers the monitor, a Cursor window is sized to the effect and clipped to the monitor |
 | `Presentation/Effects/EffectSurfaceProbe.cs` | Temporary probe behind `DRAWEM_EFFECT_PROBE=1` | Removed in S4-03 after the S4-03.1 speed gate |
 | `Application/Settings/SettingsEditor.cs` | Sound selection, sampling, Save/Cancel ownership | Effect selection grouped by placement and sample-instance ownership |
@@ -317,7 +317,7 @@ effect and is then cancelled.
 ## Delivery order and completion criteria
 
 Follow the [simple implementation steps](STEPS.md). Each step has one outcome
-and a completion check. S4-01 is recorded as complete by owner decision; S4-02, S4-04, S4-05, and S4-06 are complete; S4-03 is implemented with one visual check unverified.
+and a completion check. S4-01 is recorded as complete by owner decision; S4-02, S4-04, S4-05, and S4-06 are complete; S4-03 is implemented with one visual check unverified; S4-07 is implemented with its two-monitor checks unverified.
 
 | Task | Outcome |
 |---|---|
@@ -327,7 +327,7 @@ and a completion check. S4-01 is recorded as complete by owner decision; S4-02, 
 | [S4-04](step-04-effect-action-model/task.md) | Represent an effect in an action slot (done) |
 | [S4-05](step-05-effect-settings-schema/task.md) | Save and load effect assignments (done) |
 | [S4-06](step-06-effect-shortcuts/task.md) | Launch effects through shortcuts (done) |
-| [S4-07](step-07-effect-monitor-transitions/task.md) | Stop effects when switching monitors |
+| [S4-07](step-07-effect-monitor-transitions/task.md) | Stop effects when switching monitors (implemented; two-monitor checks unverified) |
 | [S4-08](step-08-effect-settings-ui/task.md) | Choose effects in Settings, grouped by placement |
 | [S4-09](step-09-effect-sample/task.md) | Preview draft effects with Sample |
 | [S4-10](step-10-effect-save-runtime/task.md) | Apply settings without leaving an old effect running |

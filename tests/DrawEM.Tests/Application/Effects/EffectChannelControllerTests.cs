@@ -14,7 +14,7 @@ public class EffectChannelControllerTests
     public void Start_ShowsInstanceOnSurfaceAndBecomesActive()
     {
         var fixture = new Fixture();
-        var command = new StartEffectCommand(Confetti, EffectPlacement.Monitor, Primary, new ScreenPoint(10, 20), 7);
+        var command = new StartEffectCommand(Confetti, EffectPlacement.Monitor, Primary, new ScreenPoint(10, 20), 7, 3);
 
         var instance = fixture.Controller.Start(command);
 
@@ -313,8 +313,26 @@ public class EffectChannelControllerTests
         Assert.Null(fixture.Controller.ActiveInstance);
     }
 
-    private static StartEffectCommand Command(EffectId effect, EffectPlacement placement = EffectPlacement.Monitor) =>
-        new(effect, placement, Primary, new ScreenPoint(100, 100), 1);
+    [Fact]
+    public void StopStartedBefore_StopsOnlyAnInstanceFromAnEarlierMonitorEpoch()
+    {
+        var fixture = new Fixture();
+        var instance = fixture.Controller.Start(Command(Confetti, monitorEpoch: 4));
+
+        fixture.Controller.StopStartedBefore(4);
+        Assert.Same(instance, fixture.Controller.ActiveInstance);
+
+        fixture.Controller.StopStartedBefore(5);
+        Assert.Null(fixture.Controller.ActiveInstance);
+        Assert.Equal(1, fixture.Playbacks[0].DisposeCount);
+
+        fixture.Controller.StopStartedBefore(6);
+        Assert.Equal(1, fixture.Playbacks[0].DisposeCount);
+    }
+
+    private static StartEffectCommand Command(
+        EffectId effect, EffectPlacement placement = EffectPlacement.Monitor, long monitorEpoch = 0) =>
+        new(effect, placement, Primary, new ScreenPoint(100, 100), 1, monitorEpoch);
 
     private sealed class Fixture : IEffectSurface, IEffectFailureReporter
     {

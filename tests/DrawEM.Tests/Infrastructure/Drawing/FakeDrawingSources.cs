@@ -1,6 +1,8 @@
+using DrawEM.App.Application.Effects;
 using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Infrastructure;
 using DrawEM.App.Infrastructure.Drawing;
+using DrawEM.App.Infrastructure.Effects;
 
 namespace DrawEM.Tests.Infrastructure.Drawing;
 
@@ -64,5 +66,35 @@ internal sealed class FakeKeyboardHookSource : IKeyboardHookSource, INeutralKeyE
 
     public void EmitNeutralKey()
     {
+    }
+}
+
+/// <summary>
+/// Records effect starts as the shortcut path queues and dequeues them. Every enqueue is in monitor epoch
+/// <see cref="Epoch"/>; <see cref="Started"/> holds every dequeued command that was not dropped.
+/// </summary>
+internal sealed class FakeEffectStartQueue : IEffectStartQueue
+{
+    public const long Epoch = 10;
+
+    public List<ScreenPoint> Enqueued { get; } = [];
+
+    public List<(long Epoch, StartEffectCommand? Command)> Dequeued { get; } = [];
+
+    public List<StartEffectCommand> Started { get; } = [];
+
+    public long Enqueue(ScreenPoint point)
+    {
+        Enqueued.Add(point);
+        return Epoch;
+    }
+
+    public void Dequeue(long monitorEpoch, StartEffectCommand? command)
+    {
+        Dequeued.Add((monitorEpoch, command));
+        if (command is not null)
+        {
+            Started.Add(command);
+        }
     }
 }

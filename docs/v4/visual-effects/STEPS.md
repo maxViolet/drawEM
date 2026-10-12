@@ -108,7 +108,7 @@ effect appears at the cursor point captured at key-down. Sound remains independe
 Tests cover dispatch, captured position, stale configuration requests, AltGr,
 capture mode, and paired key suppression.
 
-### S4-07: stop on monitor changes
+### S4-07: stop on monitor changes (implemented; two-monitor checks unverified)
 
 **Do:** Observe monitor transitions even when drawing is inactive. Stop the
 effect, of either placement, when the cursor enters another monitor. Preserve

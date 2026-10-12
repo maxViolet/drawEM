@@ -8,6 +8,9 @@ namespace DrawEM.App.Presentation.Effects;
 /// </summary>
 public sealed class LottieEffectSurface(BuiltInEffectAnimations animations) : IEffectSurface
 {
+    /// <summary>Raised on the UI thread before each animation frame is drawn, while an effect plays.</summary>
+    public event Action? FrameStarting;
+
     public IEffectPlayback Show(EffectInstance instance)
     {
         if (!animations.TryGet(instance.Command.Effect, out var animation, out var failure))
@@ -15,6 +18,6 @@ public sealed class LottieEffectSurface(BuiltInEffectAnimations animations) : IE
             throw new EffectPlaybackException(failure);
         }
 
-        return LottiePlayback.Start(instance.Command, animation);
+        return LottiePlayback.Start(instance.Command, animation, () => FrameStarting?.Invoke());
     }
 }

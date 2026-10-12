@@ -30,6 +30,7 @@ public partial class App : System.Windows.Application
     private EffectChannelController? effectChannel;
     private BuiltInEffectAnimations? effectAnimations;
     private LoggingEffectFailureReporter? effectFailures;
+    private Win32DisplayChangeSource? displayChanges;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -90,26 +91,35 @@ public partial class App : System.Windows.Application
             effectFailures = effectLog;
             var animations = new BuiltInEffectAnimations();
             effectAnimations = animations;
+            var surface = new LottieEffectSurface(animations);
             var effects = new EffectChannelController(
-                new LottieEffectSurface(animations), effectLog, TimeProvider.System, action => Dispatcher.BeginInvoke(action));
+                surface, effectLog, TimeProvider.System, action => Dispatcher.BeginInvoke(action));
             effectChannel = effects;
 
             var inputGate = new DrawingModeInputGate();
             var monitorBoundsSource = new Win32MonitorBoundsSource();
+            var cursor = new Win32CursorPositionSource();
             keyboardHookSource = new Win32KeyboardHookSource();
+            mouseHookSource = new Win32MouseHookSource();
+            var displays = new Win32DisplayChangeSource(action => Dispatcher.BeginInvoke(action));
+            displayChanges = displays;
+
+            // Stops an effect when the cursor enters another monitor, drawing or not; frames recheck the cursor.
+            var monitorGuard = new EffectMonitorGuard(
+                mouseHookSource, displays, monitorBoundsSource, cursor, effects, action => Dispatcher.BeginInvoke(action));
+            surface.FrameStarting += monitorGuard.CheckCursor;
             var shortcuts = new GlobalShortcutAdapter(
                 keyboardHookSource.Events,
                 keyboardHookSource,
                 controller,
                 inputGate,
-                new Win32CursorPositionSource(),
+                cursor,
                 action => Dispatcher.BeginInvoke(action),
                 monitorBoundsSource,
                 ShortcutBindings.FromSnapshot(active, settings.CommandFor),
                 channelHost.Play,
-                command => effects.Start(command));
+                monitorGuard);
 
-            mouseHookSource = new Win32MouseHookSource();
             _ = new GlobalMouseInputAdapter(
                 mouseHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action), monitorBoundsSource);
 
@@ -120,7 +130,7 @@ public partial class App : System.Windows.Application
                 // The sound channel reports its last failures while it stops, so the log drains after it.
                 // Effects stop and close their windows before their animations and failure log are released.
                 new CompositeDisposable(
-                    keyboardHookSource, mouseHookSource, channelHost, soundLog, effects, animations, effectLog),
+                    keyboardHookSource, mouseHookSource, displays, channelHost, soundLog, effects, animations, effectLog),
                 overlayWindow,
                 new WpfApplicationLifetime(this),
                 action => Dispatcher.BeginInvoke(action),
@@ -203,6 +213,7 @@ public partial class App : System.Windows.Application
         [
             () => keyboardHookSource?.Dispose(),
             () => mouseHookSource?.Dispose(),
+            () => displayChanges?.Dispose(),
             () => soundChannel?.Dispose(),
             () => soundFailures?.Dispose(),
             () => effectChannel?.Dispose(),
