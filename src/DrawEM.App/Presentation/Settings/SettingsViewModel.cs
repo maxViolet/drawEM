@@ -251,7 +251,6 @@ public sealed class SettingsViewModel : BindableBase
         else if (kind == SlotKind.Effect)
         {
             SelectEffect(slot, EffectOption.All[0]);
-            return;
         }
         else
         {

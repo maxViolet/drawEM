@@ -55,9 +55,7 @@ public sealed class SettingsWindowTests
 
             tabs.SelectedIndex = 1;
             Layout(window);
-            var effects = Descendants<ComboBox>(slots)
-                .Where(box => AutomationProperties.GetName(box) == "Effect")
-                .ToArray();
+            var effects = ComboBoxes(slots, "Effect");
             Assert.Equal(ActionSlot.Count, effects.Length);
             Assert.Equal(
                 ["Monitor: Confetti", "Cursor: Focus ring"],
@@ -90,21 +88,23 @@ public sealed class SettingsWindowTests
             Show(window, model);
             ((TabControl)window.FindName("Tabs")).SelectedIndex = 1;
             Layout(window);
-            var kind = Descendants<ComboBox>(window)
-                .Where(box => AutomationProperties.GetName(box) == "Action type")
-                .ElementAt(1);
+            var kind = ComboBoxes(window, "Action type")[1];
 
             // As a user's choice does: the one-way SelectedItem binding stays.
-            kind.SetCurrentValue(Selector.SelectedItemProperty, SlotKind.Sound);
-            Layout(window);
+            void ChooseSound()
+            {
+                kind.SetCurrentValue(Selector.SelectedItemProperty, SlotKind.Sound);
+                Layout(window);
+            }
+
+            ChooseSound();
 
             Assert.Single(picker.Picks);
             Assert.Equal(SlotKind.Effect, kind.SelectedItem);
             Assert.Equal(SlotKind.Effect, model.Slots[1].Kind);
 
             picker.Next = @"C:\sounds\Horn.wav";
-            kind.SetCurrentValue(Selector.SelectedItemProperty, SlotKind.Sound);
-            Layout(window);
+            ChooseSound();
 
             Assert.Equal(2, picker.Picks.Count);
             Assert.Equal(SlotKind.Sound, kind.SelectedItem);
@@ -173,6 +173,10 @@ public sealed class SettingsWindowTests
             }
         }
     }
+
+    /// <summary>The combo boxes under <paramref name="root"/> with this automation name, one per slot.</summary>
+    private static ComboBox[] ComboBoxes(DependencyObject root, string name) =>
+        Descendants<ComboBox>(root).Where(box => AutomationProperties.GetName(box) == name).ToArray();
 
     private static IEnumerable<T> Descendants<T>(DependencyObject element) where T : DependencyObject
     {

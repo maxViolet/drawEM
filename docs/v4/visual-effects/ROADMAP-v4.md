@@ -1,7 +1,7 @@
 # drawEM v4 roadmap: built-in Monitor and Cursor effects
 
 **Status:** proposed product and implementation plan. S4-01 is done by owner
-decision with its measurement gates unverified. S4-02, S4-04, S4-05, and S4-06 are done; S4-03 is implemented with one visual check unverified; S4-07 is implemented with its two-monitor checks unverified; other steps are pending.
+decision with its measurement gates unverified. S4-02, S4-04, S4-05, and S4-06 are done; S4-03 is implemented with one visual check unverified; S4-07 is implemented with its two-monitor checks unverified; S4-08 is implemented with its running-app check unverified; other steps are pending.
 **Date:** 2026-10-07; revised 2026-10-09 for Lottie effects with two placements.
 **Prerequisite for release:** finish the v3 Step 8 Windows acceptance work.
 Its task file records verification on one 100% monitor, with seven
@@ -317,7 +317,7 @@ effect and is then cancelled.
 ## Delivery order and completion criteria
 
 Follow the [simple implementation steps](STEPS.md). Each step has one outcome
-and a completion check. S4-01 is recorded as complete by owner decision; S4-02, S4-04, S4-05, and S4-06 are complete; S4-03 is implemented with one visual check unverified; S4-07 is implemented with its two-monitor checks unverified.
+and a completion check. S4-01 is recorded as complete by owner decision; S4-02, S4-04, S4-05, and S4-06 are complete; S4-03 is implemented with one visual check unverified; S4-07 is implemented with its two-monitor checks unverified; S4-08 is implemented with its running-app check unverified.
 
 | Task | Outcome |
 |---|---|
@@ -328,7 +328,7 @@ and a completion check. S4-01 is recorded as complete by owner decision; S4-02, 
 | [S4-05](step-05-effect-settings-schema/task.md) | Save and load effect assignments (done) |
 | [S4-06](step-06-effect-shortcuts/task.md) | Launch effects through shortcuts (done) |
 | [S4-07](step-07-effect-monitor-transitions/task.md) | Stop effects when switching monitors (implemented; two-monitor checks unverified) |
-| [S4-08](step-08-effect-settings-ui/task.md) | Choose effects in Settings, grouped by placement |
+| [S4-08](step-08-effect-settings-ui/task.md) | Choose effects in Settings, grouped by placement (implemented; running-app check unverified) |
 | [S4-09](step-09-effect-sample/task.md) | Preview draft effects with Sample |
 | [S4-10](step-10-effect-save-runtime/task.md) | Apply settings without leaving an old effect running |
 | [S4-11](step-11-effect-lifecycle/task.md) | Stop and clean up effects through the app lifecycle |

@@ -66,9 +66,9 @@ public partial class SettingsWindow : Window, ISoundFilePicker
     // by the model's notification. That revert reaches here again as a no-op.
     private void OnKindChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (sender is FrameworkElement { DataContext: SlotViewModel slot } && e.AddedItems.Count == 1 &&
-            e.AddedItems[0] is SlotKind kind)
+        if (e.AddedItems.Count == 1 && e.AddedItems[0] is SlotKind kind)
         {
+            var slot = Model<SlotViewModel>(sender);
             Dispatcher.BeginInvoke(() => slot.ChangeKind(kind));
         }
     }
