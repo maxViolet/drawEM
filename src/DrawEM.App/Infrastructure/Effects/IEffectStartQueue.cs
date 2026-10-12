@@ -18,5 +18,6 @@ public interface IEffectStartQueue
     /// only while <paramref name="monitorEpoch"/> is still current.
     /// </summary>
     /// <param name="command">The start, or <c>null</c> when it was dropped (a Save, or no monitor at the point).</param>
-    void Dequeue(long monitorEpoch, StartEffectCommand? command);
+    /// <returns>The started instance, or <c>null</c> when nothing started.</returns>
+    EffectInstance? Dequeue(long monitorEpoch, StartEffectCommand? command);
 }

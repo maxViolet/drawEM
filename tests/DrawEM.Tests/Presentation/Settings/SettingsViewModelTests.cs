@@ -23,6 +23,7 @@ public sealed class SettingsViewModelTests
     private readonly FakeLibrary library = new();
     private readonly FakeSettingsSave saver = new();
     private readonly FakeSampler sampler = new();
+    private readonly FakeEffectSampler effectSampler = new();
     private readonly FakeCapture capture = new();
     private readonly FakePicker picker = new();
     private SettingsSnapshot active = TestSettings.WithSounds((1, Applause));
@@ -426,6 +427,34 @@ public sealed class SettingsViewModelTests
     }
 
     [Fact]
+    public void Sample_OnAnEffectSlot_StartsTheDraftEffect_AndShowsItsFailure()
+    {
+        active = TestSettings.WithEffects((2, Confetti));
+        var model = Model();
+        model.Slots[1].Effect = EffectOption.All.Single(option => option.Id == FocusRing);
+
+        model.Slots[1].Sample();
+        effectSampler.Samples[0].Report("cannot render");
+
+        Assert.Equal(FocusRing, effectSampler.Samples[0].Effect);
+        Assert.Empty(sampler.Samples);
+        Assert.Equal("Sample failed: cannot render", model.Slots[1].Message);
+        Assert.Equal(Confetti, Assert.IsType<EffectAction>(active.Slots[1].Action).Effect);
+    }
+
+    [Fact]
+    public void Close_StopsTheEditorsEffectSample()
+    {
+        active = TestSettings.WithEffects((2, Confetti));
+        var model = Model();
+        model.Slots[1].Sample();
+
+        model.Close();
+
+        Assert.Equal(1, effectSampler.Stops);
+    }
+
+    [Fact]
     public void RestoreDefaults_ChangesOnlyTheDraft()
     {
         var model = Model();
@@ -508,7 +537,7 @@ public sealed class SettingsViewModelTests
             played.Add,
             new FakeEffectStartQueue());
         var model = new SettingsViewModel(
-            new SettingsEditor(() => active, library, saver, sampler, _ => { }), hook, picker);
+            new SettingsEditor(() => active, library, saver, sampler, effectSampler, _ => { }), hook, picker);
 
         model.Clear.BeginCapture();
         keys.Press(VirtualKeys.LeftControl, VirtualKeys.LeftMenu);
@@ -527,5 +556,5 @@ public sealed class SettingsViewModelTests
     }
 
     private SettingsViewModel Model() =>
-        new(new SettingsEditor(() => active, library, saver, sampler, _ => { }), capture, picker);
+        new(new SettingsEditor(() => active, library, saver, sampler, effectSampler, _ => { }), capture, picker);
 }

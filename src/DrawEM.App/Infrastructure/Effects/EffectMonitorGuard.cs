@@ -76,13 +76,10 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
         return epoch;
     }
 
-    public void Dequeue(long monitorEpoch, StartEffectCommand? command)
+    public EffectInstance? Dequeue(long monitorEpoch, StartEffectCommand? command)
     {
         queuedStarts--;
-        if (command is not null && monitorEpoch == epoch)
-        {
-            channel.Start(command);
-        }
+        return command is not null && monitorEpoch == epoch ? channel.Start(command) : null;
     }
 
     /// <summary>
