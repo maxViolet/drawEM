@@ -7,15 +7,16 @@ namespace DrawEM.Tests;
 internal static class TestSettings
 {
     /// <summary>Default settings with each given slot bound to <c>Ctrl+Alt+</c> its number.</summary>
-    public static SettingsSnapshot WithSounds(params (int Slot, SoundReference Sound)[] sounds) =>
-        WithSlots((number, shortcut) => sounds.FirstOrDefault(entry => entry.Slot == number) is { Sound: { } sound }
-            ? new SoundAction(sound, shortcut)
-            : null);
+    public static SettingsSnapshot WithSounds(params (int Slot, SoundReference Sound)[] sounds) => WithActions(sounds, []);
 
     /// <summary>Default settings with each given slot bound to <c>Ctrl+Alt+</c> its number.</summary>
-    public static SettingsSnapshot WithEffects(params (int Slot, EffectId Effect)[] effects) =>
-        WithSlots((number, shortcut) => effects.FirstOrDefault(entry => entry.Slot == number) is { Effect: { } effect }
-            ? new EffectAction(effect, shortcut)
+    public static SettingsSnapshot WithEffects(params (int Slot, EffectId Effect)[] effects) => WithActions([], effects);
+
+    /// <summary>Default settings with each given slot bound to <c>Ctrl+Alt+</c> its number.</summary>
+    public static SettingsSnapshot WithActions((int Slot, SoundReference Sound)[] sounds, (int Slot, EffectId Effect)[] effects) =>
+        WithSlots((number, shortcut) =>
+            sounds.FirstOrDefault(entry => entry.Slot == number) is { Sound: { } sound } ? new SoundAction(sound, shortcut)
+            : effects.FirstOrDefault(entry => entry.Slot == number) is { Effect: { } effect } ? new EffectAction(effect, shortcut)
             : null);
 
     private static SettingsSnapshot WithSlots(Func<int, Shortcut, SlotAction?> actionFor) =>

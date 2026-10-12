@@ -1,6 +1,6 @@
 # v4: simple implementation steps
 
-**Status:** S4-01 is done by owner decision, with its measurement gates unverified. S4-02, S4-03.1, S4-04, S4-05, and S4-06 are done; S4-03 is implemented with its flashing check unverified; S4-07 is implemented with its two-monitor checks unverified; other steps are pending.
+**Status:** S4-01 is done by owner decision, with its measurement gates unverified. S4-02, S4-03.1, S4-04, S4-05, and S4-06 are done; S4-03 is implemented with its flashing check unverified; S4-07 is implemented with its two-monitor checks unverified; S4-08 is implemented with its running-app check unverified; other steps are pending.
 **Contract:** [v4 roadmap](ROADMAP-v4.md). Its product rules, technical boundaries,
 and acceptance requirements apply to every step below. Terms follow the
 [glossary](../../../CONTEXT.md).
@@ -121,7 +121,7 @@ it. Movement inside one monitor and reaching an outside desktop edge do not
 stop it; a Cursor effect does not move. Test queued-start races and topology
 changes; confirm the behavior on two monitors.
 
-### S4-08: select an effect in Settings
+### S4-08: select an effect in Settings (implemented; running-app check unverified)
 
 **Do:** Add Sound/Effect selection and an effect list, grouped under Monitor
 and Cursor, to existing Actions rows. Preserve shortcuts when changing type;
