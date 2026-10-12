@@ -96,6 +96,18 @@ public sealed class EffectChannelController : IDisposable
         }
     }
 
+    /// <summary>
+    /// Releases the active instance if it was started in a monitor epoch before <paramref name="monitorEpoch"/>:
+    /// the cursor has entered another monitor, or the display topology changed, since it started.
+    /// </summary>
+    public void StopStartedBefore(long monitorEpoch)
+    {
+        if (active is { } run && run.Instance.Command.MonitorEpoch < monitorEpoch)
+        {
+            End(run);
+        }
+    }
+
     public void Dispose()
     {
         if (disposed)

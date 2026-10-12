@@ -66,7 +66,7 @@ public class EffectShortcutTests
     }
 
     [Fact]
-    public void EffectShortcut_CursorOutsideEveryMonitor_StartsNothing()
+    public void EffectShortcut_CursorOutsideEveryMonitor_StartsNothing_ButDequeuesItsStart()
     {
         var harness = new Harness(Confetti);
         harness.Cursor.Position = new ScreenPoint(5000, 5000);
@@ -75,6 +75,40 @@ public class EffectShortcutTests
         harness.RunQueued();
 
         Assert.Empty(harness.Started);
+        Assert.Equal([(FakeEffectStartQueue.FirstEpoch, (StartEffectCommand?)null)], harness.Effects.Dequeued);
+    }
+
+    [Fact]
+    public void QueuedEffect_IsEnqueuedInTheHookAtItsPoint_AndStartsWithThatMonitorEpoch()
+    {
+        var harness = new Harness(FocusRing);
+        harness.Cursor.Position = new ScreenPoint(-100, 500);
+
+        harness.PressChord(EffectKey);
+
+        Assert.Equal([new ScreenPoint(-100, 500)], harness.Effects.Enqueued);
+        Assert.Empty(harness.Effects.Dequeued);
+
+        harness.RunQueued();
+
+        var (epoch, command) = Assert.Single(harness.Effects.Dequeued);
+        Assert.Equal(FakeEffectStartQueue.FirstEpoch, epoch);
+        Assert.Equal(FakeEffectStartQueue.FirstEpoch, command!.MonitorEpoch);
+    }
+
+    [Fact]
+    public void TwoQueuedPresses_EachDequeueWithTheEpochOfItsOwnPress()
+    {
+        var harness = new Harness(Confetti);
+        harness.PressChord(EffectKey);
+        harness.Source.ReleaseKey(EffectKey);
+        harness.Effects.NextEpoch = 11;
+        harness.Source.PressKey(EffectKey);
+
+        harness.RunQueued();
+
+        Assert.Equal([10L, 11L], harness.Effects.Dequeued.Select(entry => entry.Epoch));
+        Assert.Equal([10L, 11L], harness.Effects.Dequeued.Select(entry => entry.Command!.MonitorEpoch));
     }
 
     [Fact]
@@ -120,6 +154,7 @@ public class EffectShortcutTests
 
         var command = Assert.Single(harness.Started);
         Assert.Equal(Confetti.Id, command.Effect);
+        Assert.Equal((FakeEffectStartQueue.FirstEpoch, (StartEffectCommand?)null), harness.Effects.Dequeued[0]);
     }
 
     [Fact]
@@ -216,7 +251,7 @@ public class EffectShortcutTests
                     [(Shortcut.Create(CtrlAlt, ShortcutKey.Digit(1)), Applause)],
                     [(Shortcut.Create(CtrlAlt, ShortcutKey.Digit(2)), effect)]),
                 Played.Add,
-                Started.Add);
+                Effects);
         }
 
         public GlobalShortcutAdapter Adapter { get; }
@@ -231,7 +266,9 @@ public class EffectShortcutTests
 
         public List<PlaySoundCommand> Played { get; } = [];
 
-        public List<StartEffectCommand> Started { get; } = [];
+        public FakeEffectStartQueue Effects { get; } = new();
+
+        public List<StartEffectCommand> Started => Effects.Started;
 
         /// <returns>Whether the hook hid the key-down of <paramref name="key"/>.</returns>
         public bool PressChord(int key)
@@ -246,32 +283,6 @@ public class EffectShortcutTests
             {
                 action();
             }
-        }
-    }
-
-    private sealed class SettableCursor : ICursorPositionSource
-    {
-        public ScreenPoint Position { get; set; } = new(100, 100);
-
-        public bool Available { get; set; } = true;
-
-        public bool TryGetCurrentPosition(out ScreenPoint position)
-        {
-            position = Position;
-            return Available;
-        }
-    }
-
-    private sealed class CountingMonitors(params MonitorBounds[] monitors) : IMonitorBoundsSource
-    {
-        private readonly FakeMonitorBoundsSource inner = new(monitors);
-
-        public int Queries { get; private set; }
-
-        public bool TryGetBounds(ScreenPoint point, out MonitorBounds bounds)
-        {
-            Queries++;
-            return inner.TryGetBounds(point, out bounds);
         }
     }
 }

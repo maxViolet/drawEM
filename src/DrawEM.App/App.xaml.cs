@@ -30,6 +30,7 @@ public partial class App : System.Windows.Application
     private EffectChannelController? effectChannel;
     private BuiltInEffectAnimations? effectAnimations;
     private LoggingEffectFailureReporter? effectFailures;
+    private Win32DisplayChangeSource? displayChanges;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -71,9 +72,10 @@ public partial class App : System.Windows.Application
             controller = new DrawingSessionController(() => settings.Current.Style);
             overlayWindow = new OverlayWindow();
             _ = new OverlayWindowAdapter(controller, overlayWindow);
+            Action<Action> dispatchToUi = action => Dispatcher.BeginInvoke(action);
 
             // Failures of a Settings window sample are also shown in the window.
-            var playbackFailures = new SampleFailureRouter(soundLog, action => Dispatcher.BeginInvoke(action));
+            var playbackFailures = new SampleFailureRouter(soundLog, dispatchToUi);
             var channelHost = new SoundChannelHost(dispatch => new SoundChannelController(
                 new MediaSoundPlayerFactory(),
                 playbackFailures,
@@ -90,28 +92,37 @@ public partial class App : System.Windows.Application
             effectFailures = effectLog;
             var animations = new BuiltInEffectAnimations();
             effectAnimations = animations;
+            var displays = new Win32DisplayChangeSource(dispatchToUi);
+            displayChanges = displays;
+            var surface = new LottieEffectSurface(animations, displays.NotifyDpiChanged);
             var effects = new EffectChannelController(
-                new LottieEffectSurface(animations), effectLog, TimeProvider.System, action => Dispatcher.BeginInvoke(action));
+                surface, effectLog, TimeProvider.System, dispatchToUi);
             effectChannel = effects;
 
             var inputGate = new DrawingModeInputGate();
             var monitorBoundsSource = new Win32MonitorBoundsSource();
+            var cursor = new Win32CursorPositionSource();
             keyboardHookSource = new Win32KeyboardHookSource();
+            mouseHookSource = new Win32MouseHookSource();
+
+            // Stops an effect when the cursor enters another monitor, drawing or not; frames recheck the cursor.
+            var monitorGuard = new EffectMonitorGuard(
+                mouseHookSource, displays, monitorBoundsSource, cursor, effects, dispatchToUi);
+            surface.FrameStarting += monitorGuard.CheckCursor;
             var shortcuts = new GlobalShortcutAdapter(
                 keyboardHookSource.Events,
                 keyboardHookSource,
                 controller,
                 inputGate,
-                new Win32CursorPositionSource(),
-                action => Dispatcher.BeginInvoke(action),
+                cursor,
+                dispatchToUi,
                 monitorBoundsSource,
                 ShortcutBindings.FromSnapshot(active, settings.CommandFor),
                 channelHost.Play,
-                command => effects.Start(command));
+                monitorGuard);
 
-            mouseHookSource = new Win32MouseHookSource();
             _ = new GlobalMouseInputAdapter(
-                mouseHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action), monitorBoundsSource);
+                mouseHookSource, controller, inputGate, dispatchToUi, monitorBoundsSource);
 
             overlayWindow.Show();
 
@@ -120,10 +131,10 @@ public partial class App : System.Windows.Application
                 // The sound channel reports its last failures while it stops, so the log drains after it.
                 // Effects stop and close their windows before their animations and failure log are released.
                 new CompositeDisposable(
-                    keyboardHookSource, mouseHookSource, channelHost, soundLog, effects, animations, effectLog),
+                    keyboardHookSource, mouseHookSource, displays, channelHost, soundLog, effects, animations, effectLog),
                 overlayWindow,
                 new WpfApplicationLifetime(this),
-                action => Dispatcher.BeginInvoke(action),
+                dispatchToUi,
                 failure => exitPolicy.Report("exit", failure));
 
             var settingsSave = new SettingsSaveOperation(store, library, settings, channelHost, shortcuts, saveNotifications);
@@ -203,6 +214,7 @@ public partial class App : System.Windows.Application
         [
             () => keyboardHookSource?.Dispose(),
             () => mouseHookSource?.Dispose(),
+            () => displayChanges?.Dispose(),
             () => soundChannel?.Dispose(),
             () => soundFailures?.Dispose(),
             () => effectChannel?.Dispose(),

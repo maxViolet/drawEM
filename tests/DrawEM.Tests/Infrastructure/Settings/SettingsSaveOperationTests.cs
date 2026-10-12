@@ -289,7 +289,7 @@ public sealed class SettingsSaveOperationTests
                 new FakeMonitorBoundsSource(Left, Right),
                 ShortcutBindings.FromSnapshot(Settings.Current, Settings.CommandFor),
                 Sound.Play,
-                _ => { });
+                new FakeEffectStartQueue());
             _ = new GlobalMouseInputAdapter(Mouse, Controller, Gate, ui.Enqueue, new FakeMonitorBoundsSource(Left, Right));
             Operation = new SettingsSaveOperation(Store, Library, Settings, Sound, shortcuts, Notifications);
         }
@@ -312,7 +312,7 @@ public sealed class SettingsSaveOperationTests
 
         public FakeKeyboardHookSource Keyboard { get; } = new();
 
-        public FakeMouse Mouse { get; } = new();
+        public FakeMouseHookSource Mouse { get; } = new();
 
         public RecordingNotifications Notifications { get; } = new();
 
@@ -375,17 +375,6 @@ public sealed class SettingsSaveOperationTests
             channel.Stop();
             return StopConfirmed;
         }
-    }
-
-    private sealed class FakeMouse : IMouseHookSource
-    {
-        public event Action<ScreenPoint>? PointerMoved;
-
-        public event Func<bool>? PointerButtonActivity { add { } remove { } }
-
-        public event Func<bool>? PointerWheelActivity { add { } remove { } }
-
-        public void Move(ScreenPoint point) => PointerMoved?.Invoke(point);
     }
 
     private sealed class FakeStore : ISettingsStore
