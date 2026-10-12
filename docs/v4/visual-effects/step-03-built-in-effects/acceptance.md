@@ -18,7 +18,9 @@
 - [ ] The focus ring stays at its captured point while the pointer moves within the monitor, and is clipped, not shifted, at each monitor edge.
 - [ ] Replacement across placements and Stop clear old visuals; animation failures clear partial visuals and leave drawing and sound usable.
 - [ ] Automated tests check that every built-in file loads, lasts no more than 10 seconds and no more than its specified length (confetti 3 s, focus ring 2 s), and has a source and license record; and check Cursor surface bounds, clipping, negative coordinates, and 100%/150%/200% scaling, and Monitor cover scaling for 16:9, 16:10, 21:9, and portrait monitors.
-- [ ] Windows visual checks with the development-only trigger are recorded separately, including that neither effect flashes more than three times in any one second. S4-06 removes this trigger.
+- [ ] Windows visual checks with the development-only trigger are recorded separately, including that neither effect flashes more than three times in any one second.
+- [ ] Carried over from [S4-06](../step-06-effect-shortcuts/acceptance.md#scope): `App.xaml.cs` passes `EffectChannelController.Start` to `GlobalShortcutAdapter`, and a bound shortcut shows each effect on screen, with a Cursor effect centered on the key-down cursor point.
+- [ ] Carried over from S4-06: the S4-01 probe is removed. `EffectSurfaceProbe.cs`, `EffectProbeHotkeys.cs`, `EffectProbeInputLoad.cs`, and the `DRAWEM_EFFECT_PROBE` wiring in `App.xaml.cs` no longer exist, and a search of `src/` for `DRAWEM_EFFECT_PROBE` finds nothing.
 
 ## Validation
 

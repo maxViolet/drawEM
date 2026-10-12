@@ -313,7 +313,8 @@ public sealed class SettingsViewModelTests
             queued.Enqueue,
             new FakeMonitorBoundsSource(new MonitorBounds(-100, -100, 100, 100)),
             ShortcutBindings.FromSnapshot(active, _ => applause),
-            played.Add);
+            played.Add,
+            _ => { });
         var model = new SettingsViewModel(
             new SettingsEditor(() => active, library, saver, sampler, _ => { }), hook, picker);
 

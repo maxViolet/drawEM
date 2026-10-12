@@ -288,7 +288,8 @@ public sealed class SettingsSaveOperationTests
                 ui.Enqueue,
                 new FakeMonitorBoundsSource(Left, Right),
                 ShortcutBindings.FromSnapshot(Settings.Current, Settings.CommandFor),
-                Sound.Play);
+                Sound.Play,
+                _ => { });
             _ = new GlobalMouseInputAdapter(Mouse, Controller, Gate, ui.Enqueue, new FakeMonitorBoundsSource(Left, Right));
             Operation = new SettingsSaveOperation(Store, Library, Settings, Sound, shortcuts, Notifications);
         }

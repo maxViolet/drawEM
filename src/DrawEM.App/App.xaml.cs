@@ -78,7 +78,7 @@ public partial class App : System.Windows.Application
                 dispatch));
             soundChannel = channelHost;
 
-            // Bindings and the sound commands they hold come from one snapshot.
+            // Bindings and the sound and effect commands they hold come from one snapshot.
             var active = settings.Current;
 
             var inputGate = new DrawingModeInputGate();
@@ -93,7 +93,10 @@ public partial class App : System.Windows.Application
                 action => Dispatcher.BeginInvoke(action),
                 monitorBoundsSource,
                 ShortcutBindings.FromSnapshot(active, settings.CommandFor),
-                channelHost.Play);
+                channelHost.Play,
+                // No effect surface exists until S4-03, which composes EffectChannelController.Start here.
+                // Until then an effect shortcut is recognized and hidden, and shows nothing.
+                _ => { });
 
             mouseHookSource = new Win32MouseHookSource();
             _ = new GlobalMouseInputAdapter(
@@ -101,7 +104,7 @@ public partial class App : System.Windows.Application
 
             overlayWindow.Show();
 
-            // Temporary S4-01 renderer experiment; S4-06 removes it with its trigger.
+            // Temporary S4-01 renderer experiment; S4-03 removes it with its trigger.
             effectProbe = EffectSurfaceProbe.IsEnabled(Environment.GetEnvironmentVariable(EffectSurfaceProbe.EnableVariable))
                 ? StartEffectProbe(controller, inputGate, monitorBoundsSource, keyboardHookSource, mouseHookSource)
                 : new CompositeDisposable();

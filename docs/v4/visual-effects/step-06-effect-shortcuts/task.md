@@ -1,6 +1,6 @@
 # v4 / S4-06: launch effects through shortcuts
 
-**Status:** planned. **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
+**Status:** shortcut path done; probe removal and the visible effect wait for S4-03 (see [acceptance](acceptance.md#scope)). **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
 
 ## Task
 

@@ -7,7 +7,7 @@ namespace DrawEM.App.Infrastructure.Effects;
 /// Temporary S4-01 trigger, enabled only with <c>DRAWEM_EFFECT_PROBE=1</c>: Ctrl+Alt+F9 shows one probe
 /// effect, Ctrl+Alt+F10 runs the probe benchmark in the startup mode, and Ctrl+Alt+F11 runs it for a
 /// Cursor effect. Registered for the UI thread, outside the low-level
-/// hooks and the shortcut settings. S4-06 removes it when effects get their own shortcuts.
+/// hooks and the shortcut settings. S4-03 removes it once effect shortcuts reach a real surface.
 /// </summary>
 public sealed class EffectProbeHotkeys : IDisposable
 {

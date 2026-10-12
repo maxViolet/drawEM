@@ -21,7 +21,8 @@ their settings and lifecycle integration is ready.
 window on the monitor containing the cursor, alongside the real drawing overlay.
 A development-only trigger in
 `src/DrawEM.App/Presentation/Effects/EffectSurfaceProbe.cs`, enabled only with
-`DRAWEM_EFFECT_PROBE=1`, may be used through S4-03 and is removed in S4-06.
+`DRAWEM_EFFECT_PROBE=1`, may be used through S4-03, which removes it (moved
+from S4-06 by owner decision on 2026-10-11, because S4-06 ran before S4-03).
 
 **Done when:** Done on 2026-10-09 by owner decision: the dedicated WPF effect
 surface is chosen. Its measurement gates are unverified; S4-03.1 and S4-12 measure them.
@@ -97,7 +98,8 @@ rewrites settings. Document how to restore the backup for an older app version.
 **Do:** Extend prepared slot commands and bindings to dispatch Sound or Effect.
 Capture the invocation cursor position and configuration generation. Keep
 rendering outside the hook callback and preserve existing capture/suppression
-rules. Remove the S4-01 probe trigger.
+rules. The probe trigger removal and the `EffectChannelController.Start` wiring
+moved to S4-03 (owner decision, 2026-10-11).
 
 **Done when:** A configured effect of either placement starts once per press;
 holding the shortcut does not repeat it, and a fresh press restarts it. A Cursor
