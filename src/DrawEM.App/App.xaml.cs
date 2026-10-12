@@ -92,7 +92,9 @@ public partial class App : System.Windows.Application
             effectFailures = effectLog;
             var animations = new BuiltInEffectAnimations();
             effectAnimations = animations;
-            var surface = new LottieEffectSurface(animations);
+            var displays = new Win32DisplayChangeSource(dispatchToUi);
+            displayChanges = displays;
+            var surface = new LottieEffectSurface(animations, displays.NotifyDpiChanged);
             var effects = new EffectChannelController(
                 surface, effectLog, TimeProvider.System, dispatchToUi);
             effectChannel = effects;
@@ -102,8 +104,6 @@ public partial class App : System.Windows.Application
             var cursor = new Win32CursorPositionSource();
             keyboardHookSource = new Win32KeyboardHookSource();
             mouseHookSource = new Win32MouseHookSource();
-            var displays = new Win32DisplayChangeSource(dispatchToUi);
-            displayChanges = displays;
 
             // Stops an effect when the cursor enters another monitor, drawing or not; frames recheck the cursor.
             var monitorGuard = new EffectMonitorGuard(

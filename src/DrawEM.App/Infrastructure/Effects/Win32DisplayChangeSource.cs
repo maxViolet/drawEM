@@ -3,8 +3,8 @@ using Microsoft.Win32;
 namespace DrawEM.App.Infrastructure.Effects;
 
 /// <summary>
-/// Listens for <see cref="SystemEvents.DisplaySettingsChanged"/> (WM_DISPLAYCHANGE) and raises
-/// <see cref="DisplayChanged"/> on the UI thread through the dispatch delegate, whatever thread Windows used.
+/// Reports Windows display-setting notifications and DPI changes observed by an active effect window on the
+/// UI thread through the dispatch delegate.
 /// </summary>
 public sealed class Win32DisplayChangeSource : IDisplayChangeSource, IDisposable
 {
@@ -18,7 +18,12 @@ public sealed class Win32DisplayChangeSource : IDisplayChangeSource, IDisposable
 
     public event Action? DisplayChanged;
 
+    /// <summary>Called by the active effect window after its monitor's DPI changes.</summary>
+    public void NotifyDpiChanged() => RaiseDisplayChanged();
+
     public void Dispose() => SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
 
-    private void OnDisplaySettingsChanged(object? sender, EventArgs e) => dispatch(() => DisplayChanged?.Invoke());
+    private void OnDisplaySettingsChanged(object? sender, EventArgs e) => RaiseDisplayChanged();
+
+    private void RaiseDisplayChanged() => dispatch(() => DisplayChanged?.Invoke());
 }

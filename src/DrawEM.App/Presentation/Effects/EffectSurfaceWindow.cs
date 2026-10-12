@@ -14,11 +14,13 @@ namespace DrawEM.App.Presentation.Effects;
 public sealed class EffectSurfaceWindow : Window
 {
     private readonly EffectSurfaceHost host = new();
+    private readonly Action dpiChanged;
     private MonitorBounds bounds;
     private IntPtr handle;
 
-    public EffectSurfaceWindow(MonitorBounds monitor)
+    public EffectSurfaceWindow(MonitorBounds monitor, Action dpiChanged)
     {
+        this.dpiChanged = dpiChanged;
         bounds = monitor;
         Title = "drawEM effect";
         WindowStyle = WindowStyle.None;
@@ -85,6 +87,10 @@ public sealed class EffectSurfaceWindow : Window
     {
         base.OnDpiChanged(oldDpi, newDpi);
         RefreshLayout();
+        if (IsVisible)
+        {
+            dpiChanged();
+        }
     }
 
     private void Place() =>

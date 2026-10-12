@@ -6,7 +6,7 @@ namespace DrawEM.App.Presentation.Effects;
 /// Shows built-in effects in an <see cref="EffectSurfaceWindow"/>: a Monitor effect covers its monitor and a
 /// Cursor effect is centered on the captured cursor point, clipped to the monitor. Call on the UI thread.
 /// </summary>
-public sealed class LottieEffectSurface(BuiltInEffectAnimations animations) : IEffectSurface
+public sealed class LottieEffectSurface(BuiltInEffectAnimations animations, Action dpiChanged) : IEffectSurface
 {
     /// <summary>Raised on the UI thread before each animation frame is drawn, while an effect plays.</summary>
     public event Action? FrameStarting;
@@ -18,6 +18,6 @@ public sealed class LottieEffectSurface(BuiltInEffectAnimations animations) : IE
             throw new EffectPlaybackException(failure);
         }
 
-        return LottiePlayback.Start(instance.Command, animation, () => FrameStarting?.Invoke());
+        return LottiePlayback.Start(instance.Command, animation, () => FrameStarting?.Invoke(), dpiChanged);
     }
 }

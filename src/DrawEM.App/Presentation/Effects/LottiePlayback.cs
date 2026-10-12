@@ -19,6 +19,7 @@ internal sealed class LottiePlayback : IEffectPlayback
 {
     private readonly Animation animation;
     private readonly Action frameStarting;
+    private readonly Action dpiChanged;
     private readonly long started = Stopwatch.GetTimestamp();
     private EffectSurfaceWindow? window;
     private WriteableBitmap? bitmap;
@@ -30,10 +31,11 @@ internal sealed class LottiePlayback : IEffectPlayback
     private bool subscribed;
     private bool released;
 
-    private LottiePlayback(Animation animation, Action frameStarting)
+    private LottiePlayback(Animation animation, Action frameStarting, Action dpiChanged)
     {
         this.animation = animation;
         this.frameStarting = frameStarting;
+        this.dpiChanged = dpiChanged;
     }
 
     public event Action? Completed;
@@ -42,10 +44,12 @@ internal sealed class LottiePlayback : IEffectPlayback
 
     /// <summary>Shows the window for <paramref name="command"/> and starts playing from the first frame.</summary>
     /// <param name="frameStarting">Called before each frame is drawn.</param>
+    /// <param name="dpiChanged">Called if the target monitor is rescaled after the window is visible.</param>
     /// <exception cref="EffectPlaybackException">The window could not be shown; everything created is released.</exception>
-    public static LottiePlayback Start(StartEffectCommand command, Animation animation, Action frameStarting)
+    public static LottiePlayback Start(
+        StartEffectCommand command, Animation animation, Action frameStarting, Action dpiChanged)
     {
-        var playback = new LottiePlayback(animation, frameStarting);
+        var playback = new LottiePlayback(animation, frameStarting, dpiChanged);
         try
         {
             playback.Open(command);
@@ -95,7 +99,7 @@ internal sealed class LottiePlayback : IEffectPlayback
     private void Open(StartEffectCommand command)
     {
         var canvas = new Size(animation.Size.Width, animation.Size.Height);
-        window = new EffectSurfaceWindow(command.Monitor);
+        window = new EffectSurfaceWindow(command.Monitor, dpiChanged);
         EffectRenderLayout layout;
         switch (command.Placement)
         {

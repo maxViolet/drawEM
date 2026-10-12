@@ -319,6 +319,9 @@ public class EffectChannelControllerTests
         var fixture = new Fixture();
         var instance = fixture.Controller.Start(Command(Confetti, monitorEpoch: 4));
 
+        fixture.Controller.StopStartedBefore(3);
+        Assert.Same(instance, fixture.Controller.ActiveInstance);
+
         fixture.Controller.StopStartedBefore(4);
         Assert.Same(instance, fixture.Controller.ActiveInstance);
 

@@ -117,9 +117,9 @@ public class EffectMonitorGuardTests
 
         // The hook reported no move to the right monitor; the press there is the first sign of it.
         var epoch = fixture.Guard.Enqueue(OnRight);
+        Assert.Single(fixture.Queued);
+
         fixture.Guard.Dequeue(epoch, null);
-        fixture.Cursor.Position = OnRight;
-        fixture.Guard.CheckCursor();
         fixture.RunQueued();
 
         Assert.Null(fixture.Channel.ActiveInstance);
