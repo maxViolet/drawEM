@@ -62,3 +62,53 @@ internal sealed class FakeDisplayChangeSource : IDisplayChangeSource
 
     public void Change() => DisplayChanged?.Invoke();
 }
+
+/// <summary>Counts shown and released playbacks; can fail on show, while playing, or on release.</summary>
+internal sealed class FailingSurface : IEffectSurface
+{
+    public string? ShowFailure { get; set; }
+
+    public int Shown { get; private set; }
+
+    public int Disposed { get; private set; }
+
+    public Playback? Last { get; private set; }
+
+    public IEffectPlayback Show(EffectInstance instance)
+    {
+        if (ShowFailure is { } reason)
+        {
+            throw new EffectPlaybackException(reason);
+        }
+
+        Shown++;
+        Last = new Playback(this);
+        return Last;
+    }
+
+    public sealed class Playback(FailingSurface owner) : IEffectPlayback
+    {
+        public event Action? Completed;
+
+        public event Action<string>? Failed;
+
+        /// <summary>Whether anyone still listens for the natural end.</summary>
+        public bool HasCompletionHandler => Completed is not null;
+
+        /// <summary>Whether anyone still listens for a failure.</summary>
+        public bool HasFailureHandler => Failed is not null;
+
+        public string? DisposeFailure { get; set; }
+
+        public void Fail(string reason) => Failed?.Invoke(reason);
+
+        public void Dispose()
+        {
+            owner.Disposed++;
+            if (DisposeFailure is { } reason)
+            {
+                throw new EffectPlaybackException(reason);
+            }
+        }
+    }
+}

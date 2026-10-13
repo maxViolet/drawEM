@@ -12,6 +12,7 @@ using DrawEM.App.Infrastructure.Effects;
 using DrawEM.Tests.Application.Settings;
 using DrawEM.Tests.Infrastructure.Drawing;
 using DrawEM.Tests.Infrastructure.Effects;
+using DrawEM.Tests.Infrastructure.Sound;
 
 namespace DrawEM.Tests.Infrastructure.Settings;
 
@@ -578,46 +579,5 @@ public sealed class SettingsSaveOperationTests
         public void CleanupFailed(SoundCleanupFailure failure) => throw new InvalidOperationException(failure.Reason);
 
         public void StopUnconfirmed() => UnconfirmedStops++;
-    }
-
-    private sealed class RecordingSoundFailures(List<string> reasons) : ISoundFailureReporter
-    {
-        public void Report(PlaySoundCommand command, string reason) => reasons.Add(reason);
-    }
-
-    /// <summary>Records players without opening a media engine.</summary>
-    private sealed class FakePlayerFactory : ISoundPlayerFactory
-    {
-        public List<FakePlayer> Created { get; } = [];
-
-        public Action? OnStop { get; set; }
-
-        public ISoundPlayer Create(PlaySoundCommand command)
-        {
-            var player = new FakePlayer(command.Sound, () => OnStop?.Invoke());
-            Created.Add(player);
-            return player;
-        }
-    }
-
-    private sealed class FakePlayer(SoundId sound, Action onStop) : ISoundPlayer
-    {
-        public event Action? Completed { add { } remove { } }
-
-        public event Action<string>? Failed { add { } remove { } }
-
-        public SoundId Sound { get; } = sound;
-
-        public List<string> Calls { get; } = [];
-
-        public void Play() => Calls.Add("play");
-
-        public void Stop()
-        {
-            Calls.Add("stop");
-            onStop();
-        }
-
-        public void Dispose() => Calls.Add("dispose");
     }
 }

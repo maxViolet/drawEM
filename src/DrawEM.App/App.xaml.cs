@@ -31,6 +31,7 @@ public partial class App : System.Windows.Application
     private BuiltInEffectAnimations? effectAnimations;
     private LoggingEffectFailureReporter? effectFailures;
     private Win32DisplayChangeSource? displayChanges;
+    private Win32SessionInterruptionSource? sessionInterruptions;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -92,8 +93,10 @@ public partial class App : System.Windows.Application
             effectFailures = effectLog;
             var animations = new BuiltInEffectAnimations();
             effectAnimations = animations;
-            var displays = new Win32DisplayChangeSource(dispatchToUi);
+            var displays = new Win32DisplayChangeSource();
             displayChanges = displays;
+            var sessions = new Win32SessionInterruptionSource();
+            sessionInterruptions = sessions;
             var surface = new LottieEffectSurface(animations, displays.NotifyDpiChanged);
 
             // Failures of a Settings window sample are also shown in the window.
@@ -109,6 +112,7 @@ public partial class App : System.Windows.Application
             mouseHookSource = new Win32MouseHookSource();
 
             // Stops an effect when the cursor enters another monitor, drawing or not; frames recheck the cursor.
+            // A display change also stops it and drops queued starts.
             var monitorGuard = new EffectMonitorGuard(
                 mouseHookSource, displays, monitorBoundsSource, cursor, effects, dispatchToUi);
             surface.FrameStarting += monitorGuard.CheckCursor;
@@ -134,11 +138,13 @@ public partial class App : System.Windows.Application
                 // The sound channel reports its last failures while it stops, so the log drains after it.
                 // Effects stop and close their windows before their animations and failure log are released.
                 new CompositeDisposable(
-                    keyboardHookSource, mouseHookSource, displays, channelHost, soundLog, effects, animations, effectLog),
+                    keyboardHookSource, mouseHookSource, displays, sessions, channelHost, soundLog, effects, animations, effectLog),
                 overlayWindow,
                 new WpfApplicationLifetime(this),
                 dispatchToUi,
                 failure => exitPolicy.Report("exit", failure));
+
+            EffectStopRoutes.Connect(trayApplication, sessions, monitorGuard);
 
             var settingsSave = new SettingsSaveOperation(
                 store, library, settings, channelHost, effects, shortcuts, saveNotifications);
@@ -222,6 +228,7 @@ public partial class App : System.Windows.Application
             () => keyboardHookSource?.Dispose(),
             () => mouseHookSource?.Dispose(),
             () => displayChanges?.Dispose(),
+            () => sessionInterruptions?.Dispose(),
             () => soundChannel?.Dispose(),
             () => soundFailures?.Dispose(),
             () => effectChannel?.Dispose(),

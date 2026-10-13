@@ -5,7 +5,8 @@ using DrawEM.App.Infrastructure.Drawing;
 namespace DrawEM.App.Infrastructure.Effects;
 
 /// <summary>
-/// Stops the effect when the cursor enters another monitor, whether drawing is active or not. While an effect
+/// Stops the effect when the cursor enters another monitor, whether drawing is active or not, on a display
+/// change, and on <see cref="StopEffects"/>. While an effect
 /// runs or a start is queued, each pointer move from the hook and each animation frame's cursor check is tested
 /// against the cached bounds of the cursor's monitor. Only a point outside them costs a monitor lookup, and
 /// only entering another monitor queues UI work. A point outside every monitor is an outside desktop edge, not
@@ -15,8 +16,9 @@ namespace DrawEM.App.Infrastructure.Effects;
 /// The monitor epoch advances on each transition and each display topology change, so a monitor is identified
 /// by its bounds within one topology, not by bounds alone. Every effect and queued start carries the epoch of
 /// its press; a later epoch stops it or drops it. Because the epoch only grows, A -> B -> A movement still
-/// stops an effect started on A, however late the UI runs the stop. Call every member on the UI thread, which
-/// also runs the low-level hooks.
+/// stops an effect started on A, however late the UI runs the stop. Call every member except
+/// <see cref="StopEffects"/> on the UI thread, which also runs the low-level hooks. A display change may arrive
+/// on any thread.
 /// </remarks>
 public sealed class EffectMonitorGuard : IEffectStartQueue
 {
@@ -73,16 +75,28 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
         }
 
         queuedStarts++;
-        return epoch;
+        return Volatile.Read(ref epoch);
     }
 
     public void Dequeue(long monitorEpoch, StartEffectCommand? command)
     {
         queuedStarts--;
-        if (command is not null && monitorEpoch == epoch)
+        if (command is not null && monitorEpoch == Volatile.Read(ref epoch))
         {
             channel.Start(command);
         }
+    }
+
+    /// <summary>
+    /// Drops every queued start at once: each carries an earlier epoch now, even one already waiting on the UI
+    /// thread. Then queues the removal of the running effect on the UI thread. The channel stays usable, and
+    /// nothing restarts until a fresh press or Sample. Safe to repeat, and safe on any thread, such as the one
+    /// that reports a session lock or a system suspend.
+    /// </summary>
+    public void StopEffects()
+    {
+        var reached = Interlocked.Increment(ref epoch);
+        dispatch(() => channel.StopStartedBefore(reached));
     }
 
     /// <summary>
@@ -126,17 +140,21 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
         }
 
         monitor = entered;
-        var reached = ++epoch;
+        var reached = Interlocked.Increment(ref epoch);
         dispatch(() => channel.StopStartedBefore(reached));
     }
 
     /// <summary>
-    /// Stops the effect and invalidates queued starts. The next effect gets a new window placed on the new
-    /// layout, and the cursor's monitor is looked up again.
+    /// Invalidates queued starts at once, on any thread. Then, on the UI thread, stops the effect and forgets the
+    /// cursor's monitor, so it is looked up again and the next effect gets a new window placed on the new layout.
     /// </summary>
     private void OnDisplayChanged()
     {
-        monitorKnown = false;
-        channel.StopStartedBefore(++epoch);
+        var reached = Interlocked.Increment(ref epoch);
+        dispatch(() =>
+        {
+            monitorKnown = false;
+            channel.StopStartedBefore(reached);
+        });
     }
 }
