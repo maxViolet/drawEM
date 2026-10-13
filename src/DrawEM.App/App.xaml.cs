@@ -31,6 +31,7 @@ public partial class App : System.Windows.Application
     private BuiltInEffectAnimations? effectAnimations;
     private LoggingEffectFailureReporter? effectFailures;
     private Win32DisplayChangeSource? displayChanges;
+    private Win32SessionInterruptionSource? sessionInterruptions;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -92,11 +93,16 @@ public partial class App : System.Windows.Application
             effectFailures = effectLog;
             var animations = new BuiltInEffectAnimations();
             effectAnimations = animations;
-            var displays = new Win32DisplayChangeSource(dispatchToUi);
+            var displays = new Win32DisplayChangeSource();
             displayChanges = displays;
+            var sessions = new Win32SessionInterruptionSource();
+            sessionInterruptions = sessions;
             var surface = new LottieEffectSurface(animations, displays.NotifyDpiChanged);
+
+            // Failures of a Settings window sample are also shown in the window.
+            var effectSampleFailures = new EffectSampleFailureRouter(effectLog);
             var effects = new EffectChannelController(
-                surface, effectLog, TimeProvider.System, dispatchToUi);
+                surface, effectSampleFailures, TimeProvider.System, dispatchToUi);
             effectChannel = effects;
 
             var inputGate = new DrawingModeInputGate();
@@ -106,6 +112,7 @@ public partial class App : System.Windows.Application
             mouseHookSource = new Win32MouseHookSource();
 
             // Stops an effect when the cursor enters another monitor, drawing or not; frames recheck the cursor.
+            // A display change also stops it and drops queued starts.
             var monitorGuard = new EffectMonitorGuard(
                 mouseHookSource, displays, monitorBoundsSource, cursor, effects, dispatchToUi);
             surface.FrameStarting += monitorGuard.CheckCursor;
@@ -131,19 +138,25 @@ public partial class App : System.Windows.Application
                 // The sound channel reports its last failures while it stops, so the log drains after it.
                 // Effects stop and close their windows before their animations and failure log are released.
                 new CompositeDisposable(
-                    keyboardHookSource, mouseHookSource, displays, channelHost, soundLog, effects, animations, effectLog),
+                    keyboardHookSource, mouseHookSource, displays, sessions, channelHost, soundLog, effects, animations, effectLog),
                 overlayWindow,
                 new WpfApplicationLifetime(this),
                 dispatchToUi,
                 failure => exitPolicy.Report("exit", failure));
 
-            var settingsSave = new SettingsSaveOperation(store, library, settings, channelHost, shortcuts, saveNotifications);
+            EffectStopRoutes.Connect(trayApplication, sessions, monitorGuard);
+
+            var settingsSave = new SettingsSaveOperation(
+                store, library, settings, channelHost, effects, shortcuts, saveNotifications);
             var sampler = new SoundSampler(channelHost.Play, channelHost.Stop, settings.CommandFor, playbackFailures);
             trayApplication.SettingsRequested += () => OpenSettings(() =>
             {
                 var window = new SettingsWindow();
+                // Each window samples effects on its own, so it stops only its own sample.
+                var effectSampler = new EffectSampler(
+                    cursor, monitorBoundsSource, monitorGuard, effects, effectSampleFailures);
                 var editor = new SettingsEditor(
-                    () => settings.Current, library, settingsSave, sampler, saveNotifications.CleanupFailed);
+                    () => settings.Current, library, settingsSave, sampler, effectSampler, saveNotifications.CleanupFailed);
                 window.Attach(new SettingsViewModel(editor, shortcuts, window));
                 return window;
             });
@@ -215,6 +228,7 @@ public partial class App : System.Windows.Application
             () => keyboardHookSource?.Dispose(),
             () => mouseHookSource?.Dispose(),
             () => displayChanges?.Dispose(),
+            () => sessionInterruptions?.Dispose(),
             () => soundChannel?.Dispose(),
             () => soundFailures?.Dispose(),
             () => effectChannel?.Dispose(),

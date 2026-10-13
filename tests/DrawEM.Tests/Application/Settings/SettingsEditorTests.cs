@@ -19,6 +19,7 @@ public sealed class SettingsEditorTests : IDisposable
     private readonly ManagedSoundLibrary library;
     private readonly FakeSettingsSave saver = new();
     private readonly FakeSampler sampler = new();
+    private readonly FakeEffectSampler effectSampler = new();
     private readonly List<SoundCleanupFailure> cleanupFailures = [];
     private SettingsSnapshot active = TestSettings.WithSounds((1, Applause));
 
@@ -463,8 +464,66 @@ public sealed class SettingsEditorTests : IDisposable
         Assert.Equal(Applause, Assert.IsType<SoundAction>(active.Slots[0].Action).Sound);
     }
 
+    [Fact]
+    public void Sample_StartsTheDraftEffect_WithoutChangingTheActiveSettings()
+    {
+        var editor = Editor();
+        editor.SelectEffect(1, FocusRing);
+        var failures = new List<string>();
+
+        editor.Sample(1, failures.Add);
+
+        var (effect, report) = Assert.Single(effectSampler.Samples);
+        Assert.Equal(FocusRing, effect);
+        Assert.Empty(sampler.Samples);
+        report("cannot render");
+        Assert.Equal(["cannot render"], failures);
+        Assert.Equal(Applause, Assert.IsType<SoundAction>(active.Slots[0].Action).Sound);
+        Assert.Empty(saver.Saved);
+    }
+
+    [Fact]
+    public void Sample_StartsAnEffectWhoseShortcutConflicts()
+    {
+        active = TestSettings.WithEffects((2, Confetti), (3, FocusRing));
+        var editor = Editor();
+        editor.SetShortcut(SettingsCommand.ForSlot(3), Shortcut.Create(CtrlAlt, ShortcutKey.Digit(2)));
+        editor.SelectEffect(4, Confetti);
+        editor.SetShortcut(SettingsCommand.ForSlot(4), active.DrawShortcut);
+        Assert.NotEmpty(editor.Validate());
+
+        editor.Sample(3, _ => { });
+        editor.Sample(4, _ => { });
+
+        Assert.Equal([FocusRing, Confetti], effectSampler.Samples.Select(sample => sample.Effect));
+    }
+
+    [Fact]
+    public void Cancel_StopsTheDraftsEffectSample_EvenWhenTheSoundStopIsUnconfirmed()
+    {
+        sampler.StopConfirmed = false;
+        var editor = Editor();
+
+        editor.Cancel();
+        editor.Cancel();
+
+        Assert.Equal(1, effectSampler.Stops);
+    }
+
+    [Fact]
+    public void Save_ForgetsTheDraftsEffectSamplesWithoutStoppingThem()
+    {
+        var editor = Editor();
+
+        Assert.IsType<SettingsSaveResult.Saved>(editor.Save());
+        editor.Cancel();
+
+        Assert.Equal(1, effectSampler.Forgets);
+        Assert.Equal(0, effectSampler.Stops);
+    }
+
     private SettingsEditor Editor() =>
-        new(() => active, library, saver, sampler, cleanupFailures.Add);
+        new(() => active, library, saver, sampler, effectSampler, cleanupFailures.Add);
 
     private static SoundReference? SoundIn(SettingsEditor editor, int slot) =>
         (editor.Slots[slot - 1].Action as SoundAction)?.Sound;

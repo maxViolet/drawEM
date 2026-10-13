@@ -6,6 +6,9 @@ public interface ITrayHost : IDisposable
 
     event Action? SettingsRequested;
 
+    /// <summary>The tray Stop effects command was chosen.</summary>
+    event Action? StopEffectsRequested;
+
     void Show();
 }
 
@@ -49,10 +52,17 @@ public sealed class TrayApplication : IDisposable
         this.reportCleanupFailure = reportCleanupFailure;
         trayHost.ExitRequested += OnExitRequested;
         trayHost.SettingsRequested += OnSettingsRequested;
+        trayHost.StopEffectsRequested += OnStopEffectsRequested;
     }
 
     /// <summary>The tray Settings command was chosen. Never raised after exit.</summary>
     public event Action? SettingsRequested;
+
+    /// <summary>
+    /// The tray Stop effects command was chosen, or Exit was: Exit stops effects at once, before the scheduled
+    /// exit runs, so no effect start queued before it can appear. Never raised after exit.
+    /// </summary>
+    public event Action? StopEffectsRequested;
 
     public void Start() => trayHost.Show();
 
@@ -60,9 +70,15 @@ public sealed class TrayApplication : IDisposable
 
     public void Dispose() => Stop(shutDownApplication: false);
 
-    private void OnExitRequested() => scheduleExit(Exit);
+    private void OnExitRequested()
+    {
+        StopEffectsRequested?.Invoke();
+        scheduleExit(Exit);
+    }
 
     private void OnSettingsRequested() => SettingsRequested?.Invoke();
+
+    private void OnStopEffectsRequested() => StopEffectsRequested?.Invoke();
 
     private void Stop(bool shutDownApplication)
     {
@@ -74,6 +90,7 @@ public sealed class TrayApplication : IDisposable
         exited = true;
         trayHost.ExitRequested -= OnExitRequested;
         trayHost.SettingsRequested -= OnSettingsRequested;
+        trayHost.StopEffectsRequested -= OnStopEffectsRequested;
 
         // A failed step must not skip the later ones, so the process still shuts down.
         List<Action> steps = [shortcutRegistration.Dispose, overlay.Close, trayHost.Dispose];

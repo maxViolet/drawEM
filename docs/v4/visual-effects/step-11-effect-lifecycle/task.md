@@ -1,6 +1,6 @@
 # v4 / S4-11: stop effects through app lifecycle
 
-**Status:** planned. **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
+**Status:** implemented; Windows desktop checks unverified. **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
 
 ## Task
 
