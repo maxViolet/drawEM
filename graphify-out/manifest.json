@@ -24,9 +24,9 @@
     "semantic_hash": "7f0789536f1e33a65c24619af3edce03"
   },
   "src/DrawEM.App/App.xaml.cs": {
-    "mtime": 1791895778.0281372,
-    "seen": 1791896046.8049815,
-    "ast_hash": "03e3a84969c83ab81043e822f7c5badc",
+    "mtime": 1791896688.4103587,
+    "seen": 1791896814.135953,
+    "ast_hash": "8ff1489c6cb3421fa6cdbf1b2f0b954d",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Application/Drawing/DrawingSessionController.cs": {
@@ -348,9 +348,9 @@
     "semantic_hash": "312c030150ecd2da4c0172b4e8700737"
   },
   "src/DrawEM.App/Infrastructure/Effects/EffectMonitorGuard.cs": {
-    "mtime": 1791895987.877149,
-    "seen": 1791896046.805098,
-    "ast_hash": "329d1e94665df621e730673e6c18a4df",
+    "mtime": 1791896702.3206823,
+    "seen": 1791896814.1360745,
+    "ast_hash": "f3ce7103b9b71bab3df5a6aca92df4d5",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Infrastructure/IKeyboardHookSource.cs": {
@@ -798,9 +798,9 @@
     "semantic_hash": "a6fd9d7f589d3564129034600dccacc2"
   },
   "tests/DrawEM.Tests/Infrastructure/Effects/EffectMonitorGuardTests.cs": {
-    "mtime": 1791895681.9867673,
-    "seen": 1791896046.8052588,
-    "ast_hash": "f279eb7606cd82c21b6ffb332a3b2d5f",
+    "mtime": 1791896688.0902421,
+    "seen": 1791896814.1362603,
+    "ast_hash": "176eae423acd103e0775b9be7a7c574a",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Infrastructure/Settings/JsonSettingsStoreTests.cs": {
@@ -822,9 +822,9 @@
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Infrastructure/Settings/SettingsSaveOperationTests.cs": {
-    "mtime": 1791895682.118351,
-    "seen": 1791896046.805266,
-    "ast_hash": "203247f78585110f0d17b5f7fe5acfb7",
+    "mtime": 1791896702.3242242,
+    "seen": 1791896814.13628,
+    "ast_hash": "55f40a7735eb49fc8e5a955d9c7cab5d",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Infrastructure/Settings/SettingsSaveStuckSoundTests.cs": {
@@ -1602,9 +1602,9 @@
     "semantic_hash": ""
   },
   "docs/v4/visual-effects/step-11-effect-lifecycle/acceptance.md": {
-    "mtime": 1791896014.1594434,
-    "seen": 1791896046.8055596,
-    "ast_hash": "f3763efa9ecb65cfa327303a70faa61a",
+    "mtime": 1791896792.0193467,
+    "seen": 1791896814.1366596,
+    "ast_hash": "c4c9aef85516115229ce4b6595df9e77",
     "semantic_hash": ""
   },
   "docs/v4/visual-effects/step-11-effect-lifecycle/plan.md": {
@@ -1728,15 +1728,15 @@
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Infrastructure/Effects/EffectSamplerTests.cs": {
-    "mtime": 1791895682.0850554,
-    "seen": 1791896046.80526,
-    "ast_hash": "231ee785fc6f5c7b1c547e53ec7f93b0",
+    "mtime": 1791896702.3217,
+    "seen": 1791896814.1362624,
+    "ast_hash": "b4fbbffac07d4c3c418856185818e557",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Infrastructure/Effects/FakeEffectSources.cs": {
-    "mtime": 1791895681.9289658,
-    "seen": 1791896046.8052614,
-    "ast_hash": "ecebcb3c3da2a3175da8dcfe98625e6f",
+    "mtime": 1791896702.3232214,
+    "seen": 1791896814.136265,
+    "ast_hash": "44640f3994c6a167a8a4e7c0d8ccfb9b",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -1758,9 +1758,15 @@
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Infrastructure/Effects/EffectLifecycleTests.cs": {
-    "mtime": 1791895756.0070171,
-    "seen": 1791896046.8052573,
-    "ast_hash": "215da0e48d8063d593dac9202c476038",
+    "mtime": 1791896761.4954417,
+    "seen": 1791896814.1362586,
+    "ast_hash": "253abd78fc749f7ed71fc385c2a6c102",
+    "semantic_hash": ""
+  },
+  "tests/DrawEM.Tests/Infrastructure/Sound/FakeSoundSources.cs": {
+    "mtime": 1791896702.3247206,
+    "seen": 1791896814.1362932,
+    "ast_hash": "948e71c7c86ce90c748924adcbfdfb34",
     "semantic_hash": ""
   }
 }
