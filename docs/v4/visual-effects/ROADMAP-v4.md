@@ -317,7 +317,7 @@ effect and is then cancelled.
 ## Delivery order and completion criteria
 
 Follow the [simple implementation steps](STEPS.md). Each step has one outcome
-and a completion check. S4-01 is recorded as complete by owner decision; S4-02, S4-04, S4-05, and S4-06 are complete; S4-03 is implemented with one visual check unverified; S4-07 is implemented with its two-monitor checks unverified; S4-08 is implemented with its running-app check unverified; S4-10 is implemented with its running-app check unverified; S4-11 is implemented with its Windows desktop checks unverified.
+and a completion check. S4-01 is recorded as complete by owner decision; S4-02, S4-04, S4-05, and S4-06 are complete; S4-03 is implemented with one visual check unverified; S4-07 is implemented with its two-monitor checks unverified; S4-08 is implemented with its running-app check unverified; S4-10 is implemented with its running-app check unverified; S4-11 is implemented with its Windows desktop checks unverified; S4-12 has its automated suite and publish recorded, with every published-app check and measurement unverified and the release blocked.
 
 | Task | Outcome |
 |---|---|
@@ -332,7 +332,7 @@ and a completion check. S4-01 is recorded as complete by owner decision; S4-02, 
 | [S4-09](step-09-effect-sample/task.md) | Preview draft effects with Sample |
 | [S4-10](step-10-effect-save-runtime/task.md) | Apply settings without leaving an old effect running (implemented; running-app check unverified) |
 | [S4-11](step-11-effect-lifecycle/task.md) | Stop and clean up effects through the app lifecycle (implemented; Windows desktop checks unverified) |
-| [S4-12](step-12-effect-publish/task.md) | Publish and verify on Windows |
+| [S4-12](step-12-effect-publish/task.md) | Publish and verify on Windows (automated suite and publish recorded; published-app checks and measurements unverified; release blocked) |
 
 Work in this order. Basic resource cleanup belongs to S4-02/S4-03; S4-11 connects
 the remaining application events. Release also depends on the v3 baseline.
