@@ -19,14 +19,31 @@ By default, drawings are OrangeRed (`#FF4500`) and 4 px thick. To change the
 color, line width, or the draw and clear shortcuts, open `Settings…` from the
 tray menu, use the `Drawing` tab, and choose `Save`.
 
-Drawings remain visible while you switch windows, until you clear them or exit. A stroke stays on the monitor
-where it began. If the pointer crosses to another monitor while drawing, the
-stroke ends; release and press the draw shortcut again to draw there. Reaching a
-screen edge with no monitor beyond it does not end the stroke.
+Drawings remain visible while you switch windows, until you clear them, save
+settings, or exit. A stroke stays on the monitor where it began. If the pointer
+crosses to another monitor while drawing, the stroke ends; release and press
+the draw shortcut again to draw there. Reaching a screen edge with no monitor
+beyond it does not end the stroke.
+
+A successful Save in Settings clears all drawings on every monitor and stops
+any playing sound or effect. If Save fails, drawings, sound, and effects stay
+as they were.
 
 While drawing, drawEM blocks pointer clicks, scrolling, and keyboard input
 other than the draw shortcut from the app beneath the overlay. After the draw
 shortcut is released, normal input passes through again.
+
+## Play sounds
+
+1. Right-click the tray icon and choose `Settings…`.
+2. On the `Actions · 8 slots` tab, set a slot's type to `Sound`.
+3. Choose `Choose file…` and pick a WAV or MP3 file.
+4. Keep the proposed `Ctrl+Alt+<N>` shortcut, where `<N>` is the slot number,
+   or click it to capture another one. Use `Sample` to hear the draft sound.
+5. Choose `Save`.
+
+One sound plays at a time: a new sound replaces the playing one. Playback
+stops after at most 10 seconds.
 
 ## Show visual effects
 
@@ -36,12 +53,14 @@ shortcut is released, normal input passes through again.
    - `Confetti` (Monitor placement) covers the monitor under the pointer.
    - `Focus ring` (Cursor placement) appears around the pointer position at
      the moment you press the shortcut.
-3. Bind a shortcut to the slot. Use `Sample` to preview the draft effect on the
-   monitor with the pointer.
+3. Keep the proposed `Ctrl+Alt+<N>` shortcut, where `<N>` is the slot number,
+   or click it to capture another one. Use `Sample` to preview the draft effect
+   on the monitor with the pointer.
 4. Choose `Save`. Shortcut changes do not apply until Save; `Cancel` discards
    them.
-5. Press the slot's shortcut with any app focused. Effects do not take focus or
-   block input to the app beneath them.
+5. Press the slot's shortcut with any app focused. Effects are designed not to
+   take focus or block input to the app beneath them; this is not yet verified
+   in the published app.
 
 One effect plays at a time: a new effect replaces the running one. An effect
 stops when it finishes (after at most 10 seconds), when the pointer moves to
