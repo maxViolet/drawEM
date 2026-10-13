@@ -31,6 +31,7 @@ public class EffectSamplerTests
         Assert.Equal(placement, command.Placement);
         Assert.Equal(Right, command.Monitor);
         Assert.Equal(OnRight, command.CursorPoint);
+        Assert.True(command.ConfigurationGeneration < 0, "A sample must not look like a configuration's start.");
         Assert.Empty(editor.Failures);
     }
 
@@ -85,7 +86,7 @@ public class EffectSamplerTests
     {
         var fixture = new Fixture();
         var editor = fixture.Editor();
-        var shortcut = fixture.StartFromShortcut(FocusRing, EffectPlacement.Cursor);
+        fixture.StartFromShortcut(FocusRing, EffectPlacement.Cursor);
         fixture.Surface.ShowFailure = "cannot create the window";
 
         editor.Sample(Confetti);
@@ -94,7 +95,6 @@ public class EffectSamplerTests
         Assert.Null(fixture.Channel.ActiveInstance);
         Assert.Equal(fixture.Surface.Shown, fixture.Surface.Disposed);
         Assert.Equal(["cannot create the window"], fixture.Log);
-        Assert.NotNull(shortcut);
     }
 
     [Fact]

@@ -13,8 +13,11 @@ namespace DrawEM.App.Infrastructure.Effects;
 /// </summary>
 public sealed class EffectSampler : IEffectSampler
 {
-    /// <summary>A sample belongs to no saved configuration, so a Save never drops it as a queued start.</summary>
-    private const long SampleConfigurationGeneration = 0;
+    /// <summary>
+    /// A sample belongs to no saved configuration. Configuration generations start at 0 and only grow, so this
+    /// value tells a sample apart from any shortcut start.
+    /// </summary>
+    private const long SampleConfigurationGeneration = -1;
 
     private readonly ICursorPositionSource cursor;
     private readonly IMonitorBoundsSource monitors;
