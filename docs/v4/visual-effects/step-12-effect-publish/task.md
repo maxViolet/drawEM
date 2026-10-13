@@ -1,6 +1,6 @@
 # v4 / S4-12: publish and verify on Windows
 
-**Status:** planned. **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
+**Status:** automated suite and publish recorded; every published-app check and measurement is unverified, and the release is blocked (see [acceptance](acceptance.md#release-blockers)). **Source:** [v4 roadmap](../ROADMAP-v4.md#delivery-order-and-completion-criteria).
 
 ## Task
 
