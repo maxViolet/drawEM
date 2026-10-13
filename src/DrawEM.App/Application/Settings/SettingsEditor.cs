@@ -150,7 +150,7 @@ public sealed class SettingsEditor
     /// Saves the draft. After <see cref="SettingsSaveResult.Saved"/> the draft has ended and Cancel does
     /// nothing. Save already stopped the sound channel, so the draft's samples are only forgotten: they no
     /// longer report failures, and a later draft does not stop a shortcut's sound on their behalf. Save also
-    /// removed the running effect, so the draft's effect samples are only forgotten too.
+    /// removed the running effect, so the draft's effect samples are forgotten, not stopped.
     /// </summary>
     public SettingsSaveResult Save()
     {

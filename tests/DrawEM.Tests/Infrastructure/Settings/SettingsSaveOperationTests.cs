@@ -357,13 +357,18 @@ public sealed class SettingsSaveOperationTests
         var running = Assert.Single(app.Effects.Shown);
         app.Release(VirtualKeys.D3);
         app.Press(VirtualKeys.D4);
-        app.Store.Failure = "The disk is full.";
+        if (invalid)
+        {
+            var result = app.Operation.Save(Remapped.Style, Remapped.DrawShortcut, Remapped.DrawShortcut, Remapped.Slots);
+            Assert.IsType<SettingsSaveResult.Invalid>(result);
+        }
+        else
+        {
+            app.Store.Failure = "The disk is full.";
+            Assert.IsType<SettingsSaveResult.NotSaved>(app.Save(Remapped));
+        }
 
-        var result = invalid
-            ? app.Operation.Save(Remapped.Style, Remapped.DrawShortcut, Remapped.DrawShortcut, Remapped.Slots)
-            : app.Save(Remapped);
-
-        Assert.IsNotType<SettingsSaveResult.Saved>(result);
+        Assert.Empty(app.Store.Saved);
         Assert.Same(running, app.EffectChannel.ActiveInstance);
         Assert.Empty(app.Effects.Removed);
         Assert.Same(Initial, app.Settings.Current);

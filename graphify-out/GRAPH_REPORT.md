@@ -1,17 +1,17 @@
 # Graph Report - worktree-calm-cloud-dd09  (2026-10-13)
 
 ## Corpus Check
-- 284 files · ~112,556 words
+- 284 files · ~112,561 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: (none) 10, .ico 1, .pubxml 1)
 
 ## Summary
-- 2698 nodes · 8075 edges · 116 communities (96 shown, 20 thin omitted)
+- 2698 nodes · 8076 edges · 116 communities (96 shown, 20 thin omitted)
 - Extraction: 83% EXTRACTED · 17% INFERRED · 0% AMBIGUOUS · INFERRED: 1370 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8b1202a4`
+- Built from commit: `3e285bd6`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -577,7 +577,7 @@ Nodes (7): Effect instance, EffectChannelController, IEffectSurface presentation
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `v3 Step 8: Publish and verify on Windows (task)` connect `drawEM v3 Roadmap: Drawing and Action Settings` to `drawEM v4 roadmap: built-in Monitor and Cursor effects`, `FEAT-005: Assisted E2E Runner`?**
-  _High betweenness centrality (0.161) - this node is a cross-community bridge._
+  _High betweenness centrality (0.147) - this node is a cross-community bridge._
 - **Are the 80 inferred relationships involving `ScreenPoint` (e.g. with `.HookCallback()` and `.PushMonitorClip()`) actually correct?**
   _`ScreenPoint` has 80 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `CompletedStrokes`, `ActiveInstance`, `Instance` to the rest of the system?**
@@ -585,7 +585,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `ManagedSoundLibraryTests` be split into smaller, more focused modules?**
   _Cohesion score 0.12895927601809956 - nodes in this community are weakly interconnected._
 - **Why does `drawEM v4 roadmap: built-in Monitor and Cursor effects` connect `drawEM v4 roadmap: built-in Monitor and Cursor effects` to `S4-05 acceptance: save and load effect assignments`, `S4-09 task: preview draft effects`, `S4-03 acceptance: play built-in Lottie effects`, `drawEM architecture`, `S4-07 acceptance: stop effects when switching monitors`, `drawEM v4: parallel work packages`, `S4-03 plan: play built-in Lottie effects`, `drawEM v3 Roadmap: Drawing and Action Settings`, `EffectChannelController`, `S4-11 task: stop effects through app lifecycle`, `ADR 0001: Lottie built-in effects`, `v4: simple implementation steps`, `Stage 1 sound implementation plan`?**
-  _High betweenness centrality (0.105) - this node is a cross-community bridge._
+  _High betweenness centrality (0.110) - this node is a cross-community bridge._
 - **Are the 40 inferred relationships involving `DrawingSessionController` (e.g. with `.ClearAndExitDrawMode_RemovesCompletedAndActiveStrokes()` and `.ClearMonitor_PreservesStrokesOnOtherMonitor()`) actually correct?**
   _`DrawingSessionController` has 40 INFERRED edges - model-reasoned connections that need verification._
 
