@@ -9,15 +9,19 @@ overlay across the desktop.
 1. Run `DrawEM.App.exe` from the published app directory (see
    [Build and run from source](#build-and-run-from-source)). The icon appears
    in the notification area.
-2. Hold `Ctrl+Alt+Z` and move the pointer to draw. Release the keys to finish
-   the stroke.
-3. Press `Ctrl+Alt+X` to clear drawings on the monitor under the pointer.
+2. Hold the draw shortcut (default `Ctrl+Alt+Z`) and move the pointer to
+   draw. Release the keys to finish the stroke.
+3. Press the clear shortcut (default `Ctrl+Alt+X`) to clear drawings on the
+   monitor under the pointer.
 4. Right-click the tray icon and choose `Exit` to close the app.
 
-Drawings are OrangeRed (`#FF4500`) and 4 px thick. They remain visible while
-you switch windows, until you clear them or exit. A stroke stays on the monitor
+By default, drawings are OrangeRed (`#FF4500`) and 4 px thick. To change the
+color, line width, or the draw and clear shortcuts, open `Settings…` from the
+tray menu, use the `Drawing` tab, and choose `Save`.
+
+Drawings remain visible while you switch windows, until you clear them or exit. A stroke stays on the monitor
 where it began. If the pointer crosses to another monitor while drawing, the
-stroke ends; release and press `Ctrl+Alt+Z` again to draw there. Reaching a
+stroke ends; release and press the draw shortcut again to draw there. Reaching a
 screen edge with no monitor beyond it does not end the stroke.
 
 While drawing, drawEM blocks pointer clicks, scrolling, and keyboard input
@@ -47,8 +51,9 @@ A stopped effect does not restart by itself. Effects and sound can play at the
 same time. Effects appear above drawings and do not clear them; drawing still
 works during an effect.
 
-A full-display screen share shows effects. A share of one window may not
-include them, because the effect is a separate window.
+A full-display screen share is expected to show effects, but this is not yet
+verified on a receiving device. A share of one window may not include them,
+because the effect is a separate window.
 
 ## Build and run from source
 
@@ -91,8 +96,7 @@ and attaches `drawEM-<version>-win-x64.zip` to a new GitHub Release.
 
 ## Current limits and plans
 
-- Shortcuts, stroke color, and thickness are fixed. There is no eraser, undo,
-  export, or Windows startup option.
+- There is no eraser, undo, export, or Windows startup option.
 - drawEM does not run elevated. Behavior over elevated apps, exclusive
   fullscreen games, and protected surfaces is not guaranteed.
 - Only the built-in effects are available. Imported effects and video are
