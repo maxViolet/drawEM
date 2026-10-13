@@ -15,6 +15,7 @@ public sealed class SettingsEditor
     private readonly ISoundLibrary library;
     private readonly ISettingsSave saver;
     private readonly ISoundSampler sampler;
+    private readonly IEffectSampler effectSampler;
     private readonly Action<SoundCleanupFailure> reportCleanupFailure;
     private ActionSlot[] slots = [];
     private bool ended;
@@ -26,17 +27,20 @@ public sealed class SettingsEditor
         ISoundLibrary library,
         ISettingsSave saver,
         ISoundSampler sampler,
+        IEffectSampler effectSampler,
         Action<SoundCleanupFailure> reportCleanupFailure)
     {
         ArgumentNullException.ThrowIfNull(active);
         ArgumentNullException.ThrowIfNull(library);
         ArgumentNullException.ThrowIfNull(saver);
         ArgumentNullException.ThrowIfNull(sampler);
+        ArgumentNullException.ThrowIfNull(effectSampler);
         ArgumentNullException.ThrowIfNull(reportCleanupFailure);
         this.active = active;
         this.library = library;
         this.saver = saver;
         this.sampler = sampler;
+        this.effectSampler = effectSampler;
         this.reportCleanupFailure = reportCleanupFailure;
         Load(active());
     }
@@ -125,19 +129,28 @@ public sealed class SettingsEditor
     public IReadOnlyList<SettingsError> Validate() =>
         SettingsSnapshot.Validate(Style(), DrawShortcut, ClearShortcut, slots).Errors;
 
-    /// <summary>Plays the slot's draft sound. Does nothing for a slot without a sound.</summary>
+    /// <summary>
+    /// Plays the slot's draft sound or shows its draft effect. The slot's shortcut is not needed, so a missing
+    /// or conflicting one does not prevent it. Does nothing for an empty slot.
+    /// </summary>
     public void Sample(int slot, Action<string> reportFailure)
     {
-        if (slots[slot - 1].Action is SoundAction { Sound: { } sound })
+        switch (slots[slot - 1].Action)
         {
-            sampler.Sample(sound, reportFailure);
+            case SoundAction { Sound: { } sound }:
+                sampler.Sample(sound, reportFailure);
+                break;
+            case EffectAction { Effect: { } effect }:
+                effectSampler.Sample(effect, reportFailure);
+                break;
         }
     }
 
     /// <summary>
     /// Saves the draft. After <see cref="SettingsSaveResult.Saved"/> the draft has ended and Cancel does
     /// nothing. Save already stopped the sound channel, so the draft's samples are only forgotten: they no
-    /// longer report failures, and a later draft does not stop a shortcut's sound on their behalf.
+    /// longer report failures, and a later draft does not stop a shortcut's sound on their behalf. The draft's
+    /// effect samples are forgotten too.
     /// </summary>
     public SettingsSaveResult Save()
     {
@@ -146,16 +159,17 @@ public sealed class SettingsEditor
         {
             ended = true;
             sampler.ForgetSamples();
+            effectSampler.ForgetSamples();
         }
 
         return result;
     }
 
     /// <summary>
-    /// Ends the draft without saving: stops a sample that may still play, then removes the draft's imports
-    /// the active settings do not reference. If that stop is not confirmed in time, a sample may still hold
-    /// a copy open, so nothing is removed and startup cleanup removes the copies. Does nothing after a
-    /// successful Save or an earlier Cancel.
+    /// Ends the draft without saving: stops this draft's effect sample if it still runs and a sound sample that
+    /// may still play, then removes the draft's imports the active settings do not reference. If the sound
+    /// stop is not confirmed in time, a sample may still hold a copy open, so nothing is removed and startup
+    /// cleanup removes the copies. Does nothing after a successful Save or an earlier Cancel.
     /// </summary>
     public void Cancel()
     {
@@ -165,6 +179,7 @@ public sealed class SettingsEditor
         }
 
         ended = true;
+        effectSampler.StopSamples();
         if (!sampler.StopSamples())
         {
             return;

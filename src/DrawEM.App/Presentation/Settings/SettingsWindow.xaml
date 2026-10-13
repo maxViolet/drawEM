@@ -152,7 +152,7 @@
                     <Border DockPanel.Dock="Top" BorderBrush="#FF5A32" BorderThickness="3,0,0,0" Background="#FFF3ED"
                             Padding="10,8" Margin="0,0,0,10">
                         <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#694332"
-                                   Text="One sound and one effect play at a time. Each slot plays a sound or shows an effect; an effect's placement comes with it. Sample plays a draft sound for up to 10 seconds; changing a slot does not affect shortcuts until Save." />
+                                   Text="One sound and one effect play at a time. Each slot plays a sound or shows an effect; an effect's placement comes with it. Sample plays a draft sound or shows a draft effect on the monitor with the cursor, for up to 10 seconds; changing a slot does not affect shortcuts until Save." />
                     </Border>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <ItemsControl x:Name="SlotList" ItemsSource="{Binding Slots}" Focusable="False">
@@ -204,7 +204,7 @@
                                                 <TextBlock Style="{StaticResource ErrorText}" Text="{Binding Error}" />
                                             </StackPanel>
                                             <Button Grid.Column="3" Content="Sample" Click="OnSample" Margin="8,0,0,0"
-                                                    VerticalAlignment="Top" IsEnabled="{Binding HasSound}" />
+                                                    VerticalAlignment="Top" IsEnabled="{Binding HasAction}" />
                                         </Grid>
                                     </Border>
                                 </DataTemplate>

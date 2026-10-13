@@ -27,7 +27,7 @@ public sealed class SettingsWindowTests
                 [(2, new EffectId("focus-ring"))]);
             var window = new SettingsWindow();
             var model = new SettingsViewModel(
-                new SettingsEditor(() => active, new FakeLibrary(), new FakeSettingsSave(), new FakeSampler(), _ => { }),
+                new SettingsEditor(() => active, new FakeLibrary(), new FakeSettingsSave(), new FakeSampler(), new FakeEffectSampler(), _ => { }),
                 new FakeCapture(),
                 window);
             Show(window, model);
@@ -65,6 +65,8 @@ public sealed class SettingsWindowTests
             Assert.Equal(Visibility.Visible, effects[1].Visibility);
             Assert.Equal(Visibility.Collapsed, effects[0].Visibility);
             Assert.Null(effects[2].SelectedItem);
+            var samples = Descendants<Button>(slots).Where(button => Equals(button.Content, "Sample")).ToArray();
+            Assert.Equal([true, true, false], samples.Take(3).Select(button => button.IsEnabled));
 
             model.HexText = "#12";
             Layout(window);
@@ -82,7 +84,7 @@ public sealed class SettingsWindowTests
             var picker = new FakePicker();
             var window = new SettingsWindow();
             var model = new SettingsViewModel(
-                new SettingsEditor(() => active, new FakeLibrary(), new FakeSettingsSave(), new FakeSampler(), _ => { }),
+                new SettingsEditor(() => active, new FakeLibrary(), new FakeSettingsSave(), new FakeSampler(), new FakeEffectSampler(), _ => { }),
                 new FakeCapture(),
                 picker);
             Show(window, model);
@@ -132,7 +134,7 @@ public sealed class SettingsWindowTests
             var library = new FakeLibrary();
             var window = new SettingsWindow();
             var model = new SettingsViewModel(
-                new SettingsEditor(() => active, library, new FakeSettingsSave(), new FakeSampler(), _ => { }),
+                new SettingsEditor(() => active, library, new FakeSettingsSave(), new FakeSampler(), new FakeEffectSampler(), _ => { }),
                 new FakeCapture(),
                 picker);
             Show(window, model);

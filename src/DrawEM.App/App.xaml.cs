@@ -95,8 +95,11 @@ public partial class App : System.Windows.Application
             var displays = new Win32DisplayChangeSource(dispatchToUi);
             displayChanges = displays;
             var surface = new LottieEffectSurface(animations, displays.NotifyDpiChanged);
+
+            // Failures of a Settings window sample are also shown in the window.
+            var effectSampleFailures = new EffectSampleFailureRouter(effectLog);
             var effects = new EffectChannelController(
-                surface, effectLog, TimeProvider.System, dispatchToUi);
+                surface, effectSampleFailures, TimeProvider.System, dispatchToUi);
             effectChannel = effects;
 
             var inputGate = new DrawingModeInputGate();
@@ -142,8 +145,11 @@ public partial class App : System.Windows.Application
             trayApplication.SettingsRequested += () => OpenSettings(() =>
             {
                 var window = new SettingsWindow();
+                // Each window samples effects on its own, so it stops only its own sample.
+                var effectSampler = new EffectSampler(
+                    cursor, monitorBoundsSource, monitorGuard, effects, effectSampleFailures);
                 var editor = new SettingsEditor(
-                    () => settings.Current, library, settingsSave, sampler, saveNotifications.CleanupFailed);
+                    () => settings.Current, library, settingsSave, sampler, effectSampler, saveNotifications.CleanupFailed);
                 window.Attach(new SettingsViewModel(editor, shortcuts, window));
                 return window;
             });

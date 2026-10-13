@@ -1,5 +1,6 @@
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Domain.Sound;
 using DrawEM.App.Presentation.Settings;
@@ -49,6 +50,21 @@ internal sealed class FakeSampler : ISoundSampler
     }
 
     public int Forgets { get; private set; }
+
+    public void ForgetSamples() => Forgets++;
+}
+
+internal sealed class FakeEffectSampler : IEffectSampler
+{
+    public List<(EffectId Effect, Action<string> Report)> Samples { get; } = [];
+
+    public int Stops { get; private set; }
+
+    public int Forgets { get; private set; }
+
+    public void Sample(EffectId effect, Action<string> reportFailure) => Samples.Add((effect, reportFailure));
+
+    public void StopSamples() => Stops++;
 
     public void ForgetSamples() => Forgets++;
 }
