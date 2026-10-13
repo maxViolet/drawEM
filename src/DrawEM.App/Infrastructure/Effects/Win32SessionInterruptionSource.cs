@@ -3,27 +3,37 @@ using Microsoft.Win32;
 namespace DrawEM.App.Infrastructure.Effects;
 
 /// <summary>
-/// Reports Windows session locks and system suspends on the UI thread through the dispatch delegate. Unlock and
-/// resume are not reported: an interrupted effect never comes back.
+/// Reports Windows session locks and system suspends at once, on the thread Windows reports them on, so queued
+/// effect starts are dropped before the UI thread runs any of them. Unlock and resume are not reported: an
+/// interrupted effect never comes back.
 /// </summary>
 public sealed class Win32SessionInterruptionSource : ISessionInterruptionSource, IDisposable
 {
-    private readonly Action<Action> dispatch;
-
-    public Win32SessionInterruptionSource(Action<Action> dispatch)
+    public Win32SessionInterruptionSource()
     {
-        this.dispatch = dispatch;
         SystemEvents.SessionSwitch += OnSessionSwitch;
         SystemEvents.PowerModeChanged += OnPowerModeChanged;
     }
 
     public event Action? Interrupted;
 
-    /// <summary>Whether a session switch interrupts effects.</summary>
-    public static bool Interrupts(SessionSwitchReason reason) => reason == SessionSwitchReason.SessionLock;
+    /// <summary>Handles a session switch as Windows reports it. Only a lock interrupts effects.</summary>
+    public void Report(SessionSwitchReason reason)
+    {
+        if (reason == SessionSwitchReason.SessionLock)
+        {
+            RaiseInterrupted();
+        }
+    }
 
-    /// <summary>Whether a power mode change interrupts effects.</summary>
-    public static bool Interrupts(PowerModes mode) => mode == PowerModes.Suspend;
+    /// <summary>Handles a power mode change as Windows reports it. Only a suspend interrupts effects.</summary>
+    public void Report(PowerModes mode)
+    {
+        if (mode == PowerModes.Suspend)
+        {
+            RaiseInterrupted();
+        }
+    }
 
     /// <summary>Stops reporting. Safe to repeat.</summary>
     public void Dispose()
@@ -32,21 +42,9 @@ public sealed class Win32SessionInterruptionSource : ISessionInterruptionSource,
         SystemEvents.PowerModeChanged -= OnPowerModeChanged;
     }
 
-    private void OnSessionSwitch(object? sender, SessionSwitchEventArgs e)
-    {
-        if (Interrupts(e.Reason))
-        {
-            RaiseInterrupted();
-        }
-    }
+    private void OnSessionSwitch(object? sender, SessionSwitchEventArgs e) => Report(e.Reason);
 
-    private void OnPowerModeChanged(object? sender, PowerModeChangedEventArgs e)
-    {
-        if (Interrupts(e.Mode))
-        {
-            RaiseInterrupted();
-        }
-    }
+    private void OnPowerModeChanged(object? sender, PowerModeChangedEventArgs e) => Report(e.Mode);
 
-    private void RaiseInterrupted() => dispatch(() => Interrupted?.Invoke());
+    private void RaiseInterrupted() => Interrupted?.Invoke();
 }

@@ -95,7 +95,7 @@ public partial class App : System.Windows.Application
             effectAnimations = animations;
             var displays = new Win32DisplayChangeSource(dispatchToUi);
             displayChanges = displays;
-            var sessions = new Win32SessionInterruptionSource(dispatchToUi);
+            var sessions = new Win32SessionInterruptionSource();
             sessionInterruptions = sessions;
             var surface = new LottieEffectSurface(animations, displays.NotifyDpiChanged);
 
@@ -144,9 +144,7 @@ public partial class App : System.Windows.Application
                 dispatchToUi,
                 failure => exitPolicy.Report("exit", failure));
 
-            // Tray Stop effects, a session lock, and a system suspend stop the effect and drop queued starts.
-            trayApplication.StopEffectsRequested += monitorGuard.StopEffects;
-            sessions.Interrupted += monitorGuard.StopEffects;
+            EffectStopRoutes.Connect(trayApplication, sessions, monitorGuard);
 
             var settingsSave = new SettingsSaveOperation(
                 store, library, settings, channelHost, effects, shortcuts, saveNotifications);

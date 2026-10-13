@@ -16,8 +16,8 @@ namespace DrawEM.App.Infrastructure.Effects;
 /// The monitor epoch advances on each transition and each display topology change, so a monitor is identified
 /// by its bounds within one topology, not by bounds alone. Every effect and queued start carries the epoch of
 /// its press; a later epoch stops it or drops it. Because the epoch only grows, A -> B -> A movement still
-/// stops an effect started on A, however late the UI runs the stop. Call every member on the UI thread, which
-/// also runs the low-level hooks.
+/// stops an effect started on A, however late the UI runs the stop. Call every member except
+/// <see cref="StopEffects"/> on the UI thread, which also runs the low-level hooks.
 /// </remarks>
 public sealed class EffectMonitorGuard : IEffectStartQueue
 {
@@ -74,23 +74,29 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
         }
 
         queuedStarts++;
-        return epoch;
+        return Volatile.Read(ref epoch);
     }
 
     public void Dequeue(long monitorEpoch, StartEffectCommand? command)
     {
         queuedStarts--;
-        if (command is not null && monitorEpoch == epoch)
+        if (command is not null && monitorEpoch == Volatile.Read(ref epoch))
         {
             channel.Start(command);
         }
     }
 
     /// <summary>
-    /// Removes the running effect and drops every queued start: each carries an earlier epoch now. The channel
-    /// stays usable, and nothing restarts until a fresh press or Sample. Safe to repeat.
+    /// Drops every queued start at once: each carries an earlier epoch now, even one already waiting on the UI
+    /// thread. Then queues the removal of the running effect on the UI thread. The channel stays usable, and
+    /// nothing restarts until a fresh press or Sample. Safe to repeat, and safe on any thread, such as the one
+    /// that reports a session lock or a system suspend.
     /// </summary>
-    public void StopEffects() => channel.StopStartedBefore(++epoch);
+    public void StopEffects()
+    {
+        var reached = Interlocked.Increment(ref epoch);
+        dispatch(() => channel.StopStartedBefore(reached));
+    }
 
     /// <summary>
     /// The per-frame backstop for movement the hook did not report. Reads the cursor only while an effect
@@ -133,7 +139,7 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
         }
 
         monitor = entered;
-        var reached = ++epoch;
+        var reached = Interlocked.Increment(ref epoch);
         dispatch(() => channel.StopStartedBefore(reached));
     }
 
@@ -144,6 +150,6 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
     private void OnDisplayChanged()
     {
         monitorKnown = false;
-        StopEffects();
+        channel.StopStartedBefore(Interlocked.Increment(ref epoch));
     }
 }

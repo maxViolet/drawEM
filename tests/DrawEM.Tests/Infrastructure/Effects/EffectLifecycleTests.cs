@@ -16,18 +16,18 @@ using Microsoft.Win32;
 namespace DrawEM.Tests.Infrastructure.Effects;
 
 /// <summary>
-/// The effect channel through the app lifecycle, wired as in <c>App.xaml.cs</c>: the real shortcut adapter,
-/// effect monitor guard, effect channel, drawing controller, and sound channel, with fake hooks, sources,
-/// players, and effect surface. Effect starts wait in a UI queue until a test runs them.
+/// The effect channel through the app lifecycle, wired as in <c>App.xaml.cs</c>: the real tray application,
+/// session source, stop routes, shortcut adapter, effect monitor guard, effect channel, drawing controller, and
+/// sound channel, with fake hooks, tray icon, players, and effect surface. Effect starts and other UI work wait
+/// in a UI queue until a test runs them.
 /// </summary>
 public sealed class EffectLifecycleTests
 {
-    /// <summary>Tray Stop effects, a session lock, or a system suspend: <c>App.xaml.cs</c> routes each to the guard.</summary>
-    private const string StopEffects = "Stop effects, lock, suspend";
+    private const string TrayStopEffects = "tray Stop effects";
+    private const string SessionLock = "session lock";
+    private const string SystemSuspend = "system suspend";
     private const string DisplayChange = "display change";
-
-    /// <summary>Exit and startup failure: both dispose the effect channel with the other resources.</summary>
-    private const string Dispose = "exit, startup failure";
+    private const string TrayExit = "tray Exit";
     private static readonly MonitorBounds Left = new(0, 0, 100, 100);
     private static readonly MonitorBounds Right = new(100, 0, 200, 100);
     private static readonly SoundReference Applause = new("applause.wav", "Applause.wav");
@@ -39,10 +39,13 @@ public sealed class EffectLifecycleTests
         TestSettings.WithActions([(1, Applause)], [(3, Confetti), (4, FocusRing)]);
 
     /// <summary>Every event that ends effects.</summary>
-    public static TheoryData<string> Events => new() { StopEffects, DisplayChange, Dispose };
+    /// <remarks>Startup failure is not here: <c>App.ReleaseStartedResources</c> cannot run without a WPF app.</remarks>
+    public static TheoryData<string> Events =>
+        new() { TrayStopEffects, SessionLock, SystemSuspend, DisplayChange, TrayExit };
 
     /// <summary>The events after which the app keeps running.</summary>
-    public static TheoryData<string> Interruptions => new() { StopEffects, DisplayChange };
+    public static TheoryData<string> Interruptions =>
+        new() { TrayStopEffects, SessionLock, SystemSuspend, DisplayChange };
 
     [Theory]
     [MemberData(nameof(Events))]
@@ -127,23 +130,33 @@ public sealed class EffectLifecycleTests
     }
 
     [Theory]
-    [InlineData(SessionSwitchReason.SessionLock, true)]
-    [InlineData(SessionSwitchReason.SessionUnlock, false)]
-    [InlineData(SessionSwitchReason.SessionLogon, false)]
-    [InlineData(SessionSwitchReason.ConsoleConnect, false)]
-    [InlineData(SessionSwitchReason.RemoteConnect, false)]
-    public void SessionLockInterrupts_UnlockDoesNot(SessionSwitchReason reason, bool interrupts)
+    [InlineData(SessionSwitchReason.SessionUnlock)]
+    [InlineData(SessionSwitchReason.SessionLogon)]
+    [InlineData(SessionSwitchReason.ConsoleConnect)]
+    [InlineData(SessionSwitchReason.RemoteConnect)]
+    public void SessionSwitchOtherThanLock_KeepsTheEffect(SessionSwitchReason reason)
     {
-        Assert.Equal(interrupts, Win32SessionInterruptionSource.Interrupts(reason));
+        var app = new Harness();
+        var running = app.StartConfetti();
+
+        app.Sessions.Report(reason);
+        app.RunUi();
+
+        Assert.Same(running, app.EffectChannel.ActiveInstance);
     }
 
     [Theory]
-    [InlineData(PowerModes.Suspend, true)]
-    [InlineData(PowerModes.Resume, false)]
-    [InlineData(PowerModes.StatusChange, false)]
-    public void SystemSuspendInterrupts_ResumeDoesNot(PowerModes mode, bool interrupts)
+    [InlineData(PowerModes.Resume)]
+    [InlineData(PowerModes.StatusChange)]
+    public void PowerChangeOtherThanSuspend_KeepsTheEffect(PowerModes mode)
     {
-        Assert.Equal(interrupts, Win32SessionInterruptionSource.Interrupts(mode));
+        var app = new Harness();
+        var running = app.StartConfetti();
+
+        app.Sessions.Report(mode);
+        app.RunUi();
+
+        Assert.Same(running, app.EffectChannel.ActiveInstance);
     }
 
     [Fact]
@@ -169,6 +182,7 @@ public sealed class EffectLifecycleTests
             Assert.Null(channel.ActiveInstance);
             Assert.Equal(1, surface.Disposed);
             Assert.False(playback.HasFailureHandler);
+            Assert.False(playback.HasCompletionHandler);
             Assert.Equal(0, time.ActiveTimerCount);
             var line = Assert.Single(File.ReadAllLines(path));
             Assert.EndsWith(
@@ -186,7 +200,7 @@ public sealed class EffectLifecycleTests
         private readonly Queue<Action> ui = new();
         private readonly FakeKeyboardHookSource keyboard = new();
         private readonly FakeDisplayChangeSource displays = new();
-        private readonly EffectMonitorGuard guard;
+        private readonly FakeTrayHost trayHost;
 
         public Harness()
         {
@@ -194,7 +208,19 @@ public sealed class EffectLifecycleTests
             var monitors = new FakeMonitorBoundsSource(Left, Right);
             var mouse = new FakeMouseHookSource();
             EffectChannel = new EffectChannelController(Effects, Effects, Time, ui.Enqueue);
-            guard = new EffectMonitorGuard(mouse, displays, monitors, cursor, EffectChannel, ui.Enqueue);
+            var guard = new EffectMonitorGuard(mouse, displays, monitors, cursor, EffectChannel, ui.Enqueue);
+            Sessions = new Win32SessionInterruptionSource();
+            trayHost = new FakeTrayHost(TrayCalls);
+
+            // On exit the tray application releases the effect channel with the other resources.
+            var tray = new TrayApplication(
+                trayHost,
+                new CompositeDisposable(Sessions, EffectChannel),
+                new FakeOverlay(TrayCalls),
+                new FakeApplicationLifetime(TrayCalls),
+                ui.Enqueue,
+                failure => throw failure);
+            EffectStopRoutes.Connect(tray, Sessions, guard);
             Sound = new SoundChannelController(
                 Players, new RecordingSoundFailures(SoundFailures), new ManualTimeProvider(), action => action());
             Controller = new DrawingSessionController(() => Settings.Style);
@@ -219,6 +245,11 @@ public sealed class EffectLifecycleTests
         public ManualTimeProvider Time { get; } = new();
 
         public EffectChannelController EffectChannel { get; }
+
+        /// <summary>The real Windows session source; tests report events to it as Windows would.</summary>
+        public Win32SessionInterruptionSource Sessions { get; }
+
+        public List<string> TrayCalls { get; } = [];
 
         public FakePlayerFactory Players { get; } = new();
 
@@ -249,14 +280,20 @@ public sealed class EffectLifecycleTests
         {
             switch (name)
             {
-                case StopEffects:
-                    guard.StopEffects();
+                case TrayStopEffects:
+                    trayHost.RequestStopEffects();
+                    break;
+                case SessionLock:
+                    Sessions.Report(SessionSwitchReason.SessionLock);
+                    break;
+                case SystemSuspend:
+                    Sessions.Report(PowerModes.Suspend);
                     break;
                 case DisplayChange:
                     displays.Change();
                     break;
-                case Dispose:
-                    EffectChannel.Dispose();
+                case TrayExit:
+                    trayHost.RequestExit();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(name), name, "Unknown lifecycle event.");

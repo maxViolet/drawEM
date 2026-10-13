@@ -88,13 +88,12 @@ internal sealed class FailingSurface : IEffectSurface
 
     public sealed class Playback(FailingSurface owner) : IEffectPlayback
     {
-        public event Action? Completed
-        {
-            add { }
-            remove { }
-        }
+        public event Action? Completed;
 
         public event Action<string>? Failed;
+
+        /// <summary>Whether anyone still listens for the natural end.</summary>
+        public bool HasCompletionHandler => Completed is not null;
 
         /// <summary>Whether anyone still listens for a failure.</summary>
         public bool HasFailureHandler => Failed is not null;

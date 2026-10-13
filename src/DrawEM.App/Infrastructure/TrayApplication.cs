@@ -58,7 +58,10 @@ public sealed class TrayApplication : IDisposable
     /// <summary>The tray Settings command was chosen. Never raised after exit.</summary>
     public event Action? SettingsRequested;
 
-    /// <summary>The tray Stop effects command was chosen. Never raised after exit.</summary>
+    /// <summary>
+    /// The tray Stop effects command was chosen, or Exit was: Exit stops effects at once, before the scheduled
+    /// exit runs, so no effect start queued before it can appear. Never raised after exit.
+    /// </summary>
     public event Action? StopEffectsRequested;
 
     public void Start() => trayHost.Show();
@@ -67,7 +70,11 @@ public sealed class TrayApplication : IDisposable
 
     public void Dispose() => Stop(shutDownApplication: false);
 
-    private void OnExitRequested() => scheduleExit(Exit);
+    private void OnExitRequested()
+    {
+        StopEffectsRequested?.Invoke();
+        scheduleExit(Exit);
+    }
 
     private void OnSettingsRequested() => SettingsRequested?.Invoke();
 

@@ -147,6 +147,30 @@ public class TrayApplicationTests
     }
 
     [Fact]
+    public void TrayExit_StopsEffectsAtOnce_BeforeTheScheduledExitRuns()
+    {
+        var calls = new List<string>();
+        var scheduledActions = new Queue<Action>();
+        var tray = new FakeTrayHost(calls);
+        var application = new TrayApplication(
+            tray,
+            new FakeDisposable(calls, "shortcuts"),
+            new FakeOverlay(calls),
+            new FakeApplicationLifetime(calls),
+            scheduledActions.Enqueue,
+            ExceptionDispatchInfo.Throw);
+        application.StopEffectsRequested += () => calls.Add("stop effects");
+
+        tray.RequestExit();
+
+        Assert.Equal(["stop effects"], calls);
+
+        scheduledActions.Dequeue()();
+
+        Assert.Equal(["stop effects", "shortcuts", "overlay", "tray disposed", "shutdown"], calls);
+    }
+
+    [Fact]
     public void TrayExit_IsScheduledAfterTheTrayCallbackReturns()
     {
         var calls = new List<string>();
@@ -256,53 +280,5 @@ public class TrayApplicationTests
             calls.Add("shortcuts");
             throw new InvalidOperationException("Sound stop failed.");
         }
-    }
-
-    private sealed class FakeTrayHost(List<string> calls, bool throwOnDispose = false) : ITrayHost
-    {
-        public event Action? ExitRequested;
-
-        public event Action? SettingsRequested;
-
-        public event Action? StopEffectsRequested;
-
-        public void Show() => calls.Add("tray shown");
-
-        public void Dispose()
-        {
-            calls.Add("tray disposed");
-            if (throwOnDispose)
-            {
-                throw new InvalidOperationException("Tray icon removal failed.");
-            }
-        }
-
-        public void RequestExit() => ExitRequested?.Invoke();
-
-        public void RequestSettings() => SettingsRequested?.Invoke();
-
-        public void RequestStopEffects() => StopEffectsRequested?.Invoke();
-    }
-
-    private sealed class FakeDisposable(List<string> calls, string name) : IDisposable
-    {
-        public void Dispose() => calls.Add(name);
-    }
-
-    private sealed class FakeOverlay(List<string> calls, bool throwOnClose = false) : IOverlayLifetime
-    {
-        public void Close()
-        {
-            calls.Add("overlay");
-            if (throwOnClose)
-            {
-                throw new InvalidOperationException("Overlay close failed.");
-            }
-        }
-    }
-
-    private sealed class FakeApplicationLifetime(List<string> calls) : IApplicationLifetime
-    {
-        public void Shutdown() => calls.Add("shutdown");
     }
 }
