@@ -8,8 +8,8 @@
 - [ ] 100-invocation shortcut-to-present latency, callback, hook delay, and resource results meet the roadmap targets for each placement; visible pacing is observed and both hooks still work after the cycles. Unverified: see [measurements](#measurements).
 - [ ] Full-display and window-only sharing results are recorded separately; unrun desktop checks are marked unverified. Unverified: see [screen sharing](#screen-sharing).
 - [ ] A missed target blocks the release. Only the project owner can accept it, and only by revising the roadmap targets or scope with a recorded rationale and confirmation before release; the revised targets are then met and recorded. Not reached: no target has been measured.
-- [ ] The v3 Step 8 baseline is complete before claiming a v4 release: none of its scenarios remains unverified. Not met: [v3 Step 8 results](../../../v3/STEP-8-ACCEPTANCE-RESULTS.md) still have checks 2.7, 2.8, 4.2, 4.3, 4.5, 6.1, and 6.2 unverified.
-- [ ] v4 is not released while any roadmap published-app check for either placement is unverified, including mixed DPI, Cursor effects at each monitor edge, monitor transitions, lifecycle events, full-display sharing, and drawing plus sound regression. Window-only sharing may stay unverified; record it separately. Not met: every published-app check below is unverified.
+- [ ] The v3 Step 8 baseline is complete before claiming a v4 release: none of its scenarios remains unverified. Not met: see [release blockers](#release-blockers).
+- [ ] v4 is not released while any roadmap published-app check for either placement is unverified, including mixed DPI, Cursor effects at each monitor edge, monitor transitions, lifecycle events, full-display sharing, and drawing plus sound regression. Window-only sharing may stay unverified; record it separately. Not met: see [release blockers](#release-blockers).
 
 Result values: **Pass**, **Fail**, **Unverified** (not run, or the environment
 cannot run it). Automated tests and publish success do not close any
@@ -107,8 +107,8 @@ Reference PC (CPU, GPU, memory, monitor resolution and scaling): not recorded.
 
 v4 is not releasable:
 
-- v3 Step 8 still has checks 2.7, 2.8, 4.2, 4.3, 4.5, 6.1, and 6.2
-  unverified. The v4 release needs all of them Pass first.
+- [v3 Step 8](../../../v3/STEP-8-ACCEPTANCE-RESULTS.md) still has checks
+  2.7, 2.8, 4.2, 4.3, 4.5, 6.1, and 6.2 unverified. The v4 release needs all of them Pass first.
 - Every published-app check, measurement, and full-display sharing check above
   is unverified.
 
