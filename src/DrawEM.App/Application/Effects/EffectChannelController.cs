@@ -45,6 +45,8 @@ public sealed class EffectChannelController : IDisposable
 
         Stop();
 
+        // StartedAt is the wall-clock record; the deadline uses elapsed time, which a clock change cannot move.
+        var showing = time.GetTimestamp();
         var instance = new EffectInstance(new EffectInstanceId(++lastInstanceId), command, time.GetUtcNow());
         IEffectPlayback playback;
         try
@@ -65,8 +67,8 @@ public sealed class EffectChannelController : IDisposable
         playback.Failed += run.OnFailed;
         active = run;
 
-        // The deadline counts from StartedAt, so time spent inside Show shortens what remains.
-        var remaining = MaxDuration - (time.GetUtcNow() - instance.StartedAt);
+        // The deadline counts from the start, so time spent inside Show shortens what remains.
+        var remaining = MaxDuration - time.GetElapsedTime(showing);
         if (remaining <= TimeSpan.Zero)
         {
             End(run);

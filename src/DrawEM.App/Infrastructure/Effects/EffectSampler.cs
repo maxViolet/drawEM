@@ -50,6 +50,14 @@ public sealed class EffectSampler : IEffectSampler
     {
         ArgumentNullException.ThrowIfNull(effect);
         ArgumentNullException.ThrowIfNull(reportFailure);
+
+        // A newer request ends the earlier sample's reports even when it cannot start. The earlier sample stays
+        // owned until this one replaces it, so Cancel can still stop it.
+        if (latest is not null)
+        {
+            failures.Forget(latest.Command);
+        }
+
         if (!EffectCatalog.TryFind(effect, out var builtIn))
         {
             reportFailure($"'{effect.Value}' is not a built-in effect.");
@@ -73,7 +81,6 @@ public sealed class EffectSampler : IEffectSampler
         var command = new StartEffectCommand(
             effect, builtIn.Placement, monitor, point, SampleConfigurationGeneration, monitorEpoch);
 
-        // An earlier sample stays owned until this one replaces it, so Cancel can still stop it.
         Forget();
 
         // Watched before the start: a window that cannot be shown is reported inside it.

@@ -120,6 +120,28 @@ public class EffectChannelControllerTests
         Assert.Null(fixture.Controller.ActiveInstance);
     }
 
+    [Theory]
+    [InlineData(-3600)]
+    [InlineData(3600)]
+    public void Deadline_IgnoresAWallClockChangeInsideShow(int clockChangeSeconds)
+    {
+        var fixture = new Fixture();
+        fixture.OnShow = () =>
+        {
+            fixture.Time.ChangeWallClock(TimeSpan.FromSeconds(clockChangeSeconds));
+            fixture.Time.Advance(TimeSpan.FromSeconds(3));
+        };
+        var instance = fixture.Controller.Start(Command(Confetti));
+
+        Assert.Same(instance, fixture.Controller.ActiveInstance);
+        fixture.Time.Advance(TimeSpan.FromSeconds(7) - TimeSpan.FromMilliseconds(1));
+        Assert.Same(instance, fixture.Controller.ActiveInstance);
+
+        fixture.Time.Advance(TimeSpan.FromMilliseconds(1));
+
+        Assert.Null(fixture.Controller.ActiveInstance);
+    }
+
     [Fact]
     public void ShowOutlastingDeadline_ReleasesPlaybackImmediately()
     {
