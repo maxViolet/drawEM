@@ -62,3 +62,11 @@ internal sealed class FakeDisplayChangeSource : IDisplayChangeSource
 
     public void Change() => DisplayChanged?.Invoke();
 }
+
+/// <summary>Raises a session lock or system suspend on request.</summary>
+internal sealed class FakeSessionInterruptionSource : ISessionInterruptionSource
+{
+    public event Action? Interrupted;
+
+    public void Interrupt() => Interrupted?.Invoke();
+}

@@ -215,7 +215,7 @@ public class EffectSamplerTests
             var log = new RecordingLog(Log);
             Failures = new EffectSampleFailureRouter(log);
             Channel = new EffectChannelController(Surface, Failures, new ManualTimeProvider(), action => action());
-            Guard = new EffectMonitorGuard(Mouse, new FakeDisplayChangeSource(), Monitors, Cursor, Channel, Queued.Enqueue);
+            Guard = new EffectMonitorGuard(Mouse, new FakeDisplayChangeSource(), new FakeSessionInterruptionSource(), Monitors, Cursor, Channel, Queued.Enqueue);
             Cursor.Position = OnLeft;
         }
 

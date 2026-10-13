@@ -411,7 +411,7 @@ public sealed class SettingsSaveOperationTests
         public SaveHarness()
         {
             EffectChannel = new EffectChannelController(Effects, Effects, new ManualTimeProvider(), ui.Enqueue);
-            guard = new EffectMonitorGuard(Mouse, new FakeDisplayChangeSource(), monitors, cursor, EffectChannel, ui.Enqueue);
+            guard = new EffectMonitorGuard(Mouse, new FakeDisplayChangeSource(), new FakeSessionInterruptionSource(), monitors, cursor, EffectChannel, ui.Enqueue);
             Settings = new ActiveSettings(Initial, reference => @"C:\library\" + reference.LibraryFileName);
             Players = new FakePlayerFactory();
             Channel = new SoundChannelController(Players, new RecordingSoundFailures(SoundFailures), new ManualTimeProvider(), action => action());

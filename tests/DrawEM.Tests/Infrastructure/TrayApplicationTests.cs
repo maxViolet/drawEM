@@ -119,6 +119,34 @@ public class TrayApplicationTests
     }
 
     [Fact]
+    public void TrayStopEffects_StopsEffectsUntilExit_AndReleasesNothingElse()
+    {
+        var calls = new List<string>();
+        var tray = new FakeTrayHost(calls);
+        var application = new TrayApplication(
+            tray,
+            new FakeDisposable(calls, "shortcuts"),
+            new FakeOverlay(calls),
+            new FakeApplicationLifetime(calls),
+            action => action(),
+            ExceptionDispatchInfo.Throw);
+        application.StopEffectsRequested += () => calls.Add("stop effects");
+        application.Start();
+
+        tray.RequestStopEffects();
+        tray.RequestStopEffects();
+
+        Assert.Equal(["tray shown", "stop effects", "stop effects"], calls);
+
+        application.Exit();
+        tray.RequestStopEffects();
+
+        Assert.Equal(
+            ["tray shown", "stop effects", "stop effects", "shortcuts", "overlay", "tray disposed", "shutdown"],
+            calls);
+    }
+
+    [Fact]
     public void TrayExit_IsScheduledAfterTheTrayCallbackReturns()
     {
         var calls = new List<string>();
@@ -236,6 +264,8 @@ public class TrayApplicationTests
 
         public event Action? SettingsRequested;
 
+        public event Action? StopEffectsRequested;
+
         public void Show() => calls.Add("tray shown");
 
         public void Dispose()
@@ -250,6 +280,8 @@ public class TrayApplicationTests
         public void RequestExit() => ExitRequested?.Invoke();
 
         public void RequestSettings() => SettingsRequested?.Invoke();
+
+        public void RequestStopEffects() => StopEffectsRequested?.Invoke();
     }
 
     private sealed class FakeDisposable(List<string> calls, string name) : IDisposable

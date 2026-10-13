@@ -269,7 +269,7 @@ public class EffectMonitorGuardTests
         public Fixture()
         {
             Channel = new EffectChannelController(Surface, Surface, new ManualTimeProvider(), action => action());
-            Guard = new EffectMonitorGuard(Mouse, Displays, Monitors, Cursor, Channel, Queued.Enqueue);
+            Guard = new EffectMonitorGuard(Mouse, Displays, new FakeSessionInterruptionSource(), Monitors, Cursor, Channel, Queued.Enqueue);
         }
 
         public FakeMouseHookSource Mouse { get; } = new();

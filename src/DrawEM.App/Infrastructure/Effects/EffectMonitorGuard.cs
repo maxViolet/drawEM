@@ -5,7 +5,8 @@ using DrawEM.App.Infrastructure.Drawing;
 namespace DrawEM.App.Infrastructure.Effects;
 
 /// <summary>
-/// Stops the effect when the cursor enters another monitor, whether drawing is active or not. While an effect
+/// Stops the effect when the cursor enters another monitor, whether drawing is active or not, and on tray Stop
+/// effects, a display change, a session lock, or a system suspend. While an effect
 /// runs or a start is queued, each pointer move from the hook and each animation frame's cursor check is tested
 /// against the cached bounds of the cursor's monitor. Only a point outside them costs a monitor lookup, and
 /// only entering another monitor queues UI work. A point outside every monitor is an outside desktop edge, not
@@ -41,6 +42,7 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
     public EffectMonitorGuard(
         IMouseHookSource mouse,
         IDisplayChangeSource displays,
+        ISessionInterruptionSource sessions,
         IMonitorBoundsSource monitors,
         ICursorPositionSource cursor,
         EffectChannelController channel,
@@ -52,6 +54,7 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
         this.dispatch = dispatch;
         mouse.PointerMoved += OnPointerMoved;
         displays.DisplayChanged += OnDisplayChanged;
+        sessions.Interrupted += StopEffects;
     }
 
     /// <remarks>
@@ -84,6 +87,12 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
             channel.Start(command);
         }
     }
+
+    /// <summary>
+    /// Removes the running effect and drops every queued start: each carries an earlier epoch now. The channel
+    /// stays usable, and nothing restarts until a fresh press or Sample. Safe to repeat.
+    /// </summary>
+    public void StopEffects() => channel.StopStartedBefore(++epoch);
 
     /// <summary>
     /// The per-frame backstop for movement the hook did not report. Reads the cursor only while an effect
@@ -137,6 +146,6 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
     private void OnDisplayChanged()
     {
         monitorKnown = false;
-        channel.StopStartedBefore(++epoch);
+        StopEffects();
     }
 }

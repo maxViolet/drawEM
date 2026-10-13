@@ -25,6 +25,8 @@ public sealed class NotifyIconTrayHost : ITrayHost
         icon = LoadIcon();
         var settingsItem = new ToolStripMenuItem("Settings…") { Font = new Font(SystemFonts.MenuFont!, FontStyle.Bold) };
         settingsItem.Click += (_, _) => SettingsRequested?.Invoke();
+        var stopEffectsItem = new ToolStripMenuItem("Stop effects");
+        stopEffectsItem.Click += (_, _) => StopEffectsRequested?.Invoke();
         var exitItem = new ToolStripMenuItem("Exit");
         exitItem.Click += (_, _) => ExitRequested?.Invoke();
 
@@ -36,6 +38,7 @@ public sealed class NotifyIconTrayHost : ITrayHost
             Visible = false,
         };
         notifyIcon.ContextMenuStrip.Items.Add(settingsItem);
+        notifyIcon.ContextMenuStrip.Items.Add(stopEffectsItem);
         notifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
         notifyIcon.ContextMenuStrip.Items.Add(exitItem);
         notifyIcon.DoubleClick += (_, _) => SettingsRequested?.Invoke();
@@ -44,6 +47,8 @@ public sealed class NotifyIconTrayHost : ITrayHost
     public event Action? ExitRequested;
 
     public event Action? SettingsRequested;
+
+    public event Action? StopEffectsRequested;
 
     public void Show() => notifyIcon.Visible = true;
 
