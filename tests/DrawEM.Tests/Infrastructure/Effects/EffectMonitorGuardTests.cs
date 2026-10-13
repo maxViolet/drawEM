@@ -274,7 +274,7 @@ public class EffectMonitorGuardTests
 
         public FakeMouseHookSource Mouse { get; } = new();
 
-        public FakeDisplays Displays { get; } = new();
+        public FakeDisplayChangeSource Displays { get; } = new();
 
         public CountingMonitors Monitors { get; } = new(Left, Right);
 
@@ -311,13 +311,6 @@ public class EffectMonitorGuardTests
                 action();
             }
         }
-    }
-
-    private sealed class FakeDisplays : IDisplayChangeSource
-    {
-        public event Action? DisplayChanged;
-
-        public void Change() => DisplayChanged?.Invoke();
     }
 
     private sealed class RecordingSurface : IEffectSurface, IEffectFailureReporter

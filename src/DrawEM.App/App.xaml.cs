@@ -140,7 +140,8 @@ public partial class App : System.Windows.Application
                 dispatchToUi,
                 failure => exitPolicy.Report("exit", failure));
 
-            var settingsSave = new SettingsSaveOperation(store, library, settings, channelHost, shortcuts, saveNotifications);
+            var settingsSave = new SettingsSaveOperation(
+                store, library, settings, channelHost, effects, shortcuts, saveNotifications);
             var sampler = new SoundSampler(channelHost.Play, channelHost.Stop, settings.CommandFor, playbackFailures);
             trayApplication.SettingsRequested += () => OpenSettings(() =>
             {

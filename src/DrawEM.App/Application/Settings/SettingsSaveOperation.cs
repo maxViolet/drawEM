@@ -1,3 +1,4 @@
+using DrawEM.App.Application.Effects;
 using DrawEM.App.Application.Sound;
 using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Settings;
@@ -20,7 +21,7 @@ public abstract record SettingsSaveResult
 
     /// <summary>
     /// The settings were not persisted. The failure was reported and the previous configuration stays
-    /// active: sound, drawing, shortcuts, and saved media.
+    /// active: sound, drawing, the running effect and queued effect starts, shortcuts, and saved media.
     /// </summary>
     public sealed record NotSaved(string Reason) : SettingsSaveResult;
 }
@@ -103,14 +104,17 @@ public sealed class SettingsSaveOperation : ISettingsSave
     private readonly ISoundLibrary library;
     private readonly ActiveSettings settings;
     private readonly ISaveSoundChannel sound;
+    private readonly EffectChannelController effects;
     private readonly IActiveShortcuts shortcuts;
     private readonly ISettingsSaveNotifications notifications;
 
+    /// <param name="effects">The effect channel, owned by this thread. A successful Save removes its running effect.</param>
     public SettingsSaveOperation(
         ISettingsStore store,
         ISoundLibrary library,
         ActiveSettings settings,
         ISaveSoundChannel sound,
+        EffectChannelController effects,
         IActiveShortcuts shortcuts,
         ISettingsSaveNotifications notifications)
     {
@@ -118,24 +122,30 @@ public sealed class SettingsSaveOperation : ISettingsSave
         ArgumentNullException.ThrowIfNull(library);
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(sound);
+        ArgumentNullException.ThrowIfNull(effects);
         ArgumentNullException.ThrowIfNull(shortcuts);
         ArgumentNullException.ThrowIfNull(notifications);
         this.store = store;
         this.library = library;
         this.settings = settings;
         this.sound = sound;
+        this.effects = effects;
         this.shortcuts = shortcuts;
         this.notifications = notifications;
     }
 
     /// <summary>
-    /// Validates the draft, persists it, then stops sound, ends drawing on every monitor, publishes the
-    /// snapshot, and rebinds shortcuts, so every command needs a fresh press.
+    /// Validates the draft, persists it, then stops sound, ends drawing on every monitor, drops queued effect
+    /// starts, removes the running effect, publishes the snapshot, and rebinds shortcuts, so every command
+    /// needs a fresh press.
     /// </summary>
     /// <remarks>
     /// <list type="bullet">
     /// <item>The snapshot is persisted before anything running changes. An invalid draft, a failed write, or a
-    /// sound start that does not finish in time changes nothing.</item>
+    /// sound start that does not finish in time changes nothing: sound, drawing, the running effect, queued
+    /// starts, and shortcuts carry on.</item>
+    /// <item>Effect starts are queued to and run on this thread, so Interrupt and the effect stop cannot
+    /// interleave with one: a start queued before the Save is dropped, and the running effect is removed.</item>
     /// <item>Sound starts are held from before the write until every earlier play request is ended, so no
     /// request made before the Save starts playback afterwards.</item>
     /// <item>Copies no longer referenced are removed only after the sound stop was confirmed, because an old
@@ -175,6 +185,10 @@ public sealed class SettingsSaveOperation : ISettingsSave
 
         var stopped = sound.Stop();
         shortcuts.Interrupt();
+
+        // After Interrupt no queued effect start can run, so the effect removed here is the last one shown
+        // under the previous configuration, whether a shortcut or a Settings sample started it.
+        effects.Stop();
         settings.Publish(draft);
         shortcuts.Bind(draft, settings.CommandFor);
         if (!stopped)

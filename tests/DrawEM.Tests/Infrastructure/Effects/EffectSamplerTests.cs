@@ -215,7 +215,7 @@ public class EffectSamplerTests
             var log = new RecordingLog(Log);
             Failures = new EffectSampleFailureRouter(log);
             Channel = new EffectChannelController(Surface, Failures, new ManualTimeProvider(), action => action());
-            Guard = new EffectMonitorGuard(Mouse, new NoDisplayChanges(), Monitors, Cursor, Channel, Queued.Enqueue);
+            Guard = new EffectMonitorGuard(Mouse, new FakeDisplayChangeSource(), Monitors, Cursor, Channel, Queued.Enqueue);
             Cursor.Position = OnLeft;
         }
 
@@ -271,15 +271,6 @@ public class EffectSamplerTests
     private sealed class RecordingLog(List<string> reasons) : IEffectFailureReporter
     {
         public void Report(EffectInstance instance, string reason) => reasons.Add(reason);
-    }
-
-    private sealed class NoDisplayChanges : IDisplayChangeSource
-    {
-        public event Action? DisplayChanged
-        {
-            add { }
-            remove { }
-        }
     }
 
     /// <summary>Counts shown and released playbacks; can fail on show, while playing, or on release.</summary>

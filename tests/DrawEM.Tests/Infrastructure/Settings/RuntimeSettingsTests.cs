@@ -1,6 +1,7 @@
 using System.Text;
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Application.Sound;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Infrastructure.Drawing;
 using DrawEM.App.Infrastructure.Settings;
@@ -68,6 +69,32 @@ public sealed class RuntimeSettingsTests : IDisposable
         var failure = Assert.Single(failures);
         Assert.Equal(copy, failure.Path);
         Assert.Equal("File not found.", failure.Reason);
+    }
+
+    [Fact]
+    public void SavedSoundAndEffectSlots_BindEachSlotToItsAction()
+    {
+        var sound = new ManagedSoundLibrary(LibraryDirectory).Import(WriteSource("applause.wav"));
+        var saved = TestSettings.WithActions(
+            [(1, sound), (4, sound)], [(2, new EffectId("confetti")), (3, new EffectId("focus-ring"))]);
+        new JsonSettingsStore(SettingsDirectory).Save(saved);
+
+        var (startup, settings) = Start();
+        var bindings = Bind(settings);
+
+        Assert.Equal(saved, startup.Active);
+        Assert.Equal(
+            [new KeyChord(CtrlAlt, VirtualKeys.D1), new KeyChord(CtrlAlt, VirtualKeys.D4)],
+            bindings.Sounds.Select(binding => binding.Chord));
+        Assert.All(
+            bindings.Sounds,
+            binding => Assert.Equal(Path.Combine(LibraryDirectory, sound.LibraryFileName), binding.Command.Path));
+        Assert.Equal(
+            [
+                new EffectBinding(new KeyChord(CtrlAlt, VirtualKeys.D2), new EffectId("confetti"), EffectPlacement.Monitor),
+                new EffectBinding(new KeyChord(CtrlAlt, VirtualKeys.D3), new EffectId("focus-ring"), EffectPlacement.Cursor),
+            ],
+            bindings.Effects);
     }
 
     [Fact]

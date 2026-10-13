@@ -317,7 +317,7 @@ effect and is then cancelled.
 ## Delivery order and completion criteria
 
 Follow the [simple implementation steps](STEPS.md). Each step has one outcome
-and a completion check. S4-01 is recorded as complete by owner decision; S4-02, S4-04, S4-05, and S4-06 are complete; S4-03 is implemented with one visual check unverified; S4-07 is implemented with its two-monitor checks unverified; S4-08 is implemented with its running-app check unverified.
+and a completion check. S4-01 is recorded as complete by owner decision; S4-02, S4-04, S4-05, and S4-06 are complete; S4-03 is implemented with one visual check unverified; S4-07 is implemented with its two-monitor checks unverified; S4-08 is implemented with its running-app check unverified; S4-10 is implemented with its running-app check unverified.
 
 | Task | Outcome |
 |---|---|
@@ -330,7 +330,7 @@ and a completion check. S4-01 is recorded as complete by owner decision; S4-02, 
 | [S4-07](step-07-effect-monitor-transitions/task.md) | Stop effects when switching monitors (implemented; two-monitor checks unverified) |
 | [S4-08](step-08-effect-settings-ui/task.md) | Choose effects in Settings, grouped by placement (implemented; running-app check unverified) |
 | [S4-09](step-09-effect-sample/task.md) | Preview draft effects with Sample |
-| [S4-10](step-10-effect-save-runtime/task.md) | Apply settings without leaving an old effect running |
+| [S4-10](step-10-effect-save-runtime/task.md) | Apply settings without leaving an old effect running (implemented; running-app check unverified) |
 | [S4-11](step-11-effect-lifecycle/task.md) | Stop and clean up effects through the app lifecycle |
 | [S4-12](step-12-effect-publish/task.md) | Publish and verify on Windows |
 

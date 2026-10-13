@@ -1,19 +1,25 @@
 using System.Text;
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Application.Sound;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Domain.Sound;
+using DrawEM.App.Infrastructure;
+using DrawEM.App.Infrastructure.Drawing;
 using DrawEM.App.Infrastructure.Settings;
 using DrawEM.App.Infrastructure.Sound;
+using DrawEM.Tests.Infrastructure.Effects;
 
 namespace DrawEM.Tests.Infrastructure.Settings;
 
 /// <summary>
 /// Save, restart, and media cleanup through <see cref="SettingsSaveOperation"/> against the real settings
-/// file and sound library. Sound and shortcuts are idle stand-ins whose stop is always confirmed.
+/// file and sound library. Sound and shortcuts are idle stand-ins whose stop is always confirmed; the effect
+/// channel shows nothing.
 /// </summary>
 public sealed class RuntimeMediaTests : IDisposable
 {
+    private const ShortcutModifiers CtrlAlt = ShortcutModifiers.Control | ShortcutModifiers.Alt;
     private readonly string root = Path.Combine(Path.GetTempPath(), "drawEM-tests", Guid.NewGuid().ToString("N"));
 
     private string SettingsDirectory => Path.Combine(root, "profile");
@@ -125,6 +131,37 @@ public sealed class RuntimeMediaTests : IDisposable
         Assert.True(File.Exists(CopyPath(replacement)));
     }
 
+    [Fact]
+    public void Save_SlotChangedFromSoundToEffect_RemovesTheCopyWithItsLastSoundReference_AndRestartBindsTheEffects()
+    {
+        var rig = new SaveRig(this);
+        var shared = rig.Library.Import(WriteSource("shared.wav", "shared"));
+        rig.Save(TestSettings.WithSounds((1, shared), (2, shared)));
+        var oneEffect = TestSettings.WithActions([(2, shared)], [(1, new EffectId("confetti"))]);
+
+        Assert.IsType<SettingsSaveResult.Saved>(rig.Save(oneEffect));
+        Assert.Equal([shared.LibraryFileName], LibraryFiles());
+
+        var effects = TestSettings.WithEffects((1, new EffectId("confetti")), (2, new EffectId("focus-ring")));
+        Assert.IsType<SettingsSaveResult.Saved>(rig.Save(effects));
+        Assert.Empty(LibraryFiles());
+        Assert.Empty(rig.Notifications.CleanupFailures);
+
+        var startup = SettingsStartup.Load(Store(), new NoSettingsFailures());
+        var restarted = new ActiveSettings(startup.Active, ManagedPath);
+        var bindings = ShortcutBindings.FromSnapshot(restarted.Current, restarted.CommandFor);
+
+        Assert.True(startup.SavedSettingsLoaded);
+        Assert.Equal(effects, restarted.Current);
+        Assert.Empty(bindings.Sounds);
+        Assert.Equal(
+            [
+                new EffectBinding(new KeyChord(CtrlAlt, VirtualKeys.D1), new EffectId("confetti"), EffectPlacement.Monitor),
+                new EffectBinding(new KeyChord(CtrlAlt, VirtualKeys.D2), new EffectId("focus-ring"), EffectPlacement.Cursor),
+            ],
+            bindings.Effects);
+    }
+
     private JsonSettingsStore Store() => new(SettingsDirectory);
 
     private ManagedSoundLibrary Library() => new(LibraryDirectory);
@@ -159,7 +196,13 @@ public sealed class RuntimeMediaTests : IDisposable
             Library = test.Library();
             Settings = new ActiveSettings(SettingsSnapshot.Default, test.ManagedPath);
             operation = new SettingsSaveOperation(
-                Store, Library, Settings, new IdleSoundChannel(), new IdleShortcuts(), Notifications);
+                Store,
+                Library,
+                Settings,
+                new IdleSoundChannel(),
+                RecordingEffectSurface.Channel(),
+                new IdleShortcuts(),
+                Notifications);
         }
 
         public JsonSettingsStore Store { get; }
