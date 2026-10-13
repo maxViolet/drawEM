@@ -5,8 +5,8 @@ using DrawEM.App.Infrastructure.Drawing;
 namespace DrawEM.App.Infrastructure.Effects;
 
 /// <summary>
-/// Stops the effect when the cursor enters another monitor, whether drawing is active or not, and on tray Stop
-/// effects, a display change, a session lock, or a system suspend. While an effect
+/// Stops the effect when the cursor enters another monitor, whether drawing is active or not, on a display
+/// change, and on <see cref="StopEffects"/>. While an effect
 /// runs or a start is queued, each pointer move from the hook and each animation frame's cursor check is tested
 /// against the cached bounds of the cursor's monitor. Only a point outside them costs a monitor lookup, and
 /// only entering another monitor queues UI work. A point outside every monitor is an outside desktop edge, not
@@ -42,7 +42,6 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
     public EffectMonitorGuard(
         IMouseHookSource mouse,
         IDisplayChangeSource displays,
-        ISessionInterruptionSource sessions,
         IMonitorBoundsSource monitors,
         ICursorPositionSource cursor,
         EffectChannelController channel,
@@ -54,7 +53,6 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
         this.dispatch = dispatch;
         mouse.PointerMoved += OnPointerMoved;
         displays.DisplayChanged += OnDisplayChanged;
-        sessions.Interrupted += StopEffects;
     }
 
     /// <remarks>

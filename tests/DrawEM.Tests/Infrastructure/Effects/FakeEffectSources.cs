@@ -63,10 +63,53 @@ internal sealed class FakeDisplayChangeSource : IDisplayChangeSource
     public void Change() => DisplayChanged?.Invoke();
 }
 
-/// <summary>Raises a session lock or system suspend on request.</summary>
-internal sealed class FakeSessionInterruptionSource : ISessionInterruptionSource
+/// <summary>Counts shown and released playbacks; can fail on show, while playing, or on release.</summary>
+internal sealed class FailingSurface : IEffectSurface
 {
-    public event Action? Interrupted;
+    public string? ShowFailure { get; set; }
 
-    public void Interrupt() => Interrupted?.Invoke();
+    public int Shown { get; private set; }
+
+    public int Disposed { get; private set; }
+
+    public Playback? Last { get; private set; }
+
+    public IEffectPlayback Show(EffectInstance instance)
+    {
+        if (ShowFailure is { } reason)
+        {
+            throw new EffectPlaybackException(reason);
+        }
+
+        Shown++;
+        Last = new Playback(this);
+        return Last;
+    }
+
+    public sealed class Playback(FailingSurface owner) : IEffectPlayback
+    {
+        public event Action? Completed
+        {
+            add { }
+            remove { }
+        }
+
+        public event Action<string>? Failed;
+
+        /// <summary>Whether anyone still listens for a failure.</summary>
+        public bool HasFailureHandler => Failed is not null;
+
+        public string? DisposeFailure { get; set; }
+
+        public void Fail(string reason) => Failed?.Invoke(reason);
+
+        public void Dispose()
+        {
+            owner.Disposed++;
+            if (DisposeFailure is { } reason)
+            {
+                throw new EffectPlaybackException(reason);
+            }
+        }
+    }
 }

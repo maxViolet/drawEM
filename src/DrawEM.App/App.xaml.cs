@@ -112,9 +112,9 @@ public partial class App : System.Windows.Application
             mouseHookSource = new Win32MouseHookSource();
 
             // Stops an effect when the cursor enters another monitor, drawing or not; frames recheck the cursor.
-            // A display change, a session lock, or a system suspend also stops it and drops queued starts.
+            // A display change also stops it and drops queued starts.
             var monitorGuard = new EffectMonitorGuard(
-                mouseHookSource, displays, sessions, monitorBoundsSource, cursor, effects, dispatchToUi);
+                mouseHookSource, displays, monitorBoundsSource, cursor, effects, dispatchToUi);
             surface.FrameStarting += monitorGuard.CheckCursor;
             var shortcuts = new GlobalShortcutAdapter(
                 keyboardHookSource.Events,
@@ -144,7 +144,9 @@ public partial class App : System.Windows.Application
                 dispatchToUi,
                 failure => exitPolicy.Report("exit", failure));
 
+            // Tray Stop effects, a session lock, and a system suspend stop the effect and drop queued starts.
             trayApplication.StopEffectsRequested += monitorGuard.StopEffects;
+            sessions.Interrupted += monitorGuard.StopEffects;
 
             var settingsSave = new SettingsSaveOperation(
                 store, library, settings, channelHost, effects, shortcuts, saveNotifications);

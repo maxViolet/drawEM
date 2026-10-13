@@ -10,6 +10,7 @@ using DrawEM.App.Infrastructure;
 using DrawEM.App.Infrastructure.Drawing;
 using DrawEM.App.Infrastructure.Effects;
 using DrawEM.Tests.Infrastructure.Drawing;
+using DrawEM.Tests.Infrastructure.Sound;
 using Microsoft.Win32;
 
 namespace DrawEM.Tests.Infrastructure.Effects;
@@ -21,12 +22,12 @@ namespace DrawEM.Tests.Infrastructure.Effects;
 /// </summary>
 public sealed class EffectLifecycleTests
 {
-    private const string StopEffects = "Stop effects";
+    /// <summary>Tray Stop effects, a session lock, or a system suspend: <c>App.xaml.cs</c> routes each to the guard.</summary>
+    private const string StopEffects = "Stop effects, lock, suspend";
     private const string DisplayChange = "display change";
-    private const string SessionLock = "session lock";
-    private const string SystemSuspend = "system suspend";
-    private const string Exit = "exit";
-    private const string StartupFailed = "startup failure";
+
+    /// <summary>Exit and startup failure: both dispose the effect channel with the other resources.</summary>
+    private const string Dispose = "exit, startup failure";
     private static readonly MonitorBounds Left = new(0, 0, 100, 100);
     private static readonly MonitorBounds Right = new(100, 0, 200, 100);
     private static readonly SoundReference Applause = new("applause.wav", "Applause.wav");
@@ -38,11 +39,10 @@ public sealed class EffectLifecycleTests
         TestSettings.WithActions([(1, Applause)], [(3, Confetti), (4, FocusRing)]);
 
     /// <summary>Every event that ends effects.</summary>
-    public static TheoryData<string> Events =>
-        new() { StopEffects, DisplayChange, SessionLock, SystemSuspend, Exit, StartupFailed };
+    public static TheoryData<string> Events => new() { StopEffects, DisplayChange, Dispose };
 
     /// <summary>The events after which the app keeps running.</summary>
-    public static TheoryData<string> Interruptions => new() { StopEffects, DisplayChange, SessionLock, SystemSuspend };
+    public static TheoryData<string> Interruptions => new() { StopEffects, DisplayChange };
 
     [Theory]
     [MemberData(nameof(Events))]
@@ -101,6 +101,7 @@ public sealed class EffectLifecycleTests
         Assert.Single(app.States[^1].CompletedStrokes);
         Assert.Equal(new SoundId(Applause.LibraryFileName), app.Sound.ActiveSound);
         Assert.Equal(["play"], Assert.Single(app.Players.Created).Calls);
+        Assert.Empty(app.SoundFailures);
     }
 
     [Theory]
@@ -161,12 +162,13 @@ public sealed class EffectLifecycleTests
                 Confetti, EffectPlacement.Monitor, Left, new ScreenPoint(10, 10), 0, 0));
             Assert.NotNull(instance);
 
-            surface.Playback!.Fail("The effect could not be drawn: Skia failed.");
+            var playback = surface.Last!;
+            playback.Fail("The effect could not be drawn: Skia failed.");
             log.Dispose();
 
             Assert.Null(channel.ActiveInstance);
-            Assert.True(surface.Playback.Disposed);
-            Assert.Equal(0, surface.Playback.Subscribers);
+            Assert.Equal(1, surface.Disposed);
+            Assert.False(playback.HasFailureHandler);
             Assert.Equal(0, time.ActiveTimerCount);
             var line = Assert.Single(File.ReadAllLines(path));
             Assert.EndsWith(
@@ -184,7 +186,6 @@ public sealed class EffectLifecycleTests
         private readonly Queue<Action> ui = new();
         private readonly FakeKeyboardHookSource keyboard = new();
         private readonly FakeDisplayChangeSource displays = new();
-        private readonly FakeSessionInterruptionSource sessions = new();
         private readonly EffectMonitorGuard guard;
 
         public Harness()
@@ -193,8 +194,9 @@ public sealed class EffectLifecycleTests
             var monitors = new FakeMonitorBoundsSource(Left, Right);
             var mouse = new FakeMouseHookSource();
             EffectChannel = new EffectChannelController(Effects, Effects, Time, ui.Enqueue);
-            guard = new EffectMonitorGuard(mouse, displays, sessions, monitors, cursor, EffectChannel, ui.Enqueue);
-            Sound = new SoundChannelController(Players, new NoSoundFailures(), new ManualTimeProvider(), action => action());
+            guard = new EffectMonitorGuard(mouse, displays, monitors, cursor, EffectChannel, ui.Enqueue);
+            Sound = new SoundChannelController(
+                Players, new RecordingSoundFailures(SoundFailures), new ManualTimeProvider(), action => action());
             Controller = new DrawingSessionController(() => Settings.Style);
             Controller.StateChanged += States.Add;
             var settings = new ActiveSettings(
@@ -222,6 +224,8 @@ public sealed class EffectLifecycleTests
 
         public SoundChannelController Sound { get; }
 
+        public List<string> SoundFailures { get; } = [];
+
         public DrawingSessionController Controller { get; }
 
         public List<DrawingState> States { get; } = [];
@@ -246,26 +250,13 @@ public sealed class EffectLifecycleTests
             switch (name)
             {
                 case StopEffects:
-                    // App.xaml.cs routes the tray command to the guard.
                     guard.StopEffects();
                     break;
                 case DisplayChange:
                     displays.Change();
                     break;
-                case SessionLock:
-                case SystemSuspend:
-                    sessions.Interrupt();
-                    break;
-                case Exit:
-                    // TrayApplication disposes the channel with the other resources.
-                    new CompositeDisposable(EffectChannel).Dispose();
-                    break;
-                case StartupFailed:
-                    StartupFailure.Handle(
-                        () => CleanupSteps.RunAll([EffectChannel.Dispose]),
-                        failure => throw failure,
-                        () => { },
-                        () => { });
+                case Dispose:
+                    EffectChannel.Dispose();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(name), name, "Unknown lifecycle event.");
@@ -279,73 +270,5 @@ public sealed class EffectLifecycleTests
                 action();
             }
         }
-    }
-
-    private sealed class NoSoundFailures : ISoundFailureReporter
-    {
-        public void Report(PlaySoundCommand command, string reason) =>
-            throw new InvalidOperationException($"Unexpected sound failure: {reason}");
-    }
-
-    private sealed class FakePlayerFactory : ISoundPlayerFactory
-    {
-        public List<FakePlayer> Created { get; } = [];
-
-        public ISoundPlayer Create(PlaySoundCommand command)
-        {
-            var player = new FakePlayer();
-            Created.Add(player);
-            return player;
-        }
-    }
-
-    private sealed class FakePlayer : ISoundPlayer
-    {
-        public event Action? Completed { add { } remove { } }
-
-        public event Action<string>? Failed { add { } remove { } }
-
-        public List<string> Calls { get; } = [];
-
-        public void Play() => Calls.Add("play");
-
-        public void Stop() => Calls.Add("stop");
-
-        public void Dispose() => Calls.Add("dispose");
-    }
-
-    /// <summary>Shows one playback whose rendering a test can fail, counting its subscribers.</summary>
-    private sealed class FailingSurface : IEffectSurface
-    {
-        public Playback? Playback { get; private set; }
-
-        public IEffectPlayback Show(EffectInstance instance) => Playback = new Playback();
-    }
-
-    private sealed class Playback : IEffectPlayback
-    {
-        private Action? completed;
-        private Action<string>? failed;
-
-        public event Action? Completed
-        {
-            add => completed += value;
-            remove => completed -= value;
-        }
-
-        public event Action<string>? Failed
-        {
-            add => failed += value;
-            remove => failed -= value;
-        }
-
-        public int Subscribers =>
-            (completed?.GetInvocationList().Length ?? 0) + (failed?.GetInvocationList().Length ?? 0);
-
-        public bool Disposed { get; private set; }
-
-        public void Fail(string reason) => failed?.Invoke(reason);
-
-        public void Dispose() => Disposed = true;
     }
 }
