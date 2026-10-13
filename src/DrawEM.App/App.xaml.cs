@@ -93,7 +93,7 @@ public partial class App : System.Windows.Application
             effectFailures = effectLog;
             var animations = new BuiltInEffectAnimations();
             effectAnimations = animations;
-            var displays = new Win32DisplayChangeSource(dispatchToUi);
+            var displays = new Win32DisplayChangeSource();
             displayChanges = displays;
             var sessions = new Win32SessionInterruptionSource();
             sessionInterruptions = sessions;

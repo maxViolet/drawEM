@@ -17,7 +17,8 @@ namespace DrawEM.App.Infrastructure.Effects;
 /// by its bounds within one topology, not by bounds alone. Every effect and queued start carries the epoch of
 /// its press; a later epoch stops it or drops it. Because the epoch only grows, A -> B -> A movement still
 /// stops an effect started on A, however late the UI runs the stop. Call every member except
-/// <see cref="StopEffects"/> on the UI thread, which also runs the low-level hooks.
+/// <see cref="StopEffects"/> on the UI thread, which also runs the low-level hooks. A display change may arrive
+/// on any thread.
 /// </remarks>
 public sealed class EffectMonitorGuard : IEffectStartQueue
 {
@@ -144,12 +145,16 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
     }
 
     /// <summary>
-    /// Stops the effect and invalidates queued starts. The next effect gets a new window placed on the new
-    /// layout, and the cursor's monitor is looked up again.
+    /// Invalidates queued starts at once, on any thread. Then, on the UI thread, stops the effect and forgets the
+    /// cursor's monitor, so it is looked up again and the next effect gets a new window placed on the new layout.
     /// </summary>
     private void OnDisplayChanged()
     {
-        monitorKnown = false;
-        channel.StopStartedBefore(Interlocked.Increment(ref epoch));
+        var reached = Interlocked.Increment(ref epoch);
+        dispatch(() =>
+        {
+            monitorKnown = false;
+            channel.StopStartedBefore(reached);
+        });
     }
 }

@@ -27,6 +27,7 @@ public sealed class EffectLifecycleTests
     private const string SessionLock = "session lock";
     private const string SystemSuspend = "system suspend";
     private const string DisplayChange = "display change";
+    private const string DpiChange = "effect monitor DPI change";
     private const string TrayExit = "tray Exit";
     private static readonly MonitorBounds Left = new(0, 0, 100, 100);
     private static readonly MonitorBounds Right = new(100, 0, 200, 100);
@@ -41,11 +42,11 @@ public sealed class EffectLifecycleTests
     /// <summary>Every event that ends effects.</summary>
     /// <remarks>Startup failure is not here: <c>App.ReleaseStartedResources</c> cannot run without a WPF app.</remarks>
     public static TheoryData<string> Events =>
-        new() { TrayStopEffects, SessionLock, SystemSuspend, DisplayChange, TrayExit };
+        new() { TrayStopEffects, SessionLock, SystemSuspend, DisplayChange, DpiChange, TrayExit };
 
     /// <summary>The events after which the app keeps running.</summary>
     public static TheoryData<string> Interruptions =>
-        new() { TrayStopEffects, SessionLock, SystemSuspend, DisplayChange };
+        new() { TrayStopEffects, SessionLock, SystemSuspend, DisplayChange, DpiChange };
 
     [Theory]
     [MemberData(nameof(Events))]
@@ -199,7 +200,6 @@ public sealed class EffectLifecycleTests
     {
         private readonly Queue<Action> ui = new();
         private readonly FakeKeyboardHookSource keyboard = new();
-        private readonly FakeDisplayChangeSource displays = new();
         private readonly FakeTrayHost trayHost;
 
         public Harness()
@@ -208,14 +208,15 @@ public sealed class EffectLifecycleTests
             var monitors = new FakeMonitorBoundsSource(Left, Right);
             var mouse = new FakeMouseHookSource();
             EffectChannel = new EffectChannelController(Effects, Effects, Time, ui.Enqueue);
-            var guard = new EffectMonitorGuard(mouse, displays, monitors, cursor, EffectChannel, ui.Enqueue);
+            Displays = new Win32DisplayChangeSource();
+            var guard = new EffectMonitorGuard(mouse, Displays, monitors, cursor, EffectChannel, ui.Enqueue);
             Sessions = new Win32SessionInterruptionSource();
             trayHost = new FakeTrayHost(TrayCalls);
 
             // On exit the tray application releases the effect channel with the other resources.
             var tray = new TrayApplication(
                 trayHost,
-                new CompositeDisposable(Sessions, EffectChannel),
+                new CompositeDisposable(Displays, Sessions, EffectChannel),
                 new FakeOverlay(TrayCalls),
                 new FakeApplicationLifetime(TrayCalls),
                 ui.Enqueue,
@@ -245,6 +246,9 @@ public sealed class EffectLifecycleTests
         public ManualTimeProvider Time { get; } = new();
 
         public EffectChannelController EffectChannel { get; }
+
+        /// <summary>The real Windows display source; tests report changes to it as Windows would.</summary>
+        public Win32DisplayChangeSource Displays { get; }
 
         /// <summary>The real Windows session source; tests report events to it as Windows would.</summary>
         public Win32SessionInterruptionSource Sessions { get; }
@@ -290,7 +294,11 @@ public sealed class EffectLifecycleTests
                     Sessions.Report(PowerModes.Suspend);
                     break;
                 case DisplayChange:
-                    displays.Change();
+                    Displays.Report();
+                    break;
+                case DpiChange:
+                    // The running effect's window reports this on the UI thread.
+                    Displays.NotifyDpiChanged();
                     break;
                 case TrayExit:
                     trayHost.RequestExit();
