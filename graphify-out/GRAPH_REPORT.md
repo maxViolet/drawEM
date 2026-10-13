@@ -1,17 +1,17 @@
 # Graph Report - wokrtree-s04-11  (2026-10-13)
 
 ## Corpus Check
-- 290 files · ~115,178 words
+- 290 files · ~115,435 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: (none) 10, .ico 1, .pubxml 1)
 
 ## Summary
-- 2746 nodes · 8233 edges · 113 communities (98 shown, 15 thin omitted)
-- Extraction: 82% EXTRACTED · 18% INFERRED · 0% AMBIGUOUS · INFERRED: 1445 edges (avg confidence: 0.85)
+- 2748 nodes · 8236 edges · 116 communities (97 shown, 19 thin omitted)
+- Extraction: 82% EXTRACTED · 18% INFERRED · 0% AMBIGUOUS · INFERRED: 1444 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5bdc06e0`
+- Built from commit: `b0efcc06`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -35,25 +35,25 @@
 - App.xaml.cs
 - EffectId
 - DrawEM.App.Domain.Drawing
-- DrawingSessionController
+- ScreenPoint
 - SettingsEditorTests
 - DrawEM.App.Application.Sound
 - Fact
 - Fixture
-- RuntimeMediaTests
-- Fixture
-- StartEffectCommand
 - SoundReference
+- Fixture
+- EffectMonitorGuard
+- ShortcutFieldViewModel
 - .Window_BindsEveryFieldWithoutBindingErrors
 - SlotViewModel
-- DrawEM.App.Domain.Effects
+- SoundFailure
 - LoggingSoundFailureReporter
 - DrawEM.App.Infrastructure
-- ScreenPoint
+- MonitorBounds
 - NativeMethods
 - PlaySoundCommand
-- DrawEM.App.Application.Settings
-- BuiltInEffectAnimations
+- DrawEM.App.Domain.Settings
+- FakePlayback
 - drawEM architecture
 - Harness
 - drawEM v4: parallel work packages
@@ -63,70 +63,73 @@
 - GlobalShortcutAdapter
 - SoundChannelController
 - Stage 1 Step 2 Review
-- v3 Step 8: Publish and verify on Windows (task)
+- drawEM v3 Roadmap: Drawing and Action Settings
 - .Save
-- ISoundPlayer
+- SoundId
 - Action
-- List
+- TrayApplication
 - EffectSurfaceLayout
-- EffectCatalog
+- Program.cs
 - .Deserialize
 - LottiePlayback
 - DateTimeOffset
 - EffectChannelController
 - DrawEM.App.Presentation.Effects
-- ThreadRecordingFactory
-- ShortcutBindings
+- ISoundPlayer
+- Func
 - TimeSpan
-- drawEM v3 Roadmap: Drawing and Action Settings
+- FEAT-005: Assisted E2E Runner
 - DrawEM.Tests.csproj
 - Sound infrastructure README
-- .RunOnDispatcherThread
-- BlockingPlayerFactory
+- List
+- SoundSlot
 - Win32SessionInterruptionSource
-- EffectSampler
+- StartEffectCommand
 - S4-03 acceptance: play built-in Lottie effects
 - MediaSoundPlayer
-- EffectInstance
+- IEffectPlayback
 - SettingsViewModel
 - FakeSampler
 - EffectSurfaceWindow
-- SettingsSaveResult
+- FakePlayer
 - SettingsWindow
-- SettingsFailureDialog
+- build-test-publish job
 - ManagedSoundLibrary
-- .RunAll
+- .ReleaseStartedResources
 - IDisposable
 - FakeSoundChannel
 - system_runtime_interopservices
 - S4-11 task: stop effects through app lifecycle
-- drawEM README
+- drawEM smoke test
 - ADR 0001: Lottie built-in effects
 - .OnStartup
 - ShortcutModifiers
 - Harness
 - F03 harness results
 - DllImport
-- IdleSoundChannel
+- SoundChannelShutdownTimeoutException
 - FIX-006: Single Screen Edge
 - Fixture
 - SettingsErrorCode
 - Stage 1 sound implementation plan
 - ShortcutBindingsTests
-- SettingsCommandKind
+- Win32DisplayChangeSource
+- RecordingNotifications
 - FakePicker
 - S4-09 task: preview draft effects
 - .Key
+- SettableCursor
 - Lottie Simple License (Design Barn Inc.)
+- FakeDisplayChangeSource
 - S4-03 plan: play built-in Lottie effects
 - drawEM Prototype Tray Icon
 - DrawEM.App.Presentation.Sound
 - Orange Brush Stroke Glyph
 - Sound domain README
 - CLAUDE.md
-- .Digit
+- SoundChannelControllerTests.cs
 - EffectChannelController
-- Func
+- FakeKeyboardHookSource
 - v4: simple implementation steps
 - NotifyIconTrayHost
 
@@ -175,11 +178,11 @@
 - **Save publication flow: persist, stop sound, clear, publish, media cleanup** — docs_v3_step_6_runtime_settings_plan_save_operation, docs_v3_step_6_runtime_settings_acceptance_start_lock, docs_v3_step_6_runtime_settings_plan_fresh_press_after_save, docs_v3_step_2_sound_library_task_orphan_cleanup, docs_v3_step_6_runtime_settings_task_active_settings_snapshot, docs_v3_step_7_settings_window_plan_settings_draft [INFERRED 0.85]
 - **Shortcut-to-screen effect pipeline** — docs_v4_visual_effects_roadmap_v4_globalshortcutadapter, docs_v4_visual_effects_roadmap_v4_effectmonitorguard, docs_v4_visual_effects_roadmap_v4_effectchannelcontroller, docs_v4_visual_effects_roadmap_v4_ieffectsurface, docs_v4_visual_effects_step_03_built_in_effects_acceptance_lottieeffectsurface, docs_v4_visual_effects_roadmap_v4_effectsurfacewindow [INFERRED 0.85]
 
-## Communities (113 total, 15 thin omitted)
+## Communities (116 total, 19 thin omitted)
 
 ### Community 0 - "ManagedSoundLibraryTests"
-Cohesion: 0.13
-Nodes (8): SoundImportException, JsonSettingsStore, DefaultDirectory, SettingsPath, ManagedSoundLibraryTests, LibraryDirectory, SourceDirectory, NoReporter
+Cohesion: 0.08
+Nodes (19): ISettingsStore, Loaded, Missing, SettingsLoadResult, Unreadable, SoundImportException, ISettingsFailureReporter, JsonSettingsStore (+11 more)
 
 ### Community 1 - "drawEM v4 roadmap: built-in Monitor and Cursor effects"
 Cohesion: 0.15
@@ -194,120 +197,112 @@ Cohesion: 0.05
 Nodes (45): Dependabot config, PR lint workflow, Branch and PR title work-id check, drawEM rules (AGENTS.md), EffectCatalog, JsonSettingsStore.Save migration backup, JsonSettingsStoreTests, ManagedSoundLibrary (counts only SoundAction slots) (+37 more)
 
 ### Community 4 - "JsonSettingsStoreTests"
-Cohesion: 0.07
-Nodes (18): ISettingsStore, Loaded, Missing, SettingsLoadResult, SettingsStoreException, Unreadable, ISettingsFailureReporter, FakeReporter (+10 more)
+Cohesion: 0.09
+Nodes (8): SettingsStoreException, SettingsFailureDialog, JsonSettingsStoreTests, BackupPath, SettingsPath, NoReporter, RecordingReporter, Reasons
 
 ### Community 5 - "GlobalShortcutAdapterTests"
-Cohesion: 0.10
-Nodes (17): FakeCursorPositionSource, FakeEffectStartQueue, Dequeued, Enqueued, NextEpoch, Started, FakeKeyboardHookSource, FailingCursorPositionSource (+9 more)
+Cohesion: 0.14
+Nodes (9): GlobalShortcutAdapterTests, SoundTestHarness, Controller, Gate, Monitors, Played, Queued, SoundQueued (+1 more)
 
 ### Community 6 - "S4-07 acceptance: stop effects when switching monitors"
 Cohesion: 0.23
 Nodes (14): S4-07 acceptance: stop effects when switching monitors, EffectMonitorGuard.CheckCursor frame check, EffectMonitorGuard, EffectMonitorGuardTests, EffectSurfaceWindow, GlobalShortcutAdapter, IDisplayChangeSource, IEffectStartQueue (+6 more)
 
 ### Community 7 - "Fixture"
-Cohesion: 0.06
-Nodes (36): DrawEM.Tests.Application.Sound, SoundId, Value, SoundAssignment, SoundAssignments, Slots, SoundFailure, SoundFailureLog (+28 more)
+Cohesion: 0.19
+Nodes (10): FakeRequest, IsCurrent, Fixture, Controller, Failures, Log, OnCreate, Players (+2 more)
 
 ### Community 8 - "Harness"
-Cohesion: 0.08
-Nodes (12): FakeNeutralKeyEmitter, Harness, Adapter, Effects, Gate, Log, NeutralKeys, Played (+4 more)
+Cohesion: 0.07
+Nodes (13): KeyboardHookEvents, FakeNeutralKeyEmitter, Harness, Adapter, Effects, Gate, Log, NeutralKeys (+5 more)
 
 ### Community 9 - "AppFailureLog"
-Cohesion: 0.16
-Nodes (6): AppFailureLog, DefaultPath, ApplicationExitPolicy, StartupFailure, AppFailureLogTests, StartupFailureTests
+Cohesion: 0.27
+Nodes (3): AppFailureLog, DefaultPath, AppFailureLogTests
 
 ### Community 10 - "Window"
 Cohesion: 0.05
-Nodes (45): CanSave, ChooseText, Clear, Color, Visible, Draw, Effect, Error (+37 more)
+Nodes (43): CanSave, ChooseText, Clear, Color, Visible, Draw, Effect, Error (+35 more)
 
 ### Community 11 - "ManualTimeProvider"
 Cohesion: 0.16
-Nodes (7): SoundChannelHost, SoundChannelShutdownTimeoutException, IgnoringReporter, SoundChannelHostTests, ThrowingReporter, ManualTimeProvider, ActiveTimerCount
+Nodes (13): SoundChannelHost, IgnoringReporter, SoundChannelHostTests, ThreadRecordingFactory, Created, OnCreate, OnPlay, Played (+5 more)
 
 ### Community 12 - "SaveHarness"
-Cohesion: 0.08
-Nodes (26): FakeStore, Failure, OnSave, Saved, RecordingNotifications, NotSavedReasons, UnconfirmedStops, SaveHarness (+18 more)
+Cohesion: 0.10
+Nodes (23): FakeStore, Failure, OnSave, Saved, SaveHarness, Channel, Controller, EffectChannel (+15 more)
 
 ### Community 13 - "SettingsSnapshot"
-Cohesion: 0.11
-Nodes (19): ISoundLibrary, SoundCleanupFailure, SettingsStartup, StartupSettings, SettingsSnapshot, ClearShortcut, Default, DrawShortcut (+11 more)
+Cohesion: 0.10
+Nodes (18): ISoundLibrary, SoundCleanupFailure, SettingsSnapshot, ClearShortcut, Default, DrawShortcut, Slots, Style (+10 more)
 
 ### Community 14 - "Rig"
-Cohesion: 0.12
-Nodes (16): Release, NoSettingsFailures, Rig, Keyboard, New, Old, Players, Previous (+8 more)
+Cohesion: 0.08
+Nodes (24): BlockingPlayerFactory, Blocked, BlockedPath, BlockInPlay, Events, NewPlayStarted, OldPlayStarted, Release (+16 more)
 
 ### Community 15 - "SettingsEditor"
-Cohesion: 0.12
-Nodes (13): SettingsEditor, ClearShortcut, Color, DrawShortcut, Slots, Width, SlotAction, SettingsCommand (+5 more)
+Cohesion: 0.08
+Nodes (18): IEffectSampler, ISoundSampler, SettingsEditor, ClearShortcut, Color, DrawShortcut, Slots, Width (+10 more)
 
 ### Community 16 - "App.xaml.cs"
-Cohesion: 0.07
-Nodes (4): DrawEM.Tests.Presentation.Settings, RenderLagHarness, DrawEM.App.Presentation.Drawing, DrawEM.App
+Cohesion: 0.08
+Nodes (5): DrawEM.Tests.Presentation.Settings, DrawEM.Tests.Presentation.Drawing, DrawEM.App.Presentation.Settings, DrawEM.App.Presentation.Drawing, DrawEM.App
 
 ### Community 17 - "EffectId"
-Cohesion: 0.13
-Nodes (12): EffectId, Value, ActionSlot, Action, IsEmpty, Number, EffectAction, Effect (+4 more)
+Cohesion: 0.12
+Nodes (15): EffectId, Value, ActionSlot, Action, IsEmpty, Number, EffectAction, Effect (+7 more)
 
 ### Community 18 - "DrawEM.App.Domain.Drawing"
-Cohesion: 0.15
-Nodes (8): DrawEM.App.Domain.Settings, DrawEM.Tests.Presentation.Drawing, DrawEM.App.Application.Drawing, DrawEM.App.Infrastructure.Drawing, DrawEM.Tests.Infrastructure.Drawing, DrawEM.App.Domain.Drawing, DrawEM.Tests.Application.Drawing, DrawEM.Tests.Domain.Settings
+Cohesion: 0.13
+Nodes (9): DrawEM.App.Application.Drawing, DrawEM.App.Infrastructure.Drawing, DrawEM.Tests.Infrastructure.Drawing, DrawEM.App.Domain.Drawing, DrawEM.Tests.Application.Effects, DrawEM.Tests.Application.Drawing, DrawEM.Tests.Infrastructure.Effects, DrawEM.App.Infrastructure.Effects (+1 more)
 
-### Community 19 - "DrawingSessionController"
-Cohesion: 0.17
-Nodes (7): DrawingSessionController, CompletedStrokes, OverlayWindowAdapter, DrawingSessionControllerTests, FakeOverlayView, LastRenderedState, OverlayWindowAdapterTests
-
-### Community 20 - "SettingsEditorTests"
-Cohesion: 0.14
-Nodes (3): SoundAction, Sound, SettingsEditorTests
+### Community 19 - "ScreenPoint"
+Cohesion: 0.19
+Nodes (8): DrawingSessionController, CompletedStrokes, ScreenPoint, OverlayWindowAdapter, DrawingSessionControllerTests, FakeOverlayView, LastRenderedState, OverlayWindowAdapterTests
 
 ### Community 21 - "DrawEM.App.Application.Sound"
-Cohesion: 0.09
-Nodes (6): DrawEM.App.Infrastructure.Sound, DrawEM.Tests.Infrastructure.Sound, DrawEM.App.Application.Sound, DrawEM.App.Infrastructure.Settings, DrawEM.Tests.Infrastructure.Settings, RetiredSoundAssignmentsTests
+Cohesion: 0.14
+Nodes (7): DrawEM.App.Infrastructure.Sound, DrawEM.Tests.Infrastructure.Sound, DrawEM.App.Application.Sound, SoundAssignment, SoundAssignments, Slots, RetiredSoundAssignmentsTests
 
 ### Community 23 - "Fixture"
 Cohesion: 0.11
 Nodes (10): EffectMonitorGuardTests, Fixture, Channel, Cursor, Displays, Guard, Monitors, Mouse (+2 more)
 
-### Community 24 - "RuntimeMediaTests"
-Cohesion: 0.18
-Nodes (11): NoSettingsFailures, RuntimeMediaTests, LibraryDirectory, SettingsDirectory, SourceDirectory, SaveRig, Library, Notifications (+3 more)
+### Community 24 - "SoundReference"
+Cohesion: 0.11
+Nodes (19): ActiveSettings, Current, SoundReference, DisplayName, LibraryFileName, ActiveSettingsTests, IdleShortcuts, NoSettingsFailures (+11 more)
 
 ### Community 25 - "Fixture"
 Cohesion: 0.14
 Nodes (8): EffectChannelControllerTests, Fixture, Controller, Failures, Log, OnShow, Playbacks, Time
 
-### Community 26 - "StartEffectCommand"
-Cohesion: 0.19
-Nodes (5): StartEffectCommand, EffectPlacement, Cursor, Monitor, EffectMonitorGuard
-
-### Community 27 - "SoundReference"
-Cohesion: 0.18
-Nodes (7): ActiveSettings, Current, SoundReference, DisplayName, LibraryFileName, ActiveSettingsTests, MediaSoundPlayerFactoryTests
+### Community 27 - "ShortcutFieldViewModel"
+Cohesion: 0.12
+Nodes (11): IShortcutCapture, BindableBase, ShortcutFieldViewModel, Command, Error, IsCapturing, IsEnabled, Message (+3 more)
 
 ### Community 28 - ".Window_BindsEveryFieldWithoutBindingErrors"
-Cohesion: 0.12
-Nodes (8): FakeCapture, Current, Ended, FakeEffectSampler, Forgets, Samples, Stops, SettingsWindowTests
+Cohesion: 0.11
+Nodes (11): FakeCapture, Current, Ended, FakeEffectSampler, Forgets, Samples, Stops, FakeSettingsSave (+3 more)
 
 ### Community 29 - "SlotViewModel"
 Cohesion: 0.08
 Nodes (21): EffectOption, All, SlotKind, Effect, Sound, SlotViewModel, Action, ChooseText (+13 more)
 
-### Community 30 - "DrawEM.App.Domain.Effects"
-Cohesion: 0.22
-Nodes (5): DrawEM.App.Domain.Effects, DrawEM.Tests.Application.Effects, DrawEM.Tests.Infrastructure.Effects, DrawEM.App.Infrastructure.Effects, DrawEM.App.Application.Effects
+### Community 30 - "SoundFailure"
+Cohesion: 0.33
+Nodes (4): SoundFailure, SoundFailureLog, DefaultPath, SoundFailureLogTests
 
 ### Community 31 - "LoggingSoundFailureReporter"
-Cohesion: 0.24
-Nodes (3): BackgroundLogWriter, LoggingSoundFailureReporter, LoggingSoundFailureReporterTests
+Cohesion: 0.19
+Nodes (4): BackgroundLogWriter, SettingsSaveNotifications, LoggingSoundFailureReporter, LoggingSoundFailureReporterTests
 
 ### Community 32 - "DrawEM.App.Infrastructure"
-Cohesion: 0.11
-Nodes (6): DrawEM.App.Infrastructure, DrawEM.Tests.Infrastructure, DrawEM.Tests, VirtualKeys, AppIconTests, StaThread
+Cohesion: 0.10
+Nodes (7): DrawEM.App.Infrastructure, DrawEM.Tests.Infrastructure, DrawEM.Tests, CleanupSteps, VirtualKeys, AppIconTests, StaThread
 
-### Community 33 - "ScreenPoint"
-Cohesion: 0.09
-Nodes (16): ScreenPoint, MonitorBounds, CursorSurfaceBounds, EffectCanvasPlacement, EffectRenderLayout, SettableCursor, Available, Position (+8 more)
+### Community 33 - "MonitorBounds"
+Cohesion: 0.14
+Nodes (8): MonitorBounds, CursorSurfaceBounds, EffectCanvasPlacement, EffectRenderLayout, CountingMonitorBoundsSource, Queries, EffectCanvasPlacementTests, EffectRenderLayoutTests
 
 ### Community 34 - "NativeMethods"
 Cohesion: 0.22
@@ -317,13 +312,13 @@ Nodes (4): MSLLHOOKSTRUCT, NativeMethods, RECT, Win32MouseHookSource
 Cohesion: 0.17
 Nodes (5): PlaySoundCommand, SampleFailureRouter, SoundSampler, RecordingReporter, SoundSamplerTests
 
-### Community 36 - "DrawEM.App.Application.Settings"
-Cohesion: 0.15
-Nodes (4): DrawEM.Tests.Application.Settings, DrawEM.App.Presentation.Settings, DrawEM.App.Domain.Sound, DrawEM.App.Application.Settings
+### Community 36 - "DrawEM.App.Domain.Settings"
+Cohesion: 0.12
+Nodes (8): DrawEM.App.Domain.Settings, DrawEM.Tests.Application.Settings, DrawEM.App.Domain.Effects, DrawEM.App.Domain.Sound, DrawEM.App.Infrastructure.Settings, DrawEM.App.Application.Settings, DrawEM.Tests.Infrastructure.Settings, DrawEM.Tests.Domain.Settings
 
-### Community 37 - "BuiltInEffectAnimations"
-Cohesion: 0.16
-Nodes (5): DrawEM.Tests.Domain.Effects, BuiltInEffectAnimations, EffectCatalogTests, BuiltInEffectAnimationsTests, BuiltInIds
+### Community 37 - "FakePlayback"
+Cohesion: 0.20
+Nodes (7): EffectPlaybackException, FakePlayback, CompletedHandler, DisposeCount, DisposeFailure, FailedHandler, Instance
 
 ### Community 38 - "drawEM architecture"
 Cohesion: 0.08
@@ -342,76 +337,76 @@ Cohesion: 0.25
 Nodes (6): KBDLLHOOKSTRUCT, KEYBDINPUT, MOUSEINPUT, NativeMethods, Win32KeyboardHookSource, Events
 
 ### Community 42 - "Theory"
-Cohesion: 0.15
-Nodes (3): LayerDependencyTests, AllowedLayerDependencies, NativeFunctionBridgeRule
+Cohesion: 0.11
+Nodes (5): DrawEM.Tests.Domain.Effects, LayerDependencyTests, AllowedLayerDependencies, NativeFunctionBridgeRule, EffectCatalogTests
 
 ### Community 43 - "DrawingModeInputGate"
-Cohesion: 0.23
-Nodes (11): DrawingModeInputGate, IsActive, IsBlockedUntilReleased, GlobalMouseInputAdapter, IMonitorBoundsSource, Win32MonitorBoundsSource, CountingMonitors, Queries (+3 more)
+Cohesion: 0.14
+Nodes (15): DrawingModeInputGate, IsActive, IsBlockedUntilReleased, GlobalMouseInputAdapter, IMonitorBoundsSource, IMouseHookSource, Win32MonitorBoundsSource, CountingMonitors (+7 more)
 
 ### Community 44 - "GlobalShortcutAdapter"
 Cohesion: 0.09
 Nodes (13): Cancelled, Captured, Rejected, ShortcutCaptureRejection, RightAlt, TooFewModifiers, ShortcutCaptureResult, GlobalShortcutAdapter (+5 more)
 
 ### Community 45 - "SoundChannelController"
-Cohesion: 0.11
-Nodes (15): ISoundFailureReporter, AlwaysCurrent, IsCurrent, Attempt, Command, Deadline, OnCompleted, OnFailed (+7 more)
+Cohesion: 0.09
+Nodes (17): ISoundFailureReporter, AlwaysCurrent, IsCurrent, Attempt, Command, Deadline, OnCompleted, OnFailed (+9 more)
 
 ### Community 46 - "Stage 1 Step 2 Review"
-Cohesion: 0.16
-Nodes (20): sound.log failure log (%LOCALAPPDATA%\drawEM\logs), Stage 1 Step 1 Review, PlaySoundCommand, SoundAssignments (code-owned Slots), SoundConfiguration (Resolve / PathOf), SoundFailure record, SoundFailureLog, SoundId (+12 more)
+Cohesion: 0.13
+Nodes (24): sound.log failure log (%LOCALAPPDATA%\drawEM\logs), Stage 1 Step 1 Review, PlaySoundCommand, SoundAssignments (code-owned Slots), SoundConfiguration (Resolve / PathOf), SoundFailure record, SoundFailureLog, SoundId (+16 more)
 
-### Community 47 - "v3 Step 8: Publish and verify on Windows (task)"
+### Community 47 - "drawEM v3 Roadmap: Drawing and Action Settings"
 Cohesion: 0.07
-Nodes (56): v3 Step 1 acceptance criteria, Defaults: #FF4500, 4 px, Ctrl+Alt+Z, Ctrl+Alt+X, v3 Step 1 plan, Default fallback with retained damaged file, Durable replacement settings storage, Right Alt reserved for AltGr, Settings schema/version policy, v3 Step 1: Settings snapshot and storage (task) (+48 more)
+Nodes (58): drawEM v3 Roadmap: Drawing and Action Settings, Shortcut Rule: two modifiers plus one key, StrokeRenderElement, v3 Step 1 acceptance criteria, Defaults: #FF4500, 4 px, Ctrl+Alt+Z, Ctrl+Alt+X, v3 Step 1 plan, Default fallback with retained damaged file, Durable replacement settings storage (+50 more)
 
 ### Community 48 - ".Save"
-Cohesion: 0.13
-Nodes (7): IActiveShortcuts, ISaveSoundChannel, ISettingsSaveNotifications, SettingsSaveOperation, IdleShortcuts, RecordingNotifications, CleanupFailures
+Cohesion: 0.15
+Nodes (9): IActiveShortcuts, Invalid, ISaveSoundChannel, ISettingsSave, ISettingsSaveNotifications, NotSaved, Saved, SettingsSaveOperation (+1 more)
 
-### Community 49 - "ISoundPlayer"
-Cohesion: 0.09
-Nodes (13): ISoundPlayer, ISoundPlayerFactory, FakePlayer, Calls, Path, PlayerFactory, Created, FakePlayer (+5 more)
+### Community 49 - "SoundId"
+Cohesion: 0.14
+Nodes (8): SoundId, Value, FakePlayer, Calls, Sound, FakePlayerFactory, Created, OnStop
 
 ### Community 50 - "Action"
-Cohesion: 0.12
-Nodes (9): Request, IsCurrent, AsyncProbe, ClosureProbe, DelegateToPointerProbe, IteratorProbe, ManagedCollectionProbe, NativeFunctionBridgeRuleTests (+1 more)
+Cohesion: 0.14
+Nodes (7): AsyncProbe, ClosureProbe, DelegateToPointerProbe, IteratorProbe, ManagedCollectionProbe, NativeFunctionBridgeRuleTests, PointerToDelegateProbe
 
-### Community 51 - "List"
+### Community 51 - "TrayApplication"
 Cohesion: 0.14
 Nodes (10): IApplicationLifetime, IOverlayLifetime, ITrayHost, TrayApplication, FakeApplicationLifetime, FakeOverlay, FakeTrayHost, ThrowingDisposable (+2 more)
 
 ### Community 52 - "EffectSurfaceLayout"
-Cohesion: 0.23
+Cohesion: 0.20
 Nodes (6): EffectSurfaceLayout, DpiScale, LocalBounds, LocalSize, Monitor, EffectSurfaceCoordinateTests
 
-### Community 53 - "EffectCatalog"
-Cohesion: 0.17
-Nodes (6): EffectCatalog, BuiltIn, ShortcutKeyKind, Digit, Function, Letter
+### Community 53 - "Program.cs"
+Cohesion: 0.13
+Nodes (3): RenderLagHarness, EffectCatalog, BuiltIn
 
 ### Community 55 - "LottiePlayback"
-Cohesion: 0.11
-Nodes (8): EffectPlaybackException, LottiePlayback, FakePlayback, CompletedHandler, DisposeCount, DisposeFailure, FailedHandler, Instance
+Cohesion: 0.12
+Nodes (5): BuiltInEffectAnimations, LottieEffectSurface, LottiePlayback, BuiltInEffectAnimationsTests, BuiltInIds
 
 ### Community 56 - "DateTimeOffset"
-Cohesion: 0.33
-Nodes (4): EffectFailure, EffectFailureLog, DefaultPath, EffectFailureLogTests
+Cohesion: 0.27
+Nodes (5): EffectFailure, EffectFailureLog, DefaultPath, TextFileLogSink, EffectFailureLogTests
 
 ### Community 57 - "EffectChannelController"
-Cohesion: 0.18
-Nodes (9): EffectChannelController, ActiveInstance, Run, Deadline, Instance, OnCompleted, OnFailed, Playback (+1 more)
+Cohesion: 0.10
+Nodes (17): EffectChannelController, ActiveInstance, Run, Deadline, Instance, OnCompleted, OnFailed, Playback (+9 more)
 
-### Community 59 - "ThreadRecordingFactory"
+### Community 59 - "ISoundPlayer"
 Cohesion: 0.12
-Nodes (13): ThreadRecordingFactory, Created, OnCreate, OnPlay, Played, Player, StopFailure, ThreadRecordingPlayer (+5 more)
+Nodes (9): ISoundPlayer, ISoundPlayerFactory, MediaSoundPlayerFactory, ThreadRecordingPlayer, IsDisposed, PlayApartment, PlayThreadId, Stopped (+1 more)
 
-### Community 60 - "ShortcutBindings"
-Cohesion: 0.17
-Nodes (12): EffectBinding, KeyChord, ShortcutBindings, Clear, Draw, Effects, Sounds, SoundBinding (+4 more)
-
-### Community 62 - "drawEM v3 Roadmap: Drawing and Action Settings"
+### Community 60 - "Func"
 Cohesion: 0.08
-Nodes (35): Ten-second playback cap, Confirmed test boundaries, Sound business test scenarios, Playback business scenarios (start, replace, restart, cap, stale finish), Shortcut and independent-channel scenarios, SoundSlot, Eight Sound Slots Ctrl+Alt+1..8, Global Single Sound Channel (+27 more)
+Nodes (20): SettingsStartup, StartupSettings, EffectBinding, KeyChord, ShortcutBindings, Clear, Draw, Effects (+12 more)
+
+### Community 62 - "FEAT-005: Assisted E2E Runner"
+Cohesion: 0.11
+Nodes (25): Ten-second playback cap, Confirmed test boundaries, Sound business test scenarios, Playback business scenarios (start, replace, restart, cap, stale finish), Shortcut and independent-channel scenarios, Stage 1 Manual Desktop Gate, FEAT-005: Assisted E2E Runner, DRAWEM_DATA_DIR override (+17 more)
 
 ### Community 63 - "DrawEM.Tests.csproj"
 Cohesion: 0.12
@@ -421,89 +416,93 @@ Nodes (12): coverlet.collector (10.1.0), Microsoft.NET.Test.Sdk (18.10.1), NetAr
 Cohesion: 0.23
 Nodes (14): Sound application README, ActiveSettings, ISoundFailureReporter, ISoundPlayerFactory / ISoundPlayer, PlaySoundCommand, SoundChannelController, Sound infrastructure README, BackgroundLogWriter<T> / TextFileLogSink (+6 more)
 
-### Community 65 - ".RunOnDispatcherThread"
-Cohesion: 0.20
-Nodes (6): IMouseHookSource, FakeMouseHookSource, Program, RunResult, Sample, ScenarioSeed
+### Community 65 - "List"
+Cohesion: 0.26
+Nodes (4): Program, RunResult, Sample, ScenarioSeed
 
-### Community 66 - "BlockingPlayerFactory"
+### Community 66 - "SoundSlot"
 Cohesion: 0.20
-Nodes (8): BlockingPlayerFactory, Blocked, BlockedPath, BlockInPlay, Events, NewPlayStarted, OldPlayStarted, Player
+Nodes (9): SoundSlot, Slot1, Slot2, Slot3, Slot4, Slot5, Slot6, Slot7 (+1 more)
 
 ### Community 67 - "Win32SessionInterruptionSource"
-Cohesion: 0.12
-Nodes (5): EffectStopRoutes, IDisplayChangeSource, ISessionInterruptionSource, Win32SessionInterruptionSource, FakeDisplayChangeSource
+Cohesion: 0.18
+Nodes (3): EffectStopRoutes, ISessionInterruptionSource, Win32SessionInterruptionSource
 
-### Community 68 - "EffectSampler"
-Cohesion: 0.19
-Nodes (5): EffectSampleFailureRouter, EffectSampler, SamplingEditor, Failures, Sampler
+### Community 68 - "StartEffectCommand"
+Cohesion: 0.15
+Nodes (9): StartEffectCommand, EffectPlacement, Cursor, Monitor, EffectSampleFailureRouter, EffectSampler, SamplingEditor, Failures (+1 more)
 
 ### Community 69 - "S4-03 acceptance: play built-in Lottie effects"
 Cohesion: 0.17
 Nodes (14): Confetti effect (confetti, Monitor), Cursor-only fallback (not needed), Cursor placement (canvas-sized, clipped), Focus ring effect (focus-ring, Cursor), Built-in Lottie effects, Monitor placement (cover scaling), Placement (Monitor / Cursor), Release performance targets (100 ms appearance, 4 ms render, 25 ms frame interval) (+6 more)
 
-### Community 70 - "MediaSoundPlayer"
-Cohesion: 0.20
-Nodes (3): SoundPlaybackException, MediaSoundPlayer, MediaSoundPlayerFactory
-
-### Community 71 - "EffectInstance"
-Cohesion: 0.07
-Nodes (24): EffectInstance, EffectInstanceId, IEffectPlayback, IEffectSurface, LottieEffectSurface, Playback, RecordingSurface, Disposed (+16 more)
+### Community 71 - "IEffectPlayback"
+Cohesion: 0.10
+Nodes (16): IEffectPlayback, IEffectSurface, Playback, RecordingSurface, Disposed, Last, Shown, FailingSurface (+8 more)
 
 ### Community 72 - "SettingsViewModel"
-Cohesion: 0.06
-Nodes (25): IShortcutCapture, BindableBase, SettingsViewModel, CanSave, Clear, Color, DraftColor, Draw (+17 more)
+Cohesion: 0.09
+Nodes (14): SettingsViewModel, CanSave, Clear, Color, DraftColor, Draw, Errors, Fields (+6 more)
 
 ### Community 73 - "FakeSampler"
-Cohesion: 0.13
-Nodes (7): IEffectSampler, ISoundSampler, FakeSampler, Forgets, Samples, StopConfirmed, Stops
+Cohesion: 0.25
+Nodes (5): FakeSampler, Forgets, Samples, StopConfirmed, Stops
 
 ### Community 74 - "EffectSurfaceWindow"
 Cohesion: 0.19
 Nodes (3): EffectSurfaceWindow, Layout, NativeMethods
 
-### Community 75 - "SettingsSaveResult"
-Cohesion: 0.24
-Nodes (8): Invalid, ISettingsSave, NotSaved, Saved, SettingsSaveResult, FakeSettingsSave, Result, Saved
+### Community 75 - "FakePlayer"
+Cohesion: 0.29
+Nodes (6): FakePlayer, Calls, DisposeFailure, IsDisposed, Sound, StopFailure
+
+### Community 76 - "SettingsWindow"
+Cohesion: 0.14
+Nodes (4): CancelButton, PickColorButton, SettingsWindow, ViewModel
+
+### Community 77 - "build-test-publish job"
+Cohesion: 0.29
+Nodes (6): build-test-publish job, CI workflow, .NET SDK pinned by global.json, Warnings as errors build, Release workflow, Tag-triggered GitHub Release (drawEM-<version>-win-x64.zip)
 
 ### Community 78 - "ManagedSoundLibrary"
 Cohesion: 0.26
 Nodes (3): ManagedSoundLibrary, DefaultDirectory, LibraryDirectory
 
-### Community 79 - ".RunAll"
-Cohesion: 0.14
-Nodes (4): CleanupSteps, SingleInstanceGuard, DefaultName, SingleInstanceGuardTests
+### Community 79 - ".ReleaseStartedResources"
+Cohesion: 0.12
+Nodes (3): SingleInstanceGuard, DefaultName, SingleInstanceGuardTests
 
 ### Community 80 - "IDisposable"
 Cohesion: 0.24
 Nodes (4): CompositeDisposable, CompositeDisposableTests, FakeDisposable, FakeDisposable
 
 ### Community 81 - "FakeSoundChannel"
-Cohesion: 0.15
-Nodes (4): ISoundStartHold, StartHold, FakeSoundChannel, StopConfirmed
+Cohesion: 0.11
+Nodes (5): ISoundStartHold, StartHold, IdleSoundChannel, FakeSoundChannel, StopConfirmed
 
 ### Community 83 - "S4-11 task: stop effects through app lifecycle"
 Cohesion: 0.22
 Nodes (9): Two-monitor manual check, S4-11 acceptance: stop effects through app lifecycle, S4-11 plan: stop effects through app lifecycle, Tray Stop effects, S4-11 task: stop effects through app lifecycle, S4-12 acceptance: publish and verify on Windows, S4-12 plan: publish and verify on Windows, 100-invocation shortcut-to-present latency (+1 more)
 
-### Community 84 - "drawEM README"
-Cohesion: 0.08
-Nodes (24): build-test-publish job, CI workflow, .NET SDK pinned by global.json, Warnings as errors build, Release workflow, Tag-triggered GitHub Release (drawEM-<version>-win-x64.zip), TrayApplication, v1 acceptance pass (step 7) (+16 more)
+### Community 84 - "drawEM smoke test"
+Cohesion: 0.09
+Nodes (26): TrayApplication, v1 acceptance pass (step 7), v1 roadmap: drawing, GlobalMouseInputAdapter seam, GlobalShortcutAdapter seam, OverlayWindowAdapter seam, v1 proposed test seams, TrayApplication seam (+18 more)
 
 ### Community 85 - "ADR 0001: Lottie built-in effects"
 Cohesion: 0.29
 Nodes (6): Built-in effect, Effect, CONTEXT.md domain glossary, Imported effect, Placement (Monitor / Cursor), ADR 0001: Lottie built-in effects
 
 ### Community 86 - ".OnStartup"
-Cohesion: 0.13
-Nodes (5): Application, App, LoggingEffectFailureReporter, Win32DisplayChangeSource, WpfApplicationLifetime
+Cohesion: 0.16
+Nodes (6): Application, App, ApplicationExitPolicy, StartupFailure, WpfApplicationLifetime, StartupFailureTests
 
 ### Community 87 - "ShortcutModifiers"
-Cohesion: 0.12
-Nodes (13): ShortcutError, IllegalKey, None, TooFewModifiers, Unrecognized, WindowsKey, ShortcutModifiers, Alt (+5 more)
+Cohesion: 0.09
+Nodes (20): ShortcutError, IllegalKey, None, TooFewModifiers, Unrecognized, WindowsKey, ShortcutModifiers, Alt (+12 more)
 
 ### Community 88 - "Harness"
 Cohesion: 0.12
-Nodes (14): EffectLifecycleTests, Events, Interruptions, Harness, Controller, EffectChannel, Effects, Players (+6 more)
+Nodes (15): EffectLifecycleTests, Events, Interruptions, Harness, Controller, Displays, EffectChannel, Effects (+7 more)
 
 ### Community 89 - "F03 harness results"
 Cohesion: 0.60
@@ -514,11 +513,11 @@ Cohesion: 0.15
 Nodes (5): MONITORINFO, POINT, NativeMethods, POINT, RECT
 
 ### Community 92 - "FIX-006: Single Screen Edge"
-Cohesion: 0.44
-Nodes (8): FIX-006: Single Screen Edge, DrawingModeInputGate (StopAtBoundary), DrawingSessionController, GlobalMouseInputAdapter (OnPointerMoved), IMonitorBoundsSource (TryGetBounds), MonitorBounds.Contains, SINGLE_SCREEN screen mode, Win32MonitorBoundsSource (MONITOR_DEFAULTTONULL)
+Cohesion: 0.38
+Nodes (9): FIX-006: Single Screen Edge, DrawingModeInputGate (StopAtBoundary), DrawingSessionController, GlobalMouseInputAdapter (OnPointerMoved), IMonitorBoundsSource (TryGetBounds), MonitorBounds.Contains, SINGLE_SCREEN screen mode, Win32MonitorBoundsSource (MONITOR_DEFAULTTONULL) (+1 more)
 
 ### Community 93 - "Fixture"
-Cohesion: 0.12
+Cohesion: 0.11
 Nodes (12): EffectSamplerTests, Fixture, Channel, Cursor, Failures, Guard, Log, Monitors (+4 more)
 
 ### Community 94 - "SettingsErrorCode"
@@ -526,12 +525,12 @@ Cohesion: 0.22
 Nodes (9): SettingsErrorCode, DuplicateShortcut, InvalidShortcut, InvalidWidth, MissingEffect, MissingShortcut, MissingSound, SlotLayout (+1 more)
 
 ### Community 95 - "Stage 1 sound implementation plan"
-Cohesion: 0.13
-Nodes (34): Step 7 acceptance results, drawEM smoke test, Manual smoke checks (tray, input blocking, multi-monitor), Acceptance results template, v2 roadmap: screen actions, Stage 1 sound acceptance results, Stage 1 test media assignments, Stage 1 sound implementation plan (+26 more)
+Cohesion: 0.15
+Nodes (29): v2 roadmap: screen actions, Stage 1 sound implementation plan, Stage 1 Step 1 Acceptance, Stage 1 Step 1 Plan, Stage 1 Step 1 Task: Command and Code Configuration, Stage 1 Step 2 Acceptance, Stage 1 Step 2 Plan, SoundChannelHost (dedicated STA sound thread) (+21 more)
 
-### Community 97 - "SettingsCommandKind"
-Cohesion: 0.50
-Nodes (4): SettingsCommandKind, Clear, Draw, Slot
+### Community 98 - "RecordingNotifications"
+Cohesion: 0.33
+Nodes (3): RecordingNotifications, NotSavedReasons, UnconfirmedStops
 
 ### Community 99 - "FakePicker"
 Cohesion: 0.29
@@ -540,6 +539,10 @@ Nodes (5): ISoundFilePicker, FakePicker, Next, Picking, Picks
 ### Community 100 - "S4-09 task: preview draft effects"
 Cohesion: 0.33
 Nodes (7): S4-09 acceptance: preview draft effects, S4-09 plan: preview draft effects, S4-09 task: preview draft effects, S4-10 acceptance: apply settings safely, S4-10 plan: apply settings safely, S4-10 task: apply settings safely, Sound presentation placeholder README
+
+### Community 102 - "SettableCursor"
+Cohesion: 0.40
+Nodes (4): SettableCursor, Available, Position, Reads
 
 ### Community 103 - "Lottie Simple License (Design Barn Inc.)"
 Cohesion: 0.60
@@ -553,17 +556,13 @@ Nodes (11): EffectCatalog (Domain/Effects), EffectAction, VideoAction / imported
 Cohesion: 0.67
 Nodes (3): Freehand Drawn Stroke Motif, drawEM Prototype Tray Icon, v3 Step 7 Settings Window
 
-### Community 111 - ".Digit"
-Cohesion: 0.40
-Nodes (3): ShortcutKey, Kind, Value
-
 ### Community 112 - "EffectChannelController"
 Cohesion: 0.36
 Nodes (7): Effect instance, EffectChannelController, IEffectSurface presentation port, S4-02 acceptance: control one running effect, S4-02 plan: control one running effect, S4-02 task: control one running effect, LottieEffectSurface / LottiePlayback
 
-### Community 113 - "Func"
-Cohesion: 0.27
-Nodes (5): IKeyboardHookSource, KeyDirection, Down, Up, KeyboardHookEvents
+### Community 113 - "FakeKeyboardHookSource"
+Cohesion: 0.10
+Nodes (13): IKeyboardHookSource, KeyDirection, Down, Up, FakeCursorPositionSource, FakeEffectStartQueue, Dequeued, Enqueued (+5 more)
 
 ### Community 114 - "v4: simple implementation steps"
 Cohesion: 0.33
@@ -574,23 +573,23 @@ Nodes (8): CONTEXT.md glossary, EffectSurfaceWindow, S4-01 acceptance: prove the
   src/DrawEM.App/Presentation/Sound/README.md · relation: conceptually_related_to
 
 ## Knowledge Gaps
-- **451 isolated node(s):** `CompletedStrokes`, `ActiveInstance`, `Instance`, `Playback`, `Deadline` (+446 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 625 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **15 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **452 isolated node(s):** `CompletedStrokes`, `ActiveInstance`, `Instance`, `Playback`, `Deadline` (+447 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 627 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **19 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `v3 Step 8: Publish and verify on Windows (task)` connect `v3 Step 8: Publish and verify on Windows (task)` to `drawEM v4 roadmap: built-in Monitor and Cursor effects`, `drawEM v3 Roadmap: Drawing and Action Settings`?**
-  _High betweenness centrality (0.167) - this node is a cross-community bridge._
+- **Why does `v3 Step 8: Publish and verify on Windows (task)` connect `drawEM v3 Roadmap: Drawing and Action Settings` to `drawEM v4 roadmap: built-in Monitor and Cursor effects`, `FEAT-005: Assisted E2E Runner`?**
+  _High betweenness centrality (0.158) - this node is a cross-community bridge._
 - **Are the 83 inferred relationships involving `ScreenPoint` (e.g. with `.HookCallback()` and `.PushMonitorClip()`) actually correct?**
   _`ScreenPoint` has 83 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `CompletedStrokes`, `ActiveInstance`, `Instance` to the rest of the system?**
-  _451 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _452 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `ManagedSoundLibraryTests` be split into smaller, more focused modules?**
-  _Cohesion score 0.13176470588235295 - nodes in this community are weakly interconnected._
-- **Why does `drawEM v4 roadmap: built-in Monitor and Cursor effects` connect `drawEM v4 roadmap: built-in Monitor and Cursor effects` to `S4-05 acceptance: save and load effect assignments`, `S4-09 task: preview draft effects`, `S4-03 acceptance: play built-in Lottie effects`, `drawEM architecture`, `S4-07 acceptance: stop effects when switching monitors`, `drawEM v4: parallel work packages`, `S4-03 plan: play built-in Lottie effects`, `v3 Step 8: Publish and verify on Windows (task)`, `EffectChannelController`, `v4: simple implementation steps`, `S4-11 task: stop effects through app lifecycle`, `ADR 0001: Lottie built-in effects`, `drawEM v3 Roadmap: Drawing and Action Settings`, `Stage 1 sound implementation plan`?**
-  _High betweenness centrality (0.135) - this node is a cross-community bridge._
+  _Cohesion score 0.08143074581430745 - nodes in this community are weakly interconnected._
+- **Why does `drawEM v4 roadmap: built-in Monitor and Cursor effects` connect `drawEM v4 roadmap: built-in Monitor and Cursor effects` to `S4-05 acceptance: save and load effect assignments`, `S4-09 task: preview draft effects`, `S4-03 acceptance: play built-in Lottie effects`, `drawEM architecture`, `S4-07 acceptance: stop effects when switching monitors`, `drawEM v4: parallel work packages`, `S4-03 plan: play built-in Lottie effects`, `drawEM v3 Roadmap: Drawing and Action Settings`, `EffectChannelController`, `v4: simple implementation steps`, `S4-11 task: stop effects through app lifecycle`, `ADR 0001: Lottie built-in effects`, `Stage 1 sound implementation plan`?**
+  _High betweenness centrality (0.124) - this node is a cross-community bridge._
 - **Are the 40 inferred relationships involving `DrawingSessionController` (e.g. with `.ClearAndExitDrawMode_RemovesCompletedAndActiveStrokes()` and `.ClearMonitor_PreservesStrokesOnOtherMonitor()`) actually correct?**
   _`DrawingSessionController` has 40 INFERRED edges - model-reasoned connections that need verification._
 
