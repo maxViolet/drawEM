@@ -96,6 +96,41 @@ public sealed class SettingsViewModelTests
         Assert.Equal(valid, model.CanSave);
     }
 
+    [Theory]
+    [InlineData("4", 1, "5")]
+    [InlineData("4", -1, "3")]
+    [InlineData("20", 1, "20")]
+    [InlineData("1", -1, "1")]
+    [InlineData("25", -1, "20")]
+    [InlineData("0", 1, "1")]
+    [InlineData("abc", 1, "1")]
+    [InlineData("", -1, "1")]
+    public void StepWidth_ChangesByOnePixel_WithinOneToTwenty(string text, int step, string stepped)
+    {
+        var model = Model();
+        model.WidthText = text;
+
+        model.StepWidth(step);
+
+        Assert.Equal(stepped, model.WidthText);
+        Assert.Null(model.WidthError);
+        Assert.True(model.CanSave);
+    }
+
+    [Theory]
+    [InlineData("1", true, false)]
+    [InlineData("4", true, true)]
+    [InlineData("20", false, true)]
+    public void WidthSteppers_AreDisabledAtTheLimits(string text, bool canIncrease, bool canDecrease)
+    {
+        var model = Model();
+
+        model.WidthText = text;
+
+        Assert.Equal(canIncrease, model.CanIncreaseWidth);
+        Assert.Equal(canDecrease, model.CanDecreaseWidth);
+    }
+
     [Fact]
     public void FocusedCaptureField_RecordsAChordIntoTheDraftOnly()
     {

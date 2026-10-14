@@ -109,6 +109,22 @@ public sealed class SettingsViewModel : BindableBase
 
     public string? WidthError { get; private set; }
 
+    public bool CanIncreaseWidth => editor.Width < StrokeWidth.Max;
+
+    public bool CanDecreaseWidth => editor.Width > StrokeWidth.Min;
+
+    /// <summary>
+    /// Changes the width by <paramref name="pixels"/>, kept within the allowed range. Text that is not a whole
+    /// number becomes the minimum width.
+    /// </summary>
+    public void StepWidth(int pixels)
+    {
+        var stepped = int.TryParse(widthText.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var current)
+            ? Math.Clamp((long)current + pixels, StrokeWidth.Min, StrokeWidth.Max)
+            : StrokeWidth.Min;
+        WidthText = stepped.ToString(CultureInfo.InvariantCulture);
+    }
+
     /// <summary>Every reason the draft cannot be saved, one per line; empty when it can.</summary>
     public string Errors { get; private set; } = "";
 
