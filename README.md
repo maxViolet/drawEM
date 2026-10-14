@@ -74,6 +74,24 @@ A full-display screen share is expected to show effects, but this is not yet
 verified on a receiving device. A share of one window may not include them,
 because the effect is a separate window.
 
+## Return to drawEM v3
+
+The first v4 Save converts `%LOCALAPPDATA%\drawEM\settings.json` to a format
+v3 cannot read and keeps the v3 file as `settings.schema1-backup*.json`. To go
+back to v3:
+
+1. Exit drawEM from the tray icon.
+2. Copy the whole `%LOCALAPPDATA%\drawEM\sounds` folder to a backup folder
+   outside `%LOCALAPPDATA%\drawEM`. v3 deletes sound copies its settings do not
+   use, including ones the v4 settings still use.
+3. Rename `settings.json` to `settings.v4.json`.
+4. Copy the newest `settings.schema1-backup*.json` to `settings.json`.
+5. Start v3.
+
+See [Rolling back to a v3 drawEM](src/DrawEM.App/Infrastructure/Settings/README.md#rolling-back-to-a-v3-drawem)
+for the exact backup to choose, how to restore sounds, and how to upgrade
+again.
+
 ## Build and run from source
 
 Publish the self-contained x64 app with the .NET SDK:

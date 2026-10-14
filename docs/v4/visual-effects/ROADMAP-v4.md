@@ -1,7 +1,7 @@
 # drawEM v4 roadmap: built-in Monitor and Cursor effects
 
 **Status:** proposed product and implementation plan. S4-01 is done by owner
-decision with its measurement gates unverified. S4-02, S4-04, S4-05, and S4-06 are done; S4-03 is implemented with one visual check unverified; S4-07 is implemented with its two-monitor checks unverified; S4-08 is implemented with its running-app check unverified; other steps are pending.
+decision with its measurement gates unverified. S4-02, S4-04, S4-05, and S4-06 are done; S4-03 is implemented with one visual check unverified; S4-07 is implemented with its two-monitor checks unverified; S4-08 is implemented with its running-app check unverified; S4-09 and S4-10 are implemented with their running-app checks unverified; S4-11 is implemented with its desktop lifecycle checks and partial startup failure unverified; S4-12 is published with every manual check and measurement unverified, so v4 is not released.
 **Date:** 2026-10-07; revised 2026-10-09 for Lottie effects with two placements.
 **Prerequisite for release:** finish the v3 Step 8 Windows acceptance work.
 Its task file records verification on one 100% monitor, with seven

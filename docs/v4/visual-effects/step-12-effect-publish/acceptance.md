@@ -76,6 +76,7 @@ check says otherwise. Record the result and a short note.
 | 8 | Cursor effect at each monitor edge is clipped to that monitor. | Unverified |
 | 9 | Lifecycle: task switching, display disconnect/reconnect, lock/unlock, suspend/resume, exit during animation. | Unverified |
 | 10 | Cleanup: no effect window or growing handle count after repeated use. | Unverified |
+| 11 | Neither effect flashes more than three times in any one second (S4-03). | Unverified |
 
 ## Measurements
 

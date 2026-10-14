@@ -52,7 +52,7 @@ public sealed class EffectLifecycleTests
     [MemberData(nameof(Events))]
     public void Event_RemovesTheRunningEffect_AndAStartQueuedBeforeItNeverAppears(string name)
     {
-        var app = new Harness();
+        using var app = new Harness();
         var running = app.StartConfetti();
         app.Release(VirtualKeys.D3);
         app.Press(VirtualKeys.D4);
@@ -71,7 +71,7 @@ public sealed class EffectLifecycleTests
     [MemberData(nameof(Events))]
     public void RepeatedEvent_IsSafe_AndLeavesNoEffectOrDeadline(string name)
     {
-        var app = new Harness();
+        using var app = new Harness();
         var running = app.StartConfetti();
 
         app.Raise(name);
@@ -88,7 +88,7 @@ public sealed class EffectLifecycleTests
     [MemberData(nameof(Interruptions))]
     public void Interruption_KeepsDrawingsAndSound(string name)
     {
-        var app = new Harness();
+        using var app = new Harness();
         app.Press(VirtualKeys.LeftControl, VirtualKeys.LeftMenu, VirtualKeys.D1);
         app.Release(VirtualKeys.D1);
         app.Controller.EnterDrawMode(new ScreenPoint(10, 10), Left);
@@ -112,7 +112,7 @@ public sealed class EffectLifecycleTests
     [MemberData(nameof(Interruptions))]
     public void AfterAnInterruption_NothingRestartsByItself_ButAFreshPressStarts(string name)
     {
-        var app = new Harness();
+        using var app = new Harness();
         var interrupted = app.StartConfetti();
 
         app.Raise(name);
@@ -137,7 +137,7 @@ public sealed class EffectLifecycleTests
     [InlineData(SessionSwitchReason.RemoteConnect)]
     public void SessionSwitchOtherThanLock_KeepsTheEffect(SessionSwitchReason reason)
     {
-        var app = new Harness();
+        using var app = new Harness();
         var running = app.StartConfetti();
 
         app.Sessions.Report(reason);
@@ -151,7 +151,7 @@ public sealed class EffectLifecycleTests
     [InlineData(PowerModes.StatusChange)]
     public void PowerChangeOtherThanSuspend_KeepsTheEffect(PowerModes mode)
     {
-        var app = new Harness();
+        using var app = new Harness();
         var running = app.StartConfetti();
 
         app.Sessions.Report(mode);
@@ -196,7 +196,8 @@ public sealed class EffectLifecycleTests
         }
     }
 
-    private sealed class Harness
+    /// <summary>Dispose it: the real Windows sources stay subscribed to <c>SystemEvents</c> until then.</summary>
+    private sealed class Harness : IDisposable
     {
         private readonly Queue<Action> ui = new();
         private readonly FakeKeyboardHookSource keyboard = new();
@@ -314,6 +315,12 @@ public sealed class EffectLifecycleTests
             {
                 action();
             }
+        }
+
+        public void Dispose()
+        {
+            Displays.Dispose();
+            Sessions.Dispose();
         }
     }
 }

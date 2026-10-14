@@ -156,10 +156,10 @@ internal sealed class LottiePlayback : IEffectPlayback
             return;
         }
 
-        frameStarting();
-
+        // A static event keeps this playback alive, so any throw must end it here rather than escape.
         try
         {
+            frameStarting();
             Draw(elapsed.TotalSeconds);
         }
         catch (Exception exception)

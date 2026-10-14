@@ -195,6 +195,37 @@ public class EffectSamplerTests
         Assert.Null(fixture.Channel.ActiveInstance);
     }
 
+    [Theory]
+    [InlineData("unknown effect")]
+    [InlineData("no cursor position")]
+    [InlineData("cursor outside every monitor")]
+    public void SampleThatCannotStart_StopsReportingTheEarlierSamplesFailures(string cause)
+    {
+        var fixture = new Fixture();
+        var editor = fixture.Editor();
+        editor.Sample(Confetti);
+        var effect = FocusRing;
+        switch (cause)
+        {
+            case "unknown effect":
+                effect = new EffectId("missing");
+                break;
+            case "no cursor position":
+                fixture.Cursor.Available = false;
+                break;
+            default:
+                fixture.Cursor.Position = new ScreenPoint(5000, 5000);
+                break;
+        }
+
+        editor.Sample(effect);
+        editor.Failures.Clear();
+        fixture.Surface.Last!.Fail("bad frame");
+
+        Assert.Empty(editor.Failures);
+        Assert.Equal(["bad frame"], fixture.Log);
+    }
+
     [Fact]
     public void Sample_StopsWhenTheCursorEntersAnotherMonitor()
     {
