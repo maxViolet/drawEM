@@ -379,7 +379,7 @@
   },
   "src/DrawEM.App/Infrastructure/NotifyIconTrayHost.cs": {
     "mtime": 1791966387.1918392,
-    "seen": 1791966409.7474153,
+    "seen": 1791966501.233625,
     "ast_hash": "fe53e0e5bc6780b797c2903b7ff98d96",
     "semantic_hash": ""
   },
@@ -625,21 +625,21 @@
   },
   "src/DrawEM.App/Presentation/Settings/SettingsViewModel.cs": {
     "mtime": 1791963189.7676103,
-    "seen": 1791966409.7474532,
+    "seen": 1791963194.529675,
     "ast_hash": "fd0842830fb4f25b798f9bd03c13d689",
     "semantic_hash": "fd0842830fb4f25b798f9bd03c13d689"
   },
   "src/DrawEM.App/Presentation/Settings/SettingsWindow.xaml": {
-    "mtime": 1791966320.4030752,
-    "seen": 1791966409.7474542,
-    "ast_hash": "a6e18f8749f4f7bf24735cd133f6ed57",
-    "semantic_hash": "a6e18f8749f4f7bf24735cd133f6ed57"
+    "mtime": 1791966481.321313,
+    "seen": 1791966501.2336845,
+    "ast_hash": "a5062edfe5ef62a05665d4032df5128e",
+    "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Settings/SettingsWindow.xaml.cs": {
-    "mtime": 1791966320.4030752,
-    "seen": 1791966409.747455,
-    "ast_hash": "9c278dd0bb3850f3dfdb6ed0aa003fd8",
-    "semantic_hash": "9c278dd0bb3850f3dfdb6ed0aa003fd8"
+    "mtime": 1791966481.321313,
+    "seen": 1791966501.233686,
+    "ast_hash": "2880d66ec2861a3062f3d31576854408",
+    "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Sound/Namespace.cs": {
     "mtime": 1791917540.0939767,
@@ -931,15 +931,15 @@
   },
   "tests/DrawEM.Tests/Presentation/Settings/SettingsViewModelTests.cs": {
     "mtime": 1791963189.768615,
-    "seen": 1791966409.7475057,
+    "seen": 1791963194.529727,
     "ast_hash": "0fabde98b499ea1c7001ad041c19f24f",
     "semantic_hash": "0fabde98b499ea1c7001ad041c19f24f"
   },
   "tests/DrawEM.Tests/Presentation/Settings/SettingsWindowTests.cs": {
-    "mtime": 1791966320.4050918,
-    "seen": 1791966409.7475066,
-    "ast_hash": "07373a99059cb5184095da2acdaa092c",
-    "semantic_hash": "07373a99059cb5184095da2acdaa092c"
+    "mtime": 1791966481.321313,
+    "seen": 1791966501.2337646,
+    "ast_hash": "3e0265f2869306bfe5f63c0e43477e09",
+    "semantic_hash": ""
   },
   "tests/DrawEM.Tests/StaThread.cs": {
     "mtime": 1791917540.1182582,
@@ -1003,13 +1003,13 @@
   },
   "README.md": {
     "mtime": 1791966320.3849523,
-    "seen": 1791966409.7475173,
+    "seen": 1791966501.233781,
     "ast_hash": "3b0ccf1a5bbf718eabe3022ef8990dd9",
     "semantic_hash": ""
   },
   "docs/ARCHITECTURE.md": {
     "mtime": 1791966399.8116307,
-    "seen": 1791966409.7475183,
+    "seen": 1791966501.2337825,
     "ast_hash": "7442f8c00c400d21b03c302f01c05a38",
     "semantic_hash": ""
   },
@@ -1783,7 +1783,7 @@
   },
   "tests/DrawEM.Tests/Infrastructure/NotifyIconTrayHostTests.cs": {
     "mtime": 1791966351.6661718,
-    "seen": 1791966409.7474847,
+    "seen": 1791966501.2337315,
     "ast_hash": "d224aaa22f53e91c1217b23706b07a90",
     "semantic_hash": ""
   }
