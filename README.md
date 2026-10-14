@@ -13,7 +13,7 @@ overlay across the desktop.
    draw. Release the keys to finish the stroke.
 3. Press the clear shortcut (default `Ctrl+Alt+X`) to clear drawings on the
    monitor under the pointer.
-4. Right-click the tray icon and choose `Exit` to close the app.
+4. Click or right-click the tray icon and choose `Exit` to close the app.
 
 By default, drawings are OrangeRed (`#FF4500`) and 4 px thick. To change the
 color, line width, or the draw and clear shortcuts, open `Settings…` from the
@@ -35,7 +35,7 @@ shortcut is released, normal input passes through again.
 
 ## Play sounds
 
-1. Right-click the tray icon and choose `Settings…`.
+1. Click or right-click the tray icon and choose `Settings…`.
 2. On the `Actions · 8 slots` tab, set a slot's type to `Sound`.
 3. Choose `Choose file…` and pick a WAV or MP3 file.
 4. Keep the proposed `Ctrl+Alt+<N>` shortcut, where `<N>` is the slot number,
@@ -47,7 +47,7 @@ stops after at most 10 seconds.
 
 ## Show visual effects
 
-1. Right-click the tray icon and choose `Settings…`.
+1. Click or right-click the tray icon and choose `Settings…`.
 2. On the `Actions · 8 slots` tab, set a slot's type to `Effect` and choose
    an effect:
    - `Confetti` (Monitor placement) covers the monitor under the pointer.

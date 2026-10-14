@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.IO.Packaging;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace DrawEM.App.Infrastructure;
@@ -41,8 +42,24 @@ public sealed class NotifyIconTrayHost : ITrayHost
         notifyIcon.ContextMenuStrip.Items.Add(stopEffectsItem);
         notifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
         notifyIcon.ContextMenuStrip.Items.Add(exitItem);
-        notifyIcon.DoubleClick += (_, _) => SettingsRequested?.Invoke();
+        notifyIcon.MouseUp += OnMouseUp;
+        notifyIcon.DoubleClick += (_, _) =>
+        {
+            // The first click of the pair opened the menu; Settings replaces it.
+            notifyIcon.ContextMenuStrip.Close();
+            SettingsRequested?.Invoke();
+        };
     }
+
+    /// <summary>
+    /// NotifyIcon's own menu display, which a right click uses. It brings the menu to the foreground, so the
+    /// menu closes on a click elsewhere; <see cref="ContextMenuStrip.Show()"/> alone does not.
+    /// </summary>
+    private static readonly MethodInfo? ShowContextMenu =
+        typeof(NotifyIcon).GetMethod("ShowContextMenu", BindingFlags.Instance | BindingFlags.NonPublic, Type.EmptyTypes);
+
+    /// <summary>Whether a left click can open the tray menu, as a right click does.</summary>
+    public static bool CanShowMenuOnLeftClick => ShowContextMenu is not null;
 
     public event Action? ExitRequested;
 
@@ -51,6 +68,14 @@ public sealed class NotifyIconTrayHost : ITrayHost
     public event Action? StopEffectsRequested;
 
     public void Show() => notifyIcon.Visible = true;
+
+    private void OnMouseUp(object? sender, MouseEventArgs e)
+    {
+        if (e.Button == MouseButtons.Left)
+        {
+            ShowContextMenu?.Invoke(notifyIcon, null);
+        }
+    }
 
     public void Dispose()
     {
