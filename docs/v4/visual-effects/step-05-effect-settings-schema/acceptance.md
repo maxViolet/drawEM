@@ -16,7 +16,9 @@
 - Rollback: "Rolling back to a v3 drawEM" in `src/DrawEM.App/Infrastructure/Settings/README.md`, including keeping the v4 file, choosing the highest-numbered backup, and the case with no backup.
 - Tests: `tests/DrawEM.Tests/Infrastructure/Settings/JsonSettingsStoreTests.cs` (schema 1 load without writes, schema 2 round-trip and payload shape, invalid schema 2 files, invalid UTF-8, effect in schema 1, backup creation, second upgrade after a rollback, A → B → A upgrades, restored backup not copied twice, no backup for damaged or missing schema 1 files, backup failure, replace failure after backup) and `tests/DrawEM.Tests/Infrastructure/Sound/ManagedSoundLibraryTests.cs` (sound-to-effect slot change, startup with mixed slots).
 - Review: code, security, and spec reviewers ran on PR #60. Their findings (damaged schema 1 file taken as the backup, a second upgrade replacing newer v3 settings without a copy, invalid UTF-8 stopping startup, and stale rollback and status text) are fixed in this step. A follow-up review found that restoring an older backup and upgrading again (A → B → A) made no new backup, so "restore the newest backup" restored B; backups are now numbered and compared only with the highest-numbered one.
-- Not yet connected: shortcut bindings (S4-06) ignore effect slots, so a saved effect slot's shortcut does nothing yet; the Settings window (S4-08) cannot assign effects.
+- Not connected when this step merged: shortcut bindings ignored effect slots, so a saved effect slot's shortcut did nothing, and the Settings window could not assign effects. S4-06 later connected the shortcuts and S4-08 the Settings window.
+
+- Documentation review: `2867663` clarified preserving separate v3/v4 settings, cleanup on any v4 Save including migration, and numbered backups in the roadmap and plan. A subsequent documentation check clarified backing up the whole hash-named `sounds` folder before either version switch and restoring it before starting the version with matching settings. The manual version-switch check remains unverified.
 
 ## Validation
 

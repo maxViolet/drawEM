@@ -1,7 +1,7 @@
 # Graph Report - worktree-silver-river-9b47  (2026-10-14)
 
 ## Corpus Check
-- 290 files · ~117,175 words
+- 290 files · ~117,357 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: (none) 10, .ico 1, .pubxml 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f3b1905f`
+- Built from commit: `0e7cf94c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -27,7 +27,7 @@
 - GlobalShortcutAdapterTests
 - InlineData
 - SettingsViewModel
-- DrawEM.App.Domain.Effects
+- SettingsViewModel.cs
 - MonitorBounds
 - drawEM architecture
 - App.xaml.cs
@@ -48,12 +48,12 @@
 - ShortcutModifiers
 - Action
 - GlobalShortcutAdapter
-- EffectId
+- BuiltInEffectAnimations
 - Fixture
 - Rig
 - RuntimeMediaTests
 - DrawEM.Tests.Infrastructure
-- DrawEM.App.Domain.Settings
+- DrawEM.App.Domain.Effects
 - FEAT-005: Assisted E2E Runner
 - v4: simple implementation steps
 - Harness
@@ -66,7 +66,7 @@
 - ManagedSoundLibrary
 - SettingsSnapshot
 - EffectChannelController
-- ManualTimeProvider
+- App
 - Harness
 - DrawEM.App.Application.Sound
 - SlotViewModel
@@ -76,55 +76,56 @@
 - .Save
 - ShortcutBindings
 - ShortcutBindingsTests
-- DllImport
+- NativeMethods
 - S4-11 Acceptance criteria
 - EffectSurfaceWindow
-- MediaSoundPlayer
+- DrawEM.App.Domain.Settings
 - SettingsWindow
 - DrawEM.Tests.csproj
 - drawEM v4: parallel work packages
-- drawEM v3 Roadmap: Drawing and Action Settings
 - ShortcutFieldViewModel
+- ManualTimeProvider
 - Program.cs
 - EffectSurfaceLayout
-- SoundId
+- MediaSoundPlayer
 - EffectMonitorGuard
 - IntPtr
-- LoggingEffectFailureReporter
+- drawEM v3 Roadmap: Drawing and Action Settings
 - .Deserialize
-- SoundFailure
+- SoundId
 - SoundSlot
 - .RunAll
-- Theory
+- LoggingEffectFailureReporter
 - IDisposable
 - Win32MouseHookSource
 - NativeFunctionBridgeRuleTests
 - Sound infrastructure README
 - system_runtime_interopservices
 - DrawEM.App.Domain.Drawing
-- BuiltInEffectAnimations
-- S4-10 Acceptance criteria
+- .Digit
+- SoundFailure
 - EffectChannelController
 - drawEM README
-- App
-- .Digit
+- S4-10 Acceptance criteria
+- DllImport
 - SettingsSnapshot.cs
 - FIX-006: Single Screen Edge
 - .Key
 - S4-12 Acceptance criteria
 - FakeSampler
 - SettingsErrorCode
+- Theory
 - FakePlayer
-- Task
 - S4-09 Acceptance criteria
-- FakeEffectSampler
+- EffectId
 - FakeCapture
-- NativeMethods
+- FakePicker
 - KeyDirection
 - ADR 0001: Lottie built-in effects
-- FakePicker
+- FakeEffectSampler
 - ErrorsText
 - HexBox
+- Task
 - F03 harness results
 - Lottie Simple License (Design Barn Inc.)
 - SettableCursor
@@ -134,7 +135,6 @@
 - Orange Brush Stroke Glyph
 - Sound domain README
 - Sound presentation placeholder README
-- SettingsViewModel.cs
 
 ## God Nodes (most connected - your core abstractions)
 1. `ScreenPoint` - 133 edges
@@ -162,27 +162,6 @@
 
 ## Import Cycles
 - None detected.
-
-## Hyperedges (group relationships)
-- **Draw shortcut input flow** — docs_architecture_win32keyboardhookadapter, docs_architecture_drawingmodeinputgate, docs_architecture_win32mousehookadapter, docs_architecture_drawingsessioncontroller, docs_architecture_overlaywindow [EXTRACTED 1.00]
-- **Effect shortcut launch path** — docs_v4_visual_effects_step_06_effect_shortcuts_acceptance_shortcutbindings, docs_v4_visual_effects_step_06_effect_shortcuts_acceptance_globalshortcutadapter, docs_v4_visual_effects_step_06_effect_shortcuts_acceptance_trystartonceperpress, docs_v4_visual_effects_step_06_effect_shortcuts_acceptance_configurationgeneration, docs_v4_visual_effects_step_06_effect_shortcuts_acceptance_starteffectcommand, docs_v4_visual_effects_step_06_effect_shortcuts_acceptance_effectchannelcontroller [EXTRACTED 1.00]
-- **Pointer-move path deciding monitor change** — docs_v3_additional_fixes_fix_006_single_screen_edge_task_globalmouseinputadapter, docs_v3_additional_fixes_fix_006_single_screen_edge_task_drawingmodeinputgate, docs_v3_additional_fixes_fix_006_single_screen_edge_task_drawingsessioncontroller, docs_v3_additional_fixes_fix_006_single_screen_edge_task_imonitorboundssource, docs_v3_additional_fixes_fix_006_single_screen_edge_task_monitorbounds [EXTRACTED 1.00]
-- **S4-07 monitor-transition stop flow** — docs_v4_visual_effects_step_07_effect_monitor_transitions_acceptance_effectmonitorguard, docs_v4_visual_effects_step_07_effect_monitor_transitions_acceptance_monitor_epoch, docs_v4_visual_effects_step_07_effect_monitor_transitions_acceptance_stopstartedbefore, docs_v4_visual_effects_step_07_effect_monitor_transitions_acceptance_ieffectstartqueue, docs_v4_visual_effects_step_07_effect_monitor_transitions_acceptance_win32displaychangesource, docs_v4_visual_effects_step_07_effect_monitor_transitions_acceptance_checkcursor [EXTRACTED 1.00]
-- **Settings save sequence** — docs_architecture_settingssaveoperation, docs_architecture_soundchannelhost, docs_architecture_globalshortcutadapter, docs_architecture_activesettings, docs_architecture_settingssnapshot [EXTRACTED 1.00]
-- **Settings UI effect selection layers** — docs_v4_visual_effects_step_08_effect_settings_ui_acceptance_settingseditor, docs_v4_visual_effects_step_08_effect_settings_ui_acceptance_settingsviewmodel, docs_v4_visual_effects_step_08_effect_settings_ui_acceptance_effectoption, src_drawem_app_presentation_settings_settingswindow [EXTRACTED 1.00]
-- **Global sound channel playback pipeline** — src_drawem_app_infrastructure_sound_readme_globalshortcutadapter, src_drawem_app_infrastructure_sound_readme_soundchannelhost, src_drawem_app_application_sound_readme_soundchannelcontroller, src_drawem_app_application_sound_readme_isoundplayerfactory, src_drawem_app_infrastructure_sound_readme_mediasoundplayerfactory, src_drawem_app_infrastructure_sound_readme_loggingsoundfailurereporter [EXTRACTED 1.00]
-- **v3 delivery order: Steps 1-8 dependency chain** — docs_v3_step_1_settings_task, docs_v3_step_2_sound_library_task, docs_v3_step_3_action_routing_task, docs_v3_step_4_shortcut_capture_task, docs_v3_step_5_drawing_style_task, docs_v3_step_6_runtime_settings_task, docs_v3_step_7_settings_window_task, docs_v3_step_8_publish_task [EXTRACTED 1.00]
-- **Lottie performance gate and fallbacks** — docs_v4_visual_effects_step_03_built_in_effects_plan_s4_03_1_speed_gate, docs_v4_visual_effects_roadmap_v4_release_targets, docs_v4_visual_effects_roadmap_v4_half_resolution_fallback, docs_v4_visual_effects_step_03_built_in_effects_acceptance_target_revision [EXTRACTED 1.00]
-- **v4 release evidence gating** — docs_v4_visual_effects_step_12_effect_publish_acceptance_automated_gate, docs_v4_visual_effects_step_12_effect_publish_acceptance_published_app_checks, docs_v4_visual_effects_step_12_effect_publish_acceptance_measurements, docs_v4_visual_effects_step_12_effect_publish_acceptance_screen_sharing, docs_v4_visual_effects_step_12_effect_publish_acceptance_release_blockers, docs_v4_visual_effects_roadmap_v4_v3_step_8 [EXTRACTED 1.00]
-- **Effect settings persistence flow (schema 2, store, catalog, backups)** — docs_v4_visual_effects_step_05_effect_settings_schema_acceptance_settingsjson, src_drawem_app_infrastructure_settings_readme_jsonsettingsstore, src_drawem_app_infrastructure_settings_readme_effectcatalog, docs_v4_visual_effects_step_05_effect_settings_schema_acceptance_numbered_schema1_backups, src_drawem_app_infrastructure_settings_readme_schema_version_2 [INFERRED 0.85]
-- **Effect start pipeline (shortcut/Sample -> guard -> channel -> surface -> player)** — docs_v4_visual_effects_roadmap_v4_globalshortcutadapter, docs_v4_visual_effects_step_09_effect_sample_acceptance_effectsampler, docs_v4_visual_effects_roadmap_v4_effectmonitorguard, docs_v4_visual_effects_roadmap_v4_effectchannelcontroller, docs_v4_visual_effects_roadmap_v4_lottieeffectsurface, docs_v4_visual_effects_roadmap_v4_skiasharp_skottie [INFERRED 0.85]
-- **Effect stop/interruption paths** — docs_v4_visual_effects_step_11_effect_lifecycle_acceptance_stopeffects, docs_v4_visual_effects_step_11_effect_lifecycle_acceptance_effectstoproutes, docs_v4_visual_effects_step_11_effect_lifecycle_acceptance_win32sessioninterruptionsource, docs_v4_visual_effects_step_11_effect_lifecycle_acceptance_win32displaychangesource, docs_v4_visual_effects_step_11_effect_lifecycle_acceptance_trayapplication, docs_v4_visual_effects_roadmap_v4_settingssaveoperation [INFERRED 0.85]
-- **Manual acceptance evidence documents** — docs_v1_smoke_test_file, docs_v1_s07_acceptance_results_file, docs_v1_steps_s07_acceptance_pass_plan_file, docs_v2_stage_1_acceptance_results_file [INFERRED 0.85]
-- **Stage 1 sound pipeline: shortcut to channel to player to failure log** — docs_v2_stage_1_step_3_sound_shortcuts_plan_globalshortcutadapter, docs_v2_stage_1_step_2_sound_channel_review_soundchannelhost, docs_v2_stage_1_step_2_sound_channel_review_soundchannelcontroller, docs_v2_stage_1_step_2_sound_channel_review_mediasoundplayer, docs_v2_stage_1_step_2_sound_channel_review_loggingsoundfailurereporter, docs_v2_stage_1_step_1_sound_command_review_soundfailurelog [INFERRED 0.85]
-- **Keyboard layout safety: Right Alt/AltGr and layout-switch prevention** — docs_v3_step_1_settings_plan_right_alt_reserved_altgr, docs_v3_step_3_action_routing_plan_right_alt_key_state_detection, docs_v3_step_4_shortcut_capture_plan_tagged_vk_0xe8_injection, docs_v3_step_8_publish_plan_layout_switch_release_blocker, docs_v3_step_8_publish_plan_test_layouts [INFERRED 0.85]
-- **AltGr and input-layout protection in global keyboard hook** — docs_v3_roadmap_v3_right_alt_altgr_reserved, docs_v3_roadmap_v3_neutral_key_injection, docs_v3_roadmap_v3_shortcut_capture_mode, docs_v3_step_8_acceptance_results_input_language_hotkey_checks, docs_v3_additional_fixes_feat_005_e2e_runner_task_keyboardhookevents_neutralkeytag [INFERRED 0.85]
-- **Save publication flow: persist, stop sound, clear, publish, media cleanup** — docs_v3_step_6_runtime_settings_plan_save_operation, docs_v3_step_6_runtime_settings_acceptance_start_lock, docs_v3_step_6_runtime_settings_plan_fresh_press_after_save, docs_v3_step_2_sound_library_task_orphan_cleanup, docs_v3_step_6_runtime_settings_task_active_settings_snapshot, docs_v3_step_7_settings_window_plan_settings_draft [INFERRED 0.85]
-- **Shortcut-to-screen effect pipeline** — docs_v4_visual_effects_roadmap_v4_globalshortcutadapter, docs_v4_visual_effects_roadmap_v4_effectmonitorguard, docs_v4_visual_effects_roadmap_v4_effectchannelcontroller, docs_v4_visual_effects_roadmap_v4_ieffectsurface, docs_v4_visual_effects_step_03_built_in_effects_acceptance_lottieeffectsurface [INFERRED 0.85]
 
 ## Communities (119 total, 15 thin omitted)
 
@@ -229,10 +208,6 @@ Nodes (4): LayerDependencyTests, AllowedLayerDependencies, NativeFunctionBridgeR
 ### Community 10 - "SettingsViewModel"
 Cohesion: 0.09
 Nodes (14): SettingsViewModel, CanSave, Clear, Color, DraftColor, Draw, Errors, Fields (+6 more)
-
-### Community 11 - "DrawEM.App.Domain.Effects"
-Cohesion: 0.14
-Nodes (7): DrawEM.App.Domain.Effects, DrawEM.Tests.Application.Effects, DrawEM.Tests.Infrastructure.Effects, DrawEM.App.Infrastructure.Effects, DrawEM.App.Application.Effects, IDisplayChangeSource, FakeDisplayChangeSource
 
 ### Community 12 - "MonitorBounds"
 Cohesion: 0.13
@@ -306,9 +281,9 @@ Nodes (9): ISoundFailureReporter, PlaySoundCommand, SampleFailureRouter, SoundSa
 Cohesion: 0.10
 Nodes (8): Captured, GlobalShortcutAdapter, IsCapturing, ICursorPositionSource, Win32CursorPositionSource, IEffectStartQueue, INeutralKeyEmitter, FailingCursorPositionSource
 
-### Community 32 - "EffectId"
-Cohesion: 0.21
-Nodes (6): DrawEM.Tests.Domain.Effects, EffectCatalog, BuiltIn, EffectId, Value, EffectCatalogTests
+### Community 32 - "BuiltInEffectAnimations"
+Cohesion: 0.29
+Nodes (3): BuiltInEffectAnimations, BuiltInEffectAnimationsTests, BuiltInIds
 
 ### Community 33 - "Fixture"
 Cohesion: 0.11
@@ -326,9 +301,9 @@ Nodes (13): ActiveSettings, Current, NoSettingsFailures, RuntimeMediaTests, Libr
 Cohesion: 0.12
 Nodes (4): DrawEM.Tests.Infrastructure, DrawEM.Tests, CleanupSteps, StaThread
 
-### Community 37 - "DrawEM.App.Domain.Settings"
-Cohesion: 0.18
-Nodes (10): DrawEM.App.Infrastructure, DrawEM.App.Domain.Settings, DrawEM.App.Application.Drawing, DrawEM.App.Infrastructure.Drawing, DrawEM.App.Domain.Sound, DrawEM.Tests.Infrastructure.Drawing, DrawEM.Tests.Application.Drawing, DrawEM.Tests.Infrastructure.Settings (+2 more)
+### Community 37 - "DrawEM.App.Domain.Effects"
+Cohesion: 0.14
+Nodes (7): DrawEM.App.Domain.Effects, DrawEM.Tests.Application.Effects, DrawEM.Tests.Infrastructure.Effects, DrawEM.App.Infrastructure.Effects, DrawEM.App.Application.Effects, IDisplayChangeSource, FakeDisplayChangeSource
 
 ### Community 38 - "FEAT-005: Assisted E2E Runner"
 Cohesion: 0.13
@@ -378,9 +353,9 @@ Nodes (17): ISoundLibrary, SoundCleanupFailure, SettingsSnapshot, ClearShortcut,
 Cohesion: 0.11
 Nodes (16): EffectChannelController, ActiveInstance, Run, Deadline, Instance, OnCompleted, OnFailed, Playback (+8 more)
 
-### Community 50 - "ManualTimeProvider"
-Cohesion: 0.16
-Nodes (5): ManualTimeProvider, ActiveTimerCount, TimestampFrequency, ManualTimer, DueAt
+### Community 50 - "App"
+Cohesion: 0.08
+Nodes (7): Application, App, EffectStopRoutes, ISessionInterruptionSource, Win32DisplayChangeSource, Win32SessionInterruptionSource, WpfApplicationLifetime
 
 ### Community 51 - "Harness"
 Cohesion: 0.12
@@ -414,9 +389,9 @@ Nodes (10): Invalid, ISaveSoundChannel, ISettingsSaveNotifications, NotSaved, Sa
 Cohesion: 0.13
 Nodes (15): SettingsStartup, StartupSettings, EffectBinding, KeyChord, ShortcutBindings, Clear, Draw, Effects (+7 more)
 
-### Community 60 - "DllImport"
-Cohesion: 0.21
-Nodes (4): NativeMethods, POINT, RECT, NativeMethods
+### Community 60 - "NativeMethods"
+Cohesion: 0.18
+Nodes (6): MONITORINFO, MSLLHOOKSTRUCT, NativeMethods, POINT, RECT, Win32MonitorBoundsSource
 
 ### Community 61 - "S4-11 Acceptance criteria"
 Cohesion: 0.24
@@ -426,9 +401,9 @@ Nodes (13): EffectMonitorGuard, Hook input ordering and monitor epoch, S4-11 Acc
 Cohesion: 0.15
 Nodes (3): EffectSurfaceWindow, Layout, LottiePlayback
 
-### Community 63 - "MediaSoundPlayer"
-Cohesion: 0.17
-Nodes (3): SoundPlaybackException, MediaSoundPlayer, MediaSoundPlayerFactory
+### Community 63 - "DrawEM.App.Domain.Settings"
+Cohesion: 0.18
+Nodes (10): DrawEM.App.Infrastructure, DrawEM.App.Domain.Settings, DrawEM.App.Application.Drawing, DrawEM.App.Infrastructure.Drawing, DrawEM.App.Domain.Sound, DrawEM.Tests.Infrastructure.Drawing, DrawEM.Tests.Application.Drawing, DrawEM.Tests.Infrastructure.Settings (+2 more)
 
 ### Community 64 - "SettingsWindow"
 Cohesion: 0.16
@@ -442,13 +417,13 @@ Nodes (12): coverlet.collector (10.1.0), Microsoft.NET.Test.Sdk (18.10.1), NetAr
 Cohesion: 0.18
 Nodes (16): drawEM v4: out of scope, drawEM v4: parallel work packages, AGENTS.md branch and PR rules, Release publishing package (R4-xx), Shared files (App.xaml.cs, DrawEM.App.csproj, README.md, ci.yml), v3 Step 8 Windows acceptance gate, Visual effects package (S4-01..S4-12), drawEM v4: release publishing (+8 more)
 
-### Community 67 - "drawEM v3 Roadmap: Drawing and Action Settings"
-Cohesion: 0.16
-Nodes (12): SoundSlot, Eight Sound Slots Ctrl+Alt+1..8, v3 Additional Fixes, drawEM v3 Roadmap: Drawing and Action Settings, Eight Numbered Action Slots, Managed Sound Library, Settings Persistence and Startup Fallback, Settings Window (Drawing and Actions tabs) (+4 more)
-
-### Community 68 - "ShortcutFieldViewModel"
+### Community 67 - "ShortcutFieldViewModel"
 Cohesion: 0.14
 Nodes (10): BindableBase, ShortcutFieldViewModel, Command, Error, IsCapturing, IsEnabled, Message, Shortcut (+2 more)
+
+### Community 68 - "ManualTimeProvider"
+Cohesion: 0.16
+Nodes (5): ManualTimeProvider, ActiveTimerCount, TimestampFrequency, ManualTimer, DueAt
 
 ### Community 69 - "Program.cs"
 Cohesion: 0.08
@@ -458,21 +433,21 @@ Nodes (6): RenderLagHarness, DrawEM.App.Infrastructure.Settings, ShortcutKeyKind
 Cohesion: 0.22
 Nodes (6): EffectSurfaceLayout, DpiScale, LocalBounds, LocalSize, Monitor, EffectSurfaceCoordinateTests
 
-### Community 71 - "SoundId"
-Cohesion: 0.14
-Nodes (8): SoundId, Value, FakePlayer, Calls, Sound, FakePlayerFactory, Created, OnStop
+### Community 71 - "MediaSoundPlayer"
+Cohesion: 0.17
+Nodes (3): SoundPlaybackException, MediaSoundPlayer, MediaSoundPlayerFactory
 
 ### Community 73 - "IntPtr"
 Cohesion: 0.24
 Nodes (6): KBDLLHOOKSTRUCT, KEYBDINPUT, MOUSEINPUT, NativeMethods, Win32KeyboardHookSource, Events
 
-### Community 74 - "LoggingEffectFailureReporter"
-Cohesion: 0.26
-Nodes (5): EffectFailure, EffectFailureLog, DefaultPath, LoggingEffectFailureReporter, EffectFailureLogTests
+### Community 74 - "drawEM v3 Roadmap: Drawing and Action Settings"
+Cohesion: 0.16
+Nodes (12): SoundSlot, Eight Sound Slots Ctrl+Alt+1..8, v3 Additional Fixes, drawEM v3 Roadmap: Drawing and Action Settings, Eight Numbered Action Slots, Managed Sound Library, Settings Persistence and Startup Fallback, Settings Window (Drawing and Actions tabs) (+4 more)
 
-### Community 76 - "SoundFailure"
-Cohesion: 0.28
-Nodes (5): SoundFailure, SoundFailureLog, DefaultPath, TextFileLogSink, SoundFailureLogTests
+### Community 76 - "SoundId"
+Cohesion: 0.14
+Nodes (8): SoundId, Value, FakePlayer, Calls, Sound, FakePlayerFactory, Created, OnStop
 
 ### Community 77 - "SoundSlot"
 Cohesion: 0.14
@@ -482,9 +457,9 @@ Nodes (12): SoundAssignment, SoundAssignments, Slots, SoundSlot, Slot1, Slot2, S
 Cohesion: 0.17
 Nodes (3): SingleInstanceGuard, DefaultName, SingleInstanceGuardTests
 
-### Community 79 - "Theory"
+### Community 79 - "LoggingEffectFailureReporter"
 Cohesion: 0.26
-Nodes (3): EffectLifecycleTests, Events, Interruptions
+Nodes (5): EffectFailure, EffectFailureLog, DefaultPath, LoggingEffectFailureReporter, EffectFailureLogTests
 
 ### Community 80 - "IDisposable"
 Cohesion: 0.12
@@ -502,13 +477,13 @@ Nodes (14): Sound application README, ActiveSettings, ISoundFailureReporter, ISo
 Cohesion: 0.17
 Nodes (4): DrawEM.App.Presentation.Effects, DrawEM.App.Domain.Drawing, DrawEM.Tests.Presentation.Effects, RetiredSoundAssignmentsTests
 
-### Community 86 - "BuiltInEffectAnimations"
-Cohesion: 0.29
-Nodes (3): BuiltInEffectAnimations, BuiltInEffectAnimationsTests, BuiltInIds
+### Community 86 - ".Digit"
+Cohesion: 0.38
+Nodes (3): ShortcutKey, Kind, Value
 
-### Community 87 - "S4-10 Acceptance criteria"
-Cohesion: 0.22
-Nodes (10): GlobalShortcutAdapter, SettingsSaveOperation, Configuration generation, S4-10 Acceptance criteria, Managed sound copy removal on Sound->Effect change, S4-10 running-app check (unverified), Save interrupt sequence (stop sound, Interrupt, stop effect channel, publish), S4-10 plan: apply settings safely (+2 more)
+### Community 87 - "SoundFailure"
+Cohesion: 0.28
+Nodes (5): SoundFailure, SoundFailureLog, DefaultPath, TextFileLogSink, SoundFailureLogTests
 
 ### Community 88 - "EffectChannelController"
 Cohesion: 0.24
@@ -518,13 +493,13 @@ Nodes (11): Effect channel, Effect instance, EffectChannelController, IEffectSur
 Cohesion: 0.28
 Nodes (9): Screen sharing checks, Continuous integration and release workflow, Clear shortcut (Ctrl+Alt+X), Current limits and plans, drawEM README, Draw shortcut (Ctrl+Alt+Z), drawEM tray app, Play sounds (Actions slots) (+1 more)
 
-### Community 90 - "App"
-Cohesion: 0.08
-Nodes (7): Application, App, EffectStopRoutes, ISessionInterruptionSource, Win32DisplayChangeSource, Win32SessionInterruptionSource, WpfApplicationLifetime
+### Community 90 - "S4-10 Acceptance criteria"
+Cohesion: 0.22
+Nodes (10): GlobalShortcutAdapter, SettingsSaveOperation, Configuration generation, S4-10 Acceptance criteria, Managed sound copy removal on Sound->Effect change, S4-10 running-app check (unverified), Save interrupt sequence (stop sound, Interrupt, stop effect channel, publish), S4-10 plan: apply settings safely (+2 more)
 
-### Community 91 - ".Digit"
-Cohesion: 0.38
-Nodes (3): ShortcutKey, Kind, Value
+### Community 91 - "DllImport"
+Cohesion: 0.21
+Nodes (4): NativeMethods, POINT, RECT, NativeMethods
 
 ### Community 92 - "SettingsSnapshot.cs"
 Cohesion: 0.29
@@ -546,7 +521,11 @@ Nodes (5): FakeSampler, Forgets, Samples, StopConfirmed, Stops
 Cohesion: 0.22
 Nodes (9): SettingsErrorCode, DuplicateShortcut, InvalidShortcut, InvalidWidth, MissingEffect, MissingShortcut, MissingSound, SlotLayout (+1 more)
 
-### Community 98 - "FakePlayer"
+### Community 98 - "Theory"
+Cohesion: 0.26
+Nodes (3): EffectLifecycleTests, Events, Interruptions
+
+### Community 99 - "FakePlayer"
 Cohesion: 0.29
 Nodes (6): FakePlayer, Calls, DisposeFailure, IsDisposed, Sound, StopFailure
 
@@ -554,31 +533,31 @@ Nodes (6): FakePlayer, Calls, DisposeFailure, IsDisposed, Sound, StopFailure
 Cohesion: 0.33
 Nodes (9): SettingsEditor, S4-09 Acceptance criteria, EffectSampleFailureRouter, EffectSampler, IEffectSampler port, Sample draft effect preview, S4-09 Windows check (unverified), S4-09 plan: preview draft effects (+1 more)
 
-### Community 101 - "FakeEffectSampler"
-Cohesion: 0.29
-Nodes (4): FakeEffectSampler, Forgets, Samples, Stops
+### Community 101 - "EffectId"
+Cohesion: 0.21
+Nodes (6): DrawEM.Tests.Domain.Effects, EffectCatalog, BuiltIn, EffectId, Value, EffectCatalogTests
 
 ### Community 102 - "FakeCapture"
 Cohesion: 0.25
 Nodes (4): IShortcutCapture, FakeCapture, Current, Ended
 
-### Community 103 - "NativeMethods"
-Cohesion: 0.18
-Nodes (6): MONITORINFO, MSLLHOOKSTRUCT, NativeMethods, POINT, RECT, Win32MonitorBoundsSource
+### Community 103 - "FakePicker"
+Cohesion: 0.29
+Nodes (5): ISoundFilePicker, FakePicker, Next, Picking, Picks
 
 ### Community 104 - "KeyDirection"
 Cohesion: 0.25
 Nodes (5): IKeyboardHookSource, KeyDirection, Down, Up, KeyboardHookEvents
 
-### Community 107 - "FakePicker"
+### Community 106 - "FakeEffectSampler"
 Cohesion: 0.29
-Nodes (5): ISoundFilePicker, FakePicker, Next, Picking, Picks
+Nodes (4): FakeEffectSampler, Forgets, Samples, Stops
 
-### Community 108 - "ErrorsText"
+### Community 107 - "ErrorsText"
 Cohesion: 0.40
 Nodes (5): Errors, Status, ErrorsText, StatusText, TextBlock
 
-### Community 109 - "HexBox"
+### Community 108 - "HexBox"
 Cohesion: 0.40
 Nodes (5): HexText, WidthText, HexBox, WidthBox, TextBox
 
@@ -610,16 +589,16 @@ Nodes (3): Freehand Drawn Stroke Motif, drawEM Prototype Tray Icon, v3 Step 7 Se
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `drawEM v3 Roadmap: Drawing and Action Settings` connect `drawEM v3 Roadmap: Drawing and Action Settings` to `v3 Step 8: Publish and verify on Windows (task)`, `Stage 1 sound implementation plan`, `drawEM architecture`, `Stage 1 Step 2 Review`?**
-  _High betweenness centrality (0.117) - this node is a cross-community bridge._
+- **Why does `Window` connect `Window` to `HexBox`, `SettingsWindow`, `ErrorsText`, `S4-05 acceptance: save and load effect assignments`?**
+  _High betweenness centrality (0.113) - this node is a cross-community bridge._
 - **Are the 84 inferred relationships involving `ScreenPoint` (e.g. with `.HookCallback()` and `.PushMonitorClip()`) actually correct?**
   _`ScreenPoint` has 84 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `CompletedStrokes`, `ActiveInstance`, `Instance` to the rest of the system?**
   _456 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `StrokeRenderElement` be split into smaller, more focused modules?**
   _Cohesion score 0.07058823529411765 - nodes in this community are weakly interconnected._
-- **Why does `Window` connect `Window` to `ErrorsText`, `SettingsWindow`, `S4-05 acceptance: save and load effect assignments`, `HexBox`?**
-  _High betweenness centrality (0.116) - this node is a cross-community bridge._
+- **Why does `v3 Step 8: Publish and verify on Windows (task)` connect `v3 Step 8: Publish and verify on Windows (task)` to `drawEM v3 Roadmap: Drawing and Action Settings`, `FEAT-005: Assisted E2E Runner`?**
+  _High betweenness centrality (0.113) - this node is a cross-community bridge._
 - **Are the 40 inferred relationships involving `DrawingSessionController` (e.g. with `.ClearAndExitDrawMode_RemovesCompletedAndActiveStrokes()` and `.ClearMonitor_PreservesStrokesOnOtherMonitor()`) actually correct?**
   _`DrawingSessionController` has 40 INFERRED edges - model-reasoned connections that need verification._
 - **Should `Fixture` be split into smaller, more focused modules?**
