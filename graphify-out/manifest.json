@@ -1392,10 +1392,10 @@
     "semantic_hash": "4231e91a139fb9201fc4a57707f646a8"
   },
   "docs/v4/out-of-scope/README.md": {
-    "mtime": 1791917539.9935272,
-    "seen": 1791918320.9444504,
-    "ast_hash": "e9c83d5576f366b7088231951646726f",
-    "semantic_hash": "e9c83d5576f366b7088231951646726f"
+    "mtime": 1791971319.8554034,
+    "seen": 1791971500.2567503,
+    "ast_hash": "c0f934f01e19a263f7bedfa5d7874a98",
+    "semantic_hash": ""
   },
   "docs/v4/release-publishing/README.md": {
     "mtime": 1791917539.9935272,
@@ -1863,6 +1863,24 @@
     "mtime": 1791967942.7846694,
     "seen": 1791968286.9342926,
     "ast_hash": "e7688505fb1014741966dda9f33d927c",
+    "semantic_hash": ""
+  },
+  "docs/v4/out-of-scope/FEAT-009-effect-loop-and-limit/acceptance.md": {
+    "mtime": 1791971319.4451802,
+    "seen": 1791971500.256742,
+    "ast_hash": "49615a50a408b544186894589b18dfb3",
+    "semantic_hash": ""
+  },
+  "docs/v4/out-of-scope/FEAT-009-effect-loop-and-limit/plan.md": {
+    "mtime": 1791971319.3584838,
+    "seen": 1791971500.2567458,
+    "ast_hash": "c02124282215036353556bbfa4ecd46f",
+    "semantic_hash": ""
+  },
+  "docs/v4/out-of-scope/FEAT-009-effect-loop-and-limit/task.md": {
+    "mtime": 1791971328.311214,
+    "seen": 1791971500.2567477,
+    "ast_hash": "206f2f8be6261126b075c08270e8c86c",
     "semantic_hash": ""
   }
 }
