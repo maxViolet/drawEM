@@ -15,4 +15,4 @@ Each task gets its own folder here with `task.md`, `plan.md`, and
 
 ## Tasks
 
-None yet.
+- [FEAT-009: loop an effect and set its length limit per slot](FEAT-009-effect-loop-and-limit/task.md)
