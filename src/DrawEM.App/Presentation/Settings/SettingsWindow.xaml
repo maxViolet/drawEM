@@ -6,7 +6,6 @@
         Width="816"
         Height="768"
         MinWidth="672"
-        MinHeight="624"
         WindowStartupLocation="CenterScreen"
         ShowInTaskbar="True"
         FontFamily="Segoe UI"
@@ -15,12 +14,9 @@
         Icon="pack://application:,,,/DrawEM.App;component/Assets/drawEM.ico">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="Visible" />
-        <!-- The whole window is drawn 20% larger. Pop-ups (drop-down items, tooltips) are separate visual trees,
-             so their styles below apply the same scale. The window sizes above are the unscaled sizes times 1.2. -->
+        <!-- The whole window is drawn 20% larger. A drop-down takes the scale of its combo box, but a tooltip
+             does not, so the tooltip style applies it. The window's default height is cut to the work area in code. -->
         <ScaleTransform x:Key="UiScale" ScaleX="1.2" ScaleY="1.2" />
-        <Style TargetType="ComboBoxItem">
-            <Setter Property="LayoutTransform" Value="{StaticResource UiScale}" />
-        </Style>
         <Style TargetType="ToolTip">
             <Setter Property="LayoutTransform" Value="{StaticResource UiScale}" />
         </Style>
@@ -192,8 +188,7 @@
                                                                 <GroupStyle.HeaderTemplate>
                                                                     <DataTemplate>
                                                                         <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"
-                                                                                   Foreground="#647080" Margin="4,4,4,2"
-                                                                                   LayoutTransform="{StaticResource UiScale}" />
+                                                                                   Foreground="#647080" Margin="4,4,4,2" />
                                                                     </DataTemplate>
                                                                 </GroupStyle.HeaderTemplate>
                                                             </GroupStyle>
