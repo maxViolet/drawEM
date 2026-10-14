@@ -3,10 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:DrawEM.App.Presentation.Settings"
         Title="drawEM Settings"
-        Width="680"
-        Height="640"
-        MinWidth="560"
-        MinHeight="520"
+        Width="816"
+        Height="768"
+        MinWidth="672"
+        MinHeight="624"
         WindowStartupLocation="CenterScreen"
         ShowInTaskbar="True"
         FontFamily="Segoe UI"
@@ -15,6 +15,15 @@
         Icon="pack://application:,,,/DrawEM.App;component/Assets/drawEM.ico">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="Visible" />
+        <!-- The whole window is drawn 20% larger. Pop-ups (drop-down items, tooltips) are separate visual trees,
+             so their styles below apply the same scale. The window sizes above are the unscaled sizes times 1.2. -->
+        <ScaleTransform x:Key="UiScale" ScaleX="1.2" ScaleY="1.2" />
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="LayoutTransform" Value="{StaticResource UiScale}" />
+        </Style>
+        <Style TargetType="ToolTip">
+            <Setter Property="LayoutTransform" Value="{StaticResource UiScale}" />
+        </Style>
         <!-- One shared view; each list sets IsSynchronizedWithCurrentItem="False" so rows select independently. -->
         <CollectionViewSource x:Key="EffectOptions" Source="{x:Static local:EffectOption.All}">
             <CollectionViewSource.GroupDescriptions>
@@ -69,7 +78,7 @@
         </Style>
     </Window.Resources>
 
-    <DockPanel>
+    <DockPanel LayoutTransform="{StaticResource UiScale}">
         <Border DockPanel.Dock="Bottom" Background="#FAFBFC" BorderBrush="#E2E5EA" BorderThickness="0,1,0,0" Padding="20,12">
             <DockPanel LastChildFill="False">
                 <Button x:Name="RestoreDefaultsButton" DockPanel.Dock="Left" Content="Restore defaults" Click="OnRestoreDefaults" />
@@ -183,7 +192,8 @@
                                                                 <GroupStyle.HeaderTemplate>
                                                                     <DataTemplate>
                                                                         <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"
-                                                                                   Foreground="#647080" Margin="4,4,4,2" />
+                                                                                   Foreground="#647080" Margin="4,4,4,2"
+                                                                                   LayoutTransform="{StaticResource UiScale}" />
                                                                     </DataTemplate>
                                                                 </GroupStyle.HeaderTemplate>
                                                             </GroupStyle>
