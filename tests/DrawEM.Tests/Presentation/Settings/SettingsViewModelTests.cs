@@ -121,6 +121,10 @@ public sealed class SettingsViewModelTests
     [InlineData("1", true, false)]
     [InlineData("4", true, true)]
     [InlineData("20", false, true)]
+    [InlineData("abc", true, true)]
+    [InlineData("", true, true)]
+    [InlineData("25", true, true)]
+    [InlineData("0", true, true)]
     public void WidthSteppers_AreDisabledAtTheLimits(string text, bool canIncrease, bool canDecrease)
     {
         var model = Model();

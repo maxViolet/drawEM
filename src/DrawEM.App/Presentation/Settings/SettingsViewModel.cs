@@ -109,9 +109,14 @@ public sealed class SettingsViewModel : BindableBase
 
     public string? WidthError { get; private set; }
 
-    public bool CanIncreaseWidth => editor.Width < StrokeWidth.Max;
+    /// <summary>
+    /// Disabled only at the limit itself, as <see cref="StepWidth"/> is: for invalid or out-of-range text both
+    /// buttons stay enabled, and a step brings the width back into range.
+    /// </summary>
+    public bool CanIncreaseWidth => editor.Width != StrokeWidth.Max;
 
-    public bool CanDecreaseWidth => editor.Width > StrokeWidth.Min;
+    /// <inheritdoc cref="CanIncreaseWidth"/>
+    public bool CanDecreaseWidth => editor.Width != StrokeWidth.Min;
 
     /// <summary>
     /// Changes the width by <paramref name="pixels"/>, kept within the allowed range. Text that is not a whole
