@@ -501,6 +501,59 @@ public sealed class SettingsEditorTests : IDisposable
         Assert.Equal([FocusRing, Confetti], effectSampler.Samples.Select(sample => sample.Effect));
     }
 
+    [Theory]
+    [InlineData("clear")]
+    [InlineData("select another effect")]
+    [InlineData("toggle loop")]
+    [InlineData("restore defaults")]
+    [InlineData("change max length")]
+    [InlineData("select a sound")]
+    public void EditingTheSampledSlot_StopsItsEffectSample(string edit)
+    {
+        active = TestSettings.WithEffects((2, Confetti));
+        var editor = Editor();
+        editor.SetEffectLoop(2, true);
+        editor.Sample(2, _ => { }, _ => { });
+
+        switch (edit)
+        {
+            case "clear":
+                editor.ClearSlot(2);
+                break;
+            case "select another effect":
+                editor.SelectEffect(2, FocusRing);
+                break;
+            case "toggle loop":
+                editor.SetEffectLoop(2, false);
+                break;
+            case "change max length":
+                editor.SetEffectMaxLength(2, TimeSpan.FromSeconds(5));
+                break;
+            case "restore defaults":
+                editor.RestoreDefaults();
+                break;
+            default:
+                editor.SelectSound(2, SourceFile("drumroll.mp3", [1, 2, 3]));
+                break;
+        }
+
+        Assert.Equal(1, effectSampler.Stops);
+    }
+
+    [Fact]
+    public void EditingAnotherSlot_KeepsTheEffectSampleRunning()
+    {
+        active = TestSettings.WithEffects((2, Confetti), (3, FocusRing));
+        var editor = Editor();
+        editor.SetEffectLoop(2, true);
+        editor.Sample(2, _ => { }, _ => { });
+
+        editor.SetEffectLoop(3, true);
+        editor.ClearSlot(3);
+
+        Assert.Equal(0, effectSampler.Stops);
+    }
+
     [Fact]
     public void Cancel_StopsTheDraftsEffectSample_EvenWhenTheSoundStopIsUnconfirmed()
     {

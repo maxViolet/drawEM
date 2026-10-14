@@ -5,18 +5,21 @@ namespace DrawEM.Tests.Presentation.Effects;
 public sealed class LottiePlaybackTests
 {
     [Theory]
-    [InlineData(0, 2, false, 0, false)]
-    [InlineData(1.5, 2, false, 1.5, false)]
-    [InlineData(2, 2, false, 2, true)]
-    [InlineData(5.5, 2, false, 5.5, true)]
-    [InlineData(2, 2, true, 0, false)]
-    [InlineData(5.5, 2, true, 1.5, false)]
-    public void PlaybackPosition_LoopsFromFrameZeroOrCompletes(
+    [InlineData(0, 2, false, 0, "Playing")]
+    [InlineData(1.5, 2, false, 1.5, "Playing")]
+    [InlineData(2, 2, false, 2, "Completed")]
+    [InlineData(5.5, 2, false, 5.5, "Completed")]
+    [InlineData(2, 2, true, 0, "Playing")]
+    [InlineData(5.5, 2, true, 1.5, "Playing")]
+    [InlineData(0, 0, false, 0, "Completed")]
+    [InlineData(0, 0, true, 0, "CannotLoop")]
+    [InlineData(3, 0, true, 3, "CannotLoop")]
+    public void PlaybackPosition_LoopsFromFrameZeroOrEnds(
         double elapsedSeconds,
         double durationSeconds,
         bool loop,
         double expectedSeconds,
-        bool completed)
+        string state)
     {
         var result = LottiePlayback.PlaybackPosition(
             TimeSpan.FromSeconds(elapsedSeconds),
@@ -24,6 +27,6 @@ public sealed class LottiePlaybackTests
             loop);
 
         Assert.Equal(TimeSpan.FromSeconds(expectedSeconds), result.Position);
-        Assert.Equal(completed, result.Completed);
+        Assert.Equal(state, result.State.ToString());
     }
 }

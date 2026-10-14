@@ -63,6 +63,7 @@ public sealed class EffectSampler : IEffectSampler
         if (effect.Loop
             && latest is { } current
             && current.Command.Slot == slot
+            && current.Command.Loop
             && ReferenceEquals(channel.ActiveInstance, current))
         {
             StopSamples();

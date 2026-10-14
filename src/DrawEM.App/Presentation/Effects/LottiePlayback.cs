@@ -151,10 +151,17 @@ internal sealed class LottiePlayback : IEffectPlayback
 
         lastRenderingTime = renderingTime;
         var frame = PlaybackPosition(Stopwatch.GetElapsedTime(started), animation.Duration, loop);
-        if (frame.Completed)
+        if (frame.State == PlaybackState.Completed)
         {
             Unsubscribe();
             Completed?.Invoke();
+            return;
+        }
+
+        if (frame.State == PlaybackState.CannotLoop)
+        {
+            Unsubscribe();
+            Failed?.Invoke("The effect has no length, so it cannot loop.");
             return;
         }
 
@@ -171,22 +178,35 @@ internal sealed class LottiePlayback : IEffectPlayback
         }
     }
 
-    internal static (TimeSpan Position, bool Completed) PlaybackPosition(
+    internal enum PlaybackState
+    {
+        Playing,
+        Completed,
+        /// <summary>A looping effect without length has no frame to repeat, so it must end as a failure.</summary>
+        CannotLoop,
+    }
+
+    internal static (TimeSpan Position, PlaybackState State) PlaybackPosition(
         TimeSpan elapsed,
         TimeSpan duration,
         bool loop)
     {
+        if (loop && duration <= TimeSpan.Zero)
+        {
+            return (elapsed, PlaybackState.CannotLoop);
+        }
+
         if (elapsed < duration)
         {
-            return (elapsed, false);
+            return (elapsed, PlaybackState.Playing);
         }
 
-        if (!loop || duration <= TimeSpan.Zero)
+        if (!loop)
         {
-            return (elapsed, true);
+            return (elapsed, PlaybackState.Completed);
         }
 
-        return (TimeSpan.FromTicks(elapsed.Ticks % duration.Ticks), false);
+        return (TimeSpan.FromTicks(elapsed.Ticks % duration.Ticks), PlaybackState.Playing);
     }
 
     private void Draw(double seconds)

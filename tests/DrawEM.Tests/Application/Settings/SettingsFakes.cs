@@ -69,7 +69,15 @@ internal sealed class FakeEffectSampler : IEffectSampler
         Action<bool> runningChanged) =>
         Samples.Add(new EffectSample(slot, effect, reportFailure, runningChanged));
 
-    public void StopSamples() => Stops++;
+    /// <summary>Counts the stop and, as the real sampler does, reports a looping latest sample as stopped.</summary>
+    public void StopSamples()
+    {
+        Stops++;
+        if (Samples.LastOrDefault() is { Action.Loop: true } latest)
+        {
+            latest.RunningChanged(false);
+        }
+    }
 
     public void ForgetSamples() => Forgets++;
 }

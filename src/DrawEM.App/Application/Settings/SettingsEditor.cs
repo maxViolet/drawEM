@@ -18,6 +18,8 @@ public sealed class SettingsEditor
     private readonly IEffectSampler effectSampler;
     private readonly Action<SoundCleanupFailure> reportCleanupFailure;
     private ActionSlot[] slots = [];
+    /// <summary>The slot the latest effect sample was started from, until an edit of that slot stops it.</summary>
+    private int? effectSampleSlot;
     private bool ended;
 
     /// <param name="active">The running configuration. Read now for the draft, and again by Cancel.</param>
@@ -142,8 +144,15 @@ public sealed class SettingsEditor
     /// <summary>Empties the slot, which also removes its shortcut.</summary>
     public void ClearSlot(int slot) => Replace(ActionSlot.Empty(slot));
 
-    /// <summary>Replaces the draft with <see cref="SettingsSnapshot.Default"/>. Nothing runs differently until Save.</summary>
-    public void RestoreDefaults() => Load(SettingsSnapshot.Default);
+    /// <summary>
+    /// Replaces the draft with <see cref="SettingsSnapshot.Default"/>, which also stops an effect sample started
+    /// from the replaced draft. Nothing else runs differently until Save.
+    /// </summary>
+    public void RestoreDefaults()
+    {
+        Load(SettingsSnapshot.Default);
+        StopEffectSample();
+    }
 
     /// <summary>Why the draft cannot be saved; empty when it can.</summary>
     public IReadOnlyList<SettingsError> Validate() =>
@@ -164,6 +173,7 @@ public sealed class SettingsEditor
                 sampler.Sample(sound, reportFailure);
                 break;
             case EffectAction { Effect: not null } effect:
+                effectSampleSlot = slot;
                 effectSampler.Sample(slot, effect, reportFailure, effectRunningChanged);
                 break;
         }
@@ -225,7 +235,26 @@ public sealed class SettingsEditor
 
     private Shortcut ShortcutForNewAction(int slot) => slots[slot - 1].Action?.Shortcut ?? ProposedShortcut(slot);
 
-    private void Replace(ActionSlot slot) => slots[slot.Number - 1] = slot;
+    /// <summary>Changes one slot's draft action. An effect sample started from that slot no longer matches it, so it stops.</summary>
+    private void Replace(ActionSlot slot)
+    {
+        slots[slot.Number - 1] = slot;
+        if (effectSampleSlot == slot.Number)
+        {
+            StopEffectSample();
+        }
+    }
+
+    private void StopEffectSample()
+    {
+        if (effectSampleSlot is null)
+        {
+            return;
+        }
+
+        effectSampleSlot = null;
+        effectSampler.StopSamples();
+    }
 
     private EffectAction EffectIn(int slot) =>
         slots[slot - 1].Action as EffectAction

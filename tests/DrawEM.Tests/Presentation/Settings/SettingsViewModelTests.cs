@@ -376,6 +376,20 @@ public sealed class SettingsViewModelTests
     }
 
     [Fact]
+    public void ClearSlot_WhileItsLoopingSampleRuns_StopsItAndShowsSample()
+    {
+        active = SettingsWithEffect(2, loop: true, TimeSpan.FromSeconds(10));
+        var slot = Model().Slots[1];
+        slot.Sample();
+        Assert.Single(effectSampler.Samples).RunningChanged(true);
+
+        slot.ClearSlot();
+
+        Assert.Equal(1, effectSampler.Stops);
+        Assert.Equal("Sample", slot.SampleText);
+    }
+
+    [Fact]
     public void EmptySlot_ChangedToEffect_ChangesTheDraftOnlyWhenAnEffectIsChosen_AndSavesIt()
     {
         var model = Model();

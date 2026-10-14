@@ -55,6 +55,20 @@ public class EffectSamplerTests
     }
 
     [Fact]
+    public void LoopingSample_WhileAOneShotSampleOfTheSlotRuns_StartsALoopInsteadOfStopping()
+    {
+        var fixture = new Fixture();
+        var editor = fixture.Editor();
+        editor.Sample(Confetti);
+
+        editor.Sample(Confetti, loop: true, maxSeconds: null);
+
+        Assert.Equal([true], editor.RunningStates);
+        Assert.True(fixture.Channel.ActiveInstance!.Command.Loop);
+        Assert.Equal(2, fixture.Surface.Shown);
+    }
+
+    [Fact]
     public void LoopingSample_ReportsStoppedWhenAnotherEffectReplacesIt()
     {
         var fixture = new Fixture();
