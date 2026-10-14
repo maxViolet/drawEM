@@ -106,14 +106,26 @@ public sealed record SettingsSnapshot
         Slots = slots;
     }
 
+    /// <summary>The built-in effect IDs in default slots 1–8, in order.</summary>
+    public static IReadOnlyList<string> DefaultEffects { get; } = Array.AsReadOnly(
+    [
+        "confetti-transparent", "confetti-party", "celebration-confetti", "fireworks-teal-red",
+        "winner-fireworks", "season-fireworks", "let-it-snow", "loader-cat",
+    ]);
+
     /// <summary>
-    /// <c>#FF4500</c>, 4 physical pixels, <c>Ctrl+Alt+Z</c>, <c>Ctrl+Alt+X</c>, and eight empty slots.
+    /// <c>#FF4500</c>, 4 physical pixels, <c>Ctrl+Alt+Z</c>, <c>Ctrl+Alt+X</c>, and slots 1–8 filled with
+    /// <see cref="DefaultEffects"/> on <c>Ctrl+Alt+1</c> to <c>Ctrl+Alt+8</c>.
     /// </summary>
     public static SettingsSnapshot Default { get; } = Validate(
         new DrawingStyle(new HexColor(0xFF, 0x45, 0x00), new StrokeWidth(4)),
         Shortcut.Create(ShortcutModifiers.Control | ShortcutModifiers.Alt, ShortcutKey.Letter('Z')),
         Shortcut.Create(ShortcutModifiers.Control | ShortcutModifiers.Alt, ShortcutKey.Letter('X')),
-        Enumerable.Range(1, ActionSlot.Count).Select(ActionSlot.Empty)).Snapshot!;
+        DefaultEffects.Select((id, index) => new ActionSlot(
+            index + 1,
+            new EffectAction(
+                new EffectId(id),
+                Shortcut.Create(ShortcutModifiers.Control | ShortcutModifiers.Alt, ShortcutKey.Digit(index + 1)))))).Snapshot!;
 
     public DrawingStyle Style { get; }
 

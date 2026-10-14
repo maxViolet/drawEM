@@ -13,6 +13,20 @@ public class BuiltInEffectAnimationsTests
     {
         ["confetti"] = 3,
         ["focus-ring"] = 2,
+        ["confetti-transparent"] = 10,
+        ["confetti-effects"] = 10,
+        ["confetti-party"] = 10,
+        ["celebration-confetti"] = 10,
+        ["confetti-02"] = 10,
+        ["fireworks-teal-red"] = 10,
+        ["winner-fireworks"] = 10,
+        ["season-fireworks"] = 10,
+        ["fireworks-red-white-blue"] = 10,
+        ["big-bada-boom"] = 10,
+        ["snow-falling"] = 10,
+        ["let-it-snow"] = 10,
+        ["snow"] = 10,
+        ["loader-cat"] = 10,
     };
 
     public static TheoryData<string> BuiltInIds => new(EffectCatalog.BuiltIn.Select(effect => effect.Id.Value));

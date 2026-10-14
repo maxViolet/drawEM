@@ -79,7 +79,7 @@ public sealed class SettingsEditorTests : IDisposable
         Assert.Equal(4, editor.Width);
         Assert.Equal(SettingsSnapshot.Default.DrawShortcut, editor.DrawShortcut);
         Assert.Equal(SettingsSnapshot.Default.ClearShortcut, editor.ClearShortcut);
-        Assert.All(editor.Slots, slot => Assert.Equal(ActionSlot.Empty(slot.Number), slot));
+        Assert.Equal(SettingsSnapshot.Default.Slots, editor.Slots);
         Assert.Equal(TestSettings.WithSounds((1, Applause)), active);
         Assert.Empty(saver.Saved);
     }
@@ -131,7 +131,7 @@ public sealed class SettingsEditorTests : IDisposable
             SettingsSnapshot.Default.Style,
             Shortcut.Create(CtrlAlt, ShortcutKey.Digit(2)),
             SettingsSnapshot.Default.ClearShortcut,
-            SettingsSnapshot.Default.Slots).Snapshot!;
+            Enumerable.Range(1, ActionSlot.Count).Select(ActionSlot.Empty)).Snapshot!;
         var editor = Editor();
 
         editor.SelectSound(2, SourceFile("horn.wav", [5]));
@@ -258,7 +258,7 @@ public sealed class SettingsEditorTests : IDisposable
             SettingsSnapshot.Default.Style,
             SettingsSnapshot.Default.DrawShortcut,
             Shortcut.Create(CtrlAlt, ShortcutKey.Digit(3)),
-            SettingsSnapshot.Default.Slots).Snapshot!;
+            Enumerable.Range(1, ActionSlot.Count).Select(ActionSlot.Empty)).Snapshot!;
         var editor = Editor();
 
         editor.SelectEffect(3, Confetti);

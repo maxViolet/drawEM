@@ -126,7 +126,7 @@ public class ShortcutBindingsTests
     [Fact]
     public void Constructor_EffectSharingASoundOrDrawShortcut_Throws()
     {
-        var focusRing = EffectCatalog.BuiltIn.Single(effect => effect.Placement == EffectPlacement.Cursor);
+        var focusRing = EffectCatalog.BuiltIn.Single(effect => effect.Id.Value == "focus-ring");
         var draw = SettingsSnapshot.Default.DrawShortcut;
         var clear = SettingsSnapshot.Default.ClearShortcut;
 

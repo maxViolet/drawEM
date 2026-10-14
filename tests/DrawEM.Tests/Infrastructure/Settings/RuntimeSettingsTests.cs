@@ -30,7 +30,7 @@ public sealed class RuntimeSettingsTests : IDisposable
     }
 
     [Fact]
-    public void FirstLaunch_BindsDrawAndClearOnly_WithEightEmptySlots()
+    public void FirstLaunch_BindsDrawAndClear_WithTheDefaultEffectSlots()
     {
         var (startup, settings) = Start();
 
@@ -38,7 +38,7 @@ public sealed class RuntimeSettingsTests : IDisposable
 
         Assert.False(startup.SavedSettingsLoaded);
         Assert.Equal(ActionSlot.Count, settings.Current.Slots.Count);
-        Assert.All(settings.Current.Slots, slot => Assert.True(slot.IsEmpty));
+        Assert.Equal(SettingsSnapshot.Default.Slots, settings.Current.Slots);
         Assert.Equal(new KeyChord(CtrlAlt, VirtualKeys.Z), bindings.Draw);
         Assert.Equal(new KeyChord(CtrlAlt, VirtualKeys.X), bindings.Clear);
         Assert.Empty(bindings.Sounds);

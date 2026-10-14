@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using DrawEM.App.Domain.Effects;
+using SkiaSharp.Resources;
 using SkiaSharp.Skottie;
 
 namespace DrawEM.App.Presentation.Effects;
@@ -36,9 +37,11 @@ public sealed class BuiltInEffectAnimations : IDisposable
         using var stream = typeof(BuiltInEffectAnimations).Assembly.GetManifestResourceStream(
             $"DrawEM.App.Presentation.Effects.BuiltIn.{effect.ResourceName}")
             ?? throw new InvalidOperationException($"The effect file {effect.ResourceName} is not embedded.");
-        return Animation.TryCreate(stream, out var animation) && animation is not null
-            ? animation
-            : throw new InvalidOperationException($"The effect file {effect.ResourceName} is not a valid Lottie file.");
+        // Some files embed their images as data URIs; without this provider those images draw nothing.
+        using var resources = new DataUriResourceProvider();
+        using var builder = Animation.CreateBuilder().SetResourceProvider(resources);
+        return builder.Build(stream)
+            ?? throw new InvalidOperationException($"The effect file {effect.ResourceName} is not a valid Lottie file.");
     }
 
     /// <summary>The parsed animation of <paramref name="id"/>, or why it is unavailable.</summary>

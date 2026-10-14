@@ -13,7 +13,7 @@ public class SettingsSnapshotTests
     private static readonly Shortcut Clear = Keys("Ctrl+Alt+X");
 
     [Fact]
-    public void Default_IsOrangeRedFourPixelsDefaultShortcutsAndEightEmptySlots()
+    public void Default_IsOrangeRedFourPixelsDefaultShortcutsAndEightEffectSlots()
     {
         var defaults = SettingsSnapshot.Default;
 
@@ -22,7 +22,13 @@ public class SettingsSnapshotTests
         Assert.Equal("Ctrl+Alt+Z", defaults.DrawShortcut.ToString());
         Assert.Equal("Ctrl+Alt+X", defaults.ClearShortcut.ToString());
         Assert.Equal([1, 2, 3, 4, 5, 6, 7, 8], defaults.Slots.Select(slot => slot.Number));
-        Assert.All(defaults.Slots, slot => Assert.True(slot.IsEmpty));
+        Assert.Equal(
+            ["confetti-transparent", "confetti-party", "celebration-confetti", "fireworks-teal-red",
+             "winner-fireworks", "season-fireworks", "let-it-snow", "loader-cat"],
+            defaults.Slots.Select(slot => Assert.IsType<EffectAction>(slot.Action).Effect.Value));
+        Assert.Equal(
+            ["Ctrl+Alt+1", "Ctrl+Alt+2", "Ctrl+Alt+3", "Ctrl+Alt+4", "Ctrl+Alt+5", "Ctrl+Alt+6", "Ctrl+Alt+7", "Ctrl+Alt+8"],
+            defaults.Slots.Select(slot => slot.Action!.Shortcut!.ToString()));
     }
 
     [Fact]

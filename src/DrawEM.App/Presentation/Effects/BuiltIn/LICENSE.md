@@ -1,6 +1,6 @@
 # Lottie Simple License (FL 9.13.21)
 
-This license covers the built-in effect files `confetti.json` and `focus-ring.json`. Their sources and
+This license covers every built-in effect file in this folder. Their sources and
 authors are listed in `SOURCES.md`. Text copied from https://lottiefiles.com/page/license on 2026-10-12.
 
 Copyright © 2021 Design Barn Inc.
