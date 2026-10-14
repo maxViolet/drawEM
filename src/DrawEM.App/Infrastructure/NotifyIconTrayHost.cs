@@ -68,7 +68,23 @@ public sealed class NotifyIconTrayHost : ITrayHost
     {
         if (e.Button == MouseButtons.Left)
         {
-            ShowContextMenu?.Invoke(notifyIcon, null);
+            ShowMenu(notifyIcon, ShowContextMenu);
+        }
+    }
+
+    /// <summary>
+    /// Shows the tray menu through <paramref name="showContextMenu"/>, or at the cursor if a WinForms update
+    /// removed that method, so a left click still opens the menu.
+    /// </summary>
+    public static void ShowMenu(NotifyIcon notifyIcon, MethodInfo? showContextMenu)
+    {
+        if (showContextMenu is not null)
+        {
+            showContextMenu.Invoke(notifyIcon, null);
+        }
+        else
+        {
+            notifyIcon.ContextMenuStrip?.Show(Cursor.Position);
         }
     }
 
