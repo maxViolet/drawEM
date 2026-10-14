@@ -120,9 +120,22 @@
                             </StackPanel>
                             <StackPanel Grid.Column="2">
                                 <TextBlock Style="{StaticResource Label}" Text="Line width · 1–20 px" />
-                                <TextBox x:Name="WidthBox" Width="100" HorizontalAlignment="Left" MinHeight="30"
-                                         VerticalContentAlignment="Center" AutomationProperties.Name="Line width"
-                                         Text="{Binding WidthText, UpdateSourceTrigger=PropertyChanged}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox x:Name="WidthBox" Width="100" MinHeight="30"
+                                             VerticalContentAlignment="Center" AutomationProperties.Name="Line width"
+                                             PreviewKeyDown="OnWidthKeyDown"
+                                             Text="{Binding WidthText, UpdateSourceTrigger=PropertyChanged}" />
+                                    <StackPanel Margin="4,0,0,0">
+                                        <RepeatButton x:Name="IncreaseWidthButton" Width="24" Height="15" Padding="0"
+                                                      FontFamily="Segoe MDL2 Assets" FontSize="8" Content="&#xE70E;"
+                                                      AutomationProperties.Name="Increase line width" ToolTip="Wider (Up)"
+                                                      IsEnabled="{Binding CanIncreaseWidth}" Click="OnIncreaseWidth" />
+                                        <RepeatButton x:Name="DecreaseWidthButton" Width="24" Height="15" Padding="0"
+                                                      FontFamily="Segoe MDL2 Assets" FontSize="8" Content="&#xE70D;"
+                                                      AutomationProperties.Name="Decrease line width" ToolTip="Thinner (Down)"
+                                                      IsEnabled="{Binding CanDecreaseWidth}" Click="OnDecreaseWidth" />
+                                    </StackPanel>
+                                </StackPanel>
                                 <TextBlock Style="{StaticResource ErrorText}" Text="{Binding WidthError}" />
                             </StackPanel>
                         </Grid>

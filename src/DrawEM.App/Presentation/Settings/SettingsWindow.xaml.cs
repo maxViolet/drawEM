@@ -109,6 +109,20 @@ public partial class SettingsWindow : Window, ISoundFilePicker
         }
     }
 
+    private void OnIncreaseWidth(object sender, RoutedEventArgs e) => ViewModel?.StepWidth(1);
+
+    private void OnDecreaseWidth(object sender, RoutedEventArgs e) => ViewModel?.StepWidth(-1);
+
+    private void OnWidthKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key is Key.Up or Key.Down && ViewModel is { } model)
+        {
+            model.StepWidth(e.Key == Key.Up ? 1 : -1);
+            WidthBox.CaretIndex = WidthBox.Text.Length;
+            e.Handled = true;
+        }
+    }
+
     private void OnPickColor(object sender, RoutedEventArgs e)
     {
         if (ViewModel is not { } model)

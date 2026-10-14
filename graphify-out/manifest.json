@@ -378,9 +378,9 @@
     "semantic_hash": "2cd68a5a8afe688997567f2d75cfb117"
   },
   "src/DrawEM.App/Infrastructure/NotifyIconTrayHost.cs": {
-    "mtime": 1791966387.1918392,
-    "seen": 1791966501.233625,
-    "ast_hash": "fe53e0e5bc6780b797c2903b7ff98d96",
+    "mtime": 1791967077.7231145,
+    "seen": 1791967095.0048523,
+    "ast_hash": "8fb7665bd3dc20f0537d33138752d355",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Infrastructure/Settings/JsonSettingsStore.cs": {
@@ -624,21 +624,21 @@
     "semantic_hash": "e24ae940dc867e7952f416fba2dc3831"
   },
   "src/DrawEM.App/Presentation/Settings/SettingsViewModel.cs": {
-    "mtime": 1791963189.7676103,
-    "seen": 1791963194.529675,
-    "ast_hash": "fd0842830fb4f25b798f9bd03c13d689",
-    "semantic_hash": "fd0842830fb4f25b798f9bd03c13d689"
+    "mtime": 1791967062.0781686,
+    "seen": 1791967095.0049336,
+    "ast_hash": "1bc4f2acd0c5d12c588b27078052d632",
+    "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Settings/SettingsWindow.xaml": {
-    "mtime": 1791966481.321313,
-    "seen": 1791966501.2336845,
-    "ast_hash": "a5062edfe5ef62a05665d4032df5128e",
+    "mtime": 1791967077.7256894,
+    "seen": 1791967095.0049365,
+    "ast_hash": "0aa9ee4e057fdbab6c9f8c8497e073c8",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Settings/SettingsWindow.xaml.cs": {
-    "mtime": 1791966481.321313,
-    "seen": 1791966501.233686,
-    "ast_hash": "2880d66ec2861a3062f3d31576854408",
+    "mtime": 1791967077.726629,
+    "seen": 1791967095.0049386,
+    "ast_hash": "1574b11ac19756fecea226d904b7f8c2",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Sound/Namespace.cs": {
@@ -930,14 +930,14 @@
     "semantic_hash": "e3396dc36460dbbda7599bbe15018798"
   },
   "tests/DrawEM.Tests/Presentation/Settings/SettingsViewModelTests.cs": {
-    "mtime": 1791963189.768615,
-    "seen": 1791963194.529727,
-    "ast_hash": "0fabde98b499ea1c7001ad041c19f24f",
-    "semantic_hash": "0fabde98b499ea1c7001ad041c19f24f"
+    "mtime": 1791967046.3283346,
+    "seen": 1791967095.0050662,
+    "ast_hash": "c0b83af9965680d8639bb60731ed3ea8",
+    "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Presentation/Settings/SettingsWindowTests.cs": {
-    "mtime": 1791966481.321313,
-    "seen": 1791966501.2337646,
+    "mtime": 1791967077.7295187,
+    "seen": 1791967095.005068,
     "ast_hash": "3e0265f2869306bfe5f63c0e43477e09",
     "semantic_hash": ""
   },
@@ -1002,15 +1002,15 @@
     "semantic_hash": "d9083cec02be96d0b20e78111319d4a8"
   },
   "README.md": {
-    "mtime": 1791966320.3849523,
-    "seen": 1791966501.233781,
+    "mtime": 1791967077.6954744,
+    "seen": 1791967095.0050983,
     "ast_hash": "3b0ccf1a5bbf718eabe3022ef8990dd9",
     "semantic_hash": ""
   },
   "docs/ARCHITECTURE.md": {
-    "mtime": 1791966399.8116307,
-    "seen": 1791966501.2337825,
-    "ast_hash": "7442f8c00c400d21b03c302f01c05a38",
+    "mtime": 1791967077.6980011,
+    "seen": 1791967095.0051,
+    "ast_hash": "5acef01cdae99ef2a4e60e8a5957819e",
     "semantic_hash": ""
   },
   "docs/adr/0001-lottie-built-in-effects.md": {
@@ -1782,9 +1782,9 @@
     "semantic_hash": "4b4837828a66e721b4d70397e178954c"
   },
   "tests/DrawEM.Tests/Infrastructure/NotifyIconTrayHostTests.cs": {
-    "mtime": 1791966351.6661718,
-    "seen": 1791966501.2337315,
-    "ast_hash": "d224aaa22f53e91c1217b23706b07a90",
+    "mtime": 1791967077.7281067,
+    "seen": 1791967095.0050175,
+    "ast_hash": "c9521b15cbd2555facc12bfe41e1879b",
     "semantic_hash": ""
   }
 }

@@ -109,6 +109,27 @@ public sealed class SettingsViewModel : BindableBase
 
     public string? WidthError { get; private set; }
 
+    /// <summary>
+    /// Disabled only at the limit itself, as <see cref="StepWidth"/> is: for invalid or out-of-range text both
+    /// buttons stay enabled, and a step brings the width back into range.
+    /// </summary>
+    public bool CanIncreaseWidth => editor.Width != StrokeWidth.Max;
+
+    /// <inheritdoc cref="CanIncreaseWidth"/>
+    public bool CanDecreaseWidth => editor.Width != StrokeWidth.Min;
+
+    /// <summary>
+    /// Changes the width by <paramref name="pixels"/>, kept within the allowed range. Text that is not a whole
+    /// number becomes the minimum width.
+    /// </summary>
+    public void StepWidth(int pixels)
+    {
+        var stepped = int.TryParse(widthText.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var current)
+            ? Math.Clamp((long)current + pixels, StrokeWidth.Min, StrokeWidth.Max)
+            : StrokeWidth.Min;
+        WidthText = stepped.ToString(CultureInfo.InvariantCulture);
+    }
+
     /// <summary>Every reason the draft cannot be saved, one per line; empty when it can.</summary>
     public string Errors { get; private set; } = "";
 
