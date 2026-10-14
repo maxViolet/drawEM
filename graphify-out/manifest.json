@@ -378,8 +378,8 @@
     "semantic_hash": "2cd68a5a8afe688997567f2d75cfb117"
   },
   "src/DrawEM.App/Infrastructure/NotifyIconTrayHost.cs": {
-    "mtime": 1791918312.5725832,
-    "seen": 1791918320.9442353,
+    "mtime": 1791963181.1116588,
+    "seen": 1791963194.5296366,
     "ast_hash": "2e7c57656edeefa3693330be2eade3ed",
     "semantic_hash": "2e7c57656edeefa3693330be2eade3ed"
   },
@@ -624,20 +624,20 @@
     "semantic_hash": "e24ae940dc867e7952f416fba2dc3831"
   },
   "src/DrawEM.App/Presentation/Settings/SettingsViewModel.cs": {
-    "mtime": 1791917615.4930997,
-    "seen": 1791918320.944286,
+    "mtime": 1791963189.7676103,
+    "seen": 1791963194.529675,
     "ast_hash": "fd0842830fb4f25b798f9bd03c13d689",
     "semantic_hash": "fd0842830fb4f25b798f9bd03c13d689"
   },
   "src/DrawEM.App/Presentation/Settings/SettingsWindow.xaml": {
-    "mtime": 1791918312.5730977,
-    "seen": 1791918320.9442875,
-    "ast_hash": "a6e18f8749f4f7bf24735cd133f6ed57",
-    "semantic_hash": "a6e18f8749f4f7bf24735cd133f6ed57"
+    "mtime": 1791963189.7676103,
+    "seen": 1791963194.529676,
+    "ast_hash": "00cbd45197fed5add211159b863e3d64",
+    "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Settings/SettingsWindow.xaml.cs": {
-    "mtime": 1791917615.4930997,
-    "seen": 1791918320.9442887,
+    "mtime": 1791963189.768615,
+    "seen": 1791963194.5296772,
     "ast_hash": "9c278dd0bb3850f3dfdb6ed0aa003fd8",
     "semantic_hash": "9c278dd0bb3850f3dfdb6ed0aa003fd8"
   },
@@ -930,8 +930,8 @@
     "semantic_hash": "e3396dc36460dbbda7599bbe15018798"
   },
   "tests/DrawEM.Tests/Presentation/Settings/SettingsViewModelTests.cs": {
-    "mtime": 1791918312.580568,
-    "seen": 1791918320.9443583,
+    "mtime": 1791963189.768615,
+    "seen": 1791963194.529727,
     "ast_hash": "0fabde98b499ea1c7001ad041c19f24f",
     "semantic_hash": "0fabde98b499ea1c7001ad041c19f24f"
   },
@@ -1002,8 +1002,8 @@
     "semantic_hash": "d9083cec02be96d0b20e78111319d4a8"
   },
   "README.md": {
-    "mtime": 1791918639.594194,
-    "seen": 1791961198.1516874,
+    "mtime": 1791963181.096914,
+    "seen": 1791963194.529739,
     "ast_hash": "dc01cf896fe28d30f3c5eef2e250c65a",
     "semantic_hash": ""
   },
