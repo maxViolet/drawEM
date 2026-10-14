@@ -20,8 +20,17 @@ public partial class SettingsWindow : Window, ISoundFilePicker
     private bool closed;
 
     public SettingsWindow()
+        : this(SystemParameters.WorkArea.Height)
+    {
+    }
+
+    /// <param name="workAreaHeight">
+    /// The usable screen height. The default height is cut to it, so the title bar stays on screen.
+    /// </param>
+    public SettingsWindow(double workAreaHeight)
     {
         InitializeComponent();
+        Height = Math.Min(Height, workAreaHeight);
         // A capture field must not take focus on open: focusing one starts capture.
         Loaded += (_, _) => HexBox.Focus();
     }

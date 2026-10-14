@@ -151,6 +151,71 @@ public sealed class SettingsWindowTests
         });
     }
 
+    [Fact]
+    public void DropDownsAndTooltips_AreDrawnAtTheWindowsScale()
+    {
+        StaThread.Run(() =>
+        {
+            var active = TestSettings.WithEffects((2, new EffectId("confetti")));
+            var window = new SettingsWindow();
+            var model = new SettingsViewModel(
+                new SettingsEditor(() => active, new FakeLibrary(), new FakeSettingsSave(), new FakeSampler(), new FakeEffectSampler(), _ => { }),
+                new FakeCapture(),
+                window);
+            Show(window, model);
+            ((TabControl)window.FindName("Tabs")).SelectedIndex = 1;
+            Layout(window);
+            var effects = ComboBoxes(window, "Effect")[1];
+            var scale = ScreenScale(effects);
+            Assert.Equal(1.2, scale, 3);
+
+            effects.IsDropDownOpen = true;
+            Layout(window);
+            var dropDown = ((Popup)effects.Template.FindName("PART_Popup", effects)).Child;
+            var item = Descendants<ComboBoxItem>(dropDown).First();
+            var header = Descendants<TextBlock>(dropDown).First(text => text.Text == "Monitor");
+            var tip = new ToolTip { Content = "tip", PlacementTarget = effects };
+            effects.ToolTip = tip;
+            tip.IsOpen = true;
+            Layout(window);
+
+            Assert.Equal(scale, ScreenScale(item), 3);
+            Assert.Equal(scale, ScreenScale(header), 3);
+            Assert.Equal(scale, ScreenScale(tip), 3);
+            tip.IsOpen = false;
+            effects.IsDropDownOpen = false;
+            window.Close();
+        });
+    }
+
+    /// <summary>Work areas of a large display, 1366×768 at 100%, and 1366×768 at 125%.</summary>
+    [Theory]
+    [InlineData(1200, 768)]
+    [InlineData(728, 728)]
+    [InlineData(576, 576)]
+    public void Window_FitsTheWorkAreaHeight(double workArea, double height)
+    {
+        StaThread.Run(() =>
+        {
+            var window = new SettingsWindow(workArea);
+            var model = new SettingsViewModel(
+                new SettingsEditor(() => TestSettings.WithSounds(), new FakeLibrary(), new FakeSettingsSave(), new FakeSampler(), new FakeEffectSampler(), _ => { }),
+                new FakeCapture(),
+                window);
+            Show(window, model);
+            Layout(window);
+
+            Assert.Equal(height, window.ActualHeight, 3);
+            Assert.True(window.MinHeight <= workArea, $"Minimum height {window.MinHeight} exceeds {workArea}.");
+            window.Close();
+        });
+    }
+
+    /// <summary>How many device-independent screen units one layout unit of <paramref name="element"/> spans.</summary>
+    private static double ScreenScale(Visual element) =>
+        (element.PointToScreen(new Point(100, 0)).X - element.PointToScreen(new Point(0, 0)).X)
+        / 100 / VisualTreeHelper.GetDpi(element).DpiScaleX;
+
     private static void Show(SettingsWindow window, SettingsViewModel model)
     {
         window.Attach(model);

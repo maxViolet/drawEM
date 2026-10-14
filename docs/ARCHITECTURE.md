@@ -142,7 +142,7 @@ still applies in both directions.
 ### Edit settings
 
 ```text
-Tray Settings (or double-click the tray icon)
+Click the tray icon (left or right) → tray menu → Settings…
   → open SettingsWindow, or activate the one already open
   → SettingsEditor copies ActiveSettings.Current into a draft
   → focus a shortcut field → IShortcutCapture.Begin (GlobalShortcutAdapter): the hook records one chord
