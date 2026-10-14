@@ -188,14 +188,27 @@ public sealed class SettingsWindowTests
         });
     }
 
+    /// <summary>Work areas of a large display, 1366×768 at 100%, and 1366×768 at 125%.</summary>
     [Theory]
     [InlineData(1200, 768)]
     [InlineData(728, 728)]
     [InlineData(576, 576)]
-    public void WindowHeight_FitsTheWorkArea(double workArea, double height)
+    public void Window_FitsTheWorkAreaHeight(double workArea, double height)
     {
-        Assert.Equal(height, SettingsWindow.FitHeight(768, workArea));
-        Assert.True(SettingsWindow.MinimumHeight <= 576, "The minimum must fit 1366×768 at 125%.");
+        StaThread.Run(() =>
+        {
+            var window = new SettingsWindow(workArea);
+            var model = new SettingsViewModel(
+                new SettingsEditor(() => TestSettings.WithSounds(), new FakeLibrary(), new FakeSettingsSave(), new FakeSampler(), new FakeEffectSampler(), _ => { }),
+                new FakeCapture(),
+                window);
+            Show(window, model);
+            Layout(window);
+
+            Assert.Equal(height, window.ActualHeight, 3);
+            Assert.True(window.MinHeight <= workArea, $"Minimum height {window.MinHeight} exceeds {workArea}.");
+            window.Close();
+        });
     }
 
     /// <summary>How many device-independent screen units one layout unit of <paramref name="element"/> spans.</summary>
