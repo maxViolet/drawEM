@@ -273,9 +273,13 @@ public sealed class SettingsViewModelTests
     [Fact]
     public void EffectOptions_ListEachBuiltInEffectUnderItsPlacement()
     {
+        var options = EffectOption.All.Select(option => (option.Group, option.Name, option.Id)).ToArray();
+
+        Assert.Equal(EffectCatalog.BuiltIn.Count, options.Length);
+        Assert.Equal(("Monitor", "Confetti", Confetti), options[0]);
+        Assert.Contains(("Cursor", "Focus ring", FocusRing), options);
         Assert.Equal(
-            [("Monitor", "Confetti", Confetti), ("Cursor", "Focus ring", FocusRing)],
-            EffectOption.All.Select(option => (option.Group, option.Name, option.Id)));
+            options.OrderBy(option => option.Group == "Cursor").ToArray(), options);
     }
 
     [Fact]
@@ -505,8 +509,8 @@ public sealed class SettingsViewModelTests
 
         Assert.Equal("#FF4500", model.HexText);
         Assert.Equal("4", model.WidthText);
-        Assert.All(model.Slots, slot => Assert.False(slot.HasAction));
-        Assert.All(model.Slots, slot => Assert.Equal(SlotKind.Sound, slot.Kind));
+        Assert.All(model.Slots, slot => Assert.True(slot.HasAction));
+        Assert.All(model.Slots, slot => Assert.Equal(SlotKind.Effect, slot.Kind));
         Assert.True(model.CanSave);
         Assert.Equal(TestSettings.WithSounds((1, Applause)), active);
         Assert.Empty(saver.Saved);

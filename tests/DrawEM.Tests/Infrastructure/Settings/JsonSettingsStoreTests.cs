@@ -52,12 +52,11 @@ public sealed class JsonSettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public void FirstLaunch_StartsWithDefaultsAndEightEmptySlots()
+    public void FirstLaunch_StartsWithDefaults()
     {
         var startup = SettingsStartup.Load(Store(), new NoReporter());
 
         Assert.Equal(SettingsSnapshot.Default, startup.Active);
-        Assert.All(startup.Active.Slots, slot => Assert.True(slot.IsEmpty));
         Assert.False(File.Exists(SettingsPath));
     }
 

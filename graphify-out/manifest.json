@@ -186,10 +186,10 @@
     "semantic_hash": "69969a5a5800702e4733beff1ac470be"
   },
   "src/DrawEM.App/Domain/Effects/EffectCatalog.cs": {
-    "mtime": 1791917540.0628965,
-    "seen": 1791918320.9441807,
-    "ast_hash": "73b3a1eb2a1ca32b05e5864bc32e09a7",
-    "semantic_hash": "73b3a1eb2a1ca32b05e5864bc32e09a7"
+    "mtime": 1791967954.829965,
+    "seen": 1791968286.9260657,
+    "ast_hash": "46567463c2283cb0dd13732f07c5d43e",
+    "semantic_hash": ""
   },
   "src/DrawEM.App/Domain/Effects/EffectId.cs": {
     "mtime": 1791917540.0628965,
@@ -210,10 +210,10 @@
     "semantic_hash": "5187dd0765c9b7d6a1b1cf6a214a8003"
   },
   "src/DrawEM.App/Domain/Settings/SettingsSnapshot.cs": {
-    "mtime": 1791917540.0628965,
-    "seen": 1791918320.9441855,
-    "ast_hash": "bda4e1a16d109e33a4c21acaf6395b29",
-    "semantic_hash": "bda4e1a16d109e33a4c21acaf6395b29"
+    "mtime": 1791967974.3670382,
+    "seen": 1791968286.9263725,
+    "ast_hash": "f9f8edb5bdd43e6b4de9d1921cbbcdae",
+    "semantic_hash": ""
   },
   "src/DrawEM.App/Domain/Settings/Shortcut.cs": {
     "mtime": 1791917540.064907,
@@ -564,10 +564,10 @@
     "semantic_hash": "bee33a4559d11ea09d7606b68041eecf"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltInEffectAnimations.cs": {
-    "mtime": 1791917615.490571,
-    "seen": 1791918320.9442742,
-    "ast_hash": "503de8f6c227148e41f3d5d4f410ef0f",
-    "semantic_hash": "503de8f6c227148e41f3d5d4f410ef0f"
+    "mtime": 1791968150.0954413,
+    "seen": 1791968286.9340878,
+    "ast_hash": "3675a7e755850771432ced0c585ebf21",
+    "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/confetti.json": {
     "mtime": 1791917615.4879334,
@@ -666,10 +666,10 @@
     "semantic_hash": "935689c73336009ce42620e545674ef2"
   },
   "tests/DrawEM.Tests/Application/Settings/SettingsEditorTests.cs": {
-    "mtime": 1791918312.5730977,
-    "seen": 1791918320.944295,
-    "ast_hash": "f2591a6cabeac38fe4d97d0fde66110e",
-    "semantic_hash": "f2591a6cabeac38fe4d97d0fde66110e"
+    "mtime": 1791968076.0728097,
+    "seen": 1791968286.9355981,
+    "ast_hash": "9158e0b931eafe4928df08bfcb8c56ce",
+    "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Application/Settings/SettingsFakes.cs": {
     "mtime": 1791918312.5730977,
@@ -678,10 +678,10 @@
     "semantic_hash": "298a0b0b5cd6d0f45b582d3b81d4ba01"
   },
   "tests/DrawEM.Tests/Application/Settings/SettingsStartupTests.cs": {
-    "mtime": 1791917540.0990894,
-    "seen": 1791918320.9442976,
-    "ast_hash": "d0302061c90a84d1a0efb89fdf973d85",
-    "semantic_hash": "d0302061c90a84d1a0efb89fdf973d85"
+    "mtime": 1791968076.070171,
+    "seen": 1791968286.9356863,
+    "ast_hash": "7f9c44304f930d1ef657f4d81790ee27",
+    "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Application/Sound/SoundChannelControllerTests.cs": {
     "mtime": 1791917540.0990894,
@@ -714,16 +714,16 @@
     "semantic_hash": "29db242891fad9e2ba09ee8e22a823f9"
   },
   "tests/DrawEM.Tests/Domain/Effects/EffectCatalogTests.cs": {
-    "mtime": 1791917540.1031754,
-    "seen": 1791918320.944305,
-    "ast_hash": "7fb33de5cae0f037fd9f43533e029d8e",
-    "semantic_hash": "7fb33de5cae0f037fd9f43533e029d8e"
+    "mtime": 1791968011.3664074,
+    "seen": 1791968286.9361374,
+    "ast_hash": "493ed68ad6608c09c775015edcb80aed",
+    "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Domain/Settings/SettingsSnapshotTests.cs": {
-    "mtime": 1791917540.1031754,
-    "seen": 1791918320.9443061,
-    "ast_hash": "853094fb569c884f345f12b66370253c",
-    "semantic_hash": "853094fb569c884f345f12b66370253c"
+    "mtime": 1791968011.3684163,
+    "seen": 1791968286.936139,
+    "ast_hash": "bbc6275b4b1c72d77ae1c2bd6e026f60",
+    "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Domain/Settings/ShortcutTests.cs": {
     "mtime": 1791917540.1031754,
@@ -780,10 +780,10 @@
     "semantic_hash": "33569776f7237995a46c3c59526b64e8"
   },
   "tests/DrawEM.Tests/Infrastructure/Drawing/ShortcutBindingsTests.cs": {
-    "mtime": 1791917615.4977825,
-    "seen": 1791918320.9443188,
-    "ast_hash": "2ebcd7f006cee56d623a0a57a91f9e43",
-    "semantic_hash": "2ebcd7f006cee56d623a0a57a91f9e43"
+    "mtime": 1791968076.070171,
+    "seen": 1791968286.9369738,
+    "ast_hash": "01f59bbcdcb7159eab5e5fe97da45c21",
+    "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Infrastructure/Drawing/ShortcutCaptureTests.cs": {
     "mtime": 1791917615.5003233,
@@ -804,10 +804,10 @@
     "semantic_hash": "176eae423acd103e0775b9be7a7c574a"
   },
   "tests/DrawEM.Tests/Infrastructure/Settings/JsonSettingsStoreTests.cs": {
-    "mtime": 1791917540.1081293,
-    "seen": 1791918320.944331,
-    "ast_hash": "bede99345cfb0aae040c6ffb70137007",
-    "semantic_hash": "bede99345cfb0aae040c6ffb70137007"
+    "mtime": 1791968076.070171,
+    "seen": 1791968286.9376838,
+    "ast_hash": "fe401b8c0df9d53caf01deddbd089069",
+    "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Infrastructure/Settings/RuntimeMediaTests.cs": {
     "mtime": 1791918312.579063,
@@ -816,10 +816,10 @@
     "semantic_hash": "74ab2b7c4a48646ad20303fee22a1e15"
   },
   "tests/DrawEM.Tests/Infrastructure/Settings/RuntimeSettingsTests.cs": {
-    "mtime": 1791918312.579063,
-    "seen": 1791918320.9443333,
-    "ast_hash": "b8531be5623b9217f99a6f4cfb0676c1",
-    "semantic_hash": "b8531be5623b9217f99a6f4cfb0676c1"
+    "mtime": 1791968076.070171,
+    "seen": 1791968286.9377756,
+    "ast_hash": "080d4c90ebccb8c0e640a654dfc09d09",
+    "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Infrastructure/Settings/SettingsSaveOperationTests.cs": {
     "mtime": 1791918312.579063,
@@ -906,10 +906,10 @@
     "semantic_hash": "6132f3ddd0255e9bb3ef7f4ec5eab7cb"
   },
   "tests/DrawEM.Tests/Presentation/Effects/BuiltInEffectAnimationsTests.cs": {
-    "mtime": 1791917615.507279,
-    "seen": 1791918320.9443526,
-    "ast_hash": "5ace0dbf8957e830f0bed549f8693aee",
-    "semantic_hash": "5ace0dbf8957e830f0bed549f8693aee"
+    "mtime": 1791968011.3664074,
+    "seen": 1791968286.9392788,
+    "ast_hash": "2f20ed003910a5924e4e829c817a611a",
+    "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Presentation/Effects/EffectCanvasPlacementTests.cs": {
     "mtime": 1791917540.115332,
@@ -930,15 +930,15 @@
     "semantic_hash": "e3396dc36460dbbda7599bbe15018798"
   },
   "tests/DrawEM.Tests/Presentation/Settings/SettingsViewModelTests.cs": {
-    "mtime": 1791967046.3283346,
-    "seen": 1791967095.0050662,
-    "ast_hash": "c0b83af9965680d8639bb60731ed3ea8",
+    "mtime": 1791968076.0738447,
+    "seen": 1791968286.939585,
+    "ast_hash": "c7cd2bc951552c4edeefd9cccf5e5cd0",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Presentation/Settings/SettingsWindowTests.cs": {
-    "mtime": 1791967077.7295187,
-    "seen": 1791967095.005068,
-    "ast_hash": "3e0265f2869306bfe5f63c0e43477e09",
+    "mtime": 1791968076.0738447,
+    "seen": 1791968286.9395864,
+    "ast_hash": "c9f16f7411ed84972769745012129a25",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/StaThread.cs": {
@@ -1662,16 +1662,16 @@
     "semantic_hash": "c52bd06f1476b224bd410ca6e1ba99aa"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/LICENSE.md": {
-    "mtime": 1791917615.4879334,
-    "seen": 1791918320.9445024,
-    "ast_hash": "cc2620e7884e1e6b5660ff7cbfd49188",
-    "semantic_hash": "cc2620e7884e1e6b5660ff7cbfd49188"
+    "mtime": 1791967990.9867363,
+    "seen": 1791968286.9505703,
+    "ast_hash": "a30d249dedbb0adaa1fe4b0074793838",
+    "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/SOURCES.md": {
-    "mtime": 1791917615.4879334,
-    "seen": 1791918320.9445033,
-    "ast_hash": "44f99ad6c8ecd8e74e7ea6177b951c0b",
-    "semantic_hash": "44f99ad6c8ecd8e74e7ea6177b951c0b"
+    "mtime": 1791968174.3790317,
+    "seen": 1791968286.950572,
+    "ast_hash": "2f2c380072de3c96e6d19eef971ee66e",
+    "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Sound/README.md": {
     "mtime": 1791917540.0939767,
@@ -1785,6 +1785,84 @@
     "mtime": 1791967077.7281067,
     "seen": 1791967095.0050175,
     "ast_hash": "c9521b15cbd2555facc12bfe41e1879b",
+    "semantic_hash": ""
+  },
+  "src/DrawEM.App/Presentation/Effects/BuiltIn/big-bada-boom.json": {
+    "mtime": 1791968174.377511,
+    "seen": 1791968286.9340906,
+    "ast_hash": "6ed8554fd7f0a07ec22d93f5226b5cf2",
+    "semantic_hash": ""
+  },
+  "src/DrawEM.App/Presentation/Effects/BuiltIn/celebration-confetti.json": {
+    "mtime": 1791967942.495962,
+    "seen": 1791968286.934092,
+    "ast_hash": "62f870f7ab2452934c3d8c0d1719533b",
+    "semantic_hash": ""
+  },
+  "src/DrawEM.App/Presentation/Effects/BuiltIn/confetti-02.json": {
+    "mtime": 1791967942.5264373,
+    "seen": 1791968286.9340935,
+    "ast_hash": "22c2599a3c96b1e0ec5fce56913fd5c1",
+    "semantic_hash": ""
+  },
+  "src/DrawEM.App/Presentation/Effects/BuiltIn/confetti-effects.json": {
+    "mtime": 1791967942.5346334,
+    "seen": 1791968286.9340947,
+    "ast_hash": "ace91f9ceceaa7fc8ee30444d64befe8",
+    "semantic_hash": ""
+  },
+  "src/DrawEM.App/Presentation/Effects/BuiltIn/confetti-party.json": {
+    "mtime": 1791967942.5934231,
+    "seen": 1791968286.934096,
+    "ast_hash": "90609269ebc9ca7674b2924b1d0b73e7",
+    "semantic_hash": ""
+  },
+  "src/DrawEM.App/Presentation/Effects/BuiltIn/confetti-transparent.json": {
+    "mtime": 1791967942.623144,
+    "seen": 1791968286.9340968,
+    "ast_hash": "2efd2fc126bf0dae679bf87f41959b4b",
+    "semantic_hash": ""
+  },
+  "src/DrawEM.App/Presentation/Effects/BuiltIn/fireworks-red-white-blue.json": {
+    "mtime": 1791967942.6436353,
+    "seen": 1791968286.934196,
+    "ast_hash": "bca113678219a5d67ea884b90fa18ee3",
+    "semantic_hash": ""
+  },
+  "src/DrawEM.App/Presentation/Effects/BuiltIn/fireworks-teal-red.json": {
+    "mtime": 1791967942.66038,
+    "seen": 1791968286.9341977,
+    "ast_hash": "07f0af72b97d3bfde10753e01d90d1c9",
+    "semantic_hash": ""
+  },
+  "src/DrawEM.App/Presentation/Effects/BuiltIn/let-it-snow.json": {
+    "mtime": 1791967942.6881287,
+    "seen": 1791968286.9342875,
+    "ast_hash": "c30214c00bd4fab26ef730c6313e0371",
+    "semantic_hash": ""
+  },
+  "src/DrawEM.App/Presentation/Effects/BuiltIn/loader-cat.json": {
+    "mtime": 1791967942.6954703,
+    "seen": 1791968286.9342887,
+    "ast_hash": "47ac964697f90ffa8e34bd11241e9a21",
+    "semantic_hash": ""
+  },
+  "src/DrawEM.App/Presentation/Effects/BuiltIn/season-fireworks.json": {
+    "mtime": 1791967942.7370124,
+    "seen": 1791968286.9342902,
+    "ast_hash": "2b9c9b16a331db63acae071cf8b3fd5e",
+    "semantic_hash": ""
+  },
+  "src/DrawEM.App/Presentation/Effects/BuiltIn/snow-falling.json": {
+    "mtime": 1791967942.7632196,
+    "seen": 1791968286.9342916,
+    "ast_hash": "6354c4ecc03bab71857ecfbc4cf14312",
+    "semantic_hash": ""
+  },
+  "src/DrawEM.App/Presentation/Effects/BuiltIn/winner-fireworks.json": {
+    "mtime": 1791967942.7846694,
+    "seen": 1791968286.9342926,
+    "ast_hash": "e7688505fb1014741966dda9f33d927c",
     "semantic_hash": ""
   }
 }

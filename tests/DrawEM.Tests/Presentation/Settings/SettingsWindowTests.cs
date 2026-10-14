@@ -58,7 +58,8 @@ public sealed class SettingsWindowTests
             var effects = ComboBoxes(slots, "Effect");
             Assert.Equal(ActionSlot.Count, effects.Length);
             Assert.Equal(
-                ["Monitor: Confetti", "Cursor: Focus ring"],
+                EffectOption.All.GroupBy(option => option.Group).Select(group =>
+                    $"{group.Key}: {string.Join(", ", group.Select(option => option.Name))}"),
                 effects[1].Items.Groups!.Cast<CollectionViewGroup>().Select(group =>
                     $"{group.Name}: {string.Join(", ", group.Items.Cast<EffectOption>().Select(option => option.Name))}"));
             Assert.Equal("Focus ring", Assert.IsType<EffectOption>(effects[1].SelectedItem).Name);
