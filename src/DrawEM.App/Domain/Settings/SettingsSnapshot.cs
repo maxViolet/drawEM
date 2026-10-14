@@ -56,6 +56,9 @@ public enum SettingsErrorCode
     /// names the ID.
     /// </summary>
     UnknownEffect,
+
+    /// <summary>An effect max length is not a whole number from 1–60 seconds.</summary>
+    InvalidEffectLength,
 }
 
 public sealed record SettingsError(
@@ -80,6 +83,8 @@ public sealed record SettingsError(
             SettingsErrorCode.InvalidShortcut => $"{Name(Command)} has an invalid shortcut.",
             SettingsErrorCode.MissingEffect => $"{Name(Command)} requires an effect.",
             SettingsErrorCode.UnknownEffect => $"{Name(Command)} uses unsupported effect \"{Effect?.Value}\".",
+            SettingsErrorCode.InvalidEffectLength =>
+                $"{Name(Command)} max length must be a whole number from {EffectAction.MinSeconds}–{EffectAction.MaxSeconds} seconds.",
             _ => $"Settings must contain exactly slots 1–{ActionSlot.Count} in order.",
         };
     }
@@ -163,16 +168,28 @@ public sealed record SettingsSnapshot
 
         foreach (var slot in slotList)
         {
-            if (slot.Action is EffectAction { Effect: var effect })
+            if (slot.Action is not EffectAction effectAction)
             {
-                if (effect is null)
-                {
-                    errors.Add(new SettingsError(SettingsErrorCode.MissingEffect, SettingsCommand.ForSlot(slot.Number)));
-                }
-                else if (!EffectCatalog.TryFind(effect, out _))
-                {
-                    errors.Add(new SettingsError(SettingsErrorCode.UnknownEffect, SettingsCommand.ForSlot(slot.Number), Effect: effect));
-                }
+                continue;
+            }
+
+            if (effectAction.Effect is null)
+            {
+                errors.Add(new SettingsError(SettingsErrorCode.MissingEffect, SettingsCommand.ForSlot(slot.Number)));
+            }
+            else if (!EffectCatalog.TryFind(effectAction.Effect, out _))
+            {
+                errors.Add(new SettingsError(
+                    SettingsErrorCode.UnknownEffect,
+                    SettingsCommand.ForSlot(slot.Number),
+                    Effect: effectAction.Effect));
+            }
+
+            if (!EffectAction.IsValidMaxLength(effectAction.MaxLength))
+            {
+                errors.Add(new SettingsError(
+                    SettingsErrorCode.InvalidEffectLength,
+                    SettingsCommand.ForSlot(slot.Number)));
             }
         }
 

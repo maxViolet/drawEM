@@ -1,10 +1,10 @@
 # v4 / FEAT-009: loop an effect and set its length limit per slot
 
-**Status:** planned. **Source:** [v4 out of scope](../README.md).
+**Status:** implemented. **Source:** [v4 out of scope](../README.md).
 
 See [implementation plan](plan.md) and [acceptance criteria](acceptance.md).
 
-## Current behavior
+## Previous behavior
 
 - An effect plays its Lottie file once and never loops
   ([v4 roadmap](../../visual-effects/ROADMAP-v4.md#effect-content-rules)).

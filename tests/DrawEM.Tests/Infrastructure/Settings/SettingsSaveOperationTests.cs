@@ -334,7 +334,7 @@ public sealed class SettingsSaveOperationTests
             () => app.Settings.Current, app.Library, app.Operation, new FakeSampler(), app.NewEffectSampler(), _ => { });
         var sampleFailures = new List<string>();
         editor.SelectEffect(3, FocusRing);
-        editor.Sample(3, sampleFailures.Add);
+        editor.Sample(3, sampleFailures.Add, _ => { });
         var sample = Assert.Single(app.Effects.Shown);
 
         Assert.IsType<SettingsSaveResult.Saved>(editor.Save());

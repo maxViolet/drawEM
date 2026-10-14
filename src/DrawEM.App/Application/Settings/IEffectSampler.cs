@@ -1,4 +1,5 @@
 using DrawEM.App.Domain.Effects;
+using DrawEM.App.Domain.Settings;
 
 namespace DrawEM.App.Application.Settings;
 
@@ -10,14 +11,22 @@ namespace DrawEM.App.Application.Settings;
 public interface IEffectSampler
 {
     /// <summary>
-    /// Starts <paramref name="effect"/> at its normal size and placement on the monitor containing the cursor,
-    /// replacing whatever effect runs.
+    /// Starts the draft <paramref name="effect"/> in <paramref name="slot"/> at its normal size and placement
+    /// on the monitor containing the cursor, replacing whatever effect runs. A looping sample of the same
+    /// slot toggles off.
     /// </summary>
     /// <param name="reportFailure">
     /// Receives the reason when this sample cannot start or fails while it plays. Not called once a newer
     /// sample was requested or the samples were stopped or forgotten.
     /// </param>
-    void Sample(EffectId effect, Action<string> reportFailure);
+    /// <param name="runningChanged">
+    /// Receives <c>true</c> when a looping sample starts and <c>false</c> when it stops.
+    /// </param>
+    void Sample(
+        int slot,
+        EffectAction effect,
+        Action<string> reportFailure,
+        Action<bool> runningChanged);
 
     /// <summary>
     /// Stops this sampler's latest sample if it still runs, and stops reporting its failures. A newer effect,

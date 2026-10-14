@@ -1,6 +1,7 @@
 using DrawEM.App.Application.Effects;
 using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Effects;
+using DrawEM.App.Domain.Settings;
 using DrawEM.App.Infrastructure.Effects;
 using DrawEM.Tests.Infrastructure.Drawing;
 
@@ -33,6 +34,53 @@ public class EffectSamplerTests
         Assert.Equal(OnRight, command.CursorPoint);
         Assert.True(command.ConfigurationGeneration < 0, "A sample must not look like a configuration's start.");
         Assert.Empty(editor.Failures);
+        Assert.Equal(1, command.Slot);
+        Assert.False(command.Loop);
+        Assert.Equal(TimeSpan.FromSeconds(10), command.MaxLength);
+    }
+
+    [Fact]
+    public void LoopingSample_TogglesAndReportsItsRunningState()
+    {
+        var fixture = new Fixture();
+        var editor = fixture.Editor();
+
+        editor.Sample(Confetti, loop: true, maxSeconds: null);
+        editor.Sample(Confetti, loop: true, maxSeconds: null);
+
+        Assert.Equal([true, false], editor.RunningStates);
+        Assert.Null(fixture.Channel.ActiveInstance);
+        Assert.Equal(1, fixture.Surface.Shown);
+        Assert.Equal(1, fixture.Surface.Disposed);
+    }
+
+    [Fact]
+    public void LoopingSample_ReportsStoppedWhenAnotherEffectReplacesIt()
+    {
+        var fixture = new Fixture();
+        var editor = fixture.Editor();
+        editor.Sample(Confetti, loop: true);
+
+        fixture.StartFromShortcut(FocusRing, EffectPlacement.Cursor);
+
+        Assert.Equal([true, false], editor.RunningStates);
+        Assert.Equal(FocusRing, fixture.Channel.ActiveInstance!.Command.Effect);
+    }
+
+    [Fact]
+    public void SameSlotInAnotherSettingsWindow_ReplacesRatherThanTogglesTheLoopingSample()
+    {
+        var fixture = new Fixture();
+        var older = fixture.Editor();
+        var newer = fixture.Editor();
+        older.Sample(Confetti, loop: true);
+
+        newer.Sample(Confetti, loop: true);
+
+        Assert.Equal([true, false], older.RunningStates);
+        Assert.Equal([true], newer.RunningStates);
+        Assert.NotNull(fixture.Channel.ActiveInstance);
+        Assert.Equal(2, fixture.Surface.Shown);
     }
 
     [Fact]
@@ -277,7 +325,8 @@ public class EffectSamplerTests
             var point = Cursor.Position;
             var epoch = Guard.Enqueue(point);
             Assert.True(Monitors.TryGetBounds(point, out var monitor));
-            Guard.Dequeue(epoch, new StartEffectCommand(effect, placement, monitor, point, 0, epoch));
+            Guard.Dequeue(epoch, new StartEffectCommand(
+                1, effect, placement, monitor, point, false, TimeSpan.FromSeconds(10), 0, epoch));
             return Channel.ActiveInstance;
         }
 
@@ -296,7 +345,18 @@ public class EffectSamplerTests
 
         public List<string> Failures { get; } = [];
 
-        public void Sample(EffectId effect) => Sampler.Sample(effect, Failures.Add);
+        public List<bool> RunningStates { get; } = [];
+
+        public void Sample(EffectId effect, bool loop = false, int? maxSeconds = 10) =>
+            Sampler.Sample(
+                1,
+                new EffectAction(
+                    effect,
+                    null,
+                    loop,
+                    maxSeconds is { } seconds ? TimeSpan.FromSeconds(seconds) : null),
+                Failures.Add,
+                RunningStates.Add);
     }
 
     private sealed class RecordingLog(List<string> reasons) : IEffectFailureReporter

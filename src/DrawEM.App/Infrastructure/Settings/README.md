@@ -4,11 +4,11 @@
 `%LOCALAPPDATA%\drawEM\settings.json`. Domain and Application see only
 `SettingsSnapshot` and the `ISettingsStore` port.
 
-## Schema version 2
+## Schema version 3
 
 ```json
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "drawing": {
     "color": "#FF4500",
     "width": 4,
@@ -17,7 +17,7 @@
   },
   "slots": [
     { "slot": 1, "action": { "type": "sound", "file": "<library file>", "name": "applause.wav", "shortcut": "Ctrl+Alt+1" } },
-    { "slot": 2, "action": { "type": "effect", "effectId": "confetti", "shortcut": "Ctrl+Alt+2" } },
+    { "slot": 2, "action": { "type": "effect", "effectId": "confetti", "shortcut": "Ctrl+Alt+2", "loop": false, "maxSeconds": 10 } },
     { "slot": 3, "action": null }
   ]
 }
@@ -31,30 +31,38 @@
 - `effectId` names a built-in effect in `Domain/Effects/EffectCatalog`. The file
   stores only the ID: placement and the Lottie resource come from the catalog,
   so a release can change them without a settings migration.
+- `loop` controls whether the Lottie animation restarts at its end. While it is
+  `true`, `maxSeconds` has no effect.
+- `maxSeconds` is an integer from 1 through 60, or `null` for no time limit.
+  The default for effect actions migrated from schema 2 is 10.
 - A shortcut is at least two of `Ctrl`, `Alt`, `Shift`, then one key `A`–`Z`,
   `0`–`9`, or `F1`–`F12`. `Alt` means Left Alt; Right Alt is reserved for AltGr
   and has no token. The file is written in canonical order (`Ctrl+Alt+Shift+K`).
 - The loaded file must pass the same validation as the Settings window: HEX
   color, width 1–20, draw and clear shortcuts present, a shortcut on every
-  filled slot, a known effect ID in every effect slot, and no duplicate active
-  shortcut.
+  filled slot, a known effect ID and a valid maximum length in every effect
+  slot, and no duplicate active shortcut.
 
-Schema 1 (v3) has the same layout and allows only `sound` actions.
+Schema 1 (v3) has the same layout and allows only `sound` actions. Schema 2
+adds effect actions without `loop` and `maxSeconds`; they load as Loop off and
+10 seconds.
 
 ## Version policy
 
-- The writer always writes `CurrentSchemaVersion` (2), including when every
+- The writer always writes `CurrentSchemaVersion` (3), including when every
   slot holds a sound or is empty.
-- The reader accepts versions 1 and 2. A missing, non-integer, older unknown,
-  or newer version is reported as unsupported, with the version number in the
-  reason; the file is treated like any other unreadable file.
+- The reader accepts versions 1, 2, and 3. A missing, non-integer, older
+  unknown, or newer version is reported as unsupported, with the version
+  number in the reason; the file is treated like any other unreadable file.
 - An unknown action type, an `effect` action in a schema 1 file, an empty
-  `effectId`, or an ID the catalog does not know makes the file unreadable,
-  with the slot number and the type or ID in the reason. The slot is never
-  silently emptied.
-- Schema 1 loads into the same model with its sounds, shortcuts, and file
-  names unchanged. A migration never rewrites the file on load; the new version
-  is written on the next Save.
+  `effectId`, an ID the catalog does not know, a non-boolean `loop`, or a
+  non-integer or out-of-range `maxSeconds` makes the file unreadable, with the
+  slot number and invalid field in the reason. The slot is never silently
+  emptied.
+- Schemas 1 and 2 load into the current model with their sounds, shortcuts,
+  and file names unchanged. Effect actions from schema 2 receive the playback
+  defaults. A migration never rewrites the file on load; schema 3 is written
+  on the next Save.
 - A later schema bumps the version and adds a forward migration from every
   earlier version in the reader.
 - v2 kept sound assignments in code, so there is nothing to migrate: a first
@@ -76,8 +84,8 @@ Schema 1 (v3) has the same layout and allows only `sound` actions.
   replaced. Nothing is copied when the highest-numbered backup already has the
   same bytes, and no backup is overwritten. If the backup cannot be made, or the
   current file or the backups cannot be read, Save raises
-  `SettingsStoreException` and writes nothing. A missing, schema 2, or damaged
-  file gets no backup: a damaged file was already kept by Load as an
+  `SettingsStoreException` and writes nothing. A missing, schema 2 or 3, or
+  damaged file gets no backup: a damaged file was already kept by Load as an
   unreadable copy.
 - Load never writes `settings.json` and never creates the backup. A missing
   file means first launch. A file that cannot be read (for example, locked) is
@@ -90,7 +98,7 @@ Schema 1 (v3) has the same layout and allows only `sound` actions.
 
 ## Rolling back to a v3 drawEM
 
-A v3 drawEM reads only schema 1, so it reports a schema 2 file as unsupported
+A v3 drawEM reads only schema 1, so it reports a schema 3 file as unsupported
 and starts with defaults. To return to v3 with the settings v4 replaced:
 
 1. Exit drawEM from the tray icon, and check that no `DrawEM.App.exe` process
@@ -110,7 +118,7 @@ and starts with defaults. To return to v3 with the settings v4 replaced:
    before starting v3. Start the v3 drawEM.
 
 With no backup, v4 never replaced a v3 file. A schema 1 `settings.json` needs
-no change. A schema 2 one was created by v4; v3 starts with defaults and
+no change. A schema 2 or 3 one was created by v4; v3 starts with defaults and
 removes no sounds.
 
 To upgrade again, exit drawEM first and copy the whole

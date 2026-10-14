@@ -43,8 +43,14 @@ public readonly record struct KeyChord(ShortcutModifiers Modifiers, int VirtualK
 /// <summary>A sound shortcut with its prepared play command.</summary>
 public sealed record SoundBinding(KeyChord Chord, PlaySoundCommand Command);
 
-/// <summary>An effect shortcut with the effect's ID and its placement from the catalog.</summary>
-public sealed record EffectBinding(KeyChord Chord, EffectId Effect, EffectPlacement Placement);
+/// <summary>An effect shortcut with its slot, effect, placement, and playback settings.</summary>
+public sealed record EffectBinding(
+    KeyChord Chord,
+    int Slot,
+    EffectId Effect,
+    EffectPlacement Placement,
+    bool Loop,
+    TimeSpan? MaxLength);
 
 /// <summary>
 /// One immutable set of active shortcuts for the keyboard hook: draw, clear, and the filled sound and effect
@@ -57,7 +63,12 @@ public sealed class ShortcutBindings
         Shortcut draw,
         Shortcut clear,
         IEnumerable<(Shortcut Shortcut, PlaySoundCommand Command)> sounds,
-        IEnumerable<(Shortcut Shortcut, BuiltInEffect Effect)> effects)
+        IEnumerable<(
+            int Slot,
+            Shortcut Shortcut,
+            BuiltInEffect Effect,
+            bool Loop,
+            TimeSpan? MaxLength)> effects)
     {
         ArgumentNullException.ThrowIfNull(draw);
         ArgumentNullException.ThrowIfNull(clear);
@@ -67,7 +78,13 @@ public sealed class ShortcutBindings
         Clear = KeyChord.From(clear);
         Sounds = Array.AsReadOnly(sounds.Select(sound => new SoundBinding(KeyChord.From(sound.Shortcut), sound.Command)).ToArray());
         Effects = Array.AsReadOnly(effects
-            .Select(effect => new EffectBinding(KeyChord.From(effect.Shortcut), effect.Effect.Id, effect.Effect.Placement))
+            .Select(effect => new EffectBinding(
+                KeyChord.From(effect.Shortcut),
+                effect.Slot,
+                effect.Effect.Id,
+                effect.Effect.Placement,
+                effect.Loop,
+                effect.MaxLength))
             .ToArray());
 
         var chords = new HashSet<KeyChord> { Draw };
@@ -95,15 +112,20 @@ public sealed class ShortcutBindings
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentNullException.ThrowIfNull(resolveSound);
-        var actions = snapshot.Slots.Select(slot => slot.Action).ToArray();
-        var sounds = actions
+        var sounds = snapshot.Slots
+            .Select(slot => slot.Action)
             .OfType<SoundAction>()
             .Select(action => (action.Shortcut!, resolveSound(action.Sound)));
-        var effects = actions
-            .OfType<EffectAction>()
-            .Select(action => (action.Shortcut!, EffectCatalog.TryFind(action.Effect, out var effect)
-                ? effect
-                : throw new ArgumentException($"Unknown effect '{action.Effect.Value}'.", nameof(snapshot))));
+        var effects = snapshot.Slots
+            .Where(slot => slot.Action is EffectAction)
+            .Select(slot =>
+            {
+                var action = (EffectAction)slot.Action!;
+                var effect = EffectCatalog.TryFind(action.Effect, out var found)
+                    ? found
+                    : throw new ArgumentException($"Unknown effect '{action.Effect.Value}'.", nameof(snapshot));
+                return (slot.Number, action.Shortcut!, effect, action.Loop, action.MaxLength);
+            });
         return new ShortcutBindings(snapshot.DrawShortcut, snapshot.ClearShortcut, sounds, effects);
     }
 }

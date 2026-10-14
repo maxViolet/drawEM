@@ -61,10 +61,12 @@ These rules apply to every built-in effect file:
 
 For both placements:
 
-- The Lottie file defines the length. The effect plays once and never loops.
+- Every effect slot has Loop and Max length settings. Loop restarts the Lottie
+  file from frame 0 until explicitly stopped. With Loop off, the effect ends at
+  the file end or its 1–60 second maximum, whichever comes first; No limit
+  removes the deadline.
 - An automated test fails if any built-in effect is longer than 10 seconds or
-  fails to load in the player. The controller's 10-second deadline remains a
-  runtime safety net.
+  fails to load in the player. Ten seconds remains the default per-slot maximum.
 - The first files are selected from LottieFiles and adapted by the drawEM team
   where needed. Each file's source URL, author, and license are recorded beside
   it in the repository. Replacing a file changes no code.
@@ -73,14 +75,15 @@ For both placements:
 
 | Event | Result |
 |---|---|
-| First shortcut press | Start once on the monitor containing the cursor at invocation |
+| First shortcut press | Start on the monitor containing the cursor at invocation |
 | Shortcut held | No repeat |
-| Same effect pressed again after release | Stop the old instance and restart from the beginning |
+| Same slot pressed again after release, Loop off | Stop the old instance and restart from the beginning |
+| Same slot pressed again after release, Loop on | Stop the effect; the next press starts it |
 | Different effect invoked, of either placement | Replace the current effect; no queue or crossfade |
 | Cursor moves within that monitor | Continue; a Cursor effect stays at its captured point |
 | Cursor enters another connected monitor | Stop; do not restart when the cursor returns |
 | Cursor reaches the outside edge of the desktop | Continue; an outside edge is not another monitor |
-| Effect completes | Remove its visuals and release its animation subscription |
+| Non-looping effect completes | Remove its visuals and release its animation subscription |
 | Tray > Stop effects | Stop the active effect, including a Sample; leave sound and drawings alone |
 | Settings Save succeeds | Stop effects and sound, exit drawing, clear strokes, then publish new bindings |
 | Settings validation or persistence fails | Keep the previous active configuration and running actions |
@@ -99,10 +102,11 @@ Clear continues to clear drawings only. Keyboard and pointer input pass
 through during effects, except for assigned shortcut suppression and existing
 drawing-mode input blocking. Effects never take focus or appear in Alt+Tab.
 
-Sample uses the same effect channel, replacement rules, and monitor policy as
-shortcuts, without changing saved assignments. Settings stays open and keeps
-focus. The mouse is usually over the Sample button, so that monitor is the
-target and a Cursor effect appears around the button; this limitation is
+Sample uses the same effect channel, playback settings, replacement rules, and
+monitor policy as shortcuts, without changing saved assignments. A looping
+Sample changes its button to Stop until it is stopped. Settings stays open and
+keeps focus. The mouse is usually over the Sample button, so that monitor is
+the target and a Cursor effect appears around the button; this limitation is
 deliberate. A new Sample or shortcut replaces an older Sample. Closing its old
 editor must not stop the replacement.
 
@@ -282,21 +286,23 @@ existing `Ctrl+Alt+N` default. Clear removes the action and binding. Type change
 remain drafts until Save. Sample works with a selected effect even if its draft
 shortcut is missing or conflicts; Save still requires all bindings to be valid.
 
-Schema 2 retains the slot shape and adds an effect payload. Placement is not
-saved: it comes from the catalog, so a later release can change an effect's
-file without migrating settings.
+Schema 3 retains the slot shape and adds per-effect playback settings. Placement
+is not saved: it comes from the catalog, so a later release can change an
+effect's file without migrating settings.
 
 ```json
-{ "slot": 2, "action": { "type": "effect", "effectId": "confetti", "shortcut": "Ctrl+Alt+2" } }
+{ "slot": 2, "action": { "type": "effect", "effectId": "confetti", "shortcut": "Ctrl+Alt+2", "loop": false, "maxSeconds": 10 } }
 ```
 
-Read schema 1 into the new model without modifying its sounds, shortcuts, or
-files. Every v4 Save writes schema 2, including when all slots contain only
-sounds. Before replacing a valid schema 1 file, keep an immutable backup:
+`maxSeconds` is an integer from 1 through 60, or `null` for No limit. Loop
+ignores the maximum. Schema 2 effect actions load with Loop off and 10 seconds;
+schema 1 has sound actions only. Loading does not rewrite a file. Every Save
+writes schema 3, including when all slots contain only sounds. Before replacing
+a valid schema 1 file, keep an immutable backup:
 `settings.schema1-backup.json` is number 1; each later migration adds the next
 numbered backup unless the highest-numbered backup already has the same bytes.
 Never overwrite a backup. If backup creation fails, do not save. An older binary
-cannot read schema 2, so rollback requires restoring the highest-numbered
+cannot read schema 3, so rollback requires restoring the highest-numbered
 backup while drawEM is closed. The backup does not restore sound copies deleted
 by any v4 Save, including the migration Save, or sounds imported after
 the backup; the older app's startup cleanup may also remove copies not named

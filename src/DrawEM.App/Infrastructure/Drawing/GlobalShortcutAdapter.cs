@@ -299,7 +299,16 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
             if (generation == Volatile.Read(ref configurationGeneration)
                 && monitorBoundsSource.TryGetBounds(point, out var monitor))
             {
-                command = new StartEffectCommand(effect.Effect, effect.Placement, monitor, point, generation, monitorEpoch);
+                command = new StartEffectCommand(
+                    effect.Slot,
+                    effect.Effect,
+                    effect.Placement,
+                    monitor,
+                    point,
+                    effect.Loop,
+                    effect.MaxLength,
+                    generation,
+                    monitorEpoch);
             }
 
             effects.Dequeue(monitorEpoch, command);

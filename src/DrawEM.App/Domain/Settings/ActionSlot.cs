@@ -20,16 +20,34 @@ public sealed record SoundAction(SoundReference Sound, Shortcut? Shortcut) : Slo
 }
 
 /// <summary>
-/// Shows one built-in effect. Stores only the effect ID; placement and file come from
-/// <see cref="EffectCatalog"/>.
+/// Shows one built-in effect. Stores the effect ID and per-slot playback settings; placement and file come
+/// from <see cref="EffectCatalog"/>.
 /// </summary>
-public sealed record EffectAction(EffectId Effect, Shortcut? Shortcut) : SlotAction(Shortcut)
+public sealed record EffectAction(
+    EffectId Effect,
+    Shortcut? Shortcut,
+    bool Loop,
+    TimeSpan? MaxLength) : SlotAction(Shortcut)
 {
+    public const int MinSeconds = 1;
+    public const int MaxSeconds = 60;
+    public static readonly TimeSpan DefaultMaxLength = TimeSpan.FromSeconds(10);
+
+    public EffectAction(EffectId effect, Shortcut? shortcut)
+        : this(effect, shortcut, false, DefaultMaxLength)
+    {
+    }
+
     /// <summary>
     /// Never <c>null</c> when constructed; a <c>with</c> expression can still clear it, so
     /// <see cref="SettingsSnapshot.Validate"/> checks it again.
     /// </summary>
     public EffectId Effect { get; init; } = Effect ?? throw new ArgumentNullException(nameof(Effect));
+
+    public static bool IsValidMaxLength(TimeSpan? length) =>
+        length is null
+        || length.Value.Ticks % TimeSpan.TicksPerSecond == 0
+        && length.Value.TotalSeconds is >= MinSeconds and <= MaxSeconds;
 }
 
 /// <summary>One of the eight numbered action slots. A slot with no action is empty and has no shortcut.</summary>

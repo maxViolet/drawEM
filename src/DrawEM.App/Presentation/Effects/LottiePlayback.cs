@@ -20,6 +20,7 @@ internal sealed class LottiePlayback : IEffectPlayback
     private readonly Animation animation;
     private readonly Action frameStarting;
     private readonly Action dpiChanged;
+    private readonly bool loop;
     private readonly long started = Stopwatch.GetTimestamp();
     private EffectSurfaceWindow? window;
     private WriteableBitmap? bitmap;
@@ -31,9 +32,10 @@ internal sealed class LottiePlayback : IEffectPlayback
     private bool subscribed;
     private bool released;
 
-    private LottiePlayback(Animation animation, Action frameStarting, Action dpiChanged)
+    private LottiePlayback(Animation animation, bool loop, Action frameStarting, Action dpiChanged)
     {
         this.animation = animation;
+        this.loop = loop;
         this.frameStarting = frameStarting;
         this.dpiChanged = dpiChanged;
     }
@@ -49,7 +51,7 @@ internal sealed class LottiePlayback : IEffectPlayback
     public static LottiePlayback Start(
         StartEffectCommand command, Animation animation, Action frameStarting, Action dpiChanged)
     {
-        var playback = new LottiePlayback(animation, frameStarting, dpiChanged);
+        var playback = new LottiePlayback(animation, command.Loop, frameStarting, dpiChanged);
         try
         {
             playback.Open(command);
@@ -148,8 +150,8 @@ internal sealed class LottiePlayback : IEffectPlayback
         }
 
         lastRenderingTime = renderingTime;
-        var elapsed = Stopwatch.GetElapsedTime(started);
-        if (elapsed >= animation.Duration)
+        var frame = PlaybackPosition(Stopwatch.GetElapsedTime(started), animation.Duration, loop);
+        if (frame.Completed)
         {
             Unsubscribe();
             Completed?.Invoke();
@@ -160,13 +162,31 @@ internal sealed class LottiePlayback : IEffectPlayback
         try
         {
             frameStarting();
-            Draw(elapsed.TotalSeconds);
+            Draw(frame.Position.TotalSeconds);
         }
         catch (Exception exception)
         {
             Unsubscribe();
             Failed?.Invoke($"The effect could not be drawn: {exception.Message}");
         }
+    }
+
+    internal static (TimeSpan Position, bool Completed) PlaybackPosition(
+        TimeSpan elapsed,
+        TimeSpan duration,
+        bool loop)
+    {
+        if (elapsed < duration)
+        {
+            return (elapsed, false);
+        }
+
+        if (!loop || duration <= TimeSpan.Zero)
+        {
+            return (elapsed, true);
+        }
+
+        return (TimeSpan.FromTicks(elapsed.Ticks % duration.Ticks), false);
     }
 
     private void Draw(double seconds)

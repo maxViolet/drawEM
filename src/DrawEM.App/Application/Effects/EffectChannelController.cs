@@ -2,14 +2,13 @@ namespace DrawEM.App.Application.Effects;
 
 /// <summary>
 /// The global effect channel: Idle -> Running(instance) -> Idle. Owns at most one effect instance across the
-/// application, whatever its placement; a new start releases the active instance first, even for the same
-/// effect. Each instance ends at its natural end, on failure, on Stop, or <see cref="MaxDuration"/> after it
-/// starts; time spent inside <see cref="IEffectSurface.Show"/> counts. Call every member on one thread;
-/// timer callbacks are marshalled to that thread through the dispatch delegate.
+/// application, whatever its placement. A looping start for the active slot and configuration toggles it off;
+/// every other start releases the active instance first. Each instance ends at its natural end, on failure,
+/// on Stop, or at its command's optional maximum length. Call every member on one thread; timer callbacks are
+/// marshalled to that thread through the dispatch delegate.
 /// </summary>
 public sealed class EffectChannelController : IDisposable
 {
-    public static readonly TimeSpan MaxDuration = TimeSpan.FromSeconds(10);
 
     private readonly IEffectSurface surface;
     private readonly IEffectFailureReporter failures;
@@ -34,12 +33,25 @@ public sealed class EffectChannelController : IDisposable
     /// <summary>The instance that owns the channel, or <c>null</c> when the channel is idle.</summary>
     public EffectInstance? ActiveInstance => active?.Instance;
 
-    /// <summary>Releases the active instance, then shows a new one.</summary>
-    /// <returns>The started instance, or <c>null</c> when the channel is disposed or the effect cannot be shown.</returns>
+    /// <summary>Raised after the channel starts or finishes an instance.</summary>
+    internal event Action<EffectInstance?>? ActiveInstanceChanged;
+
+    /// <summary>Stops a matching looping slot, or releases the active instance and shows a new one.</summary>
+    /// <returns>The started instance, or <c>null</c> when toggled off, disposed, or unable to show.</returns>
     public EffectInstance? Start(StartEffectCommand command)
     {
         if (disposed)
         {
+            return null;
+        }
+
+        if (command.Loop
+            && active is { } current
+            && current.Instance.Command.Loop
+            && current.Instance.Command.Slot == command.Slot
+            && current.Instance.Command.ConfigurationGeneration == command.ConfigurationGeneration)
+        {
+            Stop();
             return null;
         }
 
@@ -61,14 +73,24 @@ public sealed class EffectChannelController : IDisposable
 
         // The run object is the generation token: callbacks act only while it is still active.
         var run = new Run(instance, playback);
-        run.OnCompleted = () => End(run);
+        if (!command.Loop)
+        {
+            run.OnCompleted = () => End(run);
+            playback.Completed += run.OnCompleted;
+        }
+
         run.OnFailed = reason => End(run, reason);
-        playback.Completed += run.OnCompleted;
         playback.Failed += run.OnFailed;
         active = run;
+        ActiveInstanceChanged?.Invoke(instance);
+
+        if (command.Loop || command.MaxLength is not { } maxLength)
+        {
+            return instance;
+        }
 
         // The deadline counts from the start, so time spent inside Show shortens what remains.
-        var remaining = MaxDuration - time.GetElapsedTime(showing);
+        var remaining = maxLength - time.GetElapsedTime(showing);
         if (remaining <= TimeSpan.Zero)
         {
             End(run);
@@ -129,7 +151,11 @@ public sealed class EffectChannelController : IDisposable
         }
 
         active = null;
-        run.Playback.Completed -= run.OnCompleted;
+        if (run.OnCompleted is not null)
+        {
+            run.Playback.Completed -= run.OnCompleted;
+        }
+
         run.Playback.Failed -= run.OnFailed;
         run.Deadline?.Dispose();
 
@@ -151,6 +177,8 @@ public sealed class EffectChannelController : IDisposable
                 failures.Report(run.Instance, reason);
             }
         }
+
+        ActiveInstanceChanged?.Invoke(null);
     }
 
     private sealed class Run(EffectInstance instance, IEffectPlayback playback)

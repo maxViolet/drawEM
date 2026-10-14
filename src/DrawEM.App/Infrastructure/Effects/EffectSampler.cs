@@ -1,6 +1,7 @@
 using DrawEM.App.Application.Effects;
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Domain.Effects;
+using DrawEM.App.Domain.Settings;
 using DrawEM.App.Infrastructure.Drawing;
 
 namespace DrawEM.App.Infrastructure.Effects;
@@ -13,11 +14,13 @@ namespace DrawEM.App.Infrastructure.Effects;
 /// </summary>
 public sealed class EffectSampler : IEffectSampler
 {
+    private static long lastSampleConfigurationGeneration;
+
     /// <summary>
-    /// A sample belongs to no saved configuration. Configuration generations start at 0 and only grow, so this
-    /// value tells a sample apart from any shortcut start.
+    /// A sample belongs to one Settings window rather than a saved configuration. Each sampler gets a unique
+    /// negative generation, so another window sampling the same slot replaces it instead of toggling it.
     /// </summary>
-    private const long SampleConfigurationGeneration = -1;
+    private readonly long sampleConfigurationGeneration = Interlocked.Decrement(ref lastSampleConfigurationGeneration);
 
     private readonly ICursorPositionSource cursor;
     private readonly IMonitorBoundsSource monitors;
@@ -26,6 +29,7 @@ public sealed class EffectSampler : IEffectSampler
     private readonly EffectSampleFailureRouter failures;
     /// <summary>This sampler's latest started sample; it may since have ended or been replaced.</summary>
     private EffectInstance? latest;
+    private Action<bool>? runningChanged;
 
     public EffectSampler(
         ICursorPositionSource cursor,
@@ -46,10 +50,24 @@ public sealed class EffectSampler : IEffectSampler
         this.failures = failures;
     }
 
-    public void Sample(EffectId effect, Action<string> reportFailure)
+    public void Sample(
+        int slot,
+        EffectAction effect,
+        Action<string> reportFailure,
+        Action<bool> runningChanged)
     {
         ArgumentNullException.ThrowIfNull(effect);
         ArgumentNullException.ThrowIfNull(reportFailure);
+        ArgumentNullException.ThrowIfNull(runningChanged);
+
+        if (effect.Loop
+            && latest is { } current
+            && current.Command.Slot == slot
+            && ReferenceEquals(channel.ActiveInstance, current))
+        {
+            StopSamples();
+            return;
+        }
 
         // A newer request ends the earlier sample's reports even when it cannot start. The earlier sample stays
         // owned until this one replaces it, so Cancel can still stop it.
@@ -58,9 +76,9 @@ public sealed class EffectSampler : IEffectSampler
             failures.Forget(latest.Command);
         }
 
-        if (!EffectCatalog.TryFind(effect, out var builtIn))
+        if (!EffectCatalog.TryFind(effect.Effect, out var builtIn))
         {
-            reportFailure($"'{effect.Value}' is not a built-in effect.");
+            reportFailure($"'{effect.Effect.Value}' is not a built-in effect.");
             return;
         }
 
@@ -79,21 +97,38 @@ public sealed class EffectSampler : IEffectSampler
         }
 
         var command = new StartEffectCommand(
-            effect, builtIn.Placement, monitor, point, SampleConfigurationGeneration, monitorEpoch);
-
-        Forget();
+            slot,
+            effect.Effect,
+            builtIn.Placement,
+            monitor,
+            point,
+            effect.Loop,
+            effect.MaxLength,
+            sampleConfigurationGeneration,
+            monitorEpoch);
 
         // Watched before the start: a window that cannot be shown is reported inside it.
         failures.Watch(command, reportFailure);
         starts.Dequeue(monitorEpoch, command);
         if (channel.ActiveInstance is { } started && ReferenceEquals(started.Command, command))
         {
+            Forget();
             latest = started;
+            if (effect.Loop)
+            {
+                this.runningChanged = runningChanged;
+                channel.ActiveInstanceChanged += OnActiveInstanceChanged;
+                runningChanged(true);
+            }
         }
         else
         {
             // Nothing started, so nothing more can be reported for this command.
             failures.Forget(command);
+            if (latest is not null && !ReferenceEquals(channel.ActiveInstance, latest))
+            {
+                Forget();
+            }
         }
     }
 
@@ -109,6 +144,14 @@ public sealed class EffectSampler : IEffectSampler
 
     public void ForgetSamples() => Forget();
 
+    private void OnActiveInstanceChanged(EffectInstance? instance)
+    {
+        if (latest is { } owned && !ReferenceEquals(instance, owned))
+        {
+            Forget();
+        }
+    }
+
     private void Forget()
     {
         if (latest is not null)
@@ -117,6 +160,10 @@ public sealed class EffectSampler : IEffectSampler
         }
 
         latest = null;
+        channel.ActiveInstanceChanged -= OnActiveInstanceChanged;
+        var report = runningChanged;
+        runningChanged = null;
+        report?.Invoke(false);
     }
 }
 

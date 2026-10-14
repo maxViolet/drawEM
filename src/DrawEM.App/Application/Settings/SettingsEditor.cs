@@ -113,11 +113,31 @@ public sealed class SettingsEditor
 
     /// <summary>
     /// Assigns the effect to the slot. A slot that was empty proposes <see cref="ProposedShortcut"/>; a
-    /// filled slot keeps its shortcut. An ID outside <see cref="EffectCatalog"/> is kept and reported by
-    /// <see cref="Validate"/>. A sound it replaces keeps its managed copy while the active settings use it.
+    /// filled slot keeps its shortcut. Changing one effect to another keeps the slot's playback settings.
+    /// An ID outside <see cref="EffectCatalog"/> is kept and reported by <see cref="Validate"/>. A sound it
+    /// replaces keeps its managed copy while the active settings use it.
     /// </summary>
-    public void SelectEffect(int slot, EffectId effect) =>
-        Replace(new ActionSlot(slot, new EffectAction(effect, ShortcutForNewAction(slot))));
+    public void SelectEffect(int slot, EffectId effect)
+    {
+        var current = slots[slot - 1].Action as EffectAction;
+        Replace(new ActionSlot(
+            slot,
+            current is null
+                ? new EffectAction(effect, ShortcutForNewAction(slot))
+                : new EffectAction(effect, current.Shortcut, current.Loop, current.MaxLength)));
+    }
+
+    public void SetEffectLoop(int slot, bool loop)
+    {
+        var effect = EffectIn(slot);
+        Replace(new ActionSlot(slot, effect with { Loop = loop }));
+    }
+
+    public void SetEffectMaxLength(int slot, TimeSpan? maxLength)
+    {
+        var effect = EffectIn(slot);
+        Replace(new ActionSlot(slot, effect with { MaxLength = maxLength }));
+    }
 
     /// <summary>Empties the slot, which also removes its shortcut.</summary>
     public void ClearSlot(int slot) => Replace(ActionSlot.Empty(slot));
@@ -133,15 +153,18 @@ public sealed class SettingsEditor
     /// Plays the slot's draft sound or shows its draft effect. The slot's shortcut is not needed, so a missing
     /// or conflicting one does not prevent it. Does nothing for an empty slot.
     /// </summary>
-    public void Sample(int slot, Action<string> reportFailure)
+    public void Sample(
+        int slot,
+        Action<string> reportFailure,
+        Action<bool> effectRunningChanged)
     {
         switch (slots[slot - 1].Action)
         {
             case SoundAction { Sound: { } sound }:
                 sampler.Sample(sound, reportFailure);
                 break;
-            case EffectAction { Effect: { } effect }:
-                effectSampler.Sample(effect, reportFailure);
+            case EffectAction { Effect: not null } effect:
+                effectSampler.Sample(slot, effect, reportFailure, effectRunningChanged);
                 break;
         }
     }
@@ -203,6 +226,10 @@ public sealed class SettingsEditor
     private Shortcut ShortcutForNewAction(int slot) => slots[slot - 1].Action?.Shortcut ?? ProposedShortcut(slot);
 
     private void Replace(ActionSlot slot) => slots[slot.Number - 1] = slot;
+
+    private EffectAction EffectIn(int slot) =>
+        slots[slot - 1].Action as EffectAction
+        ?? throw new InvalidOperationException($"Slot {slot} is not an effect.");
 
     private DrawingStyle Style() =>
         new(Color, StrokeWidth.IsValid(Width) ? new StrokeWidth(Width) : default);

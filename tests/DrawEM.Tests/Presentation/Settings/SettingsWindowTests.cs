@@ -52,6 +52,10 @@ public sealed class SettingsWindowTests
             Assert.Contains("ComboBox.SelectedItem: Effect Active", bindings);
             Assert.Contains("ComboBox.SelectedItem: Kind Active", bindings);
             Assert.Contains("ComboBox.Visibility: IsEffect Active", bindings);
+            Assert.Contains("CheckBox.IsChecked: Loop Active", bindings);
+            Assert.Contains("CheckBox.IsChecked: NoLimit Active", bindings);
+            Assert.Contains("RepeatButton.IsEnabled: CanIncreaseMaxLength Active", bindings);
+            Assert.Contains("Button.Content: SampleText Active", bindings);
 
             tabs.SelectedIndex = 1;
             Layout(window);
@@ -66,6 +70,21 @@ public sealed class SettingsWindowTests
             Assert.Equal(Visibility.Visible, effects[1].Visibility);
             Assert.Equal(Visibility.Collapsed, effects[0].Visibility);
             Assert.Null(effects[2].SelectedItem);
+            var loops = Descendants<CheckBox>(slots)
+                .Where(box => AutomationProperties.GetName(box) == "Loop effect")
+                .ToArray();
+            var noLimits = Descendants<CheckBox>(slots)
+                .Where(box => AutomationProperties.GetName(box) == "No effect length limit")
+                .ToArray();
+            var lengthSteppers = Descendants<RepeatButton>(slots)
+                .Where(button => AutomationProperties.GetName(button) == "Increase max length")
+                .ToArray();
+            Assert.Equal(ActionSlot.Count, loops.Length);
+            Assert.Equal([false, true, false],
+                loops.Take(3).Select(box => box.IsVisible));
+            Assert.Equal(Visibility.Visible, noLimits[1].Visibility);
+            Assert.True(noLimits[1].IsEnabled);
+            Assert.True(lengthSteppers[1].IsEnabled);
             var samples = Descendants<Button>(slots).Where(button => Equals(button.Content, "Sample")).ToArray();
             Assert.Equal([true, true, false], samples.Take(3).Select(button => button.IsEnabled));
 
@@ -231,9 +250,9 @@ public sealed class SettingsWindowTests
     /// <summary>Properties bound by a style or a data template, which are not local values.</summary>
     private static readonly DependencyProperty[] StyledProperties =
         [
-            ContentControl.ContentProperty, UIElement.IsEnabledProperty, TextBlock.TextProperty,
-            FrameworkElement.DataContextProperty, FrameworkElement.ToolTipProperty, UIElement.VisibilityProperty,
-            Selector.SelectedItemProperty, ItemsControl.ItemsSourceProperty,
+            ContentControl.ContentProperty, ToggleButton.IsCheckedProperty, UIElement.IsEnabledProperty,
+            TextBlock.TextProperty, FrameworkElement.DataContextProperty, FrameworkElement.ToolTipProperty,
+            UIElement.VisibilityProperty, Selector.SelectedItemProperty, ItemsControl.ItemsSourceProperty,
         ];
 
     private static void Layout(Window window)

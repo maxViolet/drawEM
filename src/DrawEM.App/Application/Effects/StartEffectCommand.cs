@@ -4,18 +4,21 @@ using DrawEM.App.Domain.Effects;
 namespace DrawEM.App.Application.Effects;
 
 /// <summary>
-/// Request to show one effect on the effect channel. The target monitor and cursor point are captured at
-/// invocation and never resampled. <see cref="ConfigurationGeneration"/> names the configuration that built
-/// the request, so later steps can discard requests a Save invalidated.
+/// Request to show one effect on the effect channel. The slot, playback settings, target monitor, and cursor
+/// point are captured at invocation and never resampled. <see cref="ConfigurationGeneration"/> names the
+/// configuration that built the request, so later steps can discard requests a Save invalidated.
 /// </summary>
 /// <param name="MonitorEpoch">
 /// The monitor epoch at invocation. The epoch advances each time the cursor enters another monitor and on
 /// each display topology change; an effect stops once the epoch has moved past its own.
 /// </param>
 public sealed record StartEffectCommand(
+    int Slot,
     EffectId Effect,
     EffectPlacement Placement,
     MonitorBounds Monitor,
     ScreenPoint CursorPoint,
+    bool Loop,
+    TimeSpan? MaxLength,
     long ConfigurationGeneration,
     long MonitorEpoch);

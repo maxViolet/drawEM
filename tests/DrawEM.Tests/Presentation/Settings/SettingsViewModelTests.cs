@@ -298,6 +298,84 @@ public sealed class SettingsViewModelTests
     }
 
     [Fact]
+    public void EffectSlot_ShowsItsLoopAndLengthSettings()
+    {
+        active = SettingsWithEffect(2, loop: false, TimeSpan.FromSeconds(10));
+        var slot = Model().Slots[1];
+
+        Assert.True(slot.HasEffect);
+        Assert.False(slot.Loop);
+        Assert.Equal("10 s", slot.MaxLengthText);
+        Assert.False(slot.NoLimit);
+        Assert.True(slot.CanSetNoLimit);
+        Assert.True(slot.CanIncreaseMaxLength);
+        Assert.True(slot.CanDecreaseMaxLength);
+        Assert.Equal("Sample", slot.SampleText);
+    }
+
+    [Fact]
+    public void LoopAndNoLimit_DisableLengthControlsAndSaveTheirValues()
+    {
+        active = SettingsWithEffect(2, loop: false, TimeSpan.FromSeconds(18));
+        var model = Model();
+        var slot = model.Slots[1];
+
+        slot.Loop = true;
+
+        Assert.False(slot.CanSetNoLimit);
+        Assert.False(slot.CanIncreaseMaxLength);
+        Assert.False(slot.CanDecreaseMaxLength);
+
+        slot.Loop = false;
+        slot.NoLimit = true;
+
+        Assert.Equal("No limit", slot.MaxLengthText);
+        Assert.False(slot.CanIncreaseMaxLength);
+        Assert.False(slot.CanDecreaseMaxLength);
+        Assert.True(model.Save());
+        var action = Assert.IsType<EffectAction>(Assert.Single(saver.Saved).Slots[1].Action);
+        Assert.False(action.Loop);
+        Assert.Null(action.MaxLength);
+    }
+
+    [Fact]
+    public void MaxLengthStepper_ClampsToOneThroughSixtyAndDisablesOnlyAtALimit()
+    {
+        active = SettingsWithEffect(2, loop: false, TimeSpan.FromSeconds(10));
+        var slot = Model().Slots[1];
+
+        slot.StepMaxLength(-20);
+
+        Assert.Equal("1 s", slot.MaxLengthText);
+        Assert.True(slot.CanIncreaseMaxLength);
+        Assert.False(slot.CanDecreaseMaxLength);
+
+        slot.StepMaxLength(100);
+
+        Assert.Equal("60 s", slot.MaxLengthText);
+        Assert.False(slot.CanIncreaseMaxLength);
+        Assert.True(slot.CanDecreaseMaxLength);
+    }
+
+    [Fact]
+    public void LoopingSample_ShowsStopUntilTheSamplerReportsItStopped()
+    {
+        active = SettingsWithEffect(2, loop: true, TimeSpan.FromSeconds(10));
+        var slot = Model().Slots[1];
+
+        slot.Sample();
+        var started = Assert.Single(effectSampler.Samples);
+        started.RunningChanged(true);
+
+        Assert.Equal("Stop", slot.SampleText);
+
+        slot.Sample();
+        effectSampler.Samples[1].RunningChanged(false);
+
+        Assert.Equal("Sample", slot.SampleText);
+    }
+
+    [Fact]
     public void EmptySlot_ChangedToEffect_ChangesTheDraftOnlyWhenAnEffectIsChosen_AndSavesIt()
     {
         var model = Model();
@@ -596,6 +674,21 @@ public sealed class SettingsViewModelTests
         Assert.Empty(played);
         Assert.Empty(states);
         Assert.False(model.CanSave);
+    }
+
+    private static SettingsSnapshot SettingsWithEffect(int slot, bool loop, TimeSpan? maxLength)
+    {
+        var defaults = SettingsSnapshot.Default;
+        var slots = Enumerable.Range(1, ActionSlot.Count).Select(ActionSlot.Empty).ToArray();
+        slots[slot - 1] = new ActionSlot(
+            slot,
+            new EffectAction(
+                Confetti,
+                Shortcut.Create(CtrlAlt, ShortcutKey.Digit(slot)),
+                loop,
+                maxLength));
+        return SettingsSnapshot.Validate(
+            defaults.Style, defaults.DrawShortcut, defaults.ClearShortcut, slots).Snapshot!;
     }
 
     private SettingsViewModel Model() =>

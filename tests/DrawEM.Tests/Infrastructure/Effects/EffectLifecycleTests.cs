@@ -117,7 +117,7 @@ public sealed class EffectLifecycleTests
 
         app.Raise(name);
         app.RunUi();
-        app.Time.Advance(EffectChannelController.MaxDuration);
+        app.Time.Advance(TimeSpan.FromSeconds(10));
         app.RunUi();
 
         Assert.Equal([interrupted], app.Effects.Shown);
@@ -173,7 +173,15 @@ public sealed class EffectLifecycleTests
         try
         {
             var instance = channel.Start(new StartEffectCommand(
-                Confetti, EffectPlacement.Monitor, Left, new ScreenPoint(10, 10), 0, 0));
+                1,
+                Confetti,
+                EffectPlacement.Monitor,
+                Left,
+                new ScreenPoint(10, 10),
+                false,
+                TimeSpan.FromSeconds(10),
+                0,
+                0));
             Assert.NotNull(instance);
 
             var playback = surface.Last!;
