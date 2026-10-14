@@ -292,7 +292,8 @@ public class EffectMonitorGuardTests
         {
             Assert.True(Monitors.TryGetBounds(point, out var monitor));
             var effect = placement == EffectPlacement.Monitor ? "confetti" : "focus-ring";
-            return new StartEffectCommand(new EffectId(effect), placement, monitor, point, 0, epoch);
+            return new StartEffectCommand(
+                1, new EffectId(effect), placement, monitor, point, false, TimeSpan.FromSeconds(10), 0, epoch);
         }
 
         /// <summary>Queues and dispatches a start, as a shortcut press does, and checks it started.</summary>

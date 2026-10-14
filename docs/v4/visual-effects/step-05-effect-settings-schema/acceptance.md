@@ -2,6 +2,9 @@
 
 **Task:** [save and load effect assignments](task.md). **Plan:** [implementation](plan.md).
 
+> Historical S4-05 evidence. FEAT-009 later advanced the current schema to 3;
+> schema 2 remains a supported migration input.
+
 - [x] Schema 1 sound settings load with all slots, shortcuts, and file references unchanged.
 - [x] Schema 2 round-trips mixed sound/effect/empty slots and stable effect IDs; no placement is written.
 - [x] Every explicit v4 Save writes schema 2. A failed backup, write, or replacement leaves previous settings recoverable; loading alone never rewrites settings, and an existing migration backup is not overwritten.

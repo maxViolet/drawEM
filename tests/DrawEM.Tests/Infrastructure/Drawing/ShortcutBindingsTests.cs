@@ -98,8 +98,9 @@ public class ShortcutBindingsTests
             Enumerable.Range(1, ActionSlot.Count).Select(number => number switch
             {
                 1 => new ActionSlot(1, new SoundAction(applause, Slot(1))),
-                2 => new ActionSlot(2, new EffectAction(new EffectId("confetti"), Slot(2))),
-                5 => new ActionSlot(5, new EffectAction(new EffectId("focus-ring"), Slot(5))),
+                2 => new ActionSlot(2, new EffectAction(
+                    new EffectId("confetti"), Slot(2), true, TimeSpan.FromSeconds(37))),
+                5 => new ActionSlot(5, new EffectAction(new EffectId("focus-ring"), Slot(5), false, null)),
                 _ => ActionSlot.Empty(number),
             })).Snapshot!;
 
@@ -108,8 +109,8 @@ public class ShortcutBindingsTests
         Assert.Equal([new SoundBinding(new KeyChord(CtrlAlt, VirtualKeys.D1), Command("a1.wav"))], bindings.Sounds);
         Assert.Equal(
             [
-                new EffectBinding(new KeyChord(CtrlAlt, VirtualKeys.D2), new EffectId("confetti"), EffectPlacement.Monitor),
-                new EffectBinding(new KeyChord(CtrlAlt, VirtualKeys.D0 + 5), new EffectId("focus-ring"), EffectPlacement.Cursor),
+                new EffectBinding(new KeyChord(CtrlAlt, VirtualKeys.D2), 2, new EffectId("confetti"), EffectPlacement.Monitor, true, TimeSpan.FromSeconds(37)),
+                new EffectBinding(new KeyChord(CtrlAlt, VirtualKeys.D0 + 5), 5, new EffectId("focus-ring"), EffectPlacement.Cursor, false, null),
             ],
             bindings.Effects);
     }
@@ -131,8 +132,9 @@ public class ShortcutBindingsTests
         var clear = SettingsSnapshot.Default.ClearShortcut;
 
         Assert.Throws<ArgumentException>(() => new ShortcutBindings(
-            draw, clear, [(Slot(1), Command("applause"))], [(Slot(1), focusRing)]));
-        Assert.Throws<ArgumentException>(() => new ShortcutBindings(draw, clear, [], [(draw, focusRing)]));
+            draw, clear, [(Slot(1), Command("applause"))], [(1, Slot(1), focusRing, false, TimeSpan.FromSeconds(10))]));
+        Assert.Throws<ArgumentException>(() => new ShortcutBindings(
+            draw, clear, [], [(1, draw, focusRing, false, TimeSpan.FromSeconds(10))]));
     }
 
     private static Shortcut Slot(int number) => Shortcut.Create(CtrlAlt, ShortcutKey.Digit(number));

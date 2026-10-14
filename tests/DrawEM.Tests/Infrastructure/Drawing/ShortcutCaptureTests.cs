@@ -639,7 +639,7 @@ public class ShortcutCaptureTests
                         (Shortcut.Create(AltShift, three), Drumroll),
                         (Shortcut.Create(CtrlAlt | ShortcutModifiers.Shift, three), Drumroll),
                     ],
-                    [(Shortcut.Create(AltShift, ShortcutKey.Digit(4)), EffectCatalog.BuiltIn.Single(effect => effect.Id.Value == "focus-ring"))]),
+                    [(4, Shortcut.Create(AltShift, ShortcutKey.Digit(4)), EffectCatalog.BuiltIn.Single(effect => effect.Id.Value == "focus-ring"), false, TimeSpan.FromSeconds(10))]),
                 Played.Add,
                 Effects);
         }

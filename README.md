@@ -53,22 +53,28 @@ stops after at most 10 seconds.
    - `Confetti` (Monitor placement) covers the monitor under the pointer.
    - `Focus ring` (Cursor placement) appears around the pointer position at
      the moment you press the shortcut.
-3. Keep the proposed `Ctrl+Alt+<N>` shortcut, where `<N>` is the slot number,
+3. Set Loop if the animation should repeat until stopped. Otherwise, choose a
+   Max length from 1–60 seconds or select No limit to let the file finish.
+4. Keep the proposed `Ctrl+Alt+<N>` shortcut, where `<N>` is the slot number,
    or click it to capture another one. Use `Sample` to preview the draft effect
-   on the monitor with the pointer.
-4. Choose `Save`. Shortcut changes do not apply until Save; `Cancel` discards
+   on the monitor with the pointer. A looping Sample changes the button to
+   `Stop`.
+5. Choose `Save`. Shortcut changes do not apply until Save; `Cancel` discards
    them.
-5. Press the slot's shortcut with any app focused. Effects are designed not to
+6. Press the slot's shortcut with any app focused. Effects are designed not to
    take focus or block input to the app beneath them; this is not yet verified
    in the published app.
 
-One effect plays at a time: a new effect replaces the running one. An effect
-stops when it finishes (after at most 10 seconds), when the pointer moves to
-another monitor, when you choose `Stop effects` in the tray menu, when you save
-settings, and when displays change, the session locks, or the computer sleeps.
-A stopped effect does not restart by itself. Effects and sound can play at the
-same time. Effects appear above drawings and do not clear them; drawing still
-works during an effect.
+One effect plays at a time: a new effect replaces the running one. With Loop
+off, an effect stops when its file finishes or its Max length passes, whichever
+happens first. No limit lets the file finish. With Loop on, the file restarts
+from frame 0 and the same shortcut stops it instead of restarting it.
+
+An effect also stops when the pointer moves to another monitor, when you choose
+`Stop effects` in the tray menu, when you save settings, and when displays
+change, the session locks, or the computer sleeps. A stopped effect does not
+restart by itself. Effects and sound can play at the same time. Effects appear
+above drawings and do not clear them; drawing still works during an effect.
 
 A full-display screen share is expected to show effects, but this is not yet
 verified on a receiving device. A share of one window may not include them,

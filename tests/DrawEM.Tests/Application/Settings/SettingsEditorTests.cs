@@ -59,7 +59,7 @@ public sealed class SettingsEditorTests : IDisposable
         editor.SelectEffect(3, FocusRing);
         editor.ClearSlot(2);
         editor.RestoreDefaults();
-        editor.Sample(1, _ => { });
+        editor.Sample(1, _ => { }, _ => { });
 
         Assert.Same(before, active);
         Assert.Empty(saver.Saved);
@@ -356,7 +356,7 @@ public sealed class SettingsEditorTests : IDisposable
         var editor = Editor();
         editor.SelectSound(2, SourceFile("horn.wav", [1]));
         var sound = SoundIn(editor, 2)!;
-        editor.Sample(2, _ => { });
+        editor.Sample(2, _ => { }, _ => { });
 
         editor.Cancel();
 
@@ -395,7 +395,7 @@ public sealed class SettingsEditorTests : IDisposable
     public void Save_EndsTheDraftsSamplesWithoutAnotherStop()
     {
         var editor = Editor();
-        editor.Sample(1, _ => { });
+        editor.Sample(1, _ => { }, _ => { });
 
         Assert.IsType<SettingsSaveResult.Saved>(editor.Save());
         editor.Cancel();
@@ -409,7 +409,7 @@ public sealed class SettingsEditorTests : IDisposable
     {
         saver.Result = new SettingsSaveResult.NotSaved("disk full");
         var editor = Editor();
-        editor.Sample(1, _ => { });
+        editor.Sample(1, _ => { }, _ => { });
 
         editor.Save();
 
@@ -454,8 +454,8 @@ public sealed class SettingsEditorTests : IDisposable
         var draftSound = SoundIn(editor, 1)!;
         var failures = new List<string>();
 
-        editor.Sample(1, failures.Add);
-        editor.Sample(2, failures.Add);
+        editor.Sample(1, failures.Add, _ => { });
+        editor.Sample(2, failures.Add, _ => { });
 
         var (sound, report) = Assert.Single(sampler.Samples);
         Assert.Equal(draftSound, sound);
@@ -471,12 +471,15 @@ public sealed class SettingsEditorTests : IDisposable
         editor.SelectEffect(1, FocusRing);
         var failures = new List<string>();
 
-        editor.Sample(1, failures.Add);
+        editor.Sample(1, failures.Add, _ => { });
 
-        var (effect, report) = Assert.Single(effectSampler.Samples);
-        Assert.Equal(FocusRing, effect);
+        var sample = Assert.Single(effectSampler.Samples);
+        Assert.Equal(1, sample.Slot);
+        Assert.Equal(FocusRing, sample.Effect);
+        Assert.False(sample.Action.Loop);
+        Assert.Equal(TimeSpan.FromSeconds(10), sample.Action.MaxLength);
         Assert.Empty(sampler.Samples);
-        report("cannot render");
+        sample.Report("cannot render");
         Assert.Equal(["cannot render"], failures);
         Assert.Equal(Applause, Assert.IsType<SoundAction>(active.Slots[0].Action).Sound);
         Assert.Empty(saver.Saved);
@@ -492,10 +495,63 @@ public sealed class SettingsEditorTests : IDisposable
         editor.SetShortcut(SettingsCommand.ForSlot(4), active.DrawShortcut);
         Assert.NotEmpty(editor.Validate());
 
-        editor.Sample(3, _ => { });
-        editor.Sample(4, _ => { });
+        editor.Sample(3, _ => { }, _ => { });
+        editor.Sample(4, _ => { }, _ => { });
 
         Assert.Equal([FocusRing, Confetti], effectSampler.Samples.Select(sample => sample.Effect));
+    }
+
+    [Theory]
+    [InlineData("clear")]
+    [InlineData("select another effect")]
+    [InlineData("toggle loop")]
+    [InlineData("restore defaults")]
+    [InlineData("change max length")]
+    [InlineData("select a sound")]
+    public void EditingTheSampledSlot_StopsItsEffectSample(string edit)
+    {
+        active = TestSettings.WithEffects((2, Confetti));
+        var editor = Editor();
+        editor.SetEffectLoop(2, true);
+        editor.Sample(2, _ => { }, _ => { });
+
+        switch (edit)
+        {
+            case "clear":
+                editor.ClearSlot(2);
+                break;
+            case "select another effect":
+                editor.SelectEffect(2, FocusRing);
+                break;
+            case "toggle loop":
+                editor.SetEffectLoop(2, false);
+                break;
+            case "change max length":
+                editor.SetEffectMaxLength(2, TimeSpan.FromSeconds(5));
+                break;
+            case "restore defaults":
+                editor.RestoreDefaults();
+                break;
+            default:
+                editor.SelectSound(2, SourceFile("drumroll.mp3", [1, 2, 3]));
+                break;
+        }
+
+        Assert.Equal(1, effectSampler.Stops);
+    }
+
+    [Fact]
+    public void EditingAnotherSlot_KeepsTheEffectSampleRunning()
+    {
+        active = TestSettings.WithEffects((2, Confetti), (3, FocusRing));
+        var editor = Editor();
+        editor.SetEffectLoop(2, true);
+        editor.Sample(2, _ => { }, _ => { });
+
+        editor.SetEffectLoop(3, true);
+        editor.ClearSlot(3);
+
+        Assert.Equal(0, effectSampler.Stops);
     }
 
     [Fact]

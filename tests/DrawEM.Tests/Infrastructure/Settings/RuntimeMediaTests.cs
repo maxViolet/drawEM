@@ -156,8 +156,8 @@ public sealed class RuntimeMediaTests : IDisposable
         Assert.Empty(bindings.Sounds);
         Assert.Equal(
             [
-                new EffectBinding(new KeyChord(CtrlAlt, VirtualKeys.D1), new EffectId("confetti"), EffectPlacement.Monitor),
-                new EffectBinding(new KeyChord(CtrlAlt, VirtualKeys.D2), new EffectId("focus-ring"), EffectPlacement.Cursor),
+                new EffectBinding(new KeyChord(CtrlAlt, VirtualKeys.D1), 1, new EffectId("confetti"), EffectPlacement.Monitor, false, TimeSpan.FromSeconds(10)),
+                new EffectBinding(new KeyChord(CtrlAlt, VirtualKeys.D2), 2, new EffectId("focus-ring"), EffectPlacement.Cursor, false, TimeSpan.FromSeconds(10)),
             ],
             bindings.Effects);
     }

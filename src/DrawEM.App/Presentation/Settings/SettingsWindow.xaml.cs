@@ -97,6 +97,12 @@ public partial class SettingsWindow : Window, ISoundFilePicker
 
     private void OnSample(object sender, RoutedEventArgs e) => Model<SlotViewModel>(sender).Sample();
 
+    private void OnIncreaseMaxLength(object sender, RoutedEventArgs e) =>
+        Model<SlotViewModel>(sender).StepMaxLength(1);
+
+    private void OnDecreaseMaxLength(object sender, RoutedEventArgs e) =>
+        Model<SlotViewModel>(sender).StepMaxLength(-1);
+
     private void OnRestoreDefaults(object sender, RoutedEventArgs e) => ViewModel?.RestoreDefaults();
 
     private void OnCancel(object sender, RoutedEventArgs e) => Close();

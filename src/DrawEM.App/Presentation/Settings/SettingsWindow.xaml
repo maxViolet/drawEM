@@ -171,7 +171,7 @@
                     <Border DockPanel.Dock="Top" BorderBrush="#FF5A32" BorderThickness="3,0,0,0" Background="#FFF3ED"
                             Padding="10,8" Margin="0,0,0,10">
                         <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#694332"
-                                   Text="One sound and one effect play at a time. Each slot plays a sound or shows an effect; an effect's placement comes with it. Sample plays a draft sound or shows a draft effect on the monitor with the cursor, for up to 10 seconds; changing a slot does not affect shortcuts until Save." />
+                                   Text="One sound and one effect play at a time. Each slot plays a sound or shows an effect; an effect's placement comes with it. Sample uses the draft effect's Loop and Max length settings on the monitor with the cursor; changing a slot does not affect shortcuts until Save." />
                     </Border>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <ItemsControl x:Name="SlotList" ItemsSource="{Binding Slots}" Focusable="False">
@@ -213,6 +213,38 @@
                                                     <Button Content="Clear" Click="OnClearSlot" Margin="6,0,0,0" MinHeight="26"
                                                             IsEnabled="{Binding HasAction}" />
                                                 </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0"
+                                                            Visibility="{Binding HasEffect, Converter={StaticResource Visible}}">
+                                                    <CheckBox Content="Loop" VerticalAlignment="Center"
+                                                              AutomationProperties.Name="Loop effect"
+                                                              IsChecked="{Binding Loop}" />
+                                                    <TextBlock Text="Max length:" VerticalAlignment="Center" Margin="16,0,6,0" />
+                                                    <StackPanel Orientation="Horizontal" IsEnabled="{Binding CanEditMaxLength}">
+                                                        <Border MinWidth="42" Height="26" Padding="6,0" BorderBrush="#AEB5BF"
+                                                                BorderThickness="1" CornerRadius="2">
+                                                            <TextBlock Text="{Binding MaxLengthText}" VerticalAlignment="Center"
+                                                                       HorizontalAlignment="Center" />
+                                                        </Border>
+                                                        <StackPanel Margin="4,0,0,0">
+                                                            <RepeatButton Width="24" Height="13" Padding="0"
+                                                                          FontFamily="Segoe MDL2 Assets" FontSize="8" Content="&#xE70E;"
+                                                                          AutomationProperties.Name="Increase max length"
+                                                                          ToolTip="Longer"
+                                                                          IsEnabled="{Binding CanIncreaseMaxLength}"
+                                                                          Click="OnIncreaseMaxLength" />
+                                                            <RepeatButton Width="24" Height="13" Padding="0"
+                                                                          FontFamily="Segoe MDL2 Assets" FontSize="8" Content="&#xE70D;"
+                                                                          AutomationProperties.Name="Decrease max length"
+                                                                          ToolTip="Shorter"
+                                                                          IsEnabled="{Binding CanDecreaseMaxLength}"
+                                                                          Click="OnDecreaseMaxLength" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                    <CheckBox Content="No limit" VerticalAlignment="Center" Margin="12,0,0,0"
+                                                              AutomationProperties.Name="No effect length limit"
+                                                              IsEnabled="{Binding CanSetNoLimit}"
+                                                              IsChecked="{Binding NoLimit}" />
+                                                </StackPanel>
                                                 <TextBlock Text="{Binding FileName}" TextTrimming="CharacterEllipsis"
                                                            ToolTip="{Binding FileName}" Margin="0,4,0,0"
                                                            Visibility="{Binding IsSound, Converter={StaticResource Visible}}" />
@@ -222,7 +254,7 @@
                                                 <Button Style="{StaticResource CaptureField}" AutomationProperties.Name="Slot shortcut" />
                                                 <TextBlock Style="{StaticResource ErrorText}" Text="{Binding Error}" />
                                             </StackPanel>
-                                            <Button Grid.Column="3" Content="Sample" Click="OnSample" Margin="8,0,0,0"
+                                            <Button Grid.Column="3" Content="{Binding SampleText}" Click="OnSample" Margin="8,0,0,0"
                                                     VerticalAlignment="Top" IsEnabled="{Binding HasAction}" />
                                         </Grid>
                                     </Border>

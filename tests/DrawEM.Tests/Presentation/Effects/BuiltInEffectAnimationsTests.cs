@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text.RegularExpressions;
-using DrawEM.App.Application.Effects;
 using DrawEM.App.Domain.Effects;
+using DrawEM.App.Domain.Settings;
 using DrawEM.App.Presentation.Effects;
 
 namespace DrawEM.Tests.Presentation.Effects;
@@ -39,7 +39,7 @@ public class BuiltInEffectAnimationsTests
 
     [Theory]
     [MemberData(nameof(BuiltInIds))]
-    public void Load_ParsesTheEmbeddedFileWithinItsSpecifiedLengthAndTheChannelDeadline(string id)
+    public void Load_ParsesTheEmbeddedFileWithinItsSpecifiedLengthAndDefaultMaximum(string id)
     {
         Assert.True(EffectCatalog.TryFind(new EffectId(id), out var effect));
 
@@ -49,7 +49,7 @@ public class BuiltInEffectAnimationsTests
         Assert.True(animation.Duration > TimeSpan.Zero);
         Assert.True(animation.Duration.TotalSeconds <= SpecifiedSeconds[id],
             $"{id} lasts {animation.Duration.TotalSeconds} s; at most {SpecifiedSeconds[id]} s is allowed.");
-        Assert.True(animation.Duration <= EffectChannelController.MaxDuration);
+        Assert.True(animation.Duration <= EffectAction.DefaultMaxLength);
     }
 
     [Fact]

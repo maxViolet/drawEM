@@ -23,12 +23,12 @@ public sealed class SettingsFormatException : Exception
 }
 
 /// <summary>
-/// Reads and writes the settings file schema described in <c>README.md</c>. Reading accepts schema 1 and
-/// <see cref="CurrentSchemaVersion"/>; writing always produces <see cref="CurrentSchemaVersion"/>.
+/// Reads and writes the settings file schema described in <c>README.md</c>. Reading accepts schema versions
+/// 1 through <see cref="CurrentSchemaVersion"/>; writing always produces <see cref="CurrentSchemaVersion"/>.
 /// </summary>
 public static class SettingsJson
 {
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
 
     public static byte[] Serialize(SettingsSnapshot snapshot)
     {
@@ -73,6 +73,15 @@ public static class SettingsJson
                         json.WriteString("type", "effect");
                         json.WriteString("effectId", effect.Effect.Value);
                         json.WriteString("shortcut", effect.Shortcut!.ToString());
+                        json.WriteBoolean("loop", effect.Loop);
+                        if (effect.MaxLength is { } maxLength)
+                        {
+                            json.WriteNumber("maxSeconds", (int)maxLength.TotalSeconds);
+                        }
+                        else
+                        {
+                            json.WriteNull("maxSeconds");
+                        }
                         json.WriteEndObject();
                         break;
                     default:
@@ -185,7 +194,7 @@ public static class SettingsJson
         return type switch
         {
             "sound" => new ActionSlot(number, ReadSound(action, number)),
-            "effect" when version >= 2 => new ActionSlot(number, ReadEffect(action, number)),
+            "effect" when version >= 2 => new ActionSlot(number, ReadEffect(action, number, version)),
             "effect" => throw new SettingsFormatException(
                 $"Slot {number} action type 'effect' is not supported in schema version {version}."),
             _ => throw new SettingsFormatException($"Slot {number} action type '{type}' is not supported."),
@@ -208,7 +217,7 @@ public static class SettingsJson
     }
 
     /// <summary>An ID missing from the catalog is reported by <see cref="SettingsSnapshot.Validate"/>.</summary>
-    private static EffectAction ReadEffect(JsonElement action, int number)
+    private static EffectAction ReadEffect(JsonElement action, int number, int version)
     {
         EffectId effect;
         try
@@ -220,7 +229,29 @@ public static class SettingsJson
             throw new SettingsFormatException($"Slot {number} effect is invalid: {failure.Message}", failure);
         }
 
-        return new EffectAction(effect, ShortcutProperty(action, "shortcut"));
+        var shortcut = ShortcutProperty(action, "shortcut");
+        if (version < 3)
+        {
+            return new EffectAction(effect, shortcut);
+        }
+
+        var loop = Boolean(action, "loop");
+        var maxValue = Property(action, "maxSeconds");
+        TimeSpan? maxLength = null;
+        if (maxValue.ValueKind != JsonValueKind.Null)
+        {
+            var seconds = Int(action, "maxSeconds");
+            if (seconds is < EffectAction.MinSeconds or > EffectAction.MaxSeconds)
+            {
+                throw new SettingsFormatException(
+                    $"Slot {number} effect maxSeconds {seconds} is outside " +
+                    $"{EffectAction.MinSeconds}–{EffectAction.MaxSeconds}.");
+            }
+
+            maxLength = TimeSpan.FromSeconds(seconds);
+        }
+
+        return new EffectAction(effect, shortcut, loop, maxLength);
     }
 
     private static Shortcut ShortcutProperty(JsonElement element, string name)
@@ -265,5 +296,16 @@ public static class SettingsJson
         return value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number)
             ? number
             : throw new SettingsFormatException($"'{name}' must be an integer.");
+    }
+
+    private static bool Boolean(JsonElement element, string name)
+    {
+        var value = Property(element, name);
+        return value.ValueKind switch
+        {
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            _ => throw new SettingsFormatException($"'{name}' must be a boolean."),
+        };
     }
 }

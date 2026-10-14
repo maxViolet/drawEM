@@ -56,17 +56,39 @@ internal sealed class FakeSampler : ISoundSampler
 
 internal sealed class FakeEffectSampler : IEffectSampler
 {
-    public List<(EffectId Effect, Action<string> Report)> Samples { get; } = [];
+    public List<EffectSample> Samples { get; } = [];
 
     public int Stops { get; private set; }
 
     public int Forgets { get; private set; }
 
-    public void Sample(EffectId effect, Action<string> reportFailure) => Samples.Add((effect, reportFailure));
+    public void Sample(
+        int slot,
+        EffectAction effect,
+        Action<string> reportFailure,
+        Action<bool> runningChanged) =>
+        Samples.Add(new EffectSample(slot, effect, reportFailure, runningChanged));
 
-    public void StopSamples() => Stops++;
+    /// <summary>Counts the stop and, as the real sampler does, reports a looping latest sample as stopped.</summary>
+    public void StopSamples()
+    {
+        Stops++;
+        if (Samples.LastOrDefault() is { Action.Loop: true } latest)
+        {
+            latest.RunningChanged(false);
+        }
+    }
 
     public void ForgetSamples() => Forgets++;
+}
+
+internal sealed record EffectSample(
+    int Slot,
+    EffectAction Action,
+    Action<string> Report,
+    Action<bool> RunningChanged)
+{
+    public EffectId Effect => Action.Effect;
 }
 
 internal sealed class FakeCapture : IShortcutCapture

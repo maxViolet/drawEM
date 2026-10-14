@@ -38,6 +38,9 @@ public class EffectShortcutTests
         var first = Assert.Single(harness.Started);
         Assert.Equal(effect.Id, first.Effect);
         Assert.Equal(effect.Placement, first.Placement);
+        Assert.Equal(2, first.Slot);
+        Assert.False(first.Loop);
+        Assert.Equal(TimeSpan.FromSeconds(10), first.MaxLength);
 
         harness.Source.ReleaseKey(EffectKey);
         harness.Source.PressKey(EffectKey);
@@ -249,7 +252,7 @@ public class EffectShortcutTests
                     SettingsSnapshot.Default.DrawShortcut,
                     SettingsSnapshot.Default.ClearShortcut,
                     [(Shortcut.Create(CtrlAlt, ShortcutKey.Digit(1)), Applause)],
-                    [(Shortcut.Create(CtrlAlt, ShortcutKey.Digit(2)), effect)]),
+                    [(2, Shortcut.Create(CtrlAlt, ShortcutKey.Digit(2)), effect, false, TimeSpan.FromSeconds(10))]),
                 Played.Add,
                 Effects);
         }

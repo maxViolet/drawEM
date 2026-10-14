@@ -289,6 +289,18 @@ public sealed class SettingsViewModel : BindableBase
         Refresh();
     }
 
+    internal void SetEffectLoop(SlotViewModel slot, bool loop)
+    {
+        editor.SetEffectLoop(slot.Number, loop);
+        Refresh();
+    }
+
+    internal void SetEffectMaxLength(SlotViewModel slot, TimeSpan? maxLength)
+    {
+        editor.SetEffectMaxLength(slot.Number, maxLength);
+        Refresh();
+    }
+
     /// <summary>Empties the slot and its shortcut; the row keeps showing the same action type.</summary>
     internal void ClearSlot(SlotViewModel slot)
     {
@@ -303,7 +315,10 @@ public sealed class SettingsViewModel : BindableBase
     internal void Sample(SlotViewModel slot)
     {
         slot.Message = null;
-        editor.Sample(slot.Number, reason => slot.Message = $"Sample failed: {reason}");
+        editor.Sample(
+            slot.Number,
+            reason => slot.Message = $"Sample failed: {reason}",
+            slot.SetSampleRunning);
     }
 
     private void OnCaptureResult(int session, ShortcutFieldViewModel field, ShortcutCaptureResult result)
@@ -480,6 +495,7 @@ public sealed class SlotViewModel : BindableBase
 {
     private readonly SettingsViewModel owner;
     private string? message;
+    private bool sampleRunning;
 
     internal SlotViewModel(SettingsViewModel owner, int number)
     {
@@ -508,6 +524,8 @@ public sealed class SlotViewModel : BindableBase
 
     public bool IsEffect => Kind == SlotKind.Effect;
 
+    public bool HasEffect => Action is EffectAction;
+
     public bool HasAction => Action is not null;
 
     public bool HasSound => Action is SoundAction;
@@ -529,6 +547,63 @@ public sealed class SlotViewModel : BindableBase
         }
     }
 
+    public bool Loop
+    {
+        get => EffectSettings?.Loop ?? false;
+        set
+        {
+            if (HasEffect && value != Loop)
+            {
+                owner.SetEffectLoop(this, value);
+            }
+        }
+    }
+
+    public bool NoLimit
+    {
+        get => HasEffect && MaxLength is null;
+        set
+        {
+            if (!HasEffect || Loop || value == NoLimit)
+            {
+                return;
+            }
+
+            owner.SetEffectMaxLength(this, value ? null : DrawEM.App.Domain.Settings.EffectAction.DefaultMaxLength);
+        }
+    }
+
+    public string MaxLengthText => MaxLength is { } length
+        ? $"{(int)length.TotalSeconds} s"
+        : "No limit";
+
+    public bool CanSetNoLimit => HasEffect && !Loop;
+
+    public bool CanEditMaxLength => HasEffect && !Loop && MaxLength is not null;
+
+    public bool CanIncreaseMaxLength =>
+        CanEditMaxLength && MaxLength!.Value.TotalSeconds != DrawEM.App.Domain.Settings.EffectAction.MaxSeconds;
+
+    public bool CanDecreaseMaxLength =>
+        CanEditMaxLength && MaxLength!.Value.TotalSeconds != DrawEM.App.Domain.Settings.EffectAction.MinSeconds;
+
+    public string SampleText => sampleRunning ? "Stop" : "Sample";
+
+    public void StepMaxLength(int seconds)
+    {
+        if (!CanEditMaxLength)
+        {
+            return;
+        }
+
+        var current = (int)MaxLength!.Value.TotalSeconds;
+        var stepped = Math.Clamp(
+            (long)current + seconds,
+            DrawEM.App.Domain.Settings.EffectAction.MinSeconds,
+            DrawEM.App.Domain.Settings.EffectAction.MaxSeconds);
+        owner.SetEffectMaxLength(this, TimeSpan.FromSeconds(stepped));
+    }
+
     /// <summary>A copy or sample failure, or <c>null</c>.</summary>
     public string? Message
     {
@@ -544,6 +619,17 @@ public sealed class SlotViewModel : BindableBase
     internal SlotKind EmptyKind { get; set; }
 
     private SlotAction? Action => owner.SlotOf(Number).Action;
+
+    private EffectAction? EffectSettings => Action as EffectAction;
+
+    private TimeSpan? MaxLength => EffectSettings?.MaxLength;
+
+
+    internal void SetSampleRunning(bool running)
+    {
+        sampleRunning = running;
+        Raise(nameof(SampleText));
+    }
 
     public void ChangeKind(SlotKind kind) => owner.ChangeKind(this, kind);
 

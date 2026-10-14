@@ -106,7 +106,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         var json = File.ReadAllText(SettingsPath);
 
-        Assert.Contains("\"schemaVersion\": 2", json);
+        Assert.Contains("\"schemaVersion\": 3", json);
         Assert.Contains("\"color\": \"#00FF7F\"", json);
         Assert.Contains("\"width\": 12", json);
         Assert.Contains("\"drawShortcut\": \"Ctrl+Shift+D\"", json);
@@ -141,7 +141,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
     }
 
     [Theory]
-    [InlineData(3)]
+    [InlineData(4)]
     [InlineData(0)]
     public void Load_UnsupportedSchemaVersion_IsUnreadableWithVersionInReason(int version)
     {
@@ -197,7 +197,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public void Save_WritesEffectAsTypeEffectIdAndShortcutOnly()
+    public void Save_WritesEffectPlaybackSettings()
     {
         Store().Save(Mixed());
 
@@ -205,12 +205,14 @@ public sealed class JsonSettingsStoreTests : IDisposable
         var actions = document.RootElement.GetProperty("slots").EnumerateArray()
             .Select(slot => slot.GetProperty("action"))
             .ToArray();
-        var effect = actions[1];
-        Assert.Equal(["effectId", "shortcut", "type"], effect.EnumerateObject().Select(property => property.Name).Order());
-        Assert.Equal("effect", effect.GetProperty("type").GetString());
-        Assert.Equal("confetti", effect.GetProperty("effectId").GetString());
-        Assert.Equal("Ctrl+Alt+2", effect.GetProperty("shortcut").GetString());
-        Assert.Equal("focus-ring", actions[2].GetProperty("effectId").GetString());
+        var looping = actions[1];
+        Assert.Equal(["effectId", "loop", "maxSeconds", "shortcut", "type"], looping.EnumerateObject().Select(property => property.Name).Order());
+        Assert.Equal("effect", looping.GetProperty("type").GetString());
+        Assert.Equal("confetti", looping.GetProperty("effectId").GetString());
+        Assert.Equal("Ctrl+Alt+2", looping.GetProperty("shortcut").GetString());
+        Assert.True(looping.GetProperty("loop").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, looping.GetProperty("maxSeconds").ValueKind);
+        Assert.Equal(27, actions[2].GetProperty("maxSeconds").GetInt32());
     }
 
     [Fact]
@@ -226,6 +228,63 @@ public sealed class JsonSettingsStoreTests : IDisposable
         Assert.Equal("Ctrl+Alt+2", effect.Shortcut!.ToString());
         Assert.Equal(new EffectId("focus-ring"), Assert.IsType<EffectAction>(snapshot.Slots[2].Action).Effect);
         Assert.True(snapshot.Slots[3].IsEmpty);
+        Assert.False(effect.Loop);
+        Assert.Equal(TimeSpan.FromSeconds(10), effect.MaxLength);
+        var migrated = Assert.IsType<EffectAction>(snapshot.Slots[2].Action);
+        Assert.False(migrated.Loop);
+        Assert.Equal(TimeSpan.FromSeconds(10), migrated.MaxLength);
+    }
+
+    [Fact]
+    public void Load_HandWrittenSchema3File_LoadsLoopAndNoLimit()
+    {
+        WriteSettings(Schema3Json());
+
+        var snapshot = Loaded(Store().Load());
+
+        var looping = Assert.IsType<EffectAction>(snapshot.Slots[1].Action);
+        Assert.True(looping.Loop);
+        Assert.Equal(TimeSpan.FromSeconds(42), looping.MaxLength);
+        var unlimited = Assert.IsType<EffectAction>(snapshot.Slots[2].Action);
+        Assert.False(unlimited.Loop);
+        Assert.Null(unlimited.MaxLength);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(61)]
+    public void Load_Schema3EffectLengthOutsideOneToSixtySeconds_IsUnreadable(int seconds)
+    {
+        var content = Schema3Json().Replace("\"maxSeconds\": 42", $"\"maxSeconds\": {seconds}");
+        WriteSettings(content);
+
+        var result = Assert.IsType<SettingsLoadResult.Unreadable>(Store().Load());
+
+        Assert.Contains($"maxSeconds {seconds} is outside 1–60", result.Reason);
+        Assert.Equal(content, File.ReadAllText(SettingsPath));
+    }
+
+    [Fact]
+    public void Load_Schema3EffectLengthThatIsNotAnInteger_IsUnreadable()
+    {
+        var content = Schema3Json().Replace("\"maxSeconds\": 42", "\"maxSeconds\": 4.5");
+        WriteSettings(content);
+
+        var result = Assert.IsType<SettingsLoadResult.Unreadable>(Store().Load());
+
+        Assert.Contains("'maxSeconds' must be an integer", result.Reason);
+        Assert.Equal(content, File.ReadAllText(SettingsPath));
+    }
+
+    [Fact]
+    public void Load_Schema3EffectWithoutPlaybackFields_IsUnreadable()
+    {
+        var content = Schema3Json().Replace(", \"loop\": true, \"maxSeconds\": 42", "");
+        WriteSettings(content);
+
+        var result = Assert.IsType<SettingsLoadResult.Unreadable>(Store().Load());
+
+        Assert.Contains("Missing property 'loop'", result.Reason);
     }
 
     [Theory]
@@ -257,7 +316,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public void FirstSaveOverSchema1File_BacksItUpThenWritesSchema2()
+    public void FirstSaveOverSchema1File_BacksItUpThenWritesCurrentSchema()
     {
         WriteSettings(Schema1CustomJson());
         var original = File.ReadAllBytes(SettingsPath);
@@ -266,7 +325,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
         Store().Save(loaded);
 
         Assert.Equal(original, File.ReadAllBytes(BackupPath));
-        Assert.Equal(2, SchemaVersion(File.ReadAllBytes(SettingsPath)));
+        Assert.Equal(3, SchemaVersion(File.ReadAllBytes(SettingsPath)));
         Assert.Equal(loaded, Loaded(Store().Load()));
     }
 
@@ -517,8 +576,10 @@ public sealed class JsonSettingsStoreTests : IDisposable
     {
         var slots = Enumerable.Range(1, 8).Select(ActionSlot.Empty).ToArray();
         slots[0] = new ActionSlot(1, new SoundAction(new SoundReference("abc.wav", "applause.wav"), Keys("Ctrl+Alt+1")));
-        slots[1] = new ActionSlot(2, new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+2")));
-        slots[2] = new ActionSlot(3, new EffectAction(new EffectId("focus-ring"), Keys("Alt+Shift+F3")));
+        slots[1] = new ActionSlot(2, new EffectAction(
+            new EffectId("confetti"), Keys("Ctrl+Alt+2"), true, null));
+        slots[2] = new ActionSlot(3, new EffectAction(
+            new EffectId("focus-ring"), Keys("Alt+Shift+F3"), false, TimeSpan.FromSeconds(27)));
         slots[4] = new ActionSlot(5, new SoundAction(new SoundReference("def.mp3", "horn.mp3"), Keys("Ctrl+Alt+5")));
         var defaults = SettingsSnapshot.Default;
         return SettingsSnapshot.Validate(defaults.Style, defaults.DrawShortcut, defaults.ClearShortcut, slots).Snapshot!;
@@ -591,6 +652,28 @@ public sealed class JsonSettingsStoreTests : IDisposable
             { "slot": 1, "action": { "type": "sound", "file": "abc.wav", "name": "applause.wav", "shortcut": "Ctrl+Alt+1" } },
             { "slot": 2, "action": { "type": "effect", "effectId": "confetti", "shortcut": "Ctrl+Alt+2" } },
             { "slot": 3, "action": { "type": "effect", "effectId": "focus-ring", "shortcut": "Ctrl+Alt+3" } },
+            { "slot": 4, "action": null },
+            { "slot": 5, "action": null },
+            { "slot": 6, "action": null },
+            { "slot": 7, "action": null },
+            { "slot": 8, "action": null }
+          ]
+        }
+        """;
+
+    private static string Schema3Json() => """
+        {
+          "schemaVersion": 3,
+          "drawing": {
+            "color": "#FF4500",
+            "width": 4,
+            "drawShortcut": "Ctrl+Alt+Z",
+            "clearShortcut": "Ctrl+Alt+X"
+          },
+          "slots": [
+            { "slot": 1, "action": { "type": "sound", "file": "abc.wav", "name": "applause.wav", "shortcut": "Ctrl+Alt+1" } },
+            { "slot": 2, "action": { "type": "effect", "effectId": "confetti", "shortcut": "Ctrl+Alt+2", "loop": true, "maxSeconds": 42 } },
+            { "slot": 3, "action": { "type": "effect", "effectId": "focus-ring", "shortcut": "Ctrl+Alt+3", "loop": false, "maxSeconds": null } },
             { "slot": 4, "action": null },
             { "slot": 5, "action": null },
             { "slot": 6, "action": null },
