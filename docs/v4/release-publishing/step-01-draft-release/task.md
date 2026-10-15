@@ -1,6 +1,6 @@
 # v4 / R4-01: create a versioned draft release
 
-**Status:** implemented; the tag-push run on GitHub is unverified. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** [R4-02](../step-02-checksums-provenance/task.md).
+**Status:** done; tag runs verified on 2026-10-15. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** [R4-02](../step-02-checksums-provenance/task.md).
 
 ## Task
 

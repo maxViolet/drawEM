@@ -1,9 +1,9 @@
 # drawEM v4: release publishing
 
-**Status:** in progress; R4-01 implemented, its tag run unverified.
+**Status:** in progress; R4-01 done.
 **Decision baseline:** 2026-10-15. The signing license and SignPath eligibility
 remain owner decisions in [ADR-0002](../../adr/0002-release-signing-license.md).
-**Next action:** push a test tag to verify [R4-01](step-01-draft-release/acceptance.md), then start [R4-02](step-02-checksums-provenance/task.md).
+**Next action:** implement [R4-02](step-02-checksums-provenance/task.md).
 
 ## Goal
 
