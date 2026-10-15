@@ -10,6 +10,7 @@ using DrawEM.App.Infrastructure.Settings;
 using DrawEM.App.Infrastructure.Sound;
 using DrawEM.App.Infrastructure;
 using DrawEM.Tests.Infrastructure.Drawing;
+using DrawEM.Tests.Infrastructure.Effects;
 
 namespace DrawEM.Tests.Infrastructure.Settings;
 
@@ -214,9 +215,11 @@ public sealed class SettingsSaveStuckSoundTests : IDisposable
                 action => action(),
                 new FakeMonitorBoundsSource(new MonitorBounds(0, 0, 100, 100)),
                 ShortcutBindings.FromSnapshot(Settings.Current, Settings.CommandFor),
-                host.Play);
+                host.Play,
+                new FakeEffectStartQueue());
             var notifications = new SettingsSaveNotifications(new SettingsFailureDialog(SaveFailures.Add), reporter, library);
-            operation = new SettingsSaveOperation(Store, library, Settings, host, shortcuts, notifications);
+            operation = new SettingsSaveOperation(
+                Store, library, Settings, host, RecordingEffectSurface.Channel(), shortcuts, notifications);
         }
 
         public JsonSettingsStore Store { get; }

@@ -1,5 +1,6 @@
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Domain.Sound;
 using DrawEM.App.Presentation.Settings;
@@ -53,6 +54,43 @@ internal sealed class FakeSampler : ISoundSampler
     public void ForgetSamples() => Forgets++;
 }
 
+internal sealed class FakeEffectSampler : IEffectSampler
+{
+    public List<EffectSample> Samples { get; } = [];
+
+    public int Stops { get; private set; }
+
+    public int Forgets { get; private set; }
+
+    public void Sample(
+        int slot,
+        EffectAction effect,
+        Action<string> reportFailure,
+        Action<bool> runningChanged) =>
+        Samples.Add(new EffectSample(slot, effect, reportFailure, runningChanged));
+
+    /// <summary>Counts the stop and, as the real sampler does, reports a looping latest sample as stopped.</summary>
+    public void StopSamples()
+    {
+        Stops++;
+        if (Samples.LastOrDefault() is { Action.Loop: true } latest)
+        {
+            latest.RunningChanged(false);
+        }
+    }
+
+    public void ForgetSamples() => Forgets++;
+}
+
+internal sealed record EffectSample(
+    int Slot,
+    EffectAction Action,
+    Action<string> Report,
+    Action<bool> RunningChanged)
+{
+    public EffectId Effect => Action.Effect;
+}
+
 internal sealed class FakeCapture : IShortcutCapture
 {
     public Action<ShortcutCaptureResult>? Current { get; private set; }
@@ -84,7 +122,18 @@ internal sealed class FakePicker : ISoundFilePicker
 {
     public string? Next { get; set; }
 
-    public string? Pick() => Next;
+    /// <summary>One entry per dialog shown: the file it returned.</summary>
+    public List<string?> Picks { get; } = [];
+
+    /// <summary>Runs when the dialog would show.</summary>
+    public Action? Picking { get; set; }
+
+    public string? Pick()
+    {
+        Picking?.Invoke();
+        Picks.Add(Next);
+        return Next;
+    }
 }
 
 internal sealed class FakeLibrary : ISoundLibrary

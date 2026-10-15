@@ -1,6 +1,6 @@
 # v4: simple implementation steps
 
-**Status:** S4-01 is done by owner decision, with its measurement gates unverified. S4-02, S4-04, and S4-05 are done; other steps are pending.
+**Status:** S4-01 is done by owner decision, with its measurement gates unverified. S4-02, S4-03.1, S4-04, S4-05, and S4-06 are done; S4-03 is implemented with its flashing check unverified; S4-07 is implemented with its two-monitor checks unverified; S4-08 is implemented with its running-app check unverified; S4-09 and S4-10 are implemented with their running-app checks unverified; S4-11 is implemented with its desktop lifecycle checks and partial startup failure unverified; S4-12 is published with every manual check and measurement unverified, so v4 is not released.
 **Contract:** [v4 roadmap](ROADMAP-v4.md). Its product rules, technical boundaries,
 and acceptance requirements apply to every step below. Terms follow the
 [glossary](../../../CONTEXT.md).
@@ -21,7 +21,7 @@ their settings and lifecycle integration is ready.
 window on the monitor containing the cursor, alongside the real drawing overlay.
 A development-only trigger in
 `src/DrawEM.App/Presentation/Effects/EffectSurfaceProbe.cs`, enabled only with
-`DRAWEM_EFFECT_PROBE=1`, may be used through S4-03 and is removed in S4-06.
+`DRAWEM_EFFECT_PROBE=1`, served through S4-03.1; S4-03 removed it.
 
 **Done when:** Done on 2026-10-09 by owner decision: the dedicated WPF effect
 surface is chosen. Its measurement gates are unverified; S4-03.1 and S4-12 measure them.
@@ -38,7 +38,7 @@ including Monitor -> Cursor and Cursor -> Monitor, Stop is safe to repeat, and a
 old completion or timeout cannot stop a new effect. Every ending path releases
 the instance and its resources.
 
-### S4-03.1: prove Lottie speed for both placements
+### S4-03.1: prove Lottie speed for both placements (done)
 
 **Do:** Add `SkiaSharp.Skottie` and allow `SkiaSharp` in Presentation only in
 the layer dependency test. Change the S4-01 probe so its `Rendering` handler
@@ -53,9 +53,11 @@ If that also misses, stop and revise the roadmap to Cursor effects only, with
 owner confirmation, before S4-03. If Cursor misses a target, stop; the owner
 revises the roadmap targets or scope and confirms it before S4-03. S4-03 starts
 only when both placements meet the targets or a confirmed revision covers each
-miss. Estimated time: half a day.
+miss. Estimated time: half a day. Result on 2026-10-12: Monitor runs at half
+resolution, and the frame-interval targets became an absolute 25 ms by owner
+decision; see the [S4-03 acceptance](step-03-built-in-effects/acceptance.md#s4-031-results).
 
-### S4-03: play the built-in effects
+### S4-03: play the built-in effects (implemented; flashing check unverified)
 
 **Do:** Build the Monitor surface (cover scaling) and the Cursor surface (canvas
 size in DIP, centered on the captured point, clipped to the monitor) behind the
@@ -92,12 +94,13 @@ before the first migration Save; write the new format only on explicit Save.
 recoverable files. Unsupported types/IDs produce a useful error. Loading never
 rewrites settings. Document how to restore the backup for an older app version.
 
-### S4-06: launch effects from shortcuts
+### S4-06: launch effects from shortcuts (done)
 
 **Do:** Extend prepared slot commands and bindings to dispatch Sound or Effect.
 Capture the invocation cursor position and configuration generation. Keep
 rendering outside the hook callback and preserve existing capture/suppression
-rules. Remove the S4-01 probe trigger.
+rules. The probe trigger removal and the `EffectChannelController.Start` wiring
+moved to S4-03 (owner decision, 2026-10-11).
 
 **Done when:** A configured effect of either placement starts once per press;
 holding the shortcut does not repeat it, and a fresh press restarts it. A Cursor
@@ -105,7 +108,7 @@ effect appears at the cursor point captured at key-down. Sound remains independe
 Tests cover dispatch, captured position, stale configuration requests, AltGr,
 capture mode, and paired key suppression.
 
-### S4-07: stop on monitor changes
+### S4-07: stop on monitor changes (implemented; two-monitor checks unverified)
 
 **Do:** Observe monitor transitions even when drawing is inactive. Stop the
 effect, of either placement, when the cursor enters another monitor. Preserve
@@ -118,7 +121,7 @@ it. Movement inside one monitor and reaching an outside desktop edge do not
 stop it; a Cursor effect does not move. Test queued-start races and topology
 changes; confirm the behavior on two monitors.
 
-### S4-08: select an effect in Settings
+### S4-08: select an effect in Settings (implemented; running-app check unverified)
 
 **Do:** Add Sound/Effect selection and an effect list, grouped under Monitor
 and Cursor, to existing Actions rows. Preserve shortcuts when changing type;
@@ -131,7 +134,7 @@ runtime application is completed in S4-10.
 
 ## Part 3: finish the user flow and release
 
-### S4-09: preview with Sample
+### S4-09: preview with Sample (implemented; running-app check unverified)
 
 **Do:** Route the selected draft effect through the same effect controller as
 shortcuts. Associate each Sample with its editor and instance ID. Preview on
@@ -143,7 +146,7 @@ appears around the cursor. Closing/cancelling the editor stops its own current
 Sample. It cannot stop a newer shortcut effect or another Sample.
 Missing/conflicting draft shortcuts do not prevent preview. Test these ownership cases.
 
-### S4-10: apply settings safely
+### S4-10: apply settings safely (implemented; running-app check unverified)
 
 **Do:** Extend the successful Save sequence to invalidate queued effect starts
 and remove the running effect before publishing the new snapshot and bindings.
@@ -154,7 +157,7 @@ of either placement. No pre-Save effect starts afterwards. Validation or
 persistence failure leaves the previous runtime configuration and actions intact.
 Tests cover queued invocations, active Samples, and sound-library cleanup after type changes.
 
-### S4-11: connect stop and lifecycle events
+### S4-11: connect stop and lifecycle events (implemented; desktop checks unverified)
 
 **Do:** Add tray Stop effects. Connect the S4-07 display-change handling to
 final cleanup, plus lock, suspend, shutdown, and partial startup failure to
@@ -166,7 +169,7 @@ unlock/resume never restarts them. Stop effects preserves global sound and
 drawings. Repeated cleanup is safe and leaves no effect windows or callbacks.
 Test event handling and separately exercise real desktop lifecycle events.
 
-### S4-12: publish and verify
+### S4-12: publish and verify (published; manual checks and measurements unverified)
 
 **Do:** Run the automated suite, publish Windows x64, and execute the roadmap's
 desktop/performance acceptance checks for both placements. Update user
@@ -182,5 +185,6 @@ revises the roadmap with a recorded rationale. Mark unrun cases unverified; any
 unverified roadmap check except window-only sharing blocks the release. Complete the
 v3 Step 8 baseline before releasing v4.
 
-**First action:** start S4-03.1: add `SkiaSharp.Skottie` and draw one Lottie frame in the S4-01 probe.
-Estimated time: half a day.
+**First action:** run the S4-12 [published-app checks](step-12-effect-publish/acceptance.md#published-app-checks)
+with the published build on a two-monitor, mixed-DPI PC.
+Estimated time: one day, including the measurements.

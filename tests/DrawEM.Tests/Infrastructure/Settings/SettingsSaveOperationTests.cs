@@ -1,19 +1,26 @@
 using DrawEM.App.Application.Drawing;
+using DrawEM.App.Application.Effects;
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Application.Sound;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Domain.Sound;
 using DrawEM.App.Infrastructure.Drawing;
 using DrawEM.App.Infrastructure;
+using DrawEM.App.Infrastructure.Effects;
+using DrawEM.Tests.Application.Settings;
 using DrawEM.Tests.Infrastructure.Drawing;
+using DrawEM.Tests.Infrastructure.Effects;
+using DrawEM.Tests.Infrastructure.Sound;
 
 namespace DrawEM.Tests.Infrastructure.Settings;
 
 /// <summary>
 /// Save wired as in <c>App.xaml.cs</c>: the real shortcut and mouse adapters, input gate, drawing controller,
-/// and sound channel, with fake hooks, store, library, and players. Drawing commands wait in a UI queue and
-/// play requests in a sound queue until a test runs them.
+/// sound channel, effect channel, and effect monitor guard, with fake hooks, store, library, players, and effect
+/// surface. Drawing commands and effect starts wait in a UI queue and play requests in a sound queue until a
+/// test runs them.
 /// </summary>
 public sealed class SettingsSaveOperationTests
 {
@@ -24,9 +31,15 @@ public sealed class SettingsSaveOperationTests
     private static readonly SoundReference Applause = new("applause.wav", "Applause.wav");
     private static readonly SoundReference Drumroll = new("drumroll.mp3", "Drumroll.mp3");
     private static readonly HexColor Blue = new(0x00, 0x00, 0xFF);
+    private static readonly EffectId Confetti = new("confetti");
+    private static readonly EffectId FocusRing = new("focus-ring");
 
-    /// <summary>Draw Ctrl+Alt+Z, clear Ctrl+Alt+X, Applause on Ctrl+Alt+1, Drumroll on Ctrl+Alt+2.</summary>
-    private static readonly SettingsSnapshot Initial = TestSettings.WithSounds((1, Applause), (2, Drumroll));
+    /// <summary>
+    /// Draw Ctrl+Alt+Z, clear Ctrl+Alt+X, Applause on Ctrl+Alt+1, Drumroll on Ctrl+Alt+2, the Monitor effect
+    /// Confetti on Ctrl+Alt+3, and the Cursor effect Focus ring on Ctrl+Alt+4.
+    /// </summary>
+    private static readonly SettingsSnapshot Initial =
+        TestSettings.WithActions([(1, Applause), (2, Drumroll)], [(3, Confetti), (4, FocusRing)]);
 
     /// <summary>Draw moves to Ctrl+Alt+D, Ctrl+Alt+1 plays Drumroll, slot 2 is empty.</summary>
     private static readonly SettingsSnapshot Remapped = Snapshot(
@@ -248,6 +261,128 @@ public sealed class SettingsSaveOperationTests
         Assert.Same(drawing, app.States[^1]);
     }
 
+    [Theory]
+    [InlineData(VirtualKeys.D3)]
+    [InlineData(VirtualKeys.D4)]
+    public void Save_RemovesTheRunningEffect_BeforeTheNewSnapshotIsActive(int effectKey)
+    {
+        var app = new SaveHarness();
+        app.Press(VirtualKeys.LeftControl, VirtualKeys.LeftMenu, effectKey);
+        app.RunUi();
+        var running = Assert.Single(app.Effects.Shown);
+        app.Effects.OnRemove = _ => app.Events.Add($"effect removed; {Name(app.Settings.Current)} active");
+
+        var result = app.Save(Remapped);
+
+        Assert.IsType<SettingsSaveResult.Saved>(result);
+        Assert.Equal(["effect removed; initial active"], app.Events);
+        Assert.Equal([running], app.Effects.Removed);
+        Assert.Null(app.EffectChannel.ActiveInstance);
+
+        app.RunUi();
+        Assert.Equal([running], app.Effects.Shown);
+        Assert.Empty(app.Effects.Failures);
+    }
+
+    [Fact]
+    public void EffectPressedBeforeSave_ButDispatchedAfterIt_NeverStarts()
+    {
+        var app = new SaveHarness();
+        app.Press(VirtualKeys.LeftControl, VirtualKeys.LeftMenu, VirtualKeys.D3);
+        app.RunUi();
+        var running = Assert.Single(app.Effects.Shown);
+        app.Release(VirtualKeys.D3);
+        app.Press(VirtualKeys.D4);
+
+        app.Save(Initial);
+        app.RunUi();
+
+        Assert.Equal([running], app.Effects.Shown);
+        Assert.Null(app.EffectChannel.ActiveInstance);
+
+        // The same shortcut starts its effect again after a fresh press.
+        app.Release(VirtualKeys.D4, VirtualKeys.LeftMenu, VirtualKeys.LeftControl);
+        app.Press(VirtualKeys.LeftControl, VirtualKeys.LeftMenu, VirtualKeys.D4);
+        app.RunUi();
+        Assert.Equal(FocusRing, app.Effects.Shown[^1].Command.Effect);
+        Assert.Same(app.Effects.Shown[^1], app.EffectChannel.ActiveInstance);
+        Assert.Equal(2, app.Effects.Shown.Count);
+    }
+
+    [Theory]
+    [InlineData("confetti", EffectPlacement.Monitor)]
+    [InlineData("focus-ring", EffectPlacement.Cursor)]
+    public void SavedEffectAssignment_StartsFromItsShortcut(string id, EffectPlacement placement)
+    {
+        var app = new SaveHarness();
+
+        app.Save(TestSettings.WithEffects((5, new EffectId(id))));
+        app.Press(VirtualKeys.LeftControl, VirtualKeys.LeftMenu, VirtualKeys.D5);
+        app.RunUi();
+
+        var started = Assert.Single(app.Effects.Shown).Command;
+        Assert.Equal(new EffectId(id), started.Effect);
+        Assert.Equal(placement, started.Placement);
+        Assert.Equal(Left, started.Monitor);
+    }
+
+    [Fact]
+    public void Save_WithAnActiveSample_RemovesIt_AndItDoesNotReappear()
+    {
+        var app = new SaveHarness();
+        var editor = new SettingsEditor(
+            () => app.Settings.Current, app.Library, app.Operation, new FakeSampler(), app.NewEffectSampler(), _ => { });
+        var sampleFailures = new List<string>();
+        editor.SelectEffect(3, FocusRing);
+        editor.Sample(3, sampleFailures.Add, _ => { });
+        var sample = Assert.Single(app.Effects.Shown);
+
+        Assert.IsType<SettingsSaveResult.Saved>(editor.Save());
+        app.RunUi();
+        editor.Cancel();
+
+        Assert.Equal([sample], app.Effects.Removed);
+        Assert.Equal([sample], app.Effects.Shown);
+        Assert.Null(app.EffectChannel.ActiveInstance);
+        Assert.Empty(sampleFailures);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void SaveThatDoesNotPersist_KeepsTheRunningEffect_AndEffectShortcutsWorkWithoutAFreshPress(bool invalid)
+    {
+        var app = new SaveHarness();
+        app.Press(VirtualKeys.LeftControl, VirtualKeys.LeftMenu, VirtualKeys.D3);
+        app.RunUi();
+        var running = Assert.Single(app.Effects.Shown);
+        app.Release(VirtualKeys.D3);
+        app.Press(VirtualKeys.D4);
+        if (invalid)
+        {
+            var result = app.Operation.Save(Remapped.Style, Remapped.DrawShortcut, Remapped.DrawShortcut, Remapped.Slots);
+            Assert.IsType<SettingsSaveResult.Invalid>(result);
+        }
+        else
+        {
+            app.Store.Failure = "The disk is full.";
+            Assert.IsType<SettingsSaveResult.NotSaved>(app.Save(Remapped));
+        }
+
+        Assert.Empty(app.Store.Saved);
+        Assert.Same(running, app.EffectChannel.ActiveInstance);
+        Assert.Empty(app.Effects.Removed);
+        Assert.Same(Initial, app.Settings.Current);
+
+        // The press made before the Save still starts, and the previous shortcuts keep working.
+        app.RunUi();
+        Assert.Equal(FocusRing, app.EffectChannel.ActiveInstance!.Command.Effect);
+        app.Release(VirtualKeys.D4);
+        app.Press(VirtualKeys.D3);
+        app.RunUi();
+        Assert.Equal([Confetti, FocusRing, Confetti], app.Effects.Shown.Select(instance => instance.Command.Effect));
+    }
+
     private static void DrawCompletedStroke(DrawingSessionController controller, ScreenPoint start, MonitorBounds monitor)
     {
         controller.EnterDrawMode(start, monitor);
@@ -270,9 +405,14 @@ public sealed class SettingsSaveOperationTests
     private sealed class SaveHarness
     {
         private readonly Queue<Action> ui = new();
+        private readonly FakeCursorPositionSource cursor = new(new ScreenPoint(10, 10));
+        private readonly FakeMonitorBoundsSource monitors = new(Left, Right);
+        private readonly EffectMonitorGuard guard;
 
         public SaveHarness()
         {
+            EffectChannel = new EffectChannelController(Effects, Effects, new ManualTimeProvider(), ui.Enqueue);
+            guard = new EffectMonitorGuard(Mouse, new FakeDisplayChangeSource(), monitors, cursor, EffectChannel, ui.Enqueue);
             Settings = new ActiveSettings(Initial, reference => @"C:\library\" + reference.LibraryFileName);
             Players = new FakePlayerFactory();
             Channel = new SoundChannelController(Players, new RecordingSoundFailures(SoundFailures), new ManualTimeProvider(), action => action());
@@ -284,14 +424,23 @@ public sealed class SettingsSaveOperationTests
                 Keyboard,
                 Controller,
                 Gate,
-                new FakeCursorPositionSource(new ScreenPoint(10, 10)),
+                cursor,
                 ui.Enqueue,
-                new FakeMonitorBoundsSource(Left, Right),
+                monitors,
                 ShortcutBindings.FromSnapshot(Settings.Current, Settings.CommandFor),
-                Sound.Play);
-            _ = new GlobalMouseInputAdapter(Mouse, Controller, Gate, ui.Enqueue, new FakeMonitorBoundsSource(Left, Right));
-            Operation = new SettingsSaveOperation(Store, Library, Settings, Sound, shortcuts, Notifications);
+                Sound.Play,
+                guard);
+            _ = new GlobalMouseInputAdapter(Mouse, Controller, Gate, ui.Enqueue, monitors);
+            Operation = new SettingsSaveOperation(Store, Library, Settings, Sound, EffectChannel, shortcuts, Notifications);
         }
+
+        public RecordingEffectSurface Effects { get; } = new();
+
+        public EffectChannelController EffectChannel { get; }
+
+        /// <summary>A Settings window's effect sampler, as <c>App.xaml.cs</c> builds one.</summary>
+        public EffectSampler NewEffectSampler() =>
+            new(cursor, monitors, guard, EffectChannel, new EffectSampleFailureRouter(Effects));
 
         public ActiveSettings Settings { get; }
 
@@ -311,7 +460,7 @@ public sealed class SettingsSaveOperationTests
 
         public FakeKeyboardHookSource Keyboard { get; } = new();
 
-        public FakeMouse Mouse { get; } = new();
+        public FakeMouseHookSource Mouse { get; } = new();
 
         public RecordingNotifications Notifications { get; } = new();
 
@@ -376,17 +525,6 @@ public sealed class SettingsSaveOperationTests
         }
     }
 
-    private sealed class FakeMouse : IMouseHookSource
-    {
-        public event Action<ScreenPoint>? PointerMoved;
-
-        public event Func<bool>? PointerButtonActivity { add { } remove { } }
-
-        public event Func<bool>? PointerWheelActivity { add { } remove { } }
-
-        public void Move(ScreenPoint point) => PointerMoved?.Invoke(point);
-    }
-
     private sealed class FakeStore : ISettingsStore
     {
         public string? Failure { get; set; }
@@ -441,46 +579,5 @@ public sealed class SettingsSaveOperationTests
         public void CleanupFailed(SoundCleanupFailure failure) => throw new InvalidOperationException(failure.Reason);
 
         public void StopUnconfirmed() => UnconfirmedStops++;
-    }
-
-    private sealed class RecordingSoundFailures(List<string> reasons) : ISoundFailureReporter
-    {
-        public void Report(PlaySoundCommand command, string reason) => reasons.Add(reason);
-    }
-
-    /// <summary>Records players without opening a media engine.</summary>
-    private sealed class FakePlayerFactory : ISoundPlayerFactory
-    {
-        public List<FakePlayer> Created { get; } = [];
-
-        public Action? OnStop { get; set; }
-
-        public ISoundPlayer Create(PlaySoundCommand command)
-        {
-            var player = new FakePlayer(command.Sound, () => OnStop?.Invoke());
-            Created.Add(player);
-            return player;
-        }
-    }
-
-    private sealed class FakePlayer(SoundId sound, Action onStop) : ISoundPlayer
-    {
-        public event Action? Completed { add { } remove { } }
-
-        public event Action<string>? Failed { add { } remove { } }
-
-        public SoundId Sound { get; } = sound;
-
-        public List<string> Calls { get; } = [];
-
-        public void Play() => Calls.Add("play");
-
-        public void Stop()
-        {
-            Calls.Add("stop");
-            onStop();
-        }
-
-        public void Dispose() => Calls.Add("dispose");
     }
 }

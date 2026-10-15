@@ -13,7 +13,7 @@ public class SettingsSnapshotTests
     private static readonly Shortcut Clear = Keys("Ctrl+Alt+X");
 
     [Fact]
-    public void Default_IsOrangeRedFourPixelsDefaultShortcutsAndEightEmptySlots()
+    public void Default_IsOrangeRedFourPixelsDefaultShortcutsAndEightEffectSlots()
     {
         var defaults = SettingsSnapshot.Default;
 
@@ -22,7 +22,19 @@ public class SettingsSnapshotTests
         Assert.Equal("Ctrl+Alt+Z", defaults.DrawShortcut.ToString());
         Assert.Equal("Ctrl+Alt+X", defaults.ClearShortcut.ToString());
         Assert.Equal([1, 2, 3, 4, 5, 6, 7, 8], defaults.Slots.Select(slot => slot.Number));
-        Assert.All(defaults.Slots, slot => Assert.True(slot.IsEmpty));
+        Assert.Equal(
+            ["confetti-transparent", "confetti-party", "celebration-confetti", "fireworks-teal-red",
+             "winner-fireworks", "season-fireworks", "let-it-snow", "loader-cat"],
+            defaults.Slots.Select(slot => Assert.IsType<EffectAction>(slot.Action).Effect.Value));
+        Assert.Equal(
+            ["Ctrl+Alt+1", "Ctrl+Alt+2", "Ctrl+Alt+3", "Ctrl+Alt+4", "Ctrl+Alt+5", "Ctrl+Alt+6", "Ctrl+Alt+7", "Ctrl+Alt+8"],
+            defaults.Slots.Select(slot => slot.Action!.Shortcut!.ToString()));
+        Assert.All(defaults.Slots, slot =>
+        {
+            var effect = Assert.IsType<EffectAction>(slot.Action);
+            Assert.False(effect.Loop);
+            Assert.Equal(TimeSpan.FromSeconds(10), effect.MaxLength);
+        });
     }
 
     [Fact]
@@ -147,11 +159,40 @@ public class SettingsSnapshotTests
     }
 
     [Fact]
-    public void EffectAction_StoresOnlyTheEffectIdAndShortcut()
+    public void EffectAction_StoresPlaybackSettings()
     {
         Assert.Equal(
-            ["Effect", "Shortcut"],
+            ["Effect", "Loop", "MaxLength", "Shortcut"],
             typeof(EffectAction).GetProperties().Select(property => property.Name).Order());
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(61)]
+    public void Validate_RejectsEffectLengthOutsideOneToSixtySeconds(int seconds)
+    {
+        var slots = EmptySlots();
+        slots[0] = new ActionSlot(
+            1,
+            new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+1"), false, TimeSpan.FromSeconds(seconds)));
+
+        var result = SettingsSnapshot.Validate(Style, Draw, Clear, slots);
+
+        Assert.Equal(
+            [new SettingsError(SettingsErrorCode.InvalidEffectLength, SettingsCommand.ForSlot(1))],
+            result.Errors);
+        Assert.Equal("Slot 1 max length must be a whole number from 1–60 seconds.", result.Errors[0].ToString());
+    }
+
+    [Fact]
+    public void Validate_AcceptsLoopAndNoLimit()
+    {
+        var slots = EmptySlots();
+        slots[0] = new ActionSlot(1, new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+1"), true, null));
+
+        var result = SettingsSnapshot.Validate(Style, Draw, Clear, slots);
+
+        Assert.True(result.IsValid);
     }
 
     [Fact]

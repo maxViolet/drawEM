@@ -1,4 +1,5 @@
 using DrawEM.App.Application.Sound;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Domain.Sound;
 
@@ -42,28 +43,56 @@ public readonly record struct KeyChord(ShortcutModifiers Modifiers, int VirtualK
 /// <summary>A sound shortcut with its prepared play command.</summary>
 public sealed record SoundBinding(KeyChord Chord, PlaySoundCommand Command);
 
+/// <summary>An effect shortcut with its slot, effect, placement, and playback settings.</summary>
+public sealed record EffectBinding(
+    KeyChord Chord,
+    int Slot,
+    EffectId Effect,
+    EffectPlacement Placement,
+    bool Loop,
+    TimeSpan? MaxLength);
+
 /// <summary>
-/// One immutable set of active shortcuts for the keyboard hook: draw, clear, and the filled sound slots.
-/// Every command is prepared when the bindings are built, so the hook callback only compares keys.
+/// One immutable set of active shortcuts for the keyboard hook: draw, clear, and the filled sound and effect
+/// slots. Every command is prepared when the bindings are built, so the hook callback only compares keys.
 /// </summary>
 public sealed class ShortcutBindings
 {
     /// <exception cref="ArgumentException">Two commands use the same shortcut.</exception>
-    public ShortcutBindings(Shortcut draw, Shortcut clear, IEnumerable<(Shortcut Shortcut, PlaySoundCommand Command)> sounds)
+    public ShortcutBindings(
+        Shortcut draw,
+        Shortcut clear,
+        IEnumerable<(Shortcut Shortcut, PlaySoundCommand Command)> sounds,
+        IEnumerable<(
+            int Slot,
+            Shortcut Shortcut,
+            BuiltInEffect Effect,
+            bool Loop,
+            TimeSpan? MaxLength)> effects)
     {
         ArgumentNullException.ThrowIfNull(draw);
         ArgumentNullException.ThrowIfNull(clear);
         ArgumentNullException.ThrowIfNull(sounds);
+        ArgumentNullException.ThrowIfNull(effects);
         Draw = KeyChord.From(draw);
         Clear = KeyChord.From(clear);
         Sounds = Array.AsReadOnly(sounds.Select(sound => new SoundBinding(KeyChord.From(sound.Shortcut), sound.Command)).ToArray());
+        Effects = Array.AsReadOnly(effects
+            .Select(effect => new EffectBinding(
+                KeyChord.From(effect.Shortcut),
+                effect.Slot,
+                effect.Effect.Id,
+                effect.Effect.Placement,
+                effect.Loop,
+                effect.MaxLength))
+            .ToArray());
 
         var chords = new HashSet<KeyChord> { Draw };
-        foreach (var chord in Sounds.Select(sound => sound.Chord).Prepend(Clear))
+        foreach (var chord in Sounds.Select(sound => sound.Chord).Concat(Effects.Select(effect => effect.Chord)).Prepend(Clear))
         {
             if (!chords.Add(chord))
             {
-                throw new ArgumentException($"Two commands use the shortcut {chord}.", nameof(sounds));
+                throw new ArgumentException($"Two commands use the shortcut {chord}.");
             }
         }
     }
@@ -74,8 +103,11 @@ public sealed class ShortcutBindings
 
     public IReadOnlyList<SoundBinding> Sounds { get; }
 
+    public IReadOnlyList<EffectBinding> Effects { get; }
+
     /// <summary>Binds draw, clear, and every filled slot of <paramref name="snapshot"/>.</summary>
     /// <param name="resolveSound">Prepares the play command for a slot's sound. Runs here, never in the hook.</param>
+    /// <exception cref="ArgumentException">A slot names an effect missing from <see cref="EffectCatalog"/>.</exception>
     public static ShortcutBindings FromSnapshot(SettingsSnapshot snapshot, Func<SoundReference, PlaySoundCommand> resolveSound)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
@@ -84,6 +116,16 @@ public sealed class ShortcutBindings
             .Select(slot => slot.Action)
             .OfType<SoundAction>()
             .Select(action => (action.Shortcut!, resolveSound(action.Sound)));
-        return new ShortcutBindings(snapshot.DrawShortcut, snapshot.ClearShortcut, sounds);
+        var effects = snapshot.Slots
+            .Where(slot => slot.Action is EffectAction)
+            .Select(slot =>
+            {
+                var action = (EffectAction)slot.Action!;
+                var effect = EffectCatalog.TryFind(action.Effect, out var found)
+                    ? found
+                    : throw new ArgumentException($"Unknown effect '{action.Effect.Value}'.", nameof(snapshot));
+                return (slot.Number, action.Shortcut!, effect, action.Loop, action.MaxLength);
+            });
+        return new ShortcutBindings(snapshot.DrawShortcut, snapshot.ClearShortcut, sounds, effects);
     }
 }

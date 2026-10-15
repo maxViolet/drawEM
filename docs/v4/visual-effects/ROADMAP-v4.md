@@ -1,7 +1,7 @@
 # drawEM v4 roadmap: built-in Monitor and Cursor effects
 
 **Status:** proposed product and implementation plan. S4-01 is done by owner
-decision with its measurement gates unverified. S4-02, S4-04, and S4-05 are done; other steps are pending.
+decision with its measurement gates unverified. S4-02, S4-04, S4-05, and S4-06 are done; S4-03 is implemented with one visual check unverified; S4-07 is implemented with its two-monitor checks unverified; S4-08 is implemented with its running-app check unverified; S4-09 and S4-10 are implemented with their running-app checks unverified; S4-11 is implemented with its desktop lifecycle checks and partial startup failure unverified; S4-12 is published with every manual check and measurement unverified, so v4 is not released.
 **Date:** 2026-10-07; revised 2026-10-09 for Lottie effects with two placements.
 **Prerequisite for release:** finish the v3 Step 8 Windows acceptance work.
 Its task file records verification on one 100% monitor, with seven
@@ -61,10 +61,12 @@ These rules apply to every built-in effect file:
 
 For both placements:
 
-- The Lottie file defines the length. The effect plays once and never loops.
+- Every effect slot has Loop and Max length settings. Loop restarts the Lottie
+  file from frame 0 until explicitly stopped. With Loop off, the effect ends at
+  the file end or its 1–60 second maximum, whichever comes first; No limit
+  removes the deadline.
 - An automated test fails if any built-in effect is longer than 10 seconds or
-  fails to load in the player. The controller's 10-second deadline remains a
-  runtime safety net.
+  fails to load in the player. Ten seconds remains the default per-slot maximum.
 - The first files are selected from LottieFiles and adapted by the drawEM team
   where needed. Each file's source URL, author, and license are recorded beside
   it in the repository. Replacing a file changes no code.
@@ -73,14 +75,15 @@ For both placements:
 
 | Event | Result |
 |---|---|
-| First shortcut press | Start once on the monitor containing the cursor at invocation |
+| First shortcut press | Start on the monitor containing the cursor at invocation |
 | Shortcut held | No repeat |
-| Same effect pressed again after release | Stop the old instance and restart from the beginning |
+| Same slot pressed again after release, Loop off | Stop the old instance and restart from the beginning |
+| Same slot pressed again after release, Loop on | Stop the effect; the next press starts it |
 | Different effect invoked, of either placement | Replace the current effect; no queue or crossfade |
 | Cursor moves within that monitor | Continue; a Cursor effect stays at its captured point |
 | Cursor enters another connected monitor | Stop; do not restart when the cursor returns |
 | Cursor reaches the outside edge of the desktop | Continue; an outside edge is not another monitor |
-| Effect completes | Remove its visuals and release its animation subscription |
+| Non-looping effect completes | Remove its visuals and release its animation subscription |
 | Tray > Stop effects | Stop the active effect, including a Sample; leave sound and drawings alone |
 | Settings Save succeeds | Stop effects and sound, exit drawing, clear strokes, then publish new bindings |
 | Settings validation or persistence fails | Keep the previous active configuration and running actions |
@@ -99,10 +102,11 @@ Clear continues to clear drawings only. Keyboard and pointer input pass
 through during effects, except for assigned shortcut suppression and existing
 drawing-mode input blocking. Effects never take focus or appear in Alt+Tab.
 
-Sample uses the same effect channel, replacement rules, and monitor policy as
-shortcuts, without changing saved assignments. Settings stays open and keeps
-focus. The mouse is usually over the Sample button, so that monitor is the
-target and a Cursor effect appears around the button; this limitation is
+Sample uses the same effect channel, playback settings, replacement rules, and
+monitor policy as shortcuts, without changing saved assignments. A looping
+Sample changes its button to Stop until it is stopped. Settings stays open and
+keeps focus. The mouse is usually over the Sample button, so that monitor is
+the target and a Cursor effect appears around the button; this limitation is
 deliberate. A new Sample or shortcut replaces an older Sample. Closing its old
 editor must not stop the replacement.
 
@@ -117,9 +121,9 @@ Inspected on 2026-10-07; S4-01 probe added on 2026-10-08:
 | `Application/Settings/ActiveSettings.cs` | Builds sound commands from managed references | Prepare typed sound/effect commands from one snapshot |
 | `Infrastructure/Drawing/ShortcutBindings.cs` | Builds bindings only from `SoundAction` | Bind all supported slot types without silently dropping effects |
 | `Infrastructure/Drawing/GlobalShortcutAdapter.cs` | Dispatches prepared sound commands; owns key/capture behavior | Dispatch typed slot commands, preserving suppression and release bookkeeping |
-| `Infrastructure/Drawing/GlobalMouseInputAdapter.cs` | Reports movement to drawing when draw mode is active | Observe monitor transitions independently of drawing |
-| `Presentation/Effects/EffectSurfaceWindow.cs` | S4-01 probe: monitor-sized, nonactivating, click-through window | Basis for both surfaces: Monitor surface covers the monitor; Cursor surface is sized to the effect and clipped to the monitor |
-| `Presentation/Effects/EffectSurfaceProbe.cs` | Temporary probe behind `DRAWEM_EFFECT_PROBE=1` | Reused by the S4-03.1 Lottie speed gate; removed in S4-06 |
+| `Infrastructure/Drawing/GlobalMouseInputAdapter.cs` | Reports movement to drawing when draw mode is active | Done in S4-07, beside it: `Infrastructure/Effects/EffectMonitorGuard.cs` observes monitor transitions from the same hook, independently of drawing |
+| `Presentation/Effects/EffectSurfaceWindow.cs` | Nonactivating, click-through effect window from S4-01 | Done in S4-03: `LottieEffectSurface` shows each instance in one; a Monitor window covers the monitor, a Cursor window is sized to the effect and clipped to the monitor |
+| `Presentation/Effects/EffectSurfaceProbe.cs` | Temporary probe behind `DRAWEM_EFFECT_PROBE=1` | Removed in S4-03 after the S4-03.1 speed gate |
 | `Application/Settings/SettingsEditor.cs` | Sound selection, sampling, Save/Cancel ownership | Effect selection grouped by placement and sample-instance ownership |
 | `Application/Settings/SettingsSaveOperation.cs` | Durable Save and sound/drawing interruption | Invalidate queued effect starts and stop visible effects on successful Save |
 | `Infrastructure/Settings/SettingsJson.cs` | Schema 1, sound discriminator only | Schema 2, effect discriminator, schema 1 migration |
@@ -223,6 +227,12 @@ effect misses the targets:
    updates the product decision, the effect table, and the S4-03 to S4-12
    criteria, and the project owner confirms it.
 
+Outcome on 2026-10-12: Monitor missed the render-callback target at full
+resolution, so S4-03 renders Monitor effects at half resolution (fallback 1).
+Both placements missed the refresh-relative frame-interval targets on a 240 Hz
+panel; the owner replaced them with an absolute 25 ms limit (see the release
+targets below), so fallback 2 was not needed.
+
 A GPU path (Skia on Direct3D, or DirectComposition) is outside v4: it costs an
 estimated 2-5 days and adds native interop.
 
@@ -276,21 +286,23 @@ existing `Ctrl+Alt+N` default. Clear removes the action and binding. Type change
 remain drafts until Save. Sample works with a selected effect even if its draft
 shortcut is missing or conflicts; Save still requires all bindings to be valid.
 
-Schema 2 retains the slot shape and adds an effect payload. Placement is not
-saved: it comes from the catalog, so a later release can change an effect's
-file without migrating settings.
+Schema 3 retains the slot shape and adds per-effect playback settings. Placement
+is not saved: it comes from the catalog, so a later release can change an
+effect's file without migrating settings.
 
 ```json
-{ "slot": 2, "action": { "type": "effect", "effectId": "confetti", "shortcut": "Ctrl+Alt+2" } }
+{ "slot": 2, "action": { "type": "effect", "effectId": "confetti", "shortcut": "Ctrl+Alt+2", "loop": false, "maxSeconds": 10 } }
 ```
 
-Read schema 1 into the new model without modifying its sounds, shortcuts, or
-files. Every v4 Save writes schema 2, including when all slots contain only
-sounds. Before replacing a valid schema 1 file, keep an immutable backup:
+`maxSeconds` is an integer from 1 through 60, or `null` for No limit. Loop
+ignores the maximum. Schema 2 effect actions load with Loop off and 10 seconds;
+schema 1 has sound actions only. Loading does not rewrite a file. Every Save
+writes schema 3, including when all slots contain only sounds. Before replacing
+a valid schema 1 file, keep an immutable backup:
 `settings.schema1-backup.json` is number 1; each later migration adds the next
 numbered backup unless the highest-numbered backup already has the same bytes.
 Never overwrite a backup. If backup creation fails, do not save. An older binary
-cannot read schema 2, so rollback requires restoring the highest-numbered
+cannot read schema 3, so rollback requires restoring the highest-numbered
 backup while drawEM is closed. The backup does not restore sound copies deleted
 by any v4 Save, including the migration Save, or sounds imported after
 the backup; the older app's startup cleanup may also remove copies not named
@@ -311,22 +323,22 @@ effect and is then cancelled.
 ## Delivery order and completion criteria
 
 Follow the [simple implementation steps](STEPS.md). Each step has one outcome
-and a completion check. S4-01 is recorded as complete by owner decision; S4-02, S4-04, and S4-05 are complete.
+and a completion check. S4-01 is recorded as complete by owner decision; S4-02, S4-04, S4-05, and S4-06 are complete; S4-03 is implemented with one visual check unverified; S4-07 is implemented with its two-monitor checks unverified; S4-08 is implemented with its running-app check unverified; S4-10 is implemented with its running-app check unverified; S4-11 is implemented with its Windows desktop checks unverified; S4-12 has its automated suite and publish recorded, with every published-app check and measurement unverified and the release blocked.
 
 | Task | Outcome |
 |---|---|
 | [S4-01](step-01-effect-surface/task.md) | Prove a transparent effect window works on Windows (done) |
 | [S4-02](step-02-effect-channel/task.md) | Start, replace, and stop one effect of either placement safely (done) |
-| [S4-03](step-03-built-in-effects/task.md) | Play built-in Lottie effects on Monitor and Cursor surfaces; S4-03.1 is its speed gate |
+| [S4-03](step-03-built-in-effects/task.md) | Play built-in Lottie effects on Monitor and Cursor surfaces; S4-03.1 is its speed gate (implemented; flashing check unverified) |
 | [S4-04](step-04-effect-action-model/task.md) | Represent an effect in an action slot (done) |
 | [S4-05](step-05-effect-settings-schema/task.md) | Save and load effect assignments (done) |
-| [S4-06](step-06-effect-shortcuts/task.md) | Launch effects through shortcuts |
-| [S4-07](step-07-effect-monitor-transitions/task.md) | Stop effects when switching monitors |
-| [S4-08](step-08-effect-settings-ui/task.md) | Choose effects in Settings, grouped by placement |
+| [S4-06](step-06-effect-shortcuts/task.md) | Launch effects through shortcuts (done) |
+| [S4-07](step-07-effect-monitor-transitions/task.md) | Stop effects when switching monitors (implemented; two-monitor checks unverified) |
+| [S4-08](step-08-effect-settings-ui/task.md) | Choose effects in Settings, grouped by placement (implemented; running-app check unverified) |
 | [S4-09](step-09-effect-sample/task.md) | Preview draft effects with Sample |
-| [S4-10](step-10-effect-save-runtime/task.md) | Apply settings without leaving an old effect running |
-| [S4-11](step-11-effect-lifecycle/task.md) | Stop and clean up effects through the app lifecycle |
-| [S4-12](step-12-effect-publish/task.md) | Publish and verify on Windows |
+| [S4-10](step-10-effect-save-runtime/task.md) | Apply settings without leaving an old effect running (implemented; running-app check unverified) |
+| [S4-11](step-11-effect-lifecycle/task.md) | Stop and clean up effects through the app lifecycle (implemented; Windows desktop checks unverified) |
+| [S4-12](step-12-effect-publish/task.md) | Publish and verify on Windows (automated suite and publish recorded; published-app checks and measurements unverified; release blocked) |
 
 Work in this order. Basic resource cleanup belongs to S4-02/S4-03; S4-11 connects
 the remaining application events. Release also depends on the v3 baseline.
@@ -369,10 +381,13 @@ Release targets, measured on a recorded reference PC for each placement:
   from the hook event timestamp to the first presented frame containing effect
   pixels. Record the timing method and its error. Record cold starts separately.
 - Render callback time within 4 ms at p95, with Skia drawing inside the callback.
-- Frame interval within 1.5 display refresh intervals at p95 (25 ms at 60 Hz).
-  A frame is dropped when its interval exceeds 1.5 refresh intervals; at most
-  1% of frames are dropped. These two thresholds are proposed defaults; S4-03.1
-  may revise them with a recorded rationale.
+- Frame interval within 25 ms at p95. A frame is dropped when its interval
+  exceeds 25 ms; at most 1% of frames are dropped. Revised by S4-03.1 with the
+  project owner on 2026-10-12: the earlier limit of 1.5 display refresh
+  intervals (25 ms at 60 Hz) failed every mode on a 240 Hz panel, including a
+  Cursor effect whose render callback took 0.26 ms median, so it measured WPF
+  composition rate, not effect cost. See the
+  [S4-03.1 results](step-03-built-in-effects/acceptance.md#s4-031-results).
 - Hook event-to-callback delay during animation and active drawing within 25 ms
   at p95 and 100 ms maximum; the hooks still work after 100 cycles.
 - No sustained stutter or drawing slowdown in a recording. Callback timing

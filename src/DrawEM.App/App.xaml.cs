@@ -11,6 +11,7 @@ using DrawEM.App.Presentation.Settings;
 using DrawingSessionController = DrawEM.App.Application.Drawing.DrawingSessionController;
 using MessageBox = System.Windows.MessageBox;
 using SoundChannelController = DrawEM.App.Application.Sound.SoundChannelController;
+using EffectChannelController = DrawEM.App.Application.Effects.EffectChannelController;
 
 namespace DrawEM.App;
 
@@ -26,7 +27,11 @@ public partial class App : System.Windows.Application
     private ApplicationExitPolicy? exitPolicy;
     private SingleInstanceGuard? instanceGuard;
     private SettingsWindow? settingsWindow;
-    private IDisposable? effectProbe;
+    private EffectChannelController? effectChannel;
+    private BuiltInEffectAnimations? effectAnimations;
+    private LoggingEffectFailureReporter? effectFailures;
+    private Win32DisplayChangeSource? displayChanges;
+    private Win32SessionInterruptionSource? sessionInterruptions;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -68,9 +73,10 @@ public partial class App : System.Windows.Application
             controller = new DrawingSessionController(() => settings.Current.Style);
             overlayWindow = new OverlayWindow();
             _ = new OverlayWindowAdapter(controller, overlayWindow);
+            Action<Action> dispatchToUi = action => Dispatcher.BeginInvoke(action);
 
             // Failures of a Settings window sample are also shown in the window.
-            var playbackFailures = new SampleFailureRouter(soundLog, action => Dispatcher.BeginInvoke(action));
+            var playbackFailures = new SampleFailureRouter(soundLog, dispatchToUi);
             var channelHost = new SoundChannelHost(dispatch => new SoundChannelController(
                 new MediaSoundPlayerFactory(),
                 playbackFailures,
@@ -78,51 +84,79 @@ public partial class App : System.Windows.Application
                 dispatch));
             soundChannel = channelHost;
 
-            // Bindings and the sound commands they hold come from one snapshot.
+            // Bindings and the sound and effect commands they hold come from one snapshot.
             var active = settings.Current;
+
+            // Each built-in file is parsed here, once, outside the hook callback.
+            var effectLog = new LoggingEffectFailureReporter(
+                new EffectFailureLog(EffectFailureLog.DefaultPath).Append, TimeProvider.System);
+            effectFailures = effectLog;
+            var animations = new BuiltInEffectAnimations();
+            effectAnimations = animations;
+            var displays = new Win32DisplayChangeSource();
+            displayChanges = displays;
+            var sessions = new Win32SessionInterruptionSource();
+            sessionInterruptions = sessions;
+            var surface = new LottieEffectSurface(animations, displays.NotifyDpiChanged);
+
+            // Failures of a Settings window sample are also shown in the window.
+            var effectSampleFailures = new EffectSampleFailureRouter(effectLog);
+            var effects = new EffectChannelController(
+                surface, effectSampleFailures, TimeProvider.System, dispatchToUi);
+            effectChannel = effects;
 
             var inputGate = new DrawingModeInputGate();
             var monitorBoundsSource = new Win32MonitorBoundsSource();
+            var cursor = new Win32CursorPositionSource();
             keyboardHookSource = new Win32KeyboardHookSource();
+            mouseHookSource = new Win32MouseHookSource();
+
+            // Stops an effect when the cursor enters another monitor, drawing or not; frames recheck the cursor.
+            // A display change also stops it and drops queued starts.
+            var monitorGuard = new EffectMonitorGuard(
+                mouseHookSource, displays, monitorBoundsSource, cursor, effects, dispatchToUi);
+            surface.FrameStarting += monitorGuard.CheckCursor;
             var shortcuts = new GlobalShortcutAdapter(
                 keyboardHookSource.Events,
                 keyboardHookSource,
                 controller,
                 inputGate,
-                new Win32CursorPositionSource(),
-                action => Dispatcher.BeginInvoke(action),
+                cursor,
+                dispatchToUi,
                 monitorBoundsSource,
                 ShortcutBindings.FromSnapshot(active, settings.CommandFor),
-                channelHost.Play);
+                channelHost.Play,
+                monitorGuard);
 
-            mouseHookSource = new Win32MouseHookSource();
             _ = new GlobalMouseInputAdapter(
-                mouseHookSource, controller, inputGate, action => Dispatcher.BeginInvoke(action), monitorBoundsSource);
+                mouseHookSource, controller, inputGate, dispatchToUi, monitorBoundsSource);
 
             overlayWindow.Show();
-
-            // Temporary S4-01 renderer experiment; S4-06 removes it with its trigger.
-            effectProbe = EffectSurfaceProbe.IsEnabled(Environment.GetEnvironmentVariable(EffectSurfaceProbe.EnableVariable))
-                ? StartEffectProbe(controller, inputGate, monitorBoundsSource, keyboardHookSource, mouseHookSource)
-                : new CompositeDisposable();
 
             trayApplication = new TrayApplication(
                 new NotifyIconTrayHost(),
                 // The sound channel reports its last failures while it stops, so the log drains after it.
-                // The effect probe's hooks and windows go first, before the hooks it measures against.
-                new CompositeDisposable(effectProbe, keyboardHookSource, mouseHookSource, channelHost, soundLog),
+                // Effects stop and close their windows before their animations and failure log are released.
+                new CompositeDisposable(
+                    keyboardHookSource, mouseHookSource, displays, sessions, channelHost, soundLog, effects, animations, effectLog),
                 overlayWindow,
                 new WpfApplicationLifetime(this),
-                action => Dispatcher.BeginInvoke(action),
+                dispatchToUi,
                 failure => exitPolicy.Report("exit", failure));
 
-            var settingsSave = new SettingsSaveOperation(store, library, settings, channelHost, shortcuts, saveNotifications);
+            EffectStopRoutes.Connect(trayApplication, sessions, monitorGuard);
+
+            var settingsSave = new SettingsSaveOperation(
+                store, library, settings, channelHost, effects, shortcuts, saveNotifications);
             var sampler = new SoundSampler(channelHost.Play, channelHost.Stop, settings.CommandFor, playbackFailures);
             trayApplication.SettingsRequested += () => OpenSettings(() =>
             {
                 var window = new SettingsWindow();
+                // Each window samples effects on its own, so it stops only its own sample.
+                var effectSampler = new EffectSampler(
+                    cursor, monitorBoundsSource, monitorGuard, effects, effectSampleFailures);
                 var editor = new SettingsEditor(
-                    () => settings.Current, library, settingsSave, sampler, saveNotifications.CleanupFailed);
+                    () => settings.Current, library, settingsSave, sampler, effectSampler, saveNotifications.CleanupFailed);
                 window.Attach(new SettingsViewModel(editor, shortcuts, window));
                 return window;
             });
@@ -181,53 +215,6 @@ public partial class App : System.Windows.Application
     /// <summary>Discards an open draft, so its imports are removed before the sound library is left.</summary>
     private void CloseSettings() => settingsWindow?.Close();
 
-    /// <summary>
-    /// Starts the S4-01 effect-window probe: Ctrl+Alt+F9 shows one effect, Ctrl+Alt+F10 runs the benchmark
-    /// with drawing active. Its hooks are installed after the production hooks they measure against.
-    /// </summary>
-    private static IDisposable StartEffectProbe(
-        DrawingSessionController drawing, DrawingModeInputGate inputGate, IMonitorBoundsSource monitors,
-        Win32KeyboardHookSource keyboardHook, Win32MouseHookSource mouseHook)
-    {
-        var cursor = new Win32CursorPositionSource();
-
-        // Keyboard and mouse events the production hooks received, for the check after the benchmark cycles.
-        int keyboardEvents = 0, mouseEvents = 0;
-        keyboardHook.EventObserved += () => Interlocked.Increment(ref keyboardEvents);
-        mouseHook.PointerMoved += _ => Interlocked.Increment(ref mouseEvents);
-        var load = new EffectProbeInputLoad();
-        try
-        {
-            var probe = new EffectSurfaceProbe(new EffectProbePorts(
-                () => cursor.TryGetCurrentPosition(out var position) ? position : null,
-                point => monitors.TryGetBounds(point, out var bounds) ? bounds : null,
-                (point, bounds) =>
-                {
-                    inputGate.Begin(bounds);
-                    drawing.EnterDrawMode(point, bounds);
-                },
-                () =>
-                {
-                    inputGate.SetActive(false);
-                    drawing.ExitDrawMode();
-                },
-                () => inputGate.IsActive,
-                load.Start,
-                load.Stop,
-                EffectSurfaceProbe.DefaultReportDirectory,
-                () => (Volatile.Read(ref keyboardEvents), Volatile.Read(ref mouseEvents))),
-                EffectProbeMode.Parse(Environment.GetEnvironmentVariable(EffectProbeMode.Variable)));
-            load.DelayMeasured += probe.RecordHookDelay;
-            var hotkeys = new EffectProbeHotkeys(probe.Invoke, probe.RunBenchmark, probe.RunCursorBenchmark);
-            return new CompositeDisposable(hotkeys, probe, load);
-        }
-        catch
-        {
-            load.Dispose();
-            throw;
-        }
-    }
-
     private void ReleaseStartedResources()
     {
         if (trayApplication is not null)
@@ -238,11 +225,15 @@ public partial class App : System.Windows.Application
 
         CleanupSteps.RunAll(
         [
-            () => effectProbe?.Dispose(),
             () => keyboardHookSource?.Dispose(),
             () => mouseHookSource?.Dispose(),
+            () => displayChanges?.Dispose(),
+            () => sessionInterruptions?.Dispose(),
             () => soundChannel?.Dispose(),
             () => soundFailures?.Dispose(),
+            () => effectChannel?.Dispose(),
+            () => effectAnimations?.Dispose(),
+            () => effectFailures?.Dispose(),
             () => overlayWindow?.Close(),
         ]);
     }

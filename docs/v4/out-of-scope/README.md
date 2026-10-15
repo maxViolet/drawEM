@@ -15,4 +15,5 @@ Each task gets its own folder here with `task.md`, `plan.md`, and
 
 ## Tasks
 
-None yet.
+- [FEAT-009: loop an effect and set its length limit per slot](FEAT-009-effect-loop-and-limit/task.md) — implemented
+- [FEAT-010: "This is fine" fire effect](FEAT-010-this-is-fine-effect/task.md) — planned

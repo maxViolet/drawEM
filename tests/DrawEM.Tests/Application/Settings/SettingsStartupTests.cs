@@ -33,7 +33,6 @@ public class SettingsStartupTests
         var startup = SettingsStartup.Load(store, failures);
 
         Assert.Same(SettingsSnapshot.Default, startup.Active);
-        Assert.All(startup.Active.Slots, slot => Assert.True(slot.IsEmpty));
         Assert.False(startup.SavedSettingsLoaded);
         Assert.Empty(failures.Reports);
         Assert.Equal(0, store.Saves);

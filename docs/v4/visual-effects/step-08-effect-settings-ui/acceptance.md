@@ -2,13 +2,38 @@
 
 **Task:** [choose effects in Settings](task.md). **Plan:** [implementation](plan.md).
 
-- [ ] All eight rows can display and edit sound, effect, or empty actions; the effect list shows both built-in effects, each under its placement group. The user cannot choose a placement.
-- [ ] Selecting or changing type does not change running bindings before Save.
-- [ ] Default shortcut proposal, preservation, conflict errors, and clearing behave consistently across action types.
-- [ ] Cancel after Sound -> Effect preserves the saved sound assignment and managed copy; editor/view-model tests record results.
-- [ ] In the running app, Settings shows the Monitor and Cursor groups with the right effect in each, and no placement control. Record this visual check separately from automated results.
+- [x] All eight rows can display and edit sound, effect, or empty actions; the effect list shows both built-in effects, each under its placement group. The user cannot choose a placement. Each row has an action type list (Sound, Effect), then either the file button and file name or the effect list, then Clear, the shortcut, and Sample. The effect list groups Confetti under Monitor and Focus ring under Cursor; placement is only a group header. `SettingsWindowTests.Window_BindsEveryFieldWithoutBindingErrors` (the groups, the selected effect, which selector is shown, no binding errors), `SettingsViewModelTests.EffectOptions_ListEachBuiltInEffectUnderItsPlacement`, `Opens_ShowingAnEffectSlot`.
+- [x] Selecting or changing type does not change running bindings before Save. Edits change only the `SettingsEditor` draft; the active snapshot, which shortcut bindings are built from, changes only through Save. `SettingsEditorTests.DraftEdits_DoNotChangeTheActiveSnapshotOrSave` (now with effect and clear edits), `SelectEffect_InEmptySlot_ProposesTheSlotsDefaultShortcut`, `SelectEffect_OnASoundSlot_KeepsItsShortcut`, and the view-model type-change tests check the active snapshot is unchanged and nothing was saved.
+- [x] Default shortcut proposal, preservation, conflict errors, and clearing behave consistently across action types. Filling an empty slot with a sound or an effect proposes `Ctrl+Alt+N`; changing a filled slot's type or payload keeps its shortcut; a proposed shortcut that conflicts is reported on both fields and blocks Save, never reassigned; Clear empties the slot and its shortcut for either type. An effect ID outside the catalog is reported and blocks Save. `SettingsEditorTests` (`SelectEffect_*`, `SelectSound_OnAnEffectSlot_KeepsItsShortcut`, `ClearSlot_*`), `SettingsViewModelTests` (`EmptySlot_ChangedToEffect_*`, `SoundSlot_ChangedToEffect_*`, `EffectSlot_ChangedTo*`, `EffectWithAConflictingProposedShortcut_*`, `ClearSlot_*`).
+- [x] Cancel after Sound -> Effect preserves the saved sound assignment and managed copy; editor/view-model tests record results. `SettingsEditorTests.Cancel_AfterChangingASavedSoundToAnEffect_KeepsTheSoundAndItsCopy` (real `ManagedSoundLibrary`: the copy still exists, the active slot and a new draft still have the sound, no cleanup failure) and `SettingsViewModelTests.Close_AfterChangingASavedSoundToAnEffect_KeepsTheSavedSound`.
+- [ ] In the running app, Settings shows the Monitor and Cursor groups with the right effect in each, and no placement control. Record this visual check separately from automated results. Unverified: see [running-app check](#running-app-check). Not a substitute: the real `SettingsWindow` was rendered off-screen (below).
+
+## Implementation
+
+- `Application/Settings/SettingsEditor.cs`: `SelectEffect(slot, id)` assigns an effect with the same shortcut rule as `SelectSound` (keep a filled slot's shortcut, propose `Ctrl+Alt+N` for an empty one). `RemoveSound` is renamed `ClearSlot`, since it empties either type.
+- `Presentation/Settings/SettingsViewModel.cs`: `EffectOption.All` lists the catalog with its placement as the group, Monitor first. `SlotViewModel` gains `Kind`, `IsSound`, `IsEffect`, `HasAction`, `Effect`, `ChangeKind`, and `ClearSlot`; `HasSound` now means a sound action (Sample stays sound-only until S4-09). An empty slot keeps a row-only type, so choosing Effect there shows the effect list without changing the draft. A sound slot changed to Effect takes the first effect. An effect slot changed to Sound opens the file dialog and stays an effect if no file is copied. Restore defaults resets the row types to Sound.
+- `Presentation/Settings/SettingsWindow.xaml(.cs)`: the type list binds `SelectedItem` one way and calls `ChangeKind` after the selection change ends, so the file dialog opens over a closed list and a refused change shows the kept type again. A change still queued when the window closes is dropped. One `CollectionViewSource` groups the effect list by `Group`; each list sets `IsSynchronizedWithCurrentItem="False"` so rows select independently. The empty-slot file button reads "Choose file…" so it fits beside the type list.
 
 ## Validation
 
-- Automated checks: unverified. Record exact commands and results during implementation.
-- Running-app visual check: unverified. Record the build and observations.
+- Test first: the new editor, view-model, and window tests first failed to build for the expected reason: `SettingsEditor.SelectEffect`, `SettingsEditor.ClearSlot`, `SlotKind`, `EffectOption`, and the new `SlotViewModel` members did not exist. The window test then failed once more because its binding walk did not read template-set `Visibility`, `SelectedItem`, and `ItemsSource`; those are now in its list. `TypeSelector_WhenTheFileDialogIsCancelled_ShowsTheKeptEffect` drives the real window's type list.
+- `dotnet build DrawEM.sln --no-incremental -warnaserror`: succeeded, no warnings.
+- `dotnet test DrawEM.sln --no-build`: 640 passed, 0 failed after the role-review fixes.
+- Mutation check: calling `ChangeKind` synchronously in `OnKindChanged` failed `TypeSelector_WhenTheFileDialogIsCancelled_ShowsTheKeptEffect` (dialog opened over the open list) and `TypeSelector_ChangeQueuedWhenTheWindowCloses_DoesNothing`; reverted.
+- Off-screen render, 2026-10-12, branch `S4-08-effect-settings-ui`: the real `SettingsWindow` with slot 1 Horn.wav, slot 2 Focus ring, slot 3 Confetti, and slot 5 empty with Effect chosen, rendered with `RenderTargetBitmap` from a throwaway test (deleted). Observed: each row shows its type, effect rows show the effect list and no file button, the empty Effect row shows an empty list with Clear and the shortcut disabled, Sample is disabled on effect rows, and the open list shows the headers Monitor (Confetti) and Cursor (Focus ring). No placement control.
+- Unverified: the running-app check.
+
+## Review
+
+- `/simplify` (Claude Code): `ChangeKind` ends every branch at one `Refresh`; `OnKindChanged` reads the slot with the shared `Model<T>` helper; one `ComboBoxes` test helper. Rejected: using `BuiltInEffect` in the view instead of `EffectOption`, making a type change only switch the view, removing the row-only type of an empty slot, one `CollectionViewSource` per row, and merging tests into theories.
+- Role reviews (correctness, security, spec, test quality). Fixed: a type change queued just before the window closed could still open the file dialog and import into the ended draft (`TypeSelector_ChangeQueuedWhenTheWindowCloses_DoesNothing`). Added tests: saving a chosen effect, Restore defaults resetting row types, a failed copy on Effect -> Sound keeping the effect, a type change ending shortcut capture, and the file dialog opening only after the type list closes. Rejected: removing the binding-path assertions in the window test, because they show its binding-error walk reaches the new template bindings, which it missed before. Security and spec found nothing actionable.
+- Final review (Codex, `codex review --base origin/main`): no actionable defect; its independent `dotnet test DrawEM.sln --no-restore` run passed all 640 tests. The running-app check remains unverified.
+
+## Running-app check
+
+With a build of this branch running from the tray:
+
+1. Open Settings > Actions. Expected: every row has a Sound/Effect list; no control chooses a placement.
+2. Set slot 2 to Effect and open its effect list. Expected: header Monitor with Confetti, header Cursor with Focus ring. Choose Focus ring. Expected: the shortcut shows `Ctrl+Alt+2`.
+3. In a sound slot, choose Effect. Expected: Confetti is selected and the shortcut is unchanged. Choose Sound again and cancel the file dialog. Expected: the row still shows Effect and Confetti.
+4. Press the slot's shortcut before Save. Expected: the old action runs (or nothing, for a slot that was empty). Cancel the window and reopen it. Expected: the saved assignments are unchanged.

@@ -1,9 +1,12 @@
 using DrawEM.App.Application.Drawing;
+using DrawEM.App.Application.Effects;
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Application.Sound;
+using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Domain.Sound;
 using DrawEM.App.Infrastructure;
+using DrawEM.App.Infrastructure.Effects;
 
 namespace DrawEM.App.Infrastructure.Drawing;
 
@@ -21,6 +24,7 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
     private readonly Action<Action> dispatch;
     private ShortcutBindings bindings;
     private readonly Action<PlaySoundCommand> playSound;
+    private readonly IEffectStartQueue effects;
     private readonly HashSet<int> pressedKeys = [];
     private readonly HashSet<int> startedShortcutKeys = [];
 
@@ -36,10 +40,11 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
     private bool dispatchPaused;
 
     /// <summary>
-    /// Advanced by <see cref="Interrupt"/>. A queued drawing command runs only if it was queued under the
-    /// current value. Written on the hook thread, read on the dispatcher thread.
+    /// The configuration generation, advanced by <see cref="Interrupt"/>. A queued drawing or effect command
+    /// runs only if it was queued under the current value. Written on the hook thread, read on the dispatcher
+    /// thread.
     /// </summary>
-    private int drawingEpoch;
+    private int configurationGeneration;
 
     private Action<ShortcutCaptureResult>? reportCapture;
 
@@ -47,6 +52,10 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
     /// <param name="playSound">
     /// Queues the command on the sound thread. Called directly inside the hook callback, so it must
     /// return promptly without file access, decoding, or player creation. Production uses SoundChannelHost.Play.
+    /// </param>
+    /// <param name="effects">
+    /// Takes each effect start: enqueued inside the hook callback at key-down, dequeued on the dispatcher thread.
+    /// Production uses <see cref="EffectMonitorGuard"/>, which starts it on the EffectChannelController.
     /// </param>
     public GlobalShortcutAdapter(
         IKeyboardHookSource source,
@@ -57,7 +66,8 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
         Action<Action> dispatch,
         IMonitorBoundsSource monitorBoundsSource,
         ShortcutBindings bindings,
-        Action<PlaySoundCommand> playSound)
+        Action<PlaySoundCommand> playSound,
+        IEffectStartQueue effects)
     {
         this.neutralKeys = neutralKeys;
         this.controller = controller;
@@ -67,6 +77,7 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
         this.dispatch = dispatch;
         this.bindings = bindings;
         this.playSound = playSound;
+        this.effects = effects;
         source.SetKeyHandler(HandleKey);
     }
 
@@ -79,7 +90,7 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
         if (inputGate.IsActive)
         {
             inputGate.SetActive(false);
-            DispatchDrawing(controller.ExitDrawMode);
+            DispatchCommand(controller.ExitDrawMode);
         }
 
         reportCapture = report;
@@ -100,7 +111,7 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
     {
         inputGate.SetActive(false);
         inputGate.ReleaseBlock();
-        Volatile.Write(ref drawingEpoch, drawingEpoch + 1);
+        Volatile.Write(ref configurationGeneration, configurationGeneration + 1);
         dispatchPaused = pressedKeys.Count > 0;
 
         // A dropped command may have been an exit, so drawing is reset here rather than queued.
@@ -133,7 +144,7 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
         {
             int? firstKeyDown = isFirstKeyDown ? vkCode : null;
             UpdateChords(firstKeyDown);
-            UpdateSoundShortcuts(firstKeyDown);
+            UpdateSlotShortcuts(firstKeyDown);
         }
 
         var suppress = capturedKey || keysWithHiddenFirstDown.Contains(vkCode)
@@ -242,17 +253,17 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
     }
 
     /// <summary>
-    /// Starts a bound sound once per press: when its key and exactly its modifiers are first down together.
-    /// Auto-repeat does nothing; the key must be released before it can start again. The drawing gate is
-    /// untouched.
+    /// Starts a bound sound or effect once per press: when its key and exactly its modifiers are first down
+    /// together. Auto-repeat does nothing; the key must be released before it can start again. The drawing
+    /// gate is untouched.
     /// </summary>
     /// <param name="firstKeyDown">The key whose first key-down is being handled, if any.</param>
     /// <remarks>
     /// Suppression follows <see cref="TryStartOncePerPress"/>.
     /// </remarks>
-    private void UpdateSoundShortcuts(int? firstKeyDown)
+    private void UpdateSlotShortcuts(int? firstKeyDown)
     {
-        // Indexed loop: the hook callback avoids allocating an enumerator per key-down.
+        // Indexed loops: the hook callback avoids allocating an enumerator per key-down.
         for (var i = 0; i < bindings.Sounds.Count; i++)
         {
             var (chord, command) = bindings.Sounds[i];
@@ -261,11 +272,52 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
                 playSound(command);
             }
         }
+
+        for (var i = 0; i < bindings.Effects.Count; i++)
+        {
+            var effect = bindings.Effects[i];
+            if (TryStartOncePerPress(effect.Chord, firstKeyDown)
+                && cursorPositionSource.TryGetCurrentPosition(out var point))
+            {
+                DispatchEffect(effect, point);
+            }
+        }
     }
 
     /// <summary>
-    /// Starts a one-shot chord (clear or a sound) when it is pressed and its key has not started a chord
-    /// since the key went down.
+    /// Queues an effect start at the cursor point captured at key-down. The monitor is resolved on the
+    /// dispatcher, outside the hook; a point outside every monitor, or a Save before dispatch, starts nothing.
+    /// The start is dequeued either way, so the guard knows when nothing is queued.
+    /// </summary>
+    private void DispatchEffect(EffectBinding effect, ScreenPoint point)
+    {
+        var generation = configurationGeneration;
+        var monitorEpoch = effects.Enqueue(point);
+        dispatch(() =>
+        {
+            StartEffectCommand? command = null;
+            if (generation == Volatile.Read(ref configurationGeneration)
+                && monitorBoundsSource.TryGetBounds(point, out var monitor))
+            {
+                command = new StartEffectCommand(
+                    effect.Slot,
+                    effect.Effect,
+                    effect.Placement,
+                    monitor,
+                    point,
+                    effect.Loop,
+                    effect.MaxLength,
+                    generation,
+                    monitorEpoch);
+            }
+
+            effects.Dequeue(monitorEpoch, command);
+        });
+    }
+
+    /// <summary>
+    /// Starts a one-shot chord (clear, a sound, or an effect) when it is pressed and its key has not started a
+    /// chord since the key went down.
     /// </summary>
     /// <remarks>
     /// A started key's later key-downs are suppressed until release, whatever happens to its modifiers.
@@ -301,13 +353,13 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
             if (monitorBoundsSource.TryGetBounds(startingPoint, out var bounds))
             {
                 inputGate.Begin(bounds);
-                DispatchDrawing(() => controller.EnterDrawMode(startingPoint, bounds));
+                DispatchCommand(() => controller.EnterDrawMode(startingPoint, bounds));
             }
         }
         else if (!drawShortcutHeld && inputGate.IsActive)
         {
             inputGate.SetActive(false);
-            DispatchDrawing(controller.ExitDrawMode);
+            DispatchCommand(controller.ExitDrawMode);
         }
 
         if (!drawShortcutHeld && !clearShortcutHeld)
@@ -322,25 +374,26 @@ public sealed class GlobalShortcutAdapter : IShortcutCapture, IActiveShortcuts
             if (cursorPositionSource.TryGetCurrentPosition(out var clearPoint)
                 && monitorBoundsSource.TryGetBounds(clearPoint, out var clearBounds))
             {
-                DispatchDrawing(() => controller.ClearMonitorAndExitDrawMode(clearBounds));
+                DispatchCommand(() => controller.ClearMonitorAndExitDrawMode(clearBounds));
             }
             else
             {
-                DispatchDrawing(controller.ExitDrawMode);
+                DispatchCommand(controller.ExitDrawMode);
             }
         }
     }
 
     /// <summary>
-    /// Queues a drawing command that is dropped if <see cref="Interrupt"/> runs before it, so a press made
-    /// under the previous shortcuts cannot draw under the new configuration.
+    /// Queues a drawing command that is dropped if <see cref="Interrupt"/> runs before it, so a press made under
+    /// the previous shortcuts cannot draw under the new configuration. Effect starts use the same check in
+    /// <see cref="DispatchEffect"/>.
     /// </summary>
-    private void DispatchDrawing(Action command)
+    private void DispatchCommand(Action command)
     {
-        var epoch = drawingEpoch;
+        var generation = configurationGeneration;
         dispatch(() =>
         {
-            if (epoch == Volatile.Read(ref drawingEpoch))
+            if (generation == Volatile.Read(ref configurationGeneration))
             {
                 command();
             }

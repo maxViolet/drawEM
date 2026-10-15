@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows;
 using DrawEM.App.Domain.Drawing;
@@ -15,9 +16,21 @@ public partial class SettingsWindow : Window, ISoundFilePicker
 {
     private SettingsViewModel? ViewModel => DataContext as SettingsViewModel;
 
+    /// <summary>Set once closing goes ahead; the draft has then ended.</summary>
+    private bool closed;
+
     public SettingsWindow()
+        : this(SystemParameters.WorkArea.Height)
+    {
+    }
+
+    /// <param name="workAreaHeight">
+    /// The usable screen height. The default height is cut to it, so the title bar stays on screen.
+    /// </param>
+    public SettingsWindow(double workAreaHeight)
     {
         InitializeComponent();
+        Height = Math.Min(Height, workAreaHeight);
         // A capture field must not take focus on open: focusing one starts capture.
         Loaded += (_, _) => HexBox.Focus();
     }
@@ -44,6 +57,7 @@ public partial class SettingsWindow : Window, ISoundFilePicker
         base.OnClosing(e);
         if (!e.Cancel)
         {
+            closed = true;
             ViewModel?.Close();
         }
     }
@@ -60,9 +74,34 @@ public partial class SettingsWindow : Window, ISoundFilePicker
 
     private void OnChooseFile(object sender, RoutedEventArgs e) => Model<SlotViewModel>(sender).ChooseFile();
 
-    private void OnRemoveSound(object sender, RoutedEventArgs e) => Model<SlotViewModel>(sender).RemoveSound();
+    // SelectedItem is bound one way, and the change runs after this selection change ends: a file dialog
+    // then opens over a closed list, and a choice the model refuses, such as a cancelled dialog, is reverted
+    // by the model's notification. That revert reaches here again as a no-op. A change still queued when
+    // the window closes is dropped, so nothing is imported into the ended draft.
+    private void OnKindChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.AddedItems.Count == 1 && e.AddedItems[0] is SlotKind kind)
+        {
+            var slot = Model<SlotViewModel>(sender);
+            Dispatcher.BeginInvoke(() =>
+            {
+                if (!closed)
+                {
+                    slot.ChangeKind(kind);
+                }
+            });
+        }
+    }
+
+    private void OnClearSlot(object sender, RoutedEventArgs e) => Model<SlotViewModel>(sender).ClearSlot();
 
     private void OnSample(object sender, RoutedEventArgs e) => Model<SlotViewModel>(sender).Sample();
+
+    private void OnIncreaseMaxLength(object sender, RoutedEventArgs e) =>
+        Model<SlotViewModel>(sender).StepMaxLength(1);
+
+    private void OnDecreaseMaxLength(object sender, RoutedEventArgs e) =>
+        Model<SlotViewModel>(sender).StepMaxLength(-1);
 
     private void OnRestoreDefaults(object sender, RoutedEventArgs e) => ViewModel?.RestoreDefaults();
 
@@ -73,6 +112,20 @@ public partial class SettingsWindow : Window, ISoundFilePicker
         if (ViewModel?.Save() == true)
         {
             Close();
+        }
+    }
+
+    private void OnIncreaseWidth(object sender, RoutedEventArgs e) => ViewModel?.StepWidth(1);
+
+    private void OnDecreaseWidth(object sender, RoutedEventArgs e) => ViewModel?.StepWidth(-1);
+
+    private void OnWidthKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key is Key.Up or Key.Down && ViewModel is { } model)
+        {
+            model.StepWidth(e.Key == Key.Up ? 1 : -1);
+            WidthBox.CaretIndex = WidthBox.Text.Length;
+            e.Handled = true;
         }
     }
 

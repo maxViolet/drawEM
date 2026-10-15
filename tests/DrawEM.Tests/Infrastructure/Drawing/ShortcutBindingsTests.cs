@@ -1,4 +1,5 @@
 using DrawEM.App.Application.Sound;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Domain.Sound;
 using DrawEM.App.Infrastructure.Drawing;
@@ -82,7 +83,36 @@ public class ShortcutBindingsTests
         Assert.Equal(
             [new SoundBinding(new KeyChord(CtrlAlt, VirtualKeys.D0), Command("a1.wav"))],
             bindings.Sounds);
+        Assert.Empty(bindings.Effects);
         Assert.Equal([applause], resolved);
+    }
+
+    [Fact]
+    public void FromSnapshot_BindsSoundAndEffectSlotsFromOneSnapshot_WithPlacementFromTheCatalog()
+    {
+        var applause = new SoundReference("a1.wav", "applause.wav");
+        var snapshot = SettingsSnapshot.Validate(
+            SettingsSnapshot.Default.Style,
+            SettingsSnapshot.Default.DrawShortcut,
+            SettingsSnapshot.Default.ClearShortcut,
+            Enumerable.Range(1, ActionSlot.Count).Select(number => number switch
+            {
+                1 => new ActionSlot(1, new SoundAction(applause, Slot(1))),
+                2 => new ActionSlot(2, new EffectAction(
+                    new EffectId("confetti"), Slot(2), true, TimeSpan.FromSeconds(37))),
+                5 => new ActionSlot(5, new EffectAction(new EffectId("focus-ring"), Slot(5), false, null)),
+                _ => ActionSlot.Empty(number),
+            })).Snapshot!;
+
+        var bindings = ShortcutBindings.FromSnapshot(snapshot, sound => Command(sound.LibraryFileName));
+
+        Assert.Equal([new SoundBinding(new KeyChord(CtrlAlt, VirtualKeys.D1), Command("a1.wav"))], bindings.Sounds);
+        Assert.Equal(
+            [
+                new EffectBinding(new KeyChord(CtrlAlt, VirtualKeys.D2), 2, new EffectId("confetti"), EffectPlacement.Monitor, true, TimeSpan.FromSeconds(37)),
+                new EffectBinding(new KeyChord(CtrlAlt, VirtualKeys.D0 + 5), 5, new EffectId("focus-ring"), EffectPlacement.Cursor, false, null),
+            ],
+            bindings.Effects);
     }
 
     [Fact]
@@ -91,8 +121,23 @@ public class ShortcutBindingsTests
         var draw = SettingsSnapshot.Default.DrawShortcut;
 
         Assert.Throws<ArgumentException>(() => new ShortcutBindings(
-            draw, SettingsSnapshot.Default.ClearShortcut, [(draw, Command("applause"))]));
+            draw, SettingsSnapshot.Default.ClearShortcut, [(draw, Command("applause"))], []));
     }
+
+    [Fact]
+    public void Constructor_EffectSharingASoundOrDrawShortcut_Throws()
+    {
+        var focusRing = EffectCatalog.BuiltIn.Single(effect => effect.Id.Value == "focus-ring");
+        var draw = SettingsSnapshot.Default.DrawShortcut;
+        var clear = SettingsSnapshot.Default.ClearShortcut;
+
+        Assert.Throws<ArgumentException>(() => new ShortcutBindings(
+            draw, clear, [(Slot(1), Command("applause"))], [(1, Slot(1), focusRing, false, TimeSpan.FromSeconds(10))]));
+        Assert.Throws<ArgumentException>(() => new ShortcutBindings(
+            draw, clear, [], [(1, draw, focusRing, false, TimeSpan.FromSeconds(10))]));
+    }
+
+    private static Shortcut Slot(int number) => Shortcut.Create(CtrlAlt, ShortcutKey.Digit(number));
 
     private static PlaySoundCommand Command(string sound) => new(new SoundId(sound), @"C:\library\" + sound);
 }

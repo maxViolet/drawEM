@@ -14,7 +14,9 @@ public class EffectChannelControllerTests
     public void Start_ShowsInstanceOnSurfaceAndBecomesActive()
     {
         var fixture = new Fixture();
-        var command = new StartEffectCommand(Confetti, EffectPlacement.Monitor, Primary, new ScreenPoint(10, 20), 7);
+        var command = new StartEffectCommand(
+            2, Confetti, EffectPlacement.Monitor, Primary, new ScreenPoint(10, 20), false,
+            TimeSpan.FromSeconds(10), 7, 3);
 
         var instance = fixture.Controller.Start(command);
 
@@ -89,19 +91,76 @@ public class EffectChannelControllerTests
     }
 
     [Fact]
-    public void Deadline_ReleasesPlaybackTenSecondsAfterStart()
+    public void Deadline_ReleasesPlaybackAtTheCommandsMaximumLength()
     {
         var fixture = new Fixture();
-        fixture.Controller.Start(Command(Confetti));
+        fixture.Controller.Start(Command(Confetti, maxSeconds: 23));
 
-        fixture.Time.Advance(EffectChannelController.MaxDuration - TimeSpan.FromMilliseconds(1));
+        fixture.Time.Advance(TimeSpan.FromSeconds(23) - TimeSpan.FromMilliseconds(1));
         Assert.Equal(0, fixture.Playbacks[0].DisposeCount);
 
         fixture.Time.Advance(TimeSpan.FromMilliseconds(1));
 
         Assert.Equal(1, fixture.Playbacks[0].DisposeCount);
         Assert.Null(fixture.Controller.ActiveInstance);
-        Assert.Equal(TimeSpan.FromSeconds(10), EffectChannelController.MaxDuration);
+    }
+
+    [Fact]
+    public void NoLimit_HasNoDeadlineAndEndsAtNaturalCompletion()
+    {
+        var fixture = new Fixture();
+        fixture.Controller.Start(Command(Confetti, maxSeconds: null));
+
+        Assert.Equal(0, fixture.Time.ActiveTimerCount);
+        fixture.Time.Advance(TimeSpan.FromHours(1));
+        Assert.NotNull(fixture.Controller.ActiveInstance);
+
+        fixture.Playbacks[0].Complete();
+
+        Assert.Null(fixture.Controller.ActiveInstance);
+    }
+
+    [Fact]
+    public void Loop_HasNoDeadline()
+    {
+        var fixture = new Fixture();
+        var instance = fixture.Controller.Start(Command(
+            Confetti, loop: true, maxSeconds: 1));
+
+        Assert.Equal(0, fixture.Time.ActiveTimerCount);
+        fixture.Time.Advance(TimeSpan.FromHours(1));
+        Assert.Same(instance, fixture.Controller.ActiveInstance);
+    }
+
+    [Fact]
+    public void StartingSameLoopingSlotAndConfigurationAgain_StopsInsteadOfRestarting()
+    {
+        var fixture = new Fixture();
+        var command = Command(Confetti, slot: 4, loop: true, configurationGeneration: 7);
+        fixture.Controller.Start(command);
+
+        var toggled = fixture.Controller.Start(command);
+
+        Assert.Null(toggled);
+        Assert.Null(fixture.Controller.ActiveInstance);
+        Assert.Single(fixture.Playbacks);
+        Assert.Equal(1, fixture.Playbacks[0].DisposeCount);
+    }
+
+    [Fact]
+    public void StartingLoopingEffectFromAnotherSlotOrConfiguration_ReplacesTheActiveEffect()
+    {
+        var fixture = new Fixture();
+        fixture.Controller.Start(Command(Confetti, slot: 4, loop: true, configurationGeneration: 7));
+
+        var anotherSlot = fixture.Controller.Start(Command(Confetti, slot: 5, loop: true, configurationGeneration: 7));
+        var anotherConfiguration = fixture.Controller.Start(
+            Command(Confetti, slot: 5, loop: true, configurationGeneration: 8));
+
+        Assert.NotNull(anotherSlot);
+        Assert.NotNull(anotherConfiguration);
+        Assert.Same(anotherConfiguration, fixture.Controller.ActiveInstance);
+        Assert.Equal(3, fixture.Playbacks.Count);
     }
 
     [Fact]
@@ -120,11 +179,33 @@ public class EffectChannelControllerTests
         Assert.Null(fixture.Controller.ActiveInstance);
     }
 
+    [Theory]
+    [InlineData(-3600)]
+    [InlineData(3600)]
+    public void Deadline_IgnoresAWallClockChangeInsideShow(int clockChangeSeconds)
+    {
+        var fixture = new Fixture();
+        fixture.OnShow = () =>
+        {
+            fixture.Time.ChangeWallClock(TimeSpan.FromSeconds(clockChangeSeconds));
+            fixture.Time.Advance(TimeSpan.FromSeconds(3));
+        };
+        var instance = fixture.Controller.Start(Command(Confetti));
+
+        Assert.Same(instance, fixture.Controller.ActiveInstance);
+        fixture.Time.Advance(TimeSpan.FromSeconds(7) - TimeSpan.FromMilliseconds(1));
+        Assert.Same(instance, fixture.Controller.ActiveInstance);
+
+        fixture.Time.Advance(TimeSpan.FromMilliseconds(1));
+
+        Assert.Null(fixture.Controller.ActiveInstance);
+    }
+
     [Fact]
     public void ShowOutlastingDeadline_ReleasesPlaybackImmediately()
     {
         var fixture = new Fixture();
-        fixture.OnShow = () => fixture.Time.Advance(EffectChannelController.MaxDuration);
+        fixture.OnShow = () => fixture.Time.Advance(TimeSpan.FromSeconds(10));
 
         fixture.Controller.Start(Command(Confetti));
 
@@ -141,7 +222,7 @@ public class EffectChannelControllerTests
         var fixture = new Fixture(queued.Add);
         fixture.Controller.Start(Command(Confetti));
 
-        fixture.Time.Advance(EffectChannelController.MaxDuration);
+        fixture.Time.Advance(TimeSpan.FromSeconds(10));
 
         Assert.Equal(0, fixture.Playbacks[0].DisposeCount);
         Assert.Single(queued)();
@@ -154,7 +235,7 @@ public class EffectChannelControllerTests
         var queued = new List<Action>();
         var fixture = new Fixture(queued.Add);
         fixture.Controller.Start(Command(Confetti, EffectPlacement.Monitor));
-        fixture.Time.Advance(EffectChannelController.MaxDuration);
+        fixture.Time.Advance(TimeSpan.FromSeconds(10));
 
         var newer = fixture.Controller.Start(Command(FocusRing, EffectPlacement.Cursor));
         Assert.Single(queued)();
@@ -290,7 +371,7 @@ public class EffectChannelControllerTests
         fixture.Controller.Stop();
         fixture.Controller.Stop();
         fixture.Playbacks[0].Complete();
-        fixture.Time.Advance(EffectChannelController.MaxDuration);
+        fixture.Time.Advance(TimeSpan.FromSeconds(10));
 
         Assert.Equal(1, fixture.Playbacks[0].DisposeCount);
         Assert.Null(fixture.Controller.ActiveInstance);
@@ -313,8 +394,44 @@ public class EffectChannelControllerTests
         Assert.Null(fixture.Controller.ActiveInstance);
     }
 
-    private static StartEffectCommand Command(EffectId effect, EffectPlacement placement = EffectPlacement.Monitor) =>
-        new(effect, placement, Primary, new ScreenPoint(100, 100), 1);
+    [Fact]
+    public void StopStartedBefore_StopsOnlyAnInstanceFromAnEarlierMonitorEpoch()
+    {
+        var fixture = new Fixture();
+        var instance = fixture.Controller.Start(Command(Confetti, monitorEpoch: 4));
+
+        fixture.Controller.StopStartedBefore(3);
+        Assert.Same(instance, fixture.Controller.ActiveInstance);
+
+        fixture.Controller.StopStartedBefore(4);
+        Assert.Same(instance, fixture.Controller.ActiveInstance);
+
+        fixture.Controller.StopStartedBefore(5);
+        Assert.Null(fixture.Controller.ActiveInstance);
+        Assert.Equal(1, fixture.Playbacks[0].DisposeCount);
+
+        fixture.Controller.StopStartedBefore(6);
+        Assert.Equal(1, fixture.Playbacks[0].DisposeCount);
+    }
+
+    private static StartEffectCommand Command(
+        EffectId effect,
+        EffectPlacement placement = EffectPlacement.Monitor,
+        long monitorEpoch = 0,
+        int slot = 1,
+        bool loop = false,
+        int? maxSeconds = 10,
+        long configurationGeneration = 1) =>
+        new(
+            slot,
+            effect,
+            placement,
+            Primary,
+            new ScreenPoint(100, 100),
+            loop,
+            maxSeconds is { } seconds ? TimeSpan.FromSeconds(seconds) : null,
+            configurationGeneration,
+            monitorEpoch);
 
     private sealed class Fixture : IEffectSurface, IEffectFailureReporter
     {

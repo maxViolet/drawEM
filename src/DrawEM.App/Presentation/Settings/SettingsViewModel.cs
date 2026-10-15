@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 
 namespace DrawEM.App.Presentation.Settings;
@@ -108,6 +109,27 @@ public sealed class SettingsViewModel : BindableBase
 
     public string? WidthError { get; private set; }
 
+    /// <summary>
+    /// Disabled only at the limit itself, as <see cref="StepWidth"/> is: for invalid or out-of-range text both
+    /// buttons stay enabled, and a step brings the width back into range.
+    /// </summary>
+    public bool CanIncreaseWidth => editor.Width != StrokeWidth.Max;
+
+    /// <inheritdoc cref="CanIncreaseWidth"/>
+    public bool CanDecreaseWidth => editor.Width != StrokeWidth.Min;
+
+    /// <summary>
+    /// Changes the width by <paramref name="pixels"/>, kept within the allowed range. Text that is not a whole
+    /// number becomes the minimum width.
+    /// </summary>
+    public void StepWidth(int pixels)
+    {
+        var stepped = int.TryParse(widthText.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var current)
+            ? Math.Clamp((long)current + pixels, StrokeWidth.Min, StrokeWidth.Max)
+            : StrokeWidth.Min;
+        WidthText = stepped.ToString(CultureInfo.InvariantCulture);
+    }
+
     /// <summary>Every reason the draft cannot be saved, one per line; empty when it can.</summary>
     public string Errors { get; private set; } = "";
 
@@ -134,6 +156,7 @@ public sealed class SettingsViewModel : BindableBase
         foreach (var slot in Slots)
         {
             slot.Message = null;
+            slot.EmptyKind = SlotKind.Sound;
         }
 
         foreach (var field in Fields)
@@ -228,10 +251,62 @@ public sealed class SettingsViewModel : BindableBase
         Refresh();
     }
 
-    internal void RemoveSound(SlotViewModel slot)
+    /// <summary>
+    /// Switches the slot between sound and effect. An empty slot only shows the other selector. A sound slot
+    /// takes the first effect; an effect slot asks for a file and stays unchanged if none is copied. Either
+    /// keeps the slot's shortcut. Always notifies, so a type selector the model refused shows the kept type.
+    /// </summary>
+    internal void ChangeKind(SlotViewModel slot, SlotKind kind)
+    {
+        if (kind == slot.Kind)
+        {
+            return;
+        }
+
+        if (!slot.HasAction)
+        {
+            EndCapture();
+            slot.EmptyKind = kind;
+            slot.Message = null;
+        }
+        else if (kind == SlotKind.Effect)
+        {
+            SelectEffect(slot, EffectOption.All[0]);
+        }
+        else
+        {
+            ChooseFile(slot);
+        }
+
+        Refresh();
+    }
+
+    internal void SelectEffect(SlotViewModel slot, EffectOption effect)
+    {
+        EndCapture();
+        editor.SelectEffect(slot.Number, effect.Id);
+        slot.Message = null;
+        Refresh();
+    }
+
+    internal void SetEffectLoop(SlotViewModel slot, bool loop)
+    {
+        editor.SetEffectLoop(slot.Number, loop);
+        Refresh();
+    }
+
+    internal void SetEffectMaxLength(SlotViewModel slot, TimeSpan? maxLength)
+    {
+        editor.SetEffectMaxLength(slot.Number, maxLength);
+        Refresh();
+    }
+
+    /// <summary>Empties the slot and its shortcut; the row keeps showing the same action type.</summary>
+    internal void ClearSlot(SlotViewModel slot)
     {
         slot.Shortcut.EndCapture();
-        editor.RemoveSound(slot.Number);
+        slot.EmptyKind = slot.Kind;
+        editor.ClearSlot(slot.Number);
         slot.Message = null;
         slot.Shortcut.Message = null;
         Refresh();
@@ -240,7 +315,10 @@ public sealed class SettingsViewModel : BindableBase
     internal void Sample(SlotViewModel slot)
     {
         slot.Message = null;
-        editor.Sample(slot.Number, reason => slot.Message = $"Sample failed: {reason}");
+        editor.Sample(
+            slot.Number,
+            reason => slot.Message = $"Sample failed: {reason}",
+            slot.SetSampleRunning);
     }
 
     private void OnCaptureResult(int session, ShortcutFieldViewModel field, ShortcutCaptureResult result)
@@ -395,11 +473,29 @@ public sealed class ShortcutFieldViewModel : BindableBase
     }
 }
 
+/// <summary>What a slot does when filled.</summary>
+public enum SlotKind
+{
+    Sound,
+    Effect,
+}
+
+/// <summary>One choice in a slot's effect list. <see cref="Group"/> is the effect's placement.</summary>
+public sealed record EffectOption(EffectId Id, string Name, string Group)
+{
+    /// <summary>Every built-in effect, Monitor effects first, then Cursor effects.</summary>
+    public static IReadOnlyList<EffectOption> All { get; } = EffectCatalog.BuiltIn
+        .OrderBy(effect => effect.Placement)
+        .Select(effect => new EffectOption(effect.Id, effect.DisplayName, effect.Placement.ToString()))
+        .ToArray();
+}
+
 /// <summary>One numbered action slot.</summary>
 public sealed class SlotViewModel : BindableBase
 {
     private readonly SettingsViewModel owner;
     private string? message;
+    private bool sampleRunning;
 
     internal SlotViewModel(SettingsViewModel owner, int number)
     {
@@ -408,17 +504,105 @@ public sealed class SlotViewModel : BindableBase
         Shortcut = new ShortcutFieldViewModel(owner, SettingsCommand.ForSlot(number));
     }
 
+    public static IReadOnlyList<SlotKind> Kinds { get; } = [SlotKind.Sound, SlotKind.Effect];
+
     public int Number { get; }
 
     public string Label => Number.ToString("00", CultureInfo.InvariantCulture);
 
     public ShortcutFieldViewModel Shortcut { get; }
 
-    public bool HasSound => !owner.SlotOf(Number).IsEmpty;
+    /// <summary>The filled slot's action type, or the type chosen for an empty slot.</summary>
+    public SlotKind Kind => Action switch
+    {
+        SoundAction => SlotKind.Sound,
+        EffectAction => SlotKind.Effect,
+        _ => EmptyKind,
+    };
 
-    public string FileName => (owner.SlotOf(Number).Action as SoundAction)?.Sound.DisplayName ?? "No sound selected";
+    public bool IsSound => Kind == SlotKind.Sound;
 
-    public string ChooseText => HasSound ? "Change file…" : "Choose WAV / MP3…";
+    public bool IsEffect => Kind == SlotKind.Effect;
+
+    public bool HasEffect => Action is EffectAction;
+
+    public bool HasAction => Action is not null;
+
+    public bool HasSound => Action is SoundAction;
+
+    public string FileName => (Action as SoundAction)?.Sound.DisplayName ?? "No sound selected";
+
+    public string ChooseText => HasSound ? "Change file…" : "Choose file…";
+
+    /// <summary>The slot's effect, or <c>null</c>. Setting a different one changes only the draft.</summary>
+    public EffectOption? Effect
+    {
+        get => Action is EffectAction effect ? EffectOption.All.FirstOrDefault(option => option.Id == effect.Effect) : null;
+        set
+        {
+            if (value is not null && value != Effect)
+            {
+                owner.SelectEffect(this, value);
+            }
+        }
+    }
+
+    public bool Loop
+    {
+        get => EffectSettings?.Loop ?? false;
+        set
+        {
+            if (HasEffect && value != Loop)
+            {
+                owner.SetEffectLoop(this, value);
+            }
+        }
+    }
+
+    public bool NoLimit
+    {
+        get => HasEffect && MaxLength is null;
+        set
+        {
+            if (!HasEffect || Loop || value == NoLimit)
+            {
+                return;
+            }
+
+            owner.SetEffectMaxLength(this, value ? null : DrawEM.App.Domain.Settings.EffectAction.DefaultMaxLength);
+        }
+    }
+
+    public string MaxLengthText => MaxLength is { } length
+        ? $"{(int)length.TotalSeconds} s"
+        : "No limit";
+
+    public bool CanSetNoLimit => HasEffect && !Loop;
+
+    public bool CanEditMaxLength => HasEffect && !Loop && MaxLength is not null;
+
+    public bool CanIncreaseMaxLength =>
+        CanEditMaxLength && MaxLength!.Value.TotalSeconds != DrawEM.App.Domain.Settings.EffectAction.MaxSeconds;
+
+    public bool CanDecreaseMaxLength =>
+        CanEditMaxLength && MaxLength!.Value.TotalSeconds != DrawEM.App.Domain.Settings.EffectAction.MinSeconds;
+
+    public string SampleText => sampleRunning ? "Stop" : "Sample";
+
+    public void StepMaxLength(int seconds)
+    {
+        if (!CanEditMaxLength)
+        {
+            return;
+        }
+
+        var current = (int)MaxLength!.Value.TotalSeconds;
+        var stepped = Math.Clamp(
+            (long)current + seconds,
+            DrawEM.App.Domain.Settings.EffectAction.MinSeconds,
+            DrawEM.App.Domain.Settings.EffectAction.MaxSeconds);
+        owner.SetEffectMaxLength(this, TimeSpan.FromSeconds(stepped));
+    }
 
     /// <summary>A copy or sample failure, or <c>null</c>.</summary>
     public string? Message
@@ -431,9 +615,27 @@ public sealed class SlotViewModel : BindableBase
         }
     }
 
+    /// <summary>The type an empty slot shows.</summary>
+    internal SlotKind EmptyKind { get; set; }
+
+    private SlotAction? Action => owner.SlotOf(Number).Action;
+
+    private EffectAction? EffectSettings => Action as EffectAction;
+
+    private TimeSpan? MaxLength => EffectSettings?.MaxLength;
+
+
+    internal void SetSampleRunning(bool running)
+    {
+        sampleRunning = running;
+        Raise(nameof(SampleText));
+    }
+
+    public void ChangeKind(SlotKind kind) => owner.ChangeKind(this, kind);
+
     public void ChooseFile() => owner.ChooseFile(this);
 
-    public void RemoveSound() => owner.RemoveSound(this);
+    public void ClearSlot() => owner.ClearSlot(this);
 
     public void Sample() => owner.Sample(this);
 }

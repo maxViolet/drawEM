@@ -1,4 +1,5 @@
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 
 namespace DrawEM.App.Application.Settings;
@@ -14,8 +15,11 @@ public sealed class SettingsEditor
     private readonly ISoundLibrary library;
     private readonly ISettingsSave saver;
     private readonly ISoundSampler sampler;
+    private readonly IEffectSampler effectSampler;
     private readonly Action<SoundCleanupFailure> reportCleanupFailure;
     private ActionSlot[] slots = [];
+    /// <summary>The slot the latest effect sample was started from, until an edit of that slot stops it.</summary>
+    private int? effectSampleSlot;
     private bool ended;
 
     /// <param name="active">The running configuration. Read now for the draft, and again by Cancel.</param>
@@ -25,17 +29,20 @@ public sealed class SettingsEditor
         ISoundLibrary library,
         ISettingsSave saver,
         ISoundSampler sampler,
+        IEffectSampler effectSampler,
         Action<SoundCleanupFailure> reportCleanupFailure)
     {
         ArgumentNullException.ThrowIfNull(active);
         ArgumentNullException.ThrowIfNull(library);
         ArgumentNullException.ThrowIfNull(saver);
         ArgumentNullException.ThrowIfNull(sampler);
+        ArgumentNullException.ThrowIfNull(effectSampler);
         ArgumentNullException.ThrowIfNull(reportCleanupFailure);
         this.active = active;
         this.library = library;
         this.saver = saver;
         this.sampler = sampler;
+        this.effectSampler = effectSampler;
         this.reportCleanupFailure = reportCleanupFailure;
         Load(active());
     }
@@ -102,33 +109,81 @@ public sealed class SettingsEditor
     /// <exception cref="SoundImportException">The file is not a WAV or MP3, or the copy failed. The draft is unchanged.</exception>
     public void SelectSound(int slot, string sourceFile)
     {
-        var shortcut = slots[slot - 1].Action?.Shortcut ?? ProposedShortcut(slot);
+        var shortcut = ShortcutForNewAction(slot);
         Replace(new ActionSlot(slot, new SoundAction(library.Import(sourceFile), shortcut)));
     }
 
-    /// <summary>Empties the slot, which also removes its shortcut.</summary>
-    public void RemoveSound(int slot) => Replace(ActionSlot.Empty(slot));
+    /// <summary>
+    /// Assigns the effect to the slot. A slot that was empty proposes <see cref="ProposedShortcut"/>; a
+    /// filled slot keeps its shortcut. Changing one effect to another keeps the slot's playback settings.
+    /// An ID outside <see cref="EffectCatalog"/> is kept and reported by <see cref="Validate"/>. A sound it
+    /// replaces keeps its managed copy while the active settings use it.
+    /// </summary>
+    public void SelectEffect(int slot, EffectId effect)
+    {
+        var current = slots[slot - 1].Action as EffectAction;
+        Replace(new ActionSlot(
+            slot,
+            current is null
+                ? new EffectAction(effect, ShortcutForNewAction(slot))
+                : new EffectAction(effect, current.Shortcut, current.Loop, current.MaxLength)));
+    }
 
-    /// <summary>Replaces the draft with <see cref="SettingsSnapshot.Default"/>. Nothing runs differently until Save.</summary>
-    public void RestoreDefaults() => Load(SettingsSnapshot.Default);
+    public void SetEffectLoop(int slot, bool loop)
+    {
+        var effect = EffectIn(slot);
+        Replace(new ActionSlot(slot, effect with { Loop = loop }));
+    }
+
+    public void SetEffectMaxLength(int slot, TimeSpan? maxLength)
+    {
+        var effect = EffectIn(slot);
+        Replace(new ActionSlot(slot, effect with { MaxLength = maxLength }));
+    }
+
+    /// <summary>Empties the slot, which also removes its shortcut.</summary>
+    public void ClearSlot(int slot) => Replace(ActionSlot.Empty(slot));
+
+    /// <summary>
+    /// Replaces the draft with <see cref="SettingsSnapshot.Default"/>, which also stops an effect sample started
+    /// from the replaced draft. Nothing else runs differently until Save.
+    /// </summary>
+    public void RestoreDefaults()
+    {
+        Load(SettingsSnapshot.Default);
+        StopEffectSample();
+    }
 
     /// <summary>Why the draft cannot be saved; empty when it can.</summary>
     public IReadOnlyList<SettingsError> Validate() =>
         SettingsSnapshot.Validate(Style(), DrawShortcut, ClearShortcut, slots).Errors;
 
-    /// <summary>Plays the slot's draft sound. Does nothing for a slot without a sound.</summary>
-    public void Sample(int slot, Action<string> reportFailure)
+    /// <summary>
+    /// Plays the slot's draft sound or shows its draft effect. The slot's shortcut is not needed, so a missing
+    /// or conflicting one does not prevent it. Does nothing for an empty slot.
+    /// </summary>
+    public void Sample(
+        int slot,
+        Action<string> reportFailure,
+        Action<bool> effectRunningChanged)
     {
-        if (slots[slot - 1].Action is SoundAction { Sound: { } sound })
+        switch (slots[slot - 1].Action)
         {
-            sampler.Sample(sound, reportFailure);
+            case SoundAction { Sound: { } sound }:
+                sampler.Sample(sound, reportFailure);
+                break;
+            case EffectAction { Effect: not null } effect:
+                effectSampleSlot = slot;
+                effectSampler.Sample(slot, effect, reportFailure, effectRunningChanged);
+                break;
         }
     }
 
     /// <summary>
     /// Saves the draft. After <see cref="SettingsSaveResult.Saved"/> the draft has ended and Cancel does
     /// nothing. Save already stopped the sound channel, so the draft's samples are only forgotten: they no
-    /// longer report failures, and a later draft does not stop a shortcut's sound on their behalf.
+    /// longer report failures, and a later draft does not stop a shortcut's sound on their behalf. Save also
+    /// removed the running effect, so the draft's effect samples are forgotten, not stopped.
     /// </summary>
     public SettingsSaveResult Save()
     {
@@ -137,16 +192,17 @@ public sealed class SettingsEditor
         {
             ended = true;
             sampler.ForgetSamples();
+            effectSampler.ForgetSamples();
         }
 
         return result;
     }
 
     /// <summary>
-    /// Ends the draft without saving: stops a sample that may still play, then removes the draft's imports
-    /// the active settings do not reference. If that stop is not confirmed in time, a sample may still hold
-    /// a copy open, so nothing is removed and startup cleanup removes the copies. Does nothing after a
-    /// successful Save or an earlier Cancel.
+    /// Ends the draft without saving: stops this draft's effect sample if it still runs and a sound sample that
+    /// may still play, then removes the draft's imports the active settings do not reference. If the sound
+    /// stop is not confirmed in time, a sample may still hold a copy open, so nothing is removed and startup
+    /// cleanup removes the copies. Does nothing after a successful Save or an earlier Cancel.
     /// </summary>
     public void Cancel()
     {
@@ -156,6 +212,7 @@ public sealed class SettingsEditor
         }
 
         ended = true;
+        effectSampler.StopSamples();
         if (!sampler.StopSamples())
         {
             return;
@@ -176,7 +233,32 @@ public sealed class SettingsEditor
         slots = snapshot.Slots.ToArray();
     }
 
-    private void Replace(ActionSlot slot) => slots[slot.Number - 1] = slot;
+    private Shortcut ShortcutForNewAction(int slot) => slots[slot - 1].Action?.Shortcut ?? ProposedShortcut(slot);
+
+    /// <summary>Changes one slot's draft action. An effect sample started from that slot no longer matches it, so it stops.</summary>
+    private void Replace(ActionSlot slot)
+    {
+        slots[slot.Number - 1] = slot;
+        if (effectSampleSlot == slot.Number)
+        {
+            StopEffectSample();
+        }
+    }
+
+    private void StopEffectSample()
+    {
+        if (effectSampleSlot is null)
+        {
+            return;
+        }
+
+        effectSampleSlot = null;
+        effectSampler.StopSamples();
+    }
+
+    private EffectAction EffectIn(int slot) =>
+        slots[slot - 1].Action as EffectAction
+        ?? throw new InvalidOperationException($"Slot {slot} is not an effect.");
 
     private DrawingStyle Style() =>
         new(Color, StrokeWidth.IsValid(Width) ? new StrokeWidth(Width) : default);

@@ -142,7 +142,7 @@ still applies in both directions.
 ### Edit settings
 
 ```text
-Tray Settings (or double-click the tray icon)
+Click the tray icon (left or right) → tray menu → Settings…
   → open SettingsWindow, or activate the one already open
   → SettingsEditor copies ActiveSettings.Current into a draft
   → focus a shortcut field → IShortcutCapture.Begin (GlobalShortcutAdapter): the hook records one chord
@@ -249,9 +249,9 @@ drawEM runs three kinds of thread:
 
 | Thread | Owner | Runs |
 | --- | --- | --- |
-| WPF UI thread | `App` | keyboard/mouse hook callbacks (including direct sound enqueue), queued drawing commands, drawing controller, overlay |
+| WPF UI thread | `App` | keyboard/mouse hook callbacks (including direct sound enqueue), queued drawing commands, drawing controller, overlay, `EffectChannelController`, effect windows and their `CompositionTarget.Rendering` frames |
 | Sound thread (`drawEM sound`, STA, own `Dispatcher`) | `SoundChannelHost` | `SoundChannelController`, every WPF `MediaPlayer`, deadline callbacks |
-| Log writer (thread-pool task) | `LoggingSoundFailureReporter` | file writes to `sound.log` |
+| Log writers (one background thread each) | `LoggingSoundFailureReporter`, `LoggingEffectFailureReporter` | file writes to `sound.log` and `effect.log` |
 
 WPF `MediaPlayer` can be stopped only on the thread that created it. The sound
 thread therefore owns every player, and a busy UI thread cannot delay the
