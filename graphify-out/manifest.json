@@ -6,8 +6,8 @@
     "semantic_hash": "d1a96f8af1c34d3f2670fb4b2d514d34"
   },
   "DrawEM.sln": {
-    "mtime": 1791917539.9644897,
-    "seen": 1791918320.9441357,
+    "mtime": 1792056281.1457841,
+    "seen": 1792056291.741927,
     "ast_hash": "714d1ccd659392de8ac2e9e621540db6",
     "semantic_hash": "714d1ccd659392de8ac2e9e621540db6"
   },
@@ -96,9 +96,9 @@
     "semantic_hash": "05f881c86c17fae3968e6cd7045a9ef0"
   },
   "src/DrawEM.App/Application/Settings/SettingsEditor.cs": {
-    "mtime": 1791982112.6141555,
-    "seen": 1791982133.5002556,
-    "ast_hash": "40276889891525b8b2bf025b63e3064b",
+    "mtime": 1791989811.1482098,
+    "seen": 1792056291.743524,
+    "ast_hash": "db1333aefe23669132999238499d9c15",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Application/Settings/SettingsSaveOperation.cs": {
@@ -186,9 +186,9 @@
     "semantic_hash": "69969a5a5800702e4733beff1ac470be"
   },
   "src/DrawEM.App/Domain/Effects/EffectCatalog.cs": {
-    "mtime": 1791967954.829965,
-    "seen": 1791968286.9260657,
-    "ast_hash": "46567463c2283cb0dd13732f07c5d43e",
+    "mtime": 1792056281.1625242,
+    "seen": 1792056291.7448046,
+    "ast_hash": "2c0ba5bd8cc6232f087140f541637282",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Domain/Effects/EffectId.cs": {
@@ -612,9 +612,9 @@
     "semantic_hash": "a8b2e4031fc908b077f5c23f83c98590"
   },
   "src/DrawEM.App/Presentation/Effects/LottiePlayback.cs": {
-    "mtime": 1791982112.6235917,
-    "seen": 1791982133.5217535,
-    "ast_hash": "ee250c0a4f208de4c690da368f82fe87",
+    "mtime": 1791989702.0542178,
+    "seen": 1792056291.75299,
+    "ast_hash": "741f618c723034c277d147d0461d73ba",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Effects/NativeMethods.cs": {
@@ -666,15 +666,15 @@
     "semantic_hash": "935689c73336009ce42620e545674ef2"
   },
   "tests/DrawEM.Tests/Application/Settings/SettingsEditorTests.cs": {
-    "mtime": 1791982112.6306543,
-    "seen": 1791982133.5238607,
-    "ast_hash": "2981c1e546e71a537fef027f10726a0c",
+    "mtime": 1791989783.0832596,
+    "seen": 1792056291.7537718,
+    "ast_hash": "739e7503a1b2fb5bf4cd54dbcab1e73d",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Application/Settings/SettingsFakes.cs": {
-    "mtime": 1791982112.6326792,
-    "seen": 1791982133.5238638,
-    "ast_hash": "4e4203b8a27b3ea6713b9802c64939df",
+    "mtime": 1791989630.752036,
+    "seen": 1792056291.7537732,
+    "ast_hash": "53bb400f61a15b759bd5dbacdc358d92",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Application/Settings/SettingsStartupTests.cs": {
@@ -714,9 +714,9 @@
     "semantic_hash": "29db242891fad9e2ba09ee8e22a823f9"
   },
   "tests/DrawEM.Tests/Domain/Effects/EffectCatalogTests.cs": {
-    "mtime": 1791968011.3664074,
-    "seen": 1791968286.9361374,
-    "ast_hash": "493ed68ad6608c09c775015edcb80aed",
+    "mtime": 1792056281.1645353,
+    "seen": 1792056291.7543173,
+    "ast_hash": "ea671eb91725ec3bfc95a21ba55744cd",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Domain/Settings/SettingsSnapshotTests.cs": {
@@ -906,8 +906,8 @@
     "semantic_hash": "6132f3ddd0255e9bb3ef7f4ec5eab7cb"
   },
   "tests/DrawEM.Tests/Presentation/Effects/BuiltInEffectAnimationsTests.cs": {
-    "mtime": 1791982112.646863,
-    "seen": 1791982133.5325284,
+    "mtime": 1792056281.1650472,
+    "seen": 1792056291.7575982,
     "ast_hash": "1ae9030480534b47c6015a21e1b8d7e2",
     "semantic_hash": ""
   },
@@ -930,9 +930,9 @@
     "semantic_hash": "e3396dc36460dbbda7599bbe15018798"
   },
   "tests/DrawEM.Tests/Presentation/Settings/SettingsViewModelTests.cs": {
-    "mtime": 1791982112.6496046,
-    "seen": 1791982133.533377,
-    "ast_hash": "0e66faa21b93430f2b7e47c640fcbcf9",
+    "mtime": 1791989628.8964908,
+    "seen": 1792056291.757862,
+    "ast_hash": "cbc34c2b1254c09c4a4f908b0348d048",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Presentation/Settings/SettingsWindowTests.cs": {
@@ -1392,9 +1392,9 @@
     "semantic_hash": "4231e91a139fb9201fc4a57707f646a8"
   },
   "docs/v4/out-of-scope/README.md": {
-    "mtime": 1791982112.5793552,
-    "seen": 1791982133.5512874,
-    "ast_hash": "0d6bc0e282eaa853a0a7376acde74f46",
+    "mtime": 1792056281.4300816,
+    "seen": 1792056291.7655685,
+    "ast_hash": "d87a3af44804096c0497b2d157ae9aa9",
     "semantic_hash": ""
   },
   "docs/v4/release-publishing/README.md": {
@@ -1662,15 +1662,15 @@
     "semantic_hash": "c52bd06f1476b224bd410ca6e1ba99aa"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/LICENSE.md": {
-    "mtime": 1791967990.9867363,
-    "seen": 1791968286.9505703,
-    "ast_hash": "a30d249dedbb0adaa1fe4b0074793838",
+    "mtime": 1792056281.1625242,
+    "seen": 1792056291.7702785,
+    "ast_hash": "a05c93e90d28a6e38ddadb6ad1a5d9f1",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/SOURCES.md": {
-    "mtime": 1791968174.3790317,
-    "seen": 1791968286.950572,
-    "ast_hash": "2f2c380072de3c96e6d19eef971ee66e",
+    "mtime": 1792056281.1625242,
+    "seen": 1792056291.77028,
+    "ast_hash": "58a08ea3bb6a3e5ff12bac69cc92993d",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Sound/README.md": {
@@ -1722,15 +1722,15 @@
     "semantic_hash": ""
   },
   "src/DrawEM.App/Infrastructure/Effects/EffectSampler.cs": {
-    "mtime": 1791982112.6201546,
-    "seen": 1791982133.5079002,
-    "ast_hash": "7c263ff243150bacc268bcdfd42fe4be",
+    "mtime": 1791989565.9011278,
+    "seen": 1792056291.747374,
+    "ast_hash": "a54a14e98f606f0907cd9f45ea8007b3",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Infrastructure/Effects/EffectSamplerTests.cs": {
-    "mtime": 1791982112.6412642,
-    "seen": 1791982133.528569,
-    "ast_hash": "144945ff56c8e1ee8ee8d530b8299f8e",
+    "mtime": 1791989553.4859035,
+    "seen": 1792056291.7556658,
+    "ast_hash": "07559c22d6f5f13ccadc87744f1ad0c7",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Infrastructure/Effects/FakeEffectSources.cs": {
@@ -1866,9 +1866,9 @@
     "semantic_hash": ""
   },
   "docs/v4/out-of-scope/FEAT-009-effect-loop-and-limit/acceptance.md": {
-    "mtime": 1791982112.5765274,
-    "seen": 1791982133.5509498,
-    "ast_hash": "cb0ca8d4524156c66a05d7718123ab89",
+    "mtime": 1791989844.7265363,
+    "seen": 1792056291.7653255,
+    "ast_hash": "c32be0600c818bae89f4ae992eba64c9",
     "semantic_hash": ""
   },
   "docs/v4/out-of-scope/FEAT-009-effect-loop-and-limit/plan.md": {
@@ -1884,9 +1884,9 @@
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Presentation/Effects/LottiePlaybackTests.cs": {
-    "mtime": 1791982112.6479545,
-    "seen": 1791982133.533359,
-    "ast_hash": "0bbaef8a5fcc6f4eaefc3ff0d7036040",
+    "mtime": 1791989689.5066934,
+    "seen": 1792056291.7578604,
+    "ast_hash": "73936b0e6ee5e133a009755a97664b9c",
     "semantic_hash": ""
   }
 }
