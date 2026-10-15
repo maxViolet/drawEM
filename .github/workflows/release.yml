@@ -1,5 +1,7 @@
 name: Release
 
+# A vX.Y.Z tag push builds, tests, and packages drawEM, then creates a draft release.
+# The owner inspects the draft and publishes it manually; nothing here publishes it.
 on:
   push:
     tags: ['v*']
@@ -13,6 +15,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Verify tag
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_TYPE -ne 'tag') {
+            throw "Release runs only for tag pushes, not '$env:GITHUB_REF'."
+          }
+          $version = ./tools/release/Get-ReleaseVersion.ps1 -Tag $env:GITHUB_REF_NAME
+          "version=$version" >> $env:GITHUB_OUTPUT
+
       - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
@@ -22,15 +34,30 @@ jobs:
 
       - name: Publish
         shell: pwsh
-        run: |
-          $version = "$env:GITHUB_REF_NAME".TrimStart('v')
-          dotnet publish src/DrawEM.App/DrawEM.App.csproj -c Release -p:PublishProfile=win-x64 -p:Version=$version -warnaserror
-          Compress-Archive -Path src/DrawEM.App/bin/Release/net8.0-windows/win-x64/publish/* -DestinationPath "drawEM-$version-win-x64.zip"
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: dotnet publish src/DrawEM.App/DrawEM.App.csproj -c Release -p:PublishProfile=win-x64 -p:Version=$env:VERSION -warnaserror
 
-      - name: Create GitHub Release
+      - name: Package
+        id: package
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $zip = ./tools/release/New-ReleasePackage.ps1 -PublishDirectory src/DrawEM.App/bin/Release/net8.0-windows/win-x64/publish -Version $env:VERSION -OutputDirectory artifacts
+          "zip=$zip" >> $env:GITHUB_OUTPUT
+
+      - name: Create draft release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          ZIP: ${{ steps.package.outputs.zip }}
         run: |
-          $version = "$env:GITHUB_REF_NAME".TrimStart('v')
-          gh release create "$env:GITHUB_REF_NAME" "drawEM-$version-win-x64.zip" --title "drawEM $version" --generate-notes
+          # --verify-tag stops gh from creating a missing tag from the default branch.
+          gh release create $env:GITHUB_REF_NAME $env:ZIP --draft --verify-tag --title "drawEM $env:VERSION" --generate-notes
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $isDraft = gh release view $env:GITHUB_REF_NAME --json isDraft --jq .isDraft
+          if ($isDraft -ne 'true') {
+            throw "Release $env:GITHUB_REF_NAME is not a draft."
+          }

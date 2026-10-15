@@ -1,6 +1,6 @@
 # R4: release publishing steps
 
-**Status:** groomed; all steps pending. **Contract:** [roadmap](ROADMAP.md).
+**Status:** R4-01 implemented (tag run unverified); R4-02 … R4-07 pending. **Contract:** [roadmap](ROADMAP.md).
 Use the [owner questions in ADR-0002](../../adr/0002-release-signing-license.md)
 for the conditional license and SignPath decision.
 

@@ -127,15 +127,18 @@ publishes the win-x64 app for every pull request to `main` and every push to
 separate check verifies branch names and pull request titles against
 [AGENTS.md](AGENTS.md). The .NET SDK version is pinned in `global.json`.
 
-To publish a release, push a version tag:
+To prepare a release, push a `vX.Y.Z` version tag:
 
 ```powershell
 git tag v0.3.0
 git push origin v0.3.0
 ```
 
-The release workflow runs the tests, publishes the app with the tag's version,
-and attaches `drawEM-<version>-win-x64.zip` to a new GitHub Release.
+The release workflow rejects any other tag form, runs the tests, publishes the
+self-contained app with the tag's version, checks the publish output, and
+attaches `drawEM-<version>-win-x64.zip` to a draft GitHub Release with
+generated notes. Inspect the draft's notes and assets on GitHub, then publish
+it by hand; the workflow never publishes a release.
 
 ## Current limits and plans
 

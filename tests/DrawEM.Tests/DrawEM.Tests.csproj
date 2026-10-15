@@ -28,6 +28,8 @@
   <ItemGroup>
     <!-- BuiltInEffectAnimationsTests checks the source and license record of every built-in effect file. -->
     <None Include="..\..\src\DrawEM.App\Presentation\Effects\BuiltIn\SOURCES.md" Link="BuiltInEffects\SOURCES.md" CopyToOutputDirectory="PreserveNewest" />
+    <!-- ReleaseScriptsTests runs the scripts that the release workflow uses. -->
+    <None Include="..\..\tools\release\*.ps1" LinkBase="release" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
