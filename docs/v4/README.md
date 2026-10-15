@@ -1,16 +1,16 @@
 # drawEM v4: parallel work packages
 
-**Status:** two packages plus an out-of-scope list; visual effects is planned and S4-01 is done,
-release publishing is not groomed yet.
-**Date:** 2026-10-09.
+**Status:** two packages plus an out-of-scope list; visual effects is in progress,
+and release publishing is groomed with implementation pending.
+**Date:** 2026-10-15.
 
 v4 runs as two independent packages. Each package has its own roadmap, step
 IDs, and branches, so one developer or agent can work on each at the same time.
 
 | Package | Outcome | Task IDs | Status |
 |---|---|---|---|
-| [Visual effects](visual-effects/ROADMAP-v4.md) | Built-in animated effects (confetti, focus ring) triggered from action slots | `S4-01` … `S4-12` | [Steps](visual-effects/STEPS.md) planned; S4-01 done |
-| [Release publishing](release-publishing/README.md) | Signed, verifiable, installable, and updatable Windows releases | `R4-01` … (assigned during grooming) | Scope seed only; see [grooming TODO](release-publishing/TODO.md) |
+| [Visual effects](visual-effects/ROADMAP-v4.md) | Built-in animated effects (confetti, focus ring) triggered from action slots | `S4-01` … `S4-12` | [Steps](visual-effects/STEPS.md) planned; S4-01, S4-02, S4-04, and S4-05 done |
+| [Release publishing](release-publishing/README.md) | Verifiable, installable, and updatable Windows releases; signing is conditional on owner decisions | `R4-01` … `R4-07` | [Roadmap](release-publishing/ROADMAP.md) and [steps](release-publishing/STEPS.md) groomed; implementation pending |
 | [Out of scope](out-of-scope/README.md) | Extra tasks outside the roadmap steps of both packages | None | Open list |
 
 ## Package structure
@@ -24,13 +24,13 @@ IDs, and branches, so one developer or agent can work on each at the same time.
     the work is done.
 - Each file links to the other two in its header. See
   [S4-02](visual-effects/step-02-effect-channel/task.md) as the example.
-- A package that is not groomed yet, such as release publishing, may have
-  only a scope seed. It gets its roadmap and step folders during grooming.
+- A package before grooming may have only a scope seed. It gets its roadmap
+  and step folders during grooming.
 
 ## Rules for parallel work
 
 - Branch and PR names follow [AGENTS.md](../../AGENTS.md). Use the package's
-  task ID: `S4-06-effect-shortcuts`, `R4-02-code-signing`.
+  task ID: `S4-06-effect-shortcuts`, `R4-06-signpath-signing`.
 - Each package changes only its own files where possible. Visual effects owns
   `src/DrawEM.App/**/Effects/**` and the settings/shortcut changes in its
   roadmap. Release publishing owns `.github/workflows/release.yml`, packaging
@@ -49,3 +49,6 @@ IDs, and branches, so one developer or agent can work on each at the same time.
   when S4-12 starts. It does not wait for release publishing, and release
   publishing does not wait for effects.
 - The v3 Step 8 Windows acceptance gate still applies before any v4 release.
+- Release publishing's first public v3.x release also waits for the v3 Step 8
+  desktop checks to be resolved. Conditional signing prerequisites are recorded
+  in [ADR-0002](../adr/0002-release-signing-license.md).

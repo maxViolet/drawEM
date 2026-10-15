@@ -1,18 +1,21 @@
 # drawEM v4: release publishing
 
-**Status:** scope seed; not groomed, not implemented.
-**Date:** 2026-10-09.
-**Next action:** run the grooming prompt in [TODO.md](TODO.md).
+**Status:** groomed; implementation pending.
+**Decision baseline:** 2026-10-15. The signing license and SignPath eligibility
+remain owner decisions in [ADR-0002](../../adr/0002-release-signing-license.md).
+**Next action:** start [R4-01](step-01-draft-release/task.md).
 
 ## Goal
 
-A user downloads drawEM from GitHub, installs it without a Windows security
-warning, can verify that the file came from this repository, and receives
-later versions without a manual download.
+Distribute Windows x64 releases through GitHub with a portable ZIP and a
+per-user installer, provide checksum and build-origin verification, and offer
+opt-in in-app updates. Signing is conditional on a future zero-cost SignPath
+Foundation approval. The first GitHub release may be unsigned, and no signing
+choice guarantees that SmartScreen will show no warning on every machine.
 
 ## Current release pipeline
 
-Inspected on 2026-10-09:
+Inspected on 2026-10-15:
 
 - `.github/workflows/release.yml` runs on a `v*` tag push on `windows-latest`.
   It runs the tests, publishes the self-contained win-x64 app with the tag's
@@ -23,27 +26,27 @@ Inspected on 2026-10-09:
 - The app is WPF + WinForms on `net8.0-windows`. It runs only on Windows;
   macOS is out of scope for this package.
 
-## Gaps
+## Grooming decisions
 
-| Gap | User impact |
+| Area | Decision |
 |---|---|
-| No Authenticode signature | SmartScreen shows "Windows protected your PC"; antivirus false positives are more likely for an app with global input hooks |
-| No checksums or build provenance | Users cannot verify the download |
-| Zip of a directory, no installer | No Start menu entry, no uninstall entry, manual extraction |
-| No auto-update | Users stay on old versions |
-| Not in winget | No `winget install` path |
-| Release is published immediately | No chance to inspect assets before users see them |
+| Area | Decision |
+|---|---|
+| First release | GitHub v3.x after the v3 Step 8 release gate is closed; the release-publishing work can proceed in parallel with visual effects. |
+| Signing | No paid service. The first release may be unsigned. Consider SignPath Foundation only after the owner chooses a qualifying license, a release in the form to be signed exists, and SignPath approves the project. |
+| Artifact verification | Publish SHA-256 checksums and GitHub build-provenance attestations. |
+| Installer and updates | Velopack Setup.exe, per-user install, update check at startup and every 24 hours, background download, user confirmation before install/restart. |
+| Portable download | Keep the ZIP as a manually updated option. |
+| Release control | Build a draft from a verified version tag; inspect it before manual publication. Tag is the version source; review generated release notes. |
+| Catalog | Submit to WinGet after a stable release; catalog review does not block the GitHub release. |
+| Recovery | Publish a corrected higher version. Do not promise automatic downgrade. |
 
-## Candidate approaches (to be decided during grooming)
+## Implementation plan
 
-- Signing: Azure Trusted Signing (Artifact Signing), SignPath Foundation (free
-  for open source), or an OV certificate on a hardware or cloud HSM.
-- Checksums and provenance: `SHA256SUMS.txt` and
-  `actions/attest-build-provenance`, verified with `gh attestation verify`.
-- Installer and updates: Velopack (Setup.exe, delta updates from GitHub
-  Releases), or Inno Setup/WiX plus a separate update check.
-- Distribution: winget manifest submitted from the release workflow.
-- Release flow: draft release, manual inspection, then publish.
+See [ROADMAP.md](ROADMAP.md) for alternatives, evidence, gates, and owner
+questions; [STEPS.md](STEPS.md) for the delivery order; and each linked step
+folder for its task, plan, and acceptance criteria.
 
-None of these is accepted yet. The grooming output decides scope, order, and
-task IDs.
+The package has seven steps, `R4-01` through `R4-07`. No application code is
+changed during grooming. The v3 Step 8 desktop acceptance remains a release
+gate; the v4 S4-12 package uses the release process available when it starts.
