@@ -10,7 +10,21 @@
   a verified attestation under the repository identity.
 - [ ] A standard user installs without elevation, launches the tray app, and
   sees Start menu and uninstall entries.
+- [ ] The Velopack package ID is `drawEM.Desktop`; an automated test fails if
+  the package ID equals `drawEM` in a case-insensitive comparison.
+- [ ] Manual Windows check, unverified until done: install to the default
+  location and record the actual install directory. It is not
+  `%LOCALAPPDATA%\drawEM` and does not contain it.
 - [ ] Uninstall removes application files without deleting user settings.
+- [ ] Manual Windows check, unverified until done: create settings in
+  `%LOCALAPPDATA%\drawEM`, install to the default location, launch drawEM,
+  and exit it. Immediately before uninstall, record recursive SHA-256 hashes
+  of every file under `%LOCALAPPDATA%\drawEM` except `logs\`. Uninstall
+  drawEM. After uninstall, `%LOCALAPPDATA%\drawEM` still exists and the
+  recursive hashes, with `logs\` excluded, match the recorded hashes. `logs\`
+  is excluded because launch can append to log files.
+- [ ] Custom install destinations are out of scope for this step; they are not
+  claimed to preserve settings.
 - [ ] The custom WPF `Main` runs Velopack hooks before WPF initialization and
   does not initialize tray, hook, or settings services during fast-exit hooks.
 - [ ] Settings remain under `%LOCALAPPDATA%\drawEM`; schema 1 and schema 2
@@ -23,7 +37,9 @@
 - Workflow run and artifact names:
 - Windows version and account type:
 - Install, launch, uninstall results:
-- Settings before/after:
+- Default install directory (manual, unverified until recorded):
+- Settings after app exit and after uninstall (recursive file list and
+  SHA-256, `logs\` excluded):
 
 ## Validation
 

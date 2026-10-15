@@ -12,8 +12,9 @@
 - [ ] Changing one byte in a downloaded file makes checksum verification fail.
 - [ ] User instructions distinguish hashes, provenance, Authenticode, and
   software safety.
-- [ ] R4-03 extends checksum and attestation coverage to every Velopack
-  installer/update download before first public release.
+
+R4-03 owns checksum and attestation coverage for Velopack downloads; it is not
+an R4-02 acceptance criterion.
 
 ## Evidence
 

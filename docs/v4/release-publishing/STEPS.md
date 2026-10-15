@@ -6,8 +6,8 @@ for the conditional license and SignPath decision.
 
 Follow the steps in order. The package can be developed independently of visual
 effects, but the first public release must pass the v3 Step 8 release gate.
-Every task has its own [task](#steps), [plan](#steps), and acceptance file in
-its folder.
+Every task has its own `task.md`, `plan.md`, and `acceptance.md` in its step
+folder; each step below links to them.
 
 ## Steps
 
@@ -42,8 +42,9 @@ verification. R4-03 extends this to Velopack downloads.
 startup hook required by Velopack and keep settings in `%LOCALAPPDATA%\drawEM`.
 
 **Done when:** A standard user installs from `Setup.exe` without elevation,
-starts drawEM in the tray, sees a Start menu/uninstall entry, the portable ZIP
-remains usable, and each new Velopack download is hashed and attested.
+starts drawEM in the tray, sees a Start menu/uninstall entry, uninstall keeps
+settings in `%LOCALAPPDATA%\drawEM`, the portable ZIP remains usable, and each
+new Velopack download is hashed and attested.
 
 [Task](step-03-velopack-installer/task.md) · [Plan](step-03-velopack-installer/plan.md) ·
 [Acceptance](step-03-velopack-installer/acceptance.md)
