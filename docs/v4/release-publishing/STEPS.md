@@ -1,6 +1,6 @@
 # R4: release publishing steps
 
-**Status:** R4-01 implemented (tag run unverified); R4-02 … R4-07 pending. **Contract:** [roadmap](ROADMAP.md).
+**Status:** R4-01 done; R4-02 … R4-07 pending. **Contract:** [roadmap](ROADMAP.md).
 Use the [owner questions in ADR-0002](../../adr/0002-release-signing-license.md)
 for the conditional license and SignPath decision.
 
@@ -103,6 +103,6 @@ WinGet. Record catalog review separately; it does not block GitHub releases.
 
 ## First action
 
-Start [R4-01](step-01-draft-release/task.md): add a failing Windows test for
-tag-derived version and release-asset naming, then change the release workflow
-to create a draft that requires a verified tag.
+Start [R4-02](step-02-checksums-provenance/task.md): add failing tests for the
+`SHA256SUMS.txt` writer, then add the manifest and attestation to the release
+workflow.
