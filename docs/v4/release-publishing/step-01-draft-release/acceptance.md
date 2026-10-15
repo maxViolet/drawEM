@@ -51,7 +51,9 @@
   existed (script file not found) and passed 18 of 18 after.
   `dotnet build DrawEM.sln -c Release -warnaserror`: 0 warnings.
   `dotnet test DrawEM.sln -c Release`: 812 passed.
-- CI: unverified.
+- CI: PR #83 `build-test-publish` passed on `windows-latest`, which runs the
+  release script tests under `pwsh`
+  ([run](https://github.com/maxViolet/drawEM/actions/runs/38734178421)).
 - Manual: unverified. After merge, push a tag such as `v0.0.1` and check:
   the run passes, the release is a draft with generated notes and
   `drawEM-0.0.1-win-x64.zip`, and the release page has no published release.
