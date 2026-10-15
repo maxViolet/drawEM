@@ -1,9 +1,9 @@
 # drawEM v4: release publishing
 
-**Status:** groomed; implementation pending.
+**Status:** in progress; R4-01 implemented, its tag run unverified.
 **Decision baseline:** 2026-10-15. The signing license and SignPath eligibility
 remain owner decisions in [ADR-0002](../../adr/0002-release-signing-license.md).
-**Next action:** start [R4-01](step-01-draft-release/task.md).
+**Next action:** push a test tag to verify [R4-01](step-01-draft-release/acceptance.md), then start [R4-02](step-02-checksums-provenance/task.md).
 
 ## Goal
 
@@ -18,9 +18,10 @@ choice guarantees that SmartScreen will show no warning on every machine.
 Inspected on 2026-10-15:
 
 - `.github/workflows/release.yml` runs on a `v*` tag push on `windows-latest`.
-  It runs the tests, publishes the self-contained win-x64 app with the tag's
-  version, zips the publish directory as `drawEM-<version>-win-x64.zip`, and
-  creates a GitHub Release with generated notes.
+  It rejects tags other than `vX.Y.Z`, runs the tests, publishes the
+  self-contained win-x64 app with the tag's version, checks and zips the
+  publish directory as `drawEM-<version>-win-x64.zip` (R4-01), and creates a
+  draft GitHub Release with generated notes for the owner to publish.
 - `src/DrawEM.App/Properties/PublishProfiles/win-x64.pubxml`: self-contained,
   not single-file, not trimmed.
 - The app is WPF + WinForms on `net8.0-windows`. It runs only on Windows;
