@@ -21,7 +21,8 @@
   for any other tag: no `v`, upper-case `V`, two or four parts, leading zeros,
   pre-release or build suffixes, whitespace, or a full `refs/tags/` name.
 - `tools/release/New-ReleasePackage.ps1` fails without writing a ZIP unless
-  `DrawEM.App.exe` has file version `X.Y.Z.0` and product version `X.Y.Z` (the
+  `DrawEM.App.exe` has file version exactly `X.Y.Z.0` (all four parts are
+  compared) and product version `X.Y.Z` (the
   SDK's `+<commit>` suffix is allowed), and the publish directory contains
   `coreclr.dll` and `hostfxr.dll` (self-contained) and `DrawEM.App.dll` (not
   single-file). It then zips the directory and checks that the ZIP holds
@@ -49,10 +50,13 @@
 - Automated: `dotnet test DrawEM.sln -c Release --filter
   FullyQualifiedName~ReleaseScriptsTests` failed 17 of 18 before the scripts
   existed (script file not found) and passed 18 of 18 after.
+  Review fix: a test with an executable of file version `1.2.3.7` and tag
+  version `1.2.3` failed before the four-part check (the script exited 0) and
+  passes after it.
   `dotnet build DrawEM.sln -c Release -warnaserror`: 0 warnings.
-  `dotnet test DrawEM.sln -c Release`: 812 passed.
-- CI: PR #83 `build-test-publish` passed on `windows-latest`, which runs the
-  release script tests under `pwsh`
+  `dotnet test DrawEM.sln -c Release`: 813 passed.
+- CI: PR #83 `build-test-publish` passed on `windows-latest` before the review
+  fix, which runs the release script tests under `pwsh`
   ([run](https://github.com/maxViolet/drawEM/actions/runs/38734178421)).
 - Manual: unverified. After merge, push a tag such as `v0.0.1` and check:
   the run passes, the release is a draft with generated notes and

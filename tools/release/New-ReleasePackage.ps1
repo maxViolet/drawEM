@@ -49,11 +49,12 @@ if ($missing.Count -gt 0) {
 }
 
 $info = [System.Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $publish 'DrawEM.App.exe'))
-$fileVersion = '{0}.{1}.{2}' -f $info.FileMajorPart, $info.FileMinorPart, $info.FileBuildPart
+# The tag X.Y.Z must appear as file version X.Y.Z.0; a non-zero fourth part means another version source.
+$fileVersion = '{0}.{1}.{2}.{3}' -f $info.FileMajorPart, $info.FileMinorPart, $info.FileBuildPart, $info.FilePrivatePart
 # The SDK appends +<commit> to the product version; the part before it must still match the tag.
 $productVersion = ($info.ProductVersion -split '\+', 2)[0]
-if ($fileVersion -ne $Version -or $productVersion -ne $Version) {
-    throw "DrawEM.App.exe has file version '$($info.FileVersion)' and product version '$($info.ProductVersion)'; expected version $Version from the release tag."
+if ($fileVersion -ne "$Version.0" -or $productVersion -ne $Version) {
+    throw "DrawEM.App.exe has file version '$fileVersion' and product version '$($info.ProductVersion)'; expected file version $Version.0 and product version $Version from the release tag."
 }
 
 $zipPath = Join-Path $output "drawEM-$Version-win-x64.zip"

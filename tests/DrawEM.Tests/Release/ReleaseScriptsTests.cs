@@ -1,3 +1,5 @@
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using System.Diagnostics;
 using System.IO.Compression;
 
@@ -74,6 +76,20 @@ public class ReleaseScriptsTests : IDisposable
         Assert.False(File.Exists(Path.Combine(outputDirectory, "drawEM-98.76.54-win-x64.zip")));
     }
 
+    [Fact]
+    public void ReleasePackage_WhenFileVersionHasNonZeroRevision_FailsWithoutZip()
+    {
+        CreatePublishDirectory(out var publishDirectory);
+        WriteVersionedExecutable(Path.Combine(publishDirectory, "DrawEM.App.exe"), fileVersion: "1.2.3.7", productVersion: "1.2.3");
+        var outputDirectory = Path.Combine(_workDirectory, "out");
+
+        var result = RunPackage(publishDirectory, "1.2.3", outputDirectory);
+
+        Assert.NotEqual(0, result.ExitCode);
+        Assert.Contains("1.2.3.7", result.StdErr);
+        Assert.False(File.Exists(Path.Combine(outputDirectory, "drawEM-1.2.3-win-x64.zip")));
+    }
+
     [Theory]
     [InlineData("coreclr.dll")] // framework-dependent publish has no runtime
     [InlineData("hostfxr.dll")] // framework-dependent publish has no host resolver
@@ -113,6 +129,24 @@ public class ReleaseScriptsTests : IDisposable
         File.WriteAllText(Path.Combine(publishDirectory, "hostfxr.dll"), "");
         var info = FileVersionInfo.GetVersionInfo(appAssembly);
         return $"{info.FileMajorPart}.{info.FileMinorPart}.{info.FileBuildPart}";
+    }
+
+    // Compiles an empty assembly whose Win32 version resource carries the given versions.
+    private static void WriteVersionedExecutable(string path, string fileVersion, string productVersion)
+    {
+        var source = $"""
+            [assembly: System.Reflection.AssemblyFileVersion("{fileVersion}")]
+            [assembly: System.Reflection.AssemblyInformationalVersion("{productVersion}")]
+            """;
+        var compilation = CSharpCompilation.Create(
+            "DrawEM.App",
+            [CSharpSyntaxTree.ParseText(source)],
+            [MetadataReference.CreateFromFile(typeof(object).Assembly.Location)],
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        using var resources = compilation.CreateDefaultWin32Resources(versionResource: true, noManifest: true, manifestContents: null, iconInIcoFormat: null);
+        using var output = File.Create(path);
+        var emit = compilation.Emit(output, win32Resources: resources);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
     }
 
     private static ScriptResult RunPackage(string publishDirectory, string version, string outputDirectory) =>
