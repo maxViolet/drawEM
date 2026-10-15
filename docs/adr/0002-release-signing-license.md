@@ -44,3 +44,24 @@ the project license, or claim that future releases will be signed.
 - **Microsoft Store MSIX:** deferred because it changes the selected GitHub
   download path. Store signing does not sign the separate GitHub Setup.exe.
   [Microsoft distribution paths](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/choose-distribution-path)
+
+## Consequences
+
+- The first public GitHub release can ship without Authenticode signatures.
+  Users can see SmartScreen or Defender warnings, and Smart App Control or
+  enterprise policy can block the files. Release notes record observed
+  warnings and do not claim warning-free installation.
+- SHA-256 checksums and GitHub build-provenance attestations are the integrity
+  and origin checks for unsigned releases. They do not prove that the software
+  is safe, and they do not replace Authenticode.
+- No paid signing service, signing certificate, or signing secret is added
+  while the owner questions are open. The R4-06 signing step stays blocked
+  until the owner answers them and SignPath approves the project.
+- The project license stays unchanged until the owner answers questions 1
+  and 2.
+- If the owner applies and SignPath approves the project, signed releases name
+  `SignPath Foundation` as publisher and need a human approval for each signing
+  request.
+- If SignPath declines, or the owner does not choose an eligible license,
+  releases stay unsigned until the owner answers question 4 or a later ADR
+  changes the distribution or budget decision.
