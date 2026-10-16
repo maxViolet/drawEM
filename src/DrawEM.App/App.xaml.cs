@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using DrawEM.App.Application.Settings;
 using DrawEM.App.Infrastructure;
 using DrawEM.App.Infrastructure.Drawing;
@@ -8,6 +8,8 @@ using DrawEM.App.Infrastructure.Sound;
 using DrawEM.App.Presentation.Drawing;
 using DrawEM.App.Presentation.Effects;
 using DrawEM.App.Presentation.Settings;
+using DrawEM.App.Presentation.Theme;
+using DrawEM.App.Presentation.Tray;
 using DrawingSessionController = DrawEM.App.Application.Drawing.DrawingSessionController;
 using MessageBox = System.Windows.MessageBox;
 using SoundChannelController = DrawEM.App.Application.Sound.SoundChannelController;
@@ -133,8 +135,10 @@ public partial class App : System.Windows.Application
 
             overlayWindow.Show();
 
+            // The tray menu and every Settings window share one theme, so the Settings switch changes both.
+            var theme = UiThemeState.FromSystem();
             trayApplication = new TrayApplication(
-                new NotifyIconTrayHost(),
+                new NotifyIconTrayHost(new TrayMenuWindow(theme)),
                 // The sound channel reports its last failures while it stops, so the log drains after it.
                 // Effects stop and close their windows before their animations and failure log are released.
                 new CompositeDisposable(
@@ -151,7 +155,7 @@ public partial class App : System.Windows.Application
             var sampler = new SoundSampler(channelHost.Play, channelHost.Stop, settings.CommandFor, playbackFailures);
             trayApplication.SettingsRequested += () => OpenSettings(() =>
             {
-                var window = new SettingsWindow();
+                var window = new SettingsWindow(SystemParameters.WorkArea.Height, theme);
                 // Each window samples effects on its own, so it stops only its own sample.
                 var effectSampler = new EffectSampler(
                     cursor, monitorBoundsSource, monitorGuard, effects, effectSampleFailures);

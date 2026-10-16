@@ -5,27 +5,55 @@ namespace DrawEM.Tests.Infrastructure;
 
 public class NotifyIconTrayHostTests
 {
-    [Fact]
-    public void LeftClickMenu_FindsTheNotifyIconsOwnMenuDisplay()
+    [Theory]
+    [InlineData(MouseButtons.Left)]
+    [InlineData(MouseButtons.Right)]
+    public void Click_OnTheIcon_ShowsTheMenu(MouseButtons button)
     {
-        // A left click shows the tray menu through the method a right click uses; a WinForms update could
-        // rename that private method, and this test then fails instead of the click silently doing nothing.
-        Assert.True(NotifyIconTrayHost.CanShowMenuOnLeftClick);
+        var menu = new FakeTrayMenu();
+        using var host = new NotifyIconTrayHost(menu);
+
+        host.OnIconClick(button);
+
+        Assert.Equal(1, menu.Shown);
     }
 
     [Fact]
-    public void ShowMenu_WithoutTheNotifyIconsOwnMenuDisplay_ShowsTheMenuAtTheCursor()
+    public void Click_WithTheMiddleButton_DoesNothing()
     {
-        StaThread.Run(() =>
-        {
-            using var menu = new ContextMenuStrip();
-            menu.Items.Add("Exit");
-            using var notifyIcon = new NotifyIcon { ContextMenuStrip = menu };
+        var menu = new FakeTrayMenu();
+        using var host = new NotifyIconTrayHost(menu);
 
-            NotifyIconTrayHost.ShowMenu(notifyIcon, showContextMenu: null);
+        host.OnIconClick(MouseButtons.Middle);
 
-            Assert.True(menu.Visible);
-            menu.Close();
-        });
+        Assert.Equal(0, menu.Shown);
+    }
+
+    [Fact]
+    public void MenuCommands_RaiseTheTrayCommands()
+    {
+        var menu = new FakeTrayMenu();
+        using var host = new NotifyIconTrayHost(menu);
+        var commands = new List<string>();
+        host.SettingsRequested += () => commands.Add("settings");
+        host.StopEffectsRequested += () => commands.Add("stop effects");
+        host.ExitRequested += () => commands.Add("exit");
+
+        menu.Choose(TrayMenuCommand.Settings);
+        menu.Choose(TrayMenuCommand.StopEffects);
+        menu.Choose(TrayMenuCommand.Exit);
+
+        Assert.Equal(["settings", "stop effects", "exit"], commands);
+    }
+
+    private sealed class FakeTrayMenu : ITrayMenu
+    {
+        public int Shown { get; private set; }
+
+        public event Action<TrayMenuCommand>? Chosen;
+
+        public void Show() => Shown++;
+
+        public void Choose(TrayMenuCommand command) => Chosen?.Invoke(command);
     }
 }
