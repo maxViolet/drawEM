@@ -234,8 +234,8 @@
     "semantic_hash": "88f0d2346a91641aed188e440d86ece4"
   },
   "src/DrawEM.App/DrawEM.App.csproj": {
-    "mtime": 1792143874.247977,
-    "seen": 1792143919.0283692,
+    "mtime": 1792144499.7669177,
+    "seen": 1792144511.038211,
     "ast_hash": "67ffe2afb4a6128c92168f11c6a2b37e",
     "semantic_hash": ""
   },
@@ -972,8 +972,8 @@
     "semantic_hash": "bc9429899e42fd5a9b84614361e9dfeb"
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1792143874.2124407,
-    "seen": 1792143919.0626607,
+    "mtime": 1792144499.750837,
+    "seen": 1792144511.0529077,
     "ast_hash": "e633b7ad3036405355ec1a2999f7365a",
     "semantic_hash": ""
   },
@@ -984,8 +984,8 @@
     "semantic_hash": "0fa42f73e345e2d98a75aef86b09b97e"
   },
   ".github/workflows/release.yml": {
-    "mtime": 1792143874.2136545,
-    "seen": 1792143919.062829,
+    "mtime": 1792144499.750837,
+    "seen": 1792144511.0529964,
     "ast_hash": "42ac81cbb12be06b8ebfed5464afd13c",
     "semantic_hash": ""
   },
@@ -1002,8 +1002,8 @@
     "semantic_hash": "d9083cec02be96d0b20e78111319d4a8"
   },
   "README.md": {
-    "mtime": 1792143874.2153406,
-    "seen": 1792143919.063439,
+    "mtime": 1792144499.750837,
+    "seen": 1792144511.0532482,
     "ast_hash": "3aa1a27bc4402f59ea732b13135b9107",
     "semantic_hash": ""
   },
@@ -1206,10 +1206,10 @@
     "semantic_hash": "68e5d4a3e080f041ae685af3166e17ed"
   },
   "docs/v3/STEP-8-ACCEPTANCE-RESULTS.md": {
-    "mtime": 1792143874.2153406,
-    "seen": 1792143919.0698247,
-    "ast_hash": "0606c53793c1624d867ea9a61a13fae1",
-    "semantic_hash": "0606c53793c1624d867ea9a61a13fae1"
+    "mtime": 1792144499.3849242,
+    "seen": 1792144511.0582576,
+    "ast_hash": "12c7f736f4dc3b5a2e7e4ddc0e6f9a65",
+    "semantic_hash": ""
   },
   "docs/v3/additional-fixes/FEAT-005-e2e-runner/task.md": {
     "mtime": 1792125742.6246228,
@@ -1386,9 +1386,9 @@
     "semantic_hash": "f290b96c43a25aafac31b62c38ba91aa"
   },
   "docs/v4/README.md": {
-    "mtime": 1792143875.7499924,
-    "seen": 1792143919.0747635,
-    "ast_hash": "13290d79aa14b60014479617076b8302",
+    "mtime": 1792144499.3849242,
+    "seen": 1792144511.0622382,
+    "ast_hash": "bb8d0699069ea92b7240131586cfcad6",
     "semantic_hash": ""
   },
   "docs/v4/out-of-scope/README.md": {
@@ -1896,8 +1896,8 @@
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Release/ReleaseScriptsTests.cs": {
-    "mtime": 1792143874.2505653,
-    "seen": 1792143919.0614383,
+    "mtime": 1792144499.768671,
+    "seen": 1792144511.0521467,
     "ast_hash": "e8bf7251048dead0ebf47e3f6493d4d1",
     "semantic_hash": ""
   },
@@ -1920,10 +1920,10 @@
     "semantic_hash": "ae014d594b68879686fe260a3f48879b"
   },
   "docs/v4/release-publishing/ROADMAP.md": {
-    "mtime": 1792143874.2182732,
-    "seen": 1792143919.0754688,
-    "ast_hash": "cf1c77818ae13a590c7d90ae38469298",
-    "semantic_hash": "cf1c77818ae13a590c7d90ae38469298"
+    "mtime": 1792144499.3849242,
+    "seen": 1792144511.0626783,
+    "ast_hash": "c13cdb37cfbe73c798c32d01c63673f8",
+    "semantic_hash": ""
   },
   "docs/v4/release-publishing/STEPS.md": {
     "mtime": 1792143875.752328,
@@ -1968,21 +1968,21 @@
     "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-03-first-release-acceptance/acceptance.md": {
-    "mtime": 1792143874.2209327,
-    "seen": 1792143919.0763652,
-    "ast_hash": "9b091694e89196802c35e53810553456",
+    "mtime": 1792144499.3849242,
+    "seen": 1792144511.0634131,
+    "ast_hash": "abe663219b4b85491860c2264444ac81",
     "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-03-first-release-acceptance/plan.md": {
-    "mtime": 1792143874.2209327,
-    "seen": 1792143919.0763674,
-    "ast_hash": "99bb4bb9f23a5bfe9d98829952d09bb3",
-    "semantic_hash": "99bb4bb9f23a5bfe9d98829952d09bb3"
+    "mtime": 1792144499.3869357,
+    "seen": 1792144511.0634153,
+    "ast_hash": "5b337f3e45b41eb960670f6b2efc5803",
+    "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-03-first-release-acceptance/task.md": {
-    "mtime": 1792143874.2220147,
-    "seen": 1792143919.0763688,
-    "ast_hash": "562126a6c584c164649b5bb9f750a8b3",
+    "mtime": 1792144499.3872724,
+    "seen": 1792144511.0634167,
+    "ast_hash": "ccf459b82aa642dd78ffcdab7e5e2627",
     "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-04-signpath-signing/acceptance.md": {
@@ -2022,20 +2022,20 @@
     "semantic_hash": "31678ebc2a4823709f7d683730ad702f"
   },
   "docs/v4/release-publishing/step-06-velopack-installer/acceptance.md": {
-    "mtime": 1792143874.2240803,
-    "seen": 1792143919.0774229,
+    "mtime": 1792144499.75237,
+    "seen": 1792144511.0639484,
     "ast_hash": "26312c6365754b6dd32893e583fec3c0",
     "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-06-velopack-installer/plan.md": {
-    "mtime": 1792143874.2240803,
-    "seen": 1792143919.0774257,
+    "mtime": 1792144499.75237,
+    "seen": 1792144511.06395,
     "ast_hash": "81532b6915c0bef37391389d35cc0801",
     "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-06-velopack-installer/task.md": {
-    "mtime": 1792143874.2255285,
-    "seen": 1792143919.0774276,
+    "mtime": 1792144499.75237,
+    "seen": 1792144511.0639517,
     "ast_hash": "e61e540947c0c6c6d6690358a3fd99f0",
     "semantic_hash": ""
   },
@@ -2064,32 +2064,32 @@
     "semantic_hash": ""
   },
   ".config/dotnet-tools.json": {
-    "mtime": 1792143874.2092426,
-    "seen": 1792143919.019773,
+    "mtime": 1792144499.7477465,
+    "seen": 1792144511.0343707,
     "ast_hash": "8902b45543ee2b0a07f685b004a5f8f3",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Program.cs": {
-    "mtime": 1792143874.2495577,
-    "seen": 1792143919.0508907,
+    "mtime": 1792144499.7669177,
+    "seen": 1792144511.0468407,
     "ast_hash": "fa4c547c8726458a079de9922421f783",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Release/VelopackHookExitTests.cs": {
-    "mtime": 1792143874.2516716,
-    "seen": 1792143919.061442,
+    "mtime": 1792144499.769186,
+    "seen": 1792144511.0521495,
     "ast_hash": "5ad0c0406febf1ded57f944512184403",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Release/VelopackPackageIdentityTests.cs": {
-    "mtime": 1792143874.252676,
-    "seen": 1792143919.061444,
+    "mtime": 1792144499.769186,
+    "seen": 1792144511.0521512,
     "ast_hash": "695a69ad1f0ad872cba83201b71967ca",
     "semantic_hash": ""
   },
   "tools/release/New-VelopackPackage.ps1": {
-    "mtime": 1792143874.252676,
-    "seen": 1792143919.062334,
+    "mtime": 1792144499.769186,
+    "seen": 1792144511.0527308,
     "ast_hash": "1e53c034465287da013ecd9d481355ff",
     "semantic_hash": ""
   }
