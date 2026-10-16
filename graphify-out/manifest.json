@@ -1206,10 +1206,10 @@
     "semantic_hash": "68e5d4a3e080f041ae685af3166e17ed"
   },
   "docs/v3/STEP-8-ACCEPTANCE-RESULTS.md": {
-    "mtime": 1792125742.6246228,
-    "seen": 1792133205.4662056,
-    "ast_hash": "0606c53793c1624d867ea9a61a13fae1",
-    "semantic_hash": "0606c53793c1624d867ea9a61a13fae1"
+    "mtime": 1792143828.2299676,
+    "seen": 1792143851.2848942,
+    "ast_hash": "69adfee6ae866f3b7b25f7450c5c307b",
+    "semantic_hash": ""
   },
   "docs/v3/additional-fixes/FEAT-005-e2e-runner/task.md": {
     "mtime": 1792125742.6246228,
@@ -1386,9 +1386,9 @@
     "semantic_hash": "f290b96c43a25aafac31b62c38ba91aa"
   },
   "docs/v4/README.md": {
-    "mtime": 1792143506.793616,
-    "seen": 1792143516.952752,
-    "ast_hash": "13290d79aa14b60014479617076b8302",
+    "mtime": 1792143836.4196806,
+    "seen": 1792143851.2878404,
+    "ast_hash": "d4d3f165a8caf2f31881342c4e475358",
     "semantic_hash": ""
   },
   "docs/v4/out-of-scope/README.md": {
@@ -1920,10 +1920,10 @@
     "semantic_hash": "ae014d594b68879686fe260a3f48879b"
   },
   "docs/v4/release-publishing/ROADMAP.md": {
-    "mtime": 1792128171.8511765,
-    "seen": 1792129042.8509,
-    "ast_hash": "cf1c77818ae13a590c7d90ae38469298",
-    "semantic_hash": "cf1c77818ae13a590c7d90ae38469298"
+    "mtime": 1792143836.4196806,
+    "seen": 1792143851.2886982,
+    "ast_hash": "6ed6b9b2336f39c74c3fa283568bfa92",
+    "semantic_hash": ""
   },
   "docs/v4/release-publishing/STEPS.md": {
     "mtime": 1792143506.7951312,
@@ -1968,21 +1968,21 @@
     "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-03-first-release-acceptance/acceptance.md": {
-    "mtime": 1792143113.8889961,
-    "seen": 1792143516.9536173,
-    "ast_hash": "9b091694e89196802c35e53810553456",
+    "mtime": 1792143846.5182626,
+    "seen": 1792143851.289641,
+    "ast_hash": "ea6496763cb9b4b1205296e146f269f9",
     "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-03-first-release-acceptance/plan.md": {
-    "mtime": 1792127094.5158808,
-    "seen": 1792129042.8509114,
-    "ast_hash": "99bb4bb9f23a5bfe9d98829952d09bb3",
-    "semantic_hash": "99bb4bb9f23a5bfe9d98829952d09bb3"
+    "mtime": 1792143828.285399,
+    "seen": 1792143851.2896433,
+    "ast_hash": "8184144e31408fdb83420a8717d85380",
+    "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-03-first-release-acceptance/task.md": {
-    "mtime": 1792143113.8900018,
-    "seen": 1792143516.9537075,
-    "ast_hash": "562126a6c584c164649b5bb9f750a8b3",
+    "mtime": 1792143828.284865,
+    "seen": 1792143851.289645,
+    "ast_hash": "cc0dd126634a172b304648bded930b66",
     "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-04-signpath-signing/acceptance.md": {
