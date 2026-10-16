@@ -45,3 +45,23 @@ jobs:
 
       - name: Publish
         run: dotnet publish src/DrawEM.App/DrawEM.App.csproj -c Release -p:PublishProfile=win-x64 -warnaserror
+
+      # Packs the self-contained, untrimmed, multi-file publish with Velopack and checks the three downloads.
+      # vpk requires a version of at least 0.0.1. Nothing is uploaded.
+      - name: Velopack packaging smoke
+        shell: pwsh
+        env:
+          VERSION: 0.0.1-ci.${{ github.run_number }}
+        run: |
+          $packId = (dotnet msbuild src/DrawEM.App/DrawEM.App.csproj -getProperty:VelopackPackId).Trim()
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $output = Join-Path $env:RUNNER_TEMP velopack
+          $files = @(./tools/release/New-VelopackPackage.ps1 -PublishDirectory src/DrawEM.App/bin/Release/net8.0-windows/win-x64/publish -Version $env:VERSION -OutputDirectory $output -PackId $packId -Icon src/DrawEM.App/Assets/drawEM.ico)
+          $expected = @("drawEM-$env:VERSION-win-x64-Setup.exe", "$packId-$env:VERSION-full.nupkg", 'releases.win.json')
+          $actual = @($files | ForEach-Object { Split-Path $_ -Leaf })
+          if (Compare-Object $expected $actual -SyncWindow 0) {
+            throw "Expected exactly $($expected -join ', '); got $($actual -join ', ')."
+          }
+          foreach ($file in $files) {
+            if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "Missing $file." }
+          }
