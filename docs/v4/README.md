@@ -1,7 +1,7 @@
 # drawEM v4: parallel work packages
 
 **Status:** two packages plus an out-of-scope list; visual effects is in progress,
-and release publishing is in progress with R4-01 and R4-02 done.
+and release publishing is in progress: R4-01, R4-02, R4-03, R4-06, and R4-07 released in `v4.0.0` (2026-10-16).
 **Date:** 2026-10-15.
 
 v4 runs as two independent packages. Each package has its own roadmap, step
@@ -10,7 +10,7 @@ IDs, and branches, so one developer or agent can work on each at the same time.
 | Package | Outcome | Task IDs | Status |
 |---|---|---|---|
 | [Visual effects](visual-effects/ROADMAP-v4.md) | Built-in animated effects (confetti, focus ring) triggered from action slots | `S4-01` … `S4-12` | [Steps](visual-effects/STEPS.md) planned; S4-01, S4-02, S4-04, and S4-05 done |
-| [Release publishing](release-publishing/README.md) | Verifiable, installable, and updatable Windows releases; signing is conditional on owner decisions | `R4-01` … `R4-07` | [Roadmap](release-publishing/ROADMAP.md) and [steps](release-publishing/STEPS.md) groomed; R4-01 and R4-02 done |
+| [Release publishing](release-publishing/README.md) | Verifiable, installable, and updatable Windows releases; signing is conditional on owner decisions | `R4-01` … `R4-07` | [Roadmap](release-publishing/ROADMAP.md) and [steps](release-publishing/STEPS.md) groomed; R4-01, R4-02, R4-03, R4-06, and R4-07 released in `v4.0.0` (2026-10-16); R4-04 and R4-05 pending |
 | [Out of scope](out-of-scope/README.md) | Extra tasks outside the roadmap steps of both packages | None | Open list |
 
 ## Package structure

@@ -39,7 +39,14 @@
   `VelopackUpdateService` existed and passed after `Velopack` was allowed.
   Full suite on branch `R4-07.1-tray-updates` (on top of R4-06): 867 passed,
   0 failed (`dotnet test DrawEM.sln -c Release`, 2026-10-16).
-- Windows version and account type:
+- Windows version and account type: Windows 11 Pro 26H2 (10.0.26300), the owner's development machine, not a
+  clean install. Account `max` is in the local Administrators group; every
+  run was non-elevated (UAC-filtered token), and no UAC prompt appeared.
+- `v4.0.0` (2026-10-16): the installed copy started and wrote no
+  `update.log` line (no published release existed yet, and no failure). The
+  portable ZIP copy, with `VelopackApp.Run()` outside an install, also
+  created no `update.log` and showed no prompt: the "No VelopackLocator" risk
+  did not occur.
 - Old/new build identities:
 - Defer, accept, restart, and recovery results:
 - Time from Yes to the new tray icon:
@@ -55,8 +62,8 @@
   (logged, treated as not installed). Not tested automatically: the Velopack
   calls themselves. `CheckAndDownloadAsync` runs them in `Task.Run`, so the
   off-UI-thread criterion holds by code review only until step 6 runs.
-- CI: not run (not pushed).
-- Manual Windows (local feed): not done. Step 6 has not been run, including
-  the portable-copy check that `update.log` gains no line.
+- CI: PR #94 `build-test-publish` passed.
+- Manual Windows (local feed): not done. The portable-copy check from step 6
+  passed on `v4.0.0` (no `update.log`, no prompt).
 - Manual Windows (GitHub feed): not done; needs two published releases that
   contain R4-07.

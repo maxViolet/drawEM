@@ -1,6 +1,6 @@
 # R4: release publishing steps
 
-**Status:** R4-01 and R4-02 done; R4-03 … R4-07 pending. **Contract:** [roadmap](ROADMAP.md).
+**Status:** R4-01, R4-02, R4-03, R4-06, and R4-07 released in `v4.0.0` (2026-10-16); R4-04 and R4-05 pending. **Contract:** [roadmap](ROADMAP.md).
 Use the [owner questions in ADR-0002](../../adr/0002-release-signing-license.md)
 for the conditional license and SignPath decision.
 
@@ -111,6 +111,6 @@ after the user accepts the restart.
 
 ## First action
 
-Start [R4-03](step-03-first-release-acceptance/task.md): reconcile every open
-v3 Step 8 check with the release gate, then test the draft's exact portable ZIP
-on a clean Windows machine.
+Start [R4-05](step-05-winget/task.md): submit the `v4.0.0` portable ZIP to
+WinGet. With the next release, run the R4-07 GitHub upgrade check from an
+installed `v4.0.0`.
