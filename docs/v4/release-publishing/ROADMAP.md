@@ -103,7 +103,7 @@ and access to the required Windows machines are not included.
 | 4 | [R4-04](step-04-signpath-signing/task.md) | If eligible and approved, later releases sign app binaries through SignPath. | R4-03 and owner decisions in ADR-0002 | 1–2 days plus external review |
 | 5 | [R4-05](step-05-winget/task.md) | Stable portable ZIP is listed in WinGet; later updates can submit a manifest PR from release automation. | R4-03 | 0.5–1 day plus moderator review |
 | 6 | [R4-06](step-06-velopack-installer/task.md) | Velopack creates the per-user installer and packages; checksums, attestations, and signing (if R4-04 is done) extend to every new download. | R4-01, R4-02, R4-03 | 1–2 days |
-| 7 | [R4-07](step-07-tray-updates/task.md) | Tray app offers consent-based update installation while preserving settings. | R4-06 and a published installer release | 1–2 days |
+| 7 | [R4-07](step-07-tray-updates/task.md) | Tray app offers consent-based update installation while preserving settings. | R4-06 | 1–2 days |
 
 No step waits for visual effects. The first public release cannot precede the v3 Step 8
 gate. R4-06/R4-07 may touch shared `App.xaml.cs`, `DrawEM.App.csproj`,
