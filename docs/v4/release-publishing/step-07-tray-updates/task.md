@@ -1,6 +1,6 @@
 # v4 / R4-07: add consent-based tray updates
 
-**Status:** in progress; the Velopack-free part (controller, tray item, `update.log`) is implemented, and the Velopack adapter and `App` composition wait for R4-06. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** none; this is the last release-publishing step.
+**Status:** in progress; the controller, tray item, `update.log`, Velopack adapter with `DRAWEM_UPDATE_FEED`, `App` composition, layer rule, and README are implemented, and the local-feed and GitHub upgrade checks on Windows are not done. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** none; this is the last release-publishing step.
 
 ## Task
 
