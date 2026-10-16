@@ -1,9 +1,9 @@
 # drawEM v4: release publishing
 
-**Status:** in progress; R4-01 done.
+**Status:** in progress; R4-01 and R4-02 done.
 **Decision baseline:** 2026-10-15. The signing license and SignPath eligibility
 remain owner decisions in [ADR-0002](../../adr/0002-release-signing-license.md).
-**Next action:** implement [R4-02](step-02-checksums-provenance/task.md).
+**Next action:** implement [R4-03](step-03-first-release-acceptance/task.md).
 
 ## Goal
 
