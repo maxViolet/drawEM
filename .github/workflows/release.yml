@@ -50,6 +50,17 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: ./tools/release/New-ReleasePackage.ps1 -PublishDirectory src/DrawEM.App/bin/Release/net8.0-windows/win-x64/publish -Version $env:VERSION -OutputDirectory artifacts
 
+      # Setup.exe, the full update package, and the update feed, from the same publish folder as the ZIP.
+      - name: Package installer
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $packId = (dotnet msbuild src/DrawEM.App/DrawEM.App.csproj -getProperty:VelopackPackId).Trim()
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $files = ./tools/release/New-VelopackPackage.ps1 -PublishDirectory src/DrawEM.App/bin/Release/net8.0-windows/win-x64/publish -Version $env:VERSION -OutputDirectory velopack -PackId $packId -Icon src/DrawEM.App/Assets/drawEM.ico
+          Copy-Item -LiteralPath $files -Destination artifacts
+
       # SHA256SUMS.txt is the one list of downloads: the attestation and the release upload both follow it.
       - name: Checksums
         shell: pwsh

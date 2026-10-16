@@ -6,8 +6,9 @@ overlay across the desktop.
 
 ## Use drawEM
 
-1. Run `DrawEM.App.exe` from the folder where you extracted the
-   [download](#download-drawem), or from a published app directory (see
+1. Start drawEM from the Start menu after [installing it](#download-drawem),
+   run `DrawEM.App.exe` from the folder where you extracted the portable ZIP,
+   or run it from a published app directory (see
    [Build and run from source](#build-and-run-from-source)). The icon appears
    in the notification area.
 2. Hold the draw shortcut (default `Ctrl+Alt+Z`) and move the pointer to
@@ -101,15 +102,29 @@ again.
 
 ## Download drawEM
 
-Download `drawEM-<version>-win-x64.zip` and `SHA256SUMS.txt` from the latest
-release on the [GitHub Releases page](https://github.com/maxViolet/drawEM/releases).
-[Verify the ZIP](#verify-a-download) before you run anything from it.
+Each release on the [GitHub Releases page](https://github.com/maxViolet/drawEM/releases)
+offers two Windows x64 downloads, plus `SHA256SUMS.txt`.
+[Verify a download](#verify-a-download) before you run it.
 
-drawEM is a portable app: there is no installer, and it does not update
-itself. Extract the whole ZIP to a folder you choose, outside
-`%LOCALAPPDATA%\drawEM`, and run `DrawEM.App.exe`. Keep all extracted files
-together. drawEM does not need administrator rights. It stores settings,
-sounds, and logs in `%LOCALAPPDATA%\drawEM`, not in the extracted folder.
+- `drawEM-<version>-win-x64-Setup.exe` installs drawEM for the current user,
+  without administrator rights. It adds Start menu and Desktop shortcuts and
+  an entry in Settings > Apps > Installed apps.
+- `drawEM-<version>-win-x64.zip` is the portable app. Extract the whole ZIP to
+  a folder you choose, outside `%LOCALAPPDATA%\drawEM`, and run
+  `DrawEM.App.exe`. Keep all extracted files together.
+
+Both use the same settings, sounds, and logs in `%LOCALAPPDATA%\drawEM`. To
+switch from the portable app to the installer, exit drawEM and run the
+Setup.exe; your settings stay. drawEM does not update itself yet.
+
+The release also carries `drawEM.Desktop-<version>-full.nupkg` and
+`releases.win.json`. They are the update feed for a later drawEM version; you
+do not need to download them.
+
+To uninstall, exit drawEM, open Settings > Apps > Installed apps, choose
+drawEM, and choose Uninstall. This removes the app files and shortcuts and
+keeps `%LOCALAPPDATA%\drawEM`; delete that folder yourself to remove your
+settings too. Only the default install location is supported.
 
 The files are not code-signed yet. Windows SmartScreen or Microsoft Defender
 may warn before the first start; the warning depends on the computer and
@@ -121,11 +136,13 @@ Each release has a `SHA256SUMS.txt` that lists its downloads, and each
 download has a build attestation. In the folder with the downloads:
 
 ```powershell
-Get-FileHash .\drawEM-<version>-win-x64.zip -Algorithm SHA256
+Get-FileHash .\drawEM-<version>-win-x64-Setup.exe -Algorithm SHA256
 Get-Content .\SHA256SUMS.txt
-gh attestation verify .\drawEM-<version>-win-x64.zip -R maxViolet/drawEM `
+gh attestation verify .\drawEM-<version>-win-x64-Setup.exe -R maxViolet/drawEM `
   --signer-workflow maxViolet/drawEM/.github/workflows/release.yml
 ```
+
+Use the ZIP's file name instead to check the portable app.
 
 - Hash: the value matching its `SHA256SUMS.txt` line (case does not matter)
   proves the file is the one the release lists.
@@ -137,6 +154,11 @@ gh attestation verify .\drawEM-<version>-win-x64.zip -R maxViolet/drawEM `
 
 ## Update drawEM
 
+With the installer: exit drawEM, then download, [verify](#verify-a-download),
+and run the newer Setup.exe.
+
+With the portable app:
+
 1. Exit drawEM from the tray icon.
 2. Download and [verify](#verify-a-download) the newer ZIP.
 3. Extract it to a new, empty folder. Do not extract it over the old folder.
@@ -146,8 +168,9 @@ gh attestation verify .\drawEM-<version>-win-x64.zip -R maxViolet/drawEM `
 
 ## Recover from a bad update
 
-If the newer version does not start or misbehaves, exit it and run
-`DrawEM.App.exe` from the old folder. Settings are shared, so the old version
+If a newer portable version does not start or misbehaves, exit it and run
+`DrawEM.App.exe` from the old folder. For the installer, uninstall drawEM and
+run the previous Setup.exe from GitHub Releases; settings stay. Settings are shared, so the old version
 loads them as long as it can read their format. Going back from v4 to v3
 needs extra steps; see [Return to drawEM v3](#return-to-drawem-v3). The logs in
 `%LOCALAPPDATA%\drawEM\logs` (`app.log`, `sound.log`, `effect.log`) record
@@ -178,7 +201,7 @@ multi-monitor behavior that unit tests cannot establish.
 
 GitHub Actions builds the solution with warnings as errors, runs the tests, and
 publishes the win-x64 app for every pull request to `main` and every push to
-`main`. Changes that touch only `docs/` or Markdown files skip this run. A
+`main`, then checks that Velopack can package it as an installer. Changes that touch only `docs/` or Markdown files skip this run. A
 separate check verifies branch names and pull request titles against
 [AGENTS.md](AGENTS.md). The .NET SDK version is pinned in `global.json`.
 
@@ -191,15 +214,17 @@ git push origin v0.3.0
 
 The release workflow rejects any other tag form, runs the tests, publishes the
 self-contained app with the tag's version, checks the publish output, and
-builds `drawEM-<version>-win-x64.zip`. It writes `SHA256SUMS.txt` for the ZIP,
-attests the ZIP's build provenance, and attaches both files to a draft GitHub
-Release with generated notes. Inspect the draft's notes and assets on GitHub, then publish
-it by hand; the workflow never publishes a release.
+builds the portable ZIP and, from the same publish output, the Velopack
+Setup.exe, full package, and `releases.win.json`. It writes `SHA256SUMS.txt`
+for those files, attests each one, and attaches them with the manifest to a
+draft GitHub Release with generated notes. Inspect the draft's notes and
+assets on GitHub, then publish it by hand; the workflow never publishes a
+release.
 
 ## Current limits and plans
 
 - There is no eraser, undo, export, or Windows startup option.
-- There is no installer and no in-app update yet; update by hand as in
+- There is no in-app update yet; update by hand as in
   [Update drawEM](#update-drawem).
 - drawEM does not run elevated. Behavior over elevated apps, exclusive
   fullscreen games, and protected surfaces is not guaranteed.
