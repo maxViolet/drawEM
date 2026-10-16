@@ -234,10 +234,10 @@
     "semantic_hash": "88f0d2346a91641aed188e440d86ece4"
   },
   "src/DrawEM.App/DrawEM.App.csproj": {
-    "mtime": 1792143009.6062493,
-    "seen": 1792143069.3451886,
-    "ast_hash": "874c17bd35082fd8ded09ed7599d19e5",
-    "semantic_hash": "874c17bd35082fd8ded09ed7599d19e5"
+    "mtime": 1792143874.247977,
+    "seen": 1792143919.0283692,
+    "ast_hash": "67ffe2afb4a6128c92168f11c6a2b37e",
+    "semantic_hash": ""
   },
   "src/DrawEM.App/Infrastructure/AppFailureLog.cs": {
     "mtime": 1792125742.743875,
@@ -972,10 +972,10 @@
     "semantic_hash": "bc9429899e42fd5a9b84614361e9dfeb"
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1792143009.563274,
-    "seen": 1792143069.3591573,
-    "ast_hash": "7357eaf42d123e5071765fcd8b937659",
-    "semantic_hash": "7357eaf42d123e5071765fcd8b937659"
+    "mtime": 1792143874.2124407,
+    "seen": 1792143919.0626607,
+    "ast_hash": "e633b7ad3036405355ec1a2999f7365a",
+    "semantic_hash": ""
   },
   ".github/workflows/pr-lint.yml": {
     "mtime": 1792125742.5854928,
@@ -984,9 +984,9 @@
     "semantic_hash": "0fa42f73e345e2d98a75aef86b09b97e"
   },
   ".github/workflows/release.yml": {
-    "mtime": 1792143009.5642698,
-    "seen": 1792143069.3592453,
-    "ast_hash": "d2f17a619df3eb9b028fd835bbd92586",
+    "mtime": 1792143874.2136545,
+    "seen": 1792143919.062829,
+    "ast_hash": "42ac81cbb12be06b8ebfed5464afd13c",
     "semantic_hash": ""
   },
   "AGENTS.md": {
@@ -1002,9 +1002,9 @@
     "semantic_hash": "d9083cec02be96d0b20e78111319d4a8"
   },
   "README.md": {
-    "mtime": 1792143113.8849616,
-    "seen": 1792143516.941658,
-    "ast_hash": "e99e964ede2d3aee5100e01c39eb510a",
+    "mtime": 1792143874.2153406,
+    "seen": 1792143919.063439,
+    "ast_hash": "3aa1a27bc4402f59ea732b13135b9107",
     "semantic_hash": ""
   },
   "docs/ARCHITECTURE.md": {
@@ -1206,8 +1206,8 @@
     "semantic_hash": "68e5d4a3e080f041ae685af3166e17ed"
   },
   "docs/v3/STEP-8-ACCEPTANCE-RESULTS.md": {
-    "mtime": 1792125742.6246228,
-    "seen": 1792133205.4662056,
+    "mtime": 1792143874.2153406,
+    "seen": 1792143919.0698247,
     "ast_hash": "0606c53793c1624d867ea9a61a13fae1",
     "semantic_hash": "0606c53793c1624d867ea9a61a13fae1"
   },
@@ -1386,8 +1386,8 @@
     "semantic_hash": "f290b96c43a25aafac31b62c38ba91aa"
   },
   "docs/v4/README.md": {
-    "mtime": 1792143506.793616,
-    "seen": 1792143516.952752,
+    "mtime": 1792143875.7499924,
+    "seen": 1792143919.0747635,
     "ast_hash": "13290d79aa14b60014479617076b8302",
     "semantic_hash": ""
   },
@@ -1398,8 +1398,8 @@
     "semantic_hash": "0d6bc0e282eaa853a0a7376acde74f46"
   },
   "docs/v4/release-publishing/README.md": {
-    "mtime": 1792143506.7945828,
-    "seen": 1792143516.953105,
+    "mtime": 1792143875.7499924,
+    "seen": 1792143919.0754557,
     "ast_hash": "430996a1cea7fa71e1354cb0ad82a50c",
     "semantic_hash": ""
   },
@@ -1896,9 +1896,9 @@
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Release/ReleaseScriptsTests.cs": {
-    "mtime": 1792143009.617266,
-    "seen": 1792143069.3585505,
-    "ast_hash": "accfb20342b7b5004c151a853d0f2a28",
+    "mtime": 1792143874.2505653,
+    "seen": 1792143919.0614383,
+    "ast_hash": "e8bf7251048dead0ebf47e3f6493d4d1",
     "semantic_hash": ""
   },
   "tools/release/Get-ReleaseVersion.ps1": {
@@ -1920,14 +1920,14 @@
     "semantic_hash": "ae014d594b68879686fe260a3f48879b"
   },
   "docs/v4/release-publishing/ROADMAP.md": {
-    "mtime": 1792128171.8511765,
-    "seen": 1792129042.8509,
+    "mtime": 1792143874.2182732,
+    "seen": 1792143919.0754688,
     "ast_hash": "cf1c77818ae13a590c7d90ae38469298",
     "semantic_hash": "cf1c77818ae13a590c7d90ae38469298"
   },
   "docs/v4/release-publishing/STEPS.md": {
-    "mtime": 1792143506.7951312,
-    "seen": 1792143516.9531915,
+    "mtime": 1792143875.752328,
+    "seen": 1792143919.0754716,
     "ast_hash": "20b374e2e49b68a7a6d8c3aac454e309",
     "semantic_hash": ""
   },
@@ -1950,8 +1950,8 @@
     "semantic_hash": "d0537d1e6be5e5abe5ba3cecd97910e4"
   },
   "docs/v4/release-publishing/step-02-checksums-provenance/acceptance.md": {
-    "mtime": 1792143506.795792,
-    "seen": 1792143516.9535303,
+    "mtime": 1792143875.752328,
+    "seen": 1792143919.0761962,
     "ast_hash": "15c33c9bc4a6058b2e5499780d09b316",
     "semantic_hash": ""
   },
@@ -1962,26 +1962,26 @@
     "semantic_hash": "f556acbf534af951f49a72931acc8a14"
   },
   "docs/v4/release-publishing/step-02-checksums-provenance/task.md": {
-    "mtime": 1792143506.795792,
-    "seen": 1792143516.9536161,
+    "mtime": 1792143875.752328,
+    "seen": 1792143919.076363,
     "ast_hash": "c2ba8b6d4c61f6978802a964528c3b40",
     "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-03-first-release-acceptance/acceptance.md": {
-    "mtime": 1792143113.8889961,
-    "seen": 1792143516.9536173,
+    "mtime": 1792143874.2209327,
+    "seen": 1792143919.0763652,
     "ast_hash": "9b091694e89196802c35e53810553456",
     "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-03-first-release-acceptance/plan.md": {
-    "mtime": 1792127094.5158808,
-    "seen": 1792129042.8509114,
+    "mtime": 1792143874.2209327,
+    "seen": 1792143919.0763674,
     "ast_hash": "99bb4bb9f23a5bfe9d98829952d09bb3",
     "semantic_hash": "99bb4bb9f23a5bfe9d98829952d09bb3"
   },
   "docs/v4/release-publishing/step-03-first-release-acceptance/task.md": {
-    "mtime": 1792143113.8900018,
-    "seen": 1792143516.9537075,
+    "mtime": 1792143874.2220147,
+    "seen": 1792143919.0763688,
     "ast_hash": "562126a6c584c164649b5bb9f750a8b3",
     "semantic_hash": ""
   },
@@ -2022,22 +2022,22 @@
     "semantic_hash": "31678ebc2a4823709f7d683730ad702f"
   },
   "docs/v4/release-publishing/step-06-velopack-installer/acceptance.md": {
-    "mtime": 1792143009.5748465,
-    "seen": 1792143069.366819,
-    "ast_hash": "fac3ce797f1c182de81e790c7548f54c",
-    "semantic_hash": "fac3ce797f1c182de81e790c7548f54c"
+    "mtime": 1792143874.2240803,
+    "seen": 1792143919.0774229,
+    "ast_hash": "26312c6365754b6dd32893e583fec3c0",
+    "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-06-velopack-installer/plan.md": {
-    "mtime": 1792143009.5773683,
-    "seen": 1792143069.3668206,
-    "ast_hash": "6a40966574398aab96cd5f6dbcbe1102",
-    "semantic_hash": "6a40966574398aab96cd5f6dbcbe1102"
+    "mtime": 1792143874.2240803,
+    "seen": 1792143919.0774257,
+    "ast_hash": "81532b6915c0bef37391389d35cc0801",
+    "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-06-velopack-installer/task.md": {
-    "mtime": 1792143009.579399,
-    "seen": 1792143069.366822,
-    "ast_hash": "ef32b3c7e465b5b189daa795a368ca52",
-    "semantic_hash": "ef32b3c7e465b5b189daa795a368ca52"
+    "mtime": 1792143874.2255285,
+    "seen": 1792143919.0774276,
+    "ast_hash": "e61e540947c0c6c6d6690358a3fd99f0",
+    "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-07-tray-updates/acceptance.md": {
     "mtime": 1792143009.5804095,
@@ -2061,6 +2061,36 @@
     "mtime": 1792133426.7398243,
     "seen": 1792143069.359064,
     "ast_hash": "aa30a2de90239dbef3859543abffe2dd",
+    "semantic_hash": ""
+  },
+  ".config/dotnet-tools.json": {
+    "mtime": 1792143874.2092426,
+    "seen": 1792143919.019773,
+    "ast_hash": "8902b45543ee2b0a07f685b004a5f8f3",
+    "semantic_hash": ""
+  },
+  "src/DrawEM.App/Program.cs": {
+    "mtime": 1792143874.2495577,
+    "seen": 1792143919.0508907,
+    "ast_hash": "fa4c547c8726458a079de9922421f783",
+    "semantic_hash": ""
+  },
+  "tests/DrawEM.Tests/Release/VelopackHookExitTests.cs": {
+    "mtime": 1792143874.2516716,
+    "seen": 1792143919.061442,
+    "ast_hash": "5ad0c0406febf1ded57f944512184403",
+    "semantic_hash": ""
+  },
+  "tests/DrawEM.Tests/Release/VelopackPackageIdentityTests.cs": {
+    "mtime": 1792143874.252676,
+    "seen": 1792143919.061444,
+    "ast_hash": "695a69ad1f0ad872cba83201b71967ca",
+    "semantic_hash": ""
+  },
+  "tools/release/New-VelopackPackage.ps1": {
+    "mtime": 1792143874.252676,
+    "seen": 1792143919.062334,
+    "ast_hash": "1e53c034465287da013ecd9d481355ff",
     "semantic_hash": ""
   }
 }

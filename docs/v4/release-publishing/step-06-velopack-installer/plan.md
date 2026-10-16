@@ -62,7 +62,8 @@
    `DrawEM.App.csproj` and the `vpk` CLI as a local tool in
    `.config/dotnet-tools.json`, both at the same reviewed stable version;
    record that version here. Workflows run `dotnet tool restore`, not a global
-   install.
+   install. Recorded: `Velopack` and `vpk` 1.2.161 (published on NuGet
+   2026-09-29).
 4. **Custom `Main`.** Add `src/DrawEM.App/Program.cs` in namespace
    `DrawEM.App`:
    `[STAThread] static void Main()` calls
@@ -116,9 +117,10 @@
    `gh attestation verify <file> -R maxViolet/drawEM` and
    `Get-FileHash -Algorithm SHA256`.
 7. **CI packaging smoke.** In `ci.yml`, after `Publish`, run
-   `New-VelopackPackage.ps1` with version `0.0.0-ci.<run number>` into a temp
+   `New-VelopackPackage.ps1` with version `0.0.1-ci.<run number>` into a temp
    folder, then fail unless exactly the expected Setup.exe, full `.nupkg`, and
-   `releases.win.json` exist. Do not upload them. The job must not depend on
+   `releases.win.json` exist. (Changed from `0.0.0-ci.*`: vpk 1.2.161 rejects
+   it with "it must be >= 0.0.1".) Do not upload them. The job must not depend on
    visual-effects work.
 8. **Manual Windows check** as a standard (non-admin) user, recorded in
    [acceptance](acceptance.md):
