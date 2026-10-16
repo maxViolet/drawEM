@@ -149,6 +149,24 @@ public class UpdateControllerTests
     }
 
     [Fact]
+    public void RequestWhileConfirmationIsOpen_AsksNothing_AndAppliesOnce()
+    {
+        var fixture = new Fixture();
+        fixture.Controller.Start();
+        fixture.Service.Complete("1.2.3");
+        fixture.Consent = true;
+        fixture.WhileConfirming = () =>
+        {
+            fixture.WhileConfirming = null;
+            fixture.Controller.RequestUpdate();
+        };
+
+        fixture.Controller.RequestUpdate();
+
+        Assert.Equal(["ready 1.2.3", "confirm 1.2.3", "apply", "exit"], fixture.Log);
+    }
+
+    [Fact]
     public void ApplyFailure_IsReported_AndTheAppKeepsRunning()
     {
         var fixture = new Fixture();
@@ -237,6 +255,7 @@ public class UpdateControllerTests
                 version =>
                 {
                     Log.Add("confirm " + version);
+                    WhileConfirming?.Invoke();
                     return Consent;
                 },
                 () => Log.Add("exit"),
@@ -253,6 +272,9 @@ public class UpdateControllerTests
         public UpdateController Controller { get; }
 
         public bool Consent { get; set; }
+
+        /// <summary>Runs inside the confirmation, like a tray click handled by the modal dialog's message loop.</summary>
+        public Action? WhileConfirming { get; set; }
     }
 
     private sealed class FakeUpdateService(List<string> log) : IUpdateService

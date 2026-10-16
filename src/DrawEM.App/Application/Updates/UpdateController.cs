@@ -24,6 +24,7 @@ public sealed class UpdateController : IDisposable
     private string? readyVersion;
     private bool started;
     private bool applying;
+    private bool confirming;
     private bool disposed;
 
     /// <param name="showUpdateReady">Shows the tray item and balloon for a downloaded version.</param>
@@ -77,7 +78,24 @@ public sealed class UpdateController : IDisposable
     /// </summary>
     public void RequestUpdate()
     {
-        if (disposed || applying || readyVersion is not { } version || !confirmRestart(version))
+        if (disposed || applying || confirming || readyVersion is not { } version)
+        {
+            return;
+        }
+
+        // The modal dialog pumps messages, so a tray click can arrive here again while it is open.
+        confirming = true;
+        bool confirmed;
+        try
+        {
+            confirmed = confirmRestart(version);
+        }
+        finally
+        {
+            confirming = false;
+        }
+
+        if (!confirmed)
         {
             return;
         }
