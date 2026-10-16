@@ -115,11 +115,12 @@ offers two Windows x64 downloads, plus `SHA256SUMS.txt`.
 
 Both use the same settings, sounds, and logs in `%LOCALAPPDATA%\drawEM`. To
 switch from the portable app to the installer, exit drawEM and run the
-Setup.exe; your settings stay. drawEM does not update itself yet.
+Setup.exe; your settings stay. Only the installed app
+[updates itself](#update-drawem).
 
 The release also carries `drawEM.Desktop-<version>-full.nupkg` and
-`releases.win.json`. They are the update feed for a later drawEM version; you
-do not need to download them.
+`releases.win.json`. They are the update feed that the installed app reads;
+you do not need to download them.
 
 To uninstall, exit drawEM, open Settings > Apps > Installed apps, choose
 drawEM, and choose Uninstall. This removes the app files and shortcuts and
@@ -154,10 +155,25 @@ Use the ZIP's file name instead to check the portable app.
 
 ## Update drawEM
 
-With the installer: exit drawEM, then download, [verify](#verify-a-download),
-and run the newer Setup.exe.
+The installed app checks GitHub Releases for a newer version once after it
+starts and then every 24 hours while it runs. It downloads a newer version in
+the background and never installs it on its own:
 
-With the portable app:
+1. A balloon tip says the update is ready, and the tray menu shows
+   `Restart to update to <version>` above `Exit`.
+2. Click the balloon or that menu item. drawEM asks
+   `Restart drawEM now to install <version>?`
+3. Choose `No` to keep working. The menu item stays, and drawEM offers the
+   same download again after it restarts.
+4. Choose `Yes` to install. drawEM exits as it does from `Exit`, the update is
+   applied, and the new version starts.
+
+A failed check or download does not interrupt drawEM; it is logged to
+`%LOCALAPPDATA%\drawEM\logs\update.log`, and drawEM tries again at the next
+check. Copies installed from a Setup.exe that predates in-app updates have no
+updater: run the newer Setup.exe once, and later updates arrive in the app.
+
+The portable app never checks for updates. Update it by hand:
 
 1. Exit drawEM from the tray icon.
 2. Download and [verify](#verify-a-download) the newer ZIP.
@@ -169,12 +185,13 @@ With the portable app:
 ## Recover from a bad update
 
 If a newer portable version does not start or misbehaves, exit it and run
-`DrawEM.App.exe` from the old folder. For the installer, uninstall drawEM and
-run the previous Setup.exe from GitHub Releases; settings stay. Settings are shared, so the old version
-loads them as long as it can read their format. Going back from v4 to v3
-needs extra steps; see [Return to drawEM v3](#return-to-drawem-v3). The logs in
-`%LOCALAPPDATA%\drawEM\logs` (`app.log`, `sound.log`, `effect.log`) record
-failures to report in an issue.
+`DrawEM.App.exe` from the old folder. If an installed update does not start,
+uninstall drawEM and run the previous Setup.exe from GitHub Releases; settings
+stay. Settings are shared, so the old version loads them as long as it can
+read their format. Going back from v4 to v3 needs extra steps; see
+[Return to drawEM v3](#return-to-drawem-v3). The logs in
+`%LOCALAPPDATA%\drawEM\logs` (`app.log`, `sound.log`, `effect.log`,
+`update.log`) record failures to report in an issue.
 
 ## Build and run from source
 
@@ -224,8 +241,6 @@ release.
 ## Current limits and plans
 
 - There is no eraser, undo, export, or Windows startup option.
-- There is no in-app update yet; update by hand as in
-  [Update drawEM](#update-drawem).
 - drawEM does not run elevated. Behavior over elevated apps, exclusive
   fullscreen games, and protected surfaces is not guaranteed.
 - Only the built-in effects are available. Imported effects and video are

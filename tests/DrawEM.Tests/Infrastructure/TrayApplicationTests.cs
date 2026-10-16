@@ -147,6 +147,66 @@ public class TrayApplicationTests
     }
 
     [Fact]
+    public void TrayUpdate_IsForwardedUntilExit()
+    {
+        var calls = new List<string>();
+        var tray = new FakeTrayHost(calls);
+        var application = new TrayApplication(
+            tray,
+            new FakeDisposable(calls, "shortcuts"),
+            new FakeOverlay(calls),
+            new FakeApplicationLifetime(calls),
+            action => action(),
+            ExceptionDispatchInfo.Throw);
+        application.UpdateRequested += () => calls.Add("update");
+
+        tray.RequestUpdate();
+        application.Exit();
+        tray.RequestUpdate();
+
+        Assert.Equal(["update", "shortcuts", "overlay", "tray disposed", "shutdown"], calls);
+    }
+
+    [Fact]
+    public void TrayUpdate_IsNotForwardedAfterDispose()
+    {
+        var calls = new List<string>();
+        var tray = new FakeTrayHost(calls);
+        var application = new TrayApplication(
+            tray,
+            new FakeDisposable(calls, "shortcuts"),
+            new FakeOverlay(calls),
+            new FakeApplicationLifetime(calls),
+            action => action(),
+            ExceptionDispatchInfo.Throw);
+        application.UpdateRequested += () => calls.Add("update");
+
+        application.Dispose();
+        tray.RequestUpdate();
+
+        Assert.Equal(["shortcuts", "overlay", "tray disposed"], calls);
+    }
+
+    [Fact]
+    public void ShowUpdateReady_ReachesTheTrayUntilExit()
+    {
+        var calls = new List<string>();
+        var application = new TrayApplication(
+            new FakeTrayHost(calls),
+            new FakeDisposable(calls, "shortcuts"),
+            new FakeOverlay(calls),
+            new FakeApplicationLifetime(calls),
+            action => action(),
+            ExceptionDispatchInfo.Throw);
+
+        application.ShowUpdateReady("1.2.3");
+        application.Exit();
+        application.ShowUpdateReady("1.2.4");
+
+        Assert.Equal(["update ready 1.2.3", "shortcuts", "overlay", "tray disposed", "shutdown"], calls);
+    }
+
+    [Fact]
     public void TrayExit_StopsEffectsAtOnce_BeforeTheScheduledExitRuns()
     {
         var calls = new List<string>();

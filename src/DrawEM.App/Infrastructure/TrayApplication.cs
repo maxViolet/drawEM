@@ -9,7 +9,13 @@ public interface ITrayHost : IDisposable
     /// <summary>The tray Stop effects command was chosen.</summary>
     event Action? StopEffectsRequested;
 
+    /// <summary>The tray update item or the update balloon was chosen.</summary>
+    event Action? UpdateRequested;
+
     void Show();
+
+    /// <summary>Shows the restart-to-update item for <paramref name="version"/> and one balloon tip.</summary>
+    void ShowUpdateReady(string version);
 }
 
 public interface IOverlayLifetime
@@ -53,6 +59,7 @@ public sealed class TrayApplication : IDisposable
         trayHost.ExitRequested += OnExitRequested;
         trayHost.SettingsRequested += OnSettingsRequested;
         trayHost.StopEffectsRequested += OnStopEffectsRequested;
+        trayHost.UpdateRequested += OnUpdateRequested;
     }
 
     /// <summary>The tray Settings command was chosen. Never raised after exit.</summary>
@@ -64,7 +71,19 @@ public sealed class TrayApplication : IDisposable
     /// </summary>
     public event Action? StopEffectsRequested;
 
+    /// <summary>The tray update item or balloon was chosen. Never raised after exit.</summary>
+    public event Action? UpdateRequested;
+
     public void Start() => trayHost.Show();
+
+    /// <summary>Offers a downloaded version in the tray. Does nothing after exit.</summary>
+    public void ShowUpdateReady(string version)
+    {
+        if (!exited)
+        {
+            trayHost.ShowUpdateReady(version);
+        }
+    }
 
     public void Exit() => Stop(shutDownApplication: true);
 
@@ -80,6 +99,8 @@ public sealed class TrayApplication : IDisposable
 
     private void OnStopEffectsRequested() => StopEffectsRequested?.Invoke();
 
+    private void OnUpdateRequested() => UpdateRequested?.Invoke();
+
     private void Stop(bool shutDownApplication)
     {
         if (exited)
@@ -91,6 +112,7 @@ public sealed class TrayApplication : IDisposable
         trayHost.ExitRequested -= OnExitRequested;
         trayHost.SettingsRequested -= OnSettingsRequested;
         trayHost.StopEffectsRequested -= OnStopEffectsRequested;
+        trayHost.UpdateRequested -= OnUpdateRequested;
 
         // A failed step must not skip the later ones, so the process still shuts down.
         List<Action> steps = [shortcutRegistration.Dispose, overlay.Close, trayHost.Dispose];
