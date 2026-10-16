@@ -1,4 +1,4 @@
-# R4-05: acceptance criteria
+# R4-03: acceptance criteria
 
 **Task:** [first-release acceptance](task.md). **Plan:** [implementation](plan.md).
 
@@ -6,13 +6,14 @@
   `Unverified`.
 - [ ] Evidence identifies the exact draft tag, commit, publish artifact hashes,
   Windows version, and machine configuration.
-- [ ] SHA-256 and provenance verification pass before install.
-- [ ] Standard-user installer, update/defer/restart, settings persistence,
-  portable ZIP, and uninstall pass on Windows 10/11 x64.
+- [ ] SHA-256 and provenance verification pass before the app is run.
+- [ ] Standard-user portable ZIP start, tray behavior, settings persistence,
+  and manual update to a newer ZIP pass on Windows 10/11 x64.
 - [ ] Defender and SmartScreen outcomes are recorded, including any warning;
   no universal warning-free claim is made.
 - [ ] Root README explains download, checksum, attestation, signature status,
-  update consent, and recovery.
+  manual update, and recovery, and states that installer and in-app updates
+  are not yet available.
 - [ ] The owner manually publishes the reviewed draft after all gates pass.
 
 ## Evidence
@@ -20,7 +21,7 @@
 - v3 Step 8 results link:
 - Release tag, commit, and asset hashes:
 - Windows environment:
-- Install/update/portable/uninstall results:
+- Portable start/settings/manual-update results:
 - Defender/SmartScreen results:
 - Published release URL:
 

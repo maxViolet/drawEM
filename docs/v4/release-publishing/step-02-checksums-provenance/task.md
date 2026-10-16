@@ -1,11 +1,11 @@
 # v4 / R4-02: publish checksums and provenance
 
-**Status:** pending. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** [R4-03](../step-03-velopack-installer/task.md).
+**Status:** pending. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** [R4-03](../step-03-first-release-acceptance/task.md).
 
 ## Task
 
 Attach a SHA-256 manifest and GitHub build-provenance attestation to the
-portable ZIP so users can verify its integrity and repository origin. R4-03
+portable ZIP so users can verify its integrity and repository origin. R4-06
 extends coverage to Velopack installer and update packages.
 
 **Depends on:** R4-01. **Does not wait for:** visual effects.

@@ -14,7 +14,7 @@
   ([run 38771883964](https://github.com/maxViolet/drawEM/actions/runs/38771883964)).
   The draft and both tags are deleted, so `v0.0.1` is free for step 4.
 - `SHA256SUMS.txt` is the only list of verifiable downloads: the attestation
-  reads its subjects from it (`subject-checksums`). R4-03 extends coverage by
+  reads its subjects from it (`subject-checksums`). R4-06 extends coverage by
   adding files to one list.
 - Follow R4-01: scripts in `tools/release/`, tests in `ReleaseScriptsTests.cs`
   through `RunScript`. The test project already copies `tools/release/*.ps1`.
@@ -42,7 +42,7 @@ the `sha256sum -c` format. The manifest never lists itself.
    the class's temporary directory and `RunScript`:
    - Two input files passed in reverse name order give exactly two lines,
      sorted ordinally, each with the hash from `SHA256.HashData` and the file
-     name. R4-03 relies on more than one file.
+     name. R4-06 relies on more than one file.
    - The output path given as an input fails and writes no manifest.
    - Two inputs with the same file name fail.
    - A missing input fails.
@@ -118,11 +118,11 @@ the `sha256sum -c` format. The manifest never lists itself.
      commands from step 5, and what each proves. Hash: the file matches the
      published manifest. Provenance: this repository's release workflow built
      it from a specific commit. Authenticode: absent until
-     [ADR-0002](../../../adr/0002-release-signing-license.md) and R4-06 decide
+     [ADR-0002](../../../adr/0002-release-signing-license.md) and R4-04 decide
      otherwise. None of them proves the software is safe.
 
 ## Out of scope
 
-- Velopack downloads: R4-03 adds them to the `Write-Sha256Sums.ps1` input.
-- Signing: R4-06.
-- Publishing the draft: owner action, R4-05.
+- Velopack downloads: R4-06 adds them to the `Write-Sha256Sums.ps1` input.
+- Signing: R4-04.
+- Publishing the draft: owner action, R4-03.

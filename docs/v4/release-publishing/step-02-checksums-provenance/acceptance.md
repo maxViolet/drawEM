@@ -13,7 +13,7 @@
 - [ ] User instructions distinguish hashes, provenance, Authenticode, and
   software safety.
 
-R4-03 owns checksum and attestation coverage for Velopack downloads; it is not
+R4-06 owns checksum and attestation coverage for Velopack downloads; it is not
 an R4-02 acceptance criterion.
 
 ## Evidence

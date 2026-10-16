@@ -55,7 +55,7 @@ the project license, or claim that future releases will be signed.
   and origin checks for unsigned releases. They do not prove that the software
   is safe, and they do not replace Authenticode.
 - No paid signing service, signing certificate, or signing secret is added
-  while the owner questions are open. The R4-06 signing step stays blocked
+  while the owner questions are open. The R4-04 signing step stays blocked
   until the owner answers them and SignPath approves the project.
 - The project license stays unchanged until the owner answers questions 1
   and 2.
