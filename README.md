@@ -6,7 +6,8 @@ overlay across the desktop.
 
 ## Use drawEM
 
-1. Run `DrawEM.App.exe` from the published app directory (see
+1. Run `DrawEM.App.exe` from the folder where you extracted the
+   [download](#download-drawem), or from a published app directory (see
    [Build and run from source](#build-and-run-from-source)). The icon appears
    in the notification area.
 2. Hold the draw shortcut (default `Ctrl+Alt+Z`) and move the pointer to
@@ -98,6 +99,60 @@ See [Rolling back to a v3 drawEM](src/DrawEM.App/Infrastructure/Settings/README.
 for the exact backup to choose, how to restore sounds, and how to upgrade
 again.
 
+## Download drawEM
+
+Download `drawEM-<version>-win-x64.zip` and `SHA256SUMS.txt` from the latest
+release on the [GitHub Releases page](https://github.com/maxViolet/drawEM/releases).
+[Verify the ZIP](#verify-a-download) before you run anything from it.
+
+drawEM is a portable app: there is no installer, and it does not update
+itself. Extract the whole ZIP to a folder you choose, outside
+`%LOCALAPPDATA%\drawEM`, and run `DrawEM.App.exe`. Keep all extracted files
+together. drawEM does not need administrator rights. It stores settings,
+sounds, and logs in `%LOCALAPPDATA%\drawEM`, not in the extracted folder.
+
+The files are not code-signed yet. Windows SmartScreen or Microsoft Defender
+may warn before the first start; the warning depends on the computer and
+Windows settings, so no release is guaranteed to start without one.
+
+## Verify a download
+
+Each release has a `SHA256SUMS.txt` that lists its downloads, and each
+download has a build attestation. In the folder with the downloads:
+
+```powershell
+Get-FileHash .\drawEM-<version>-win-x64.zip -Algorithm SHA256
+Get-Content .\SHA256SUMS.txt
+gh attestation verify .\drawEM-<version>-win-x64.zip -R maxViolet/drawEM `
+  --signer-workflow maxViolet/drawEM/.github/workflows/release.yml
+```
+
+- Hash: the value matching its `SHA256SUMS.txt` line (case does not matter)
+  proves the file is the one the release lists.
+- Provenance: `gh attestation verify` exiting with code 0 proves this
+  repository's release workflow built the file from a specific commit.
+- Authenticode: the files are not signed until the signing decision in
+  [ADR-0002](docs/adr/0002-release-signing-license.md) and R4-04 is made.
+- None of these proves the software is safe.
+
+## Update drawEM
+
+1. Exit drawEM from the tray icon.
+2. Download and [verify](#verify-a-download) the newer ZIP.
+3. Extract it to a new, empty folder. Do not extract it over the old folder.
+4. Run `DrawEM.App.exe` from the new folder. Your settings and sounds load
+   from `%LOCALAPPDATA%\drawEM`.
+5. When the new version works, delete the old folder.
+
+## Recover from a bad update
+
+If the newer version does not start or misbehaves, exit it and run
+`DrawEM.App.exe` from the old folder. Settings are shared, so the old version
+loads them as long as it can read their format. Going back from v4 to v3
+needs extra steps; see [Return to drawEM v3](#return-to-drawem-v3). The logs in
+`%LOCALAPPDATA%\drawEM\logs` (`app.log`, `sound.log`, `effect.log`) record
+failures to report in an issue.
+
 ## Build and run from source
 
 Publish the self-contained x64 app with the .NET SDK:
@@ -141,29 +196,11 @@ attests the ZIP's build provenance, and attaches both files to a draft GitHub
 Release with generated notes. Inspect the draft's notes and assets on GitHub, then publish
 it by hand; the workflow never publishes a release.
 
-## Verify a download
-
-Each release has a `SHA256SUMS.txt` that lists its downloads, and each
-download has a build attestation. In the folder with the downloads:
-
-```powershell
-Get-FileHash .\drawEM-<version>-win-x64.zip -Algorithm SHA256
-Get-Content .\SHA256SUMS.txt
-gh attestation verify .\drawEM-<version>-win-x64.zip -R maxViolet/drawEM `
-  --signer-workflow maxViolet/drawEM/.github/workflows/release.yml
-```
-
-- Hash: the value matching its `SHA256SUMS.txt` line (case does not matter)
-  proves the file is the one the release lists.
-- Provenance: `gh attestation verify` exiting with code 0 proves this
-  repository's release workflow built the file from a specific commit.
-- Authenticode: the files are not signed until the signing decision in
-  [ADR-0002](docs/adr/0002-release-signing-license.md) and R4-04 is made.
-- None of these proves the software is safe.
-
 ## Current limits and plans
 
 - There is no eraser, undo, export, or Windows startup option.
+- There is no installer and no in-app update yet; update by hand as in
+  [Update drawEM](#update-drawem).
 - drawEM does not run elevated. Behavior over elevated apps, exclusive
   fullscreen games, and protected surfaces is not guaranteed.
 - Only the built-in effects are available. Imported effects and video are
