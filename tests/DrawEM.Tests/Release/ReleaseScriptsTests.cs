@@ -101,6 +101,72 @@ public class ReleaseScriptsTests : IDisposable
         Assert.NotEqual(0, result.ExitCode);
     }
 
+    [Fact]
+    public void Sha256Sums_ForFilesInReverseOrder_WritesSortedHashLinesWithLfAndNoBom()
+    {
+        var first = WriteFile("b-second.zip", "second");
+        var second = WriteFile("a-first.exe", "first");
+        var manifest = Path.Combine(_workDirectory, "out", "SHA256SUMS.txt");
+
+        var result = RunScript("Write-Sha256Sums.ps1", "-Path", $"{first},{second}", "-OutputPath", manifest);
+
+        Assert.True(result.ExitCode == 0, result.Output);
+        var bytes = File.ReadAllBytes(manifest);
+        Assert.False(bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF);
+        Assert.Equal(
+            $"{Sha256(second)}  a-first.exe\n{Sha256(first)}  b-second.zip\n",
+            System.Text.Encoding.UTF8.GetString(bytes));
+    }
+
+    [Fact]
+    public void Sha256Sums_WhenOutputIsAnInput_FailsWithoutManifest()
+    {
+        var input = WriteFile("drawEM.zip", "zip");
+        var manifest = Path.Combine(_workDirectory, "SHA256SUMS.txt");
+        File.WriteAllText(manifest, "old");
+
+        var result = RunScript("Write-Sha256Sums.ps1", "-Path", $"{input},{manifest}", "-OutputPath", manifest);
+
+        Assert.NotEqual(0, result.ExitCode);
+        Assert.Equal("old", File.ReadAllText(manifest));
+    }
+
+    [Fact]
+    public void Sha256Sums_WithDuplicateFileNames_Fails()
+    {
+        var first = WriteFile("drawEM.zip", "one");
+        Directory.CreateDirectory(Path.Combine(_workDirectory, "other"));
+        var second = WriteFile(Path.Combine("other", "drawEM.zip"), "two");
+        var manifest = Path.Combine(_workDirectory, "SHA256SUMS.txt");
+
+        var result = RunScript("Write-Sha256Sums.ps1", "-Path", $"{first},{second}", "-OutputPath", manifest);
+
+        Assert.NotEqual(0, result.ExitCode);
+        Assert.False(File.Exists(manifest));
+    }
+
+    [Fact]
+    public void Sha256Sums_WithMissingInput_Fails()
+    {
+        var manifest = Path.Combine(_workDirectory, "SHA256SUMS.txt");
+
+        var result = RunScript("Write-Sha256Sums.ps1",
+            "-Path", Path.Combine(_workDirectory, "missing.zip"), "-OutputPath", manifest);
+
+        Assert.NotEqual(0, result.ExitCode);
+        Assert.False(File.Exists(manifest));
+    }
+
+    private string WriteFile(string name, string content)
+    {
+        var path = Path.Combine(_workDirectory, name);
+        File.WriteAllText(path, content);
+        return path;
+    }
+
+    private static string Sha256(string path) =>
+        Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path))).ToLowerInvariant();
+
     // Builds a stand-in publish directory whose executable carries the version resource of the built app assembly.
     private string CreatePublishDirectory(out string publishDirectory)
     {
