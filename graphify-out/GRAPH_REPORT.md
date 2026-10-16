@@ -1,7 +1,7 @@
 # Graph Report - worktree-r4-03  (2026-10-16)
 
 ## Corpus Check
-- 354 files · ~158,690 words
+- 354 files · ~159,156 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: (none) 10, .ico 1, .pubxml 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b9282537`
+- Built from commit: `a355644e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -631,7 +631,7 @@ Nodes (3): Freehand Drawn Stroke Motif, drawEM Prototype Tray Icon, v3 Step 7 Se
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `v3 Step 8: Publish and verify on Windows (task)` connect `drawEM v3 Roadmap: Drawing and Action Settings` to `FEAT-005: Assisted E2E Runner`?**
-  _High betweenness centrality (0.110) - this node is a cross-community bridge._
+  _High betweenness centrality (0.115) - this node is a cross-community bridge._
 - **Are the 84 inferred relationships involving `ScreenPoint` (e.g. with `.HookCallback()` and `.PushMonitorClip()`) actually correct?**
   _`ScreenPoint` has 84 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `CompletedStrokes`, `ActiveInstance`, `Instance` to the rest of the system?**
@@ -639,8 +639,8 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `SettingsEditorTests` be split into smaller, more focused modules?**
   _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._
 - **Why does `drawEM v3 Roadmap: Drawing and Action Settings` connect `drawEM v3 Roadmap: Drawing and Action Settings` to `drawEM architecture`, `Stage 1 Step 2 Review`, `FEAT-005: Assisted E2E Runner`, `Stage 1 sound implementation plan`?**
-  _High betweenness centrality (0.101) - this node is a cross-community bridge._
+  _High betweenness centrality (0.098) - this node is a cross-community bridge._
 - **Should `StrokeRenderElement` be split into smaller, more focused modules?**
   _Cohesion score 0.09974424552429667 - nodes in this community are weakly interconnected._
-- **Why does `drawEM architecture` connect `drawEM architecture` to `drawEM v3 Roadmap: Drawing and Action Settings`, `drawEM v4 Roadmap: Built-in Monitor and Cursor Effects`, `Stage 1 sound implementation plan`, `Stage 1 Step 2 Review`, `FIX-006: Single Screen Edge`, `v1 roadmap: drawing`?**
+- **Why does `Window` connect `Window` to `SettingsWindow`, `S4-08 acceptance: choose effects in Settings`, `WidthBox`?**
   _High betweenness centrality (0.084) - this node is a cross-community bridge._
