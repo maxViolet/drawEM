@@ -136,9 +136,30 @@ git push origin v0.3.0
 
 The release workflow rejects any other tag form, runs the tests, publishes the
 self-contained app with the tag's version, checks the publish output, and
-attaches `drawEM-<version>-win-x64.zip` to a draft GitHub Release with
-generated notes. Inspect the draft's notes and assets on GitHub, then publish
+builds `drawEM-<version>-win-x64.zip`. It writes `SHA256SUMS.txt` for the ZIP,
+attests the ZIP's build provenance, and attaches both files to a draft GitHub
+Release with generated notes. Inspect the draft's notes and assets on GitHub, then publish
 it by hand; the workflow never publishes a release.
+
+## Verify a download
+
+Each release has a `SHA256SUMS.txt` that lists its downloads, and each
+download has a build attestation. In the folder with the downloads:
+
+```powershell
+Get-FileHash .\drawEM-<version>-win-x64.zip -Algorithm SHA256
+Get-Content .\SHA256SUMS.txt
+gh attestation verify .\drawEM-<version>-win-x64.zip -R maxViolet/drawEM `
+  --signer-workflow maxViolet/drawEM/.github/workflows/release.yml
+```
+
+- Hash: the value matching its `SHA256SUMS.txt` line (case does not matter)
+  proves the file is the one the release lists.
+- Provenance: `gh attestation verify` exiting with code 0 proves this
+  repository's release workflow built the file from a specific commit.
+- Authenticode: the files are not signed until the signing decision in
+  [ADR-0002](docs/adr/0002-release-signing-license.md) and R4-04 is made.
+- None of these proves the software is safe.
 
 ## Current limits and plans
 
