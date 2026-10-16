@@ -10,6 +10,7 @@ using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Domain.Sound;
 using DrawEM.App.Presentation.Settings;
+using DrawEM.App.Presentation.Theme;
 using DrawEM.Tests.Application.Settings;
 
 namespace DrawEM.Tests.Presentation.Settings;
@@ -204,6 +205,38 @@ public sealed class SettingsWindowTests
             Assert.Equal(scale, ScreenScale(tip), 3);
             tip.IsOpen = false;
             effects.IsDropDownOpen = false;
+            window.Close();
+        });
+    }
+
+    [Fact]
+    public void ThemeSwitch_TogglesTheSharedThemeAndTheWindowBrushes()
+    {
+        StaThread.Run(() =>
+        {
+            var theme = new UiThemeState(UiTheme.Dark);
+            var window = new SettingsWindow(1200, theme);
+            var model = new SettingsViewModel(
+                new SettingsEditor(() => TestSettings.WithSounds(), new FakeLibrary(), new FakeSettingsSave(), new FakeSampler(), new FakeEffectSampler(), _ => { }),
+                new FakeCapture(),
+                window);
+            Show(window, model);
+            Layout(window);
+            var themeSwitch = (ToggleButton)window.FindName("ThemeSwitch");
+            var dark = ((SolidColorBrush)window.FindResource("Glass.Foreground")).Color;
+            Assert.False(themeSwitch.IsChecked);
+
+            themeSwitch.IsChecked = true;
+            Layout(window);
+
+            Assert.Equal(UiTheme.Light, theme.Current);
+            Assert.NotEqual(dark, ((SolidColorBrush)window.FindResource("Glass.Foreground")).Color);
+
+            theme.Toggle();
+            Layout(window);
+
+            Assert.False(themeSwitch.IsChecked);
+            Assert.Equal(dark, ((SolidColorBrush)window.FindResource("Glass.Foreground")).Color);
             window.Close();
         });
     }

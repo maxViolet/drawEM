@@ -5,58 +5,75 @@ namespace DrawEM.Tests.Infrastructure;
 
 public class NotifyIconTrayHostTests
 {
-    [Fact]
-    public void LeftClickMenu_FindsTheNotifyIconsOwnMenuDisplay()
+    [Theory]
+    [InlineData(MouseButtons.Left)]
+    [InlineData(MouseButtons.Right)]
+    public void Click_OnTheIcon_ShowsTheMenu(MouseButtons button)
     {
-        // A left click shows the tray menu through the method a right click uses; a WinForms update could
-        // rename that private method, and this test then fails instead of the click silently doing nothing.
-        Assert.True(NotifyIconTrayHost.CanShowMenuOnLeftClick);
+        var menu = new FakeTrayMenu();
+        using var host = new NotifyIconTrayHost(menu);
+
+        host.OnIconClick(button);
+
+        Assert.Equal(1, menu.Shown);
     }
 
     [Fact]
-    public void ShowMenu_WithoutTheNotifyIconsOwnMenuDisplay_ShowsTheMenuAtTheCursor()
+    public void Click_WithTheMiddleButton_DoesNothing()
     {
-        StaThread.Run(() =>
-        {
-            using var menu = new ContextMenuStrip();
-            menu.Items.Add("Exit");
-            using var notifyIcon = new NotifyIcon { ContextMenuStrip = menu };
+        var menu = new FakeTrayMenu();
+        using var host = new NotifyIconTrayHost(menu);
 
-            NotifyIconTrayHost.ShowMenu(notifyIcon, showContextMenu: null);
+        host.OnIconClick(MouseButtons.Middle);
 
-            Assert.True(menu.Visible);
-            menu.Close();
-        });
+        Assert.Equal(0, menu.Shown);
     }
 
     [Fact]
-    public void UpdateItem_IsHiddenAtFirst()
+    public void MenuCommands_RaiseTheTrayCommands()
     {
-        StaThread.Run(() =>
-        {
-            using var host = new NotifyIconTrayHost();
+        var menu = new FakeTrayMenu();
+        using var host = new NotifyIconTrayHost(menu);
+        var commands = new List<string>();
+        host.SettingsRequested += () => commands.Add("settings");
+        host.StopEffectsRequested += () => commands.Add("stop effects");
+        host.UpdateRequested += () => commands.Add("update");
+        host.ExitRequested += () => commands.Add("exit");
 
-            Assert.False(host.UpdateItem.Available);
-        });
+        menu.Choose(TrayMenuCommand.Settings);
+        menu.Choose(TrayMenuCommand.StopEffects);
+        menu.Choose(TrayMenuCommand.Update);
+        menu.Choose(TrayMenuCommand.Exit);
+
+        Assert.Equal(["settings", "stop effects", "update", "exit"], commands);
     }
 
     [Fact]
-    public void ShowUpdateReady_ShowsTheVersionAboveExit_AndAClickRequestsTheUpdate()
+    public void ShowUpdateReady_ShowsTheUpdateInTheMenu()
     {
         StaThread.Run(() =>
         {
-            using var host = new NotifyIconTrayHost();
-            var requests = 0;
-            host.UpdateRequested += () => requests++;
+            var menu = new FakeTrayMenu();
+            using var host = new NotifyIconTrayHost(menu);
 
             host.ShowUpdateReady("1.2.3");
-            host.UpdateItem.PerformClick();
 
-            var items = host.Menu.Items.Cast<ToolStripItem>().ToList();
-            Assert.True(host.UpdateItem.Available);
-            Assert.Equal("Restart to update to 1.2.3", host.UpdateItem.Text);
-            Assert.True(items.IndexOf(host.UpdateItem) < items.FindIndex(item => item.Text == "Exit"));
-            Assert.Equal(1, requests);
+            Assert.Equal(["1.2.3"], menu.Updates);
         });
+    }
+
+    private sealed class FakeTrayMenu : ITrayMenu
+    {
+        public int Shown { get; private set; }
+
+        public List<string> Updates { get; } = [];
+
+        public event Action<TrayMenuCommand>? Chosen;
+
+        public void Show() => Shown++;
+
+        public void ShowUpdate(string version) => Updates.Add(version);
+
+        public void Choose(TrayMenuCommand command) => Chosen?.Invoke(command);
     }
 }
