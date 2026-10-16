@@ -2106,9 +2106,9 @@
     "semantic_hash": ""
   },
   "src/DrawEM.App/Application/Updates/UpdateController.cs": {
-    "mtime": 1792133426.9347732,
-    "seen": 1792133715.6050634,
-    "ast_hash": "1eeeabbe35c42454b8b7028ce116649d",
+    "mtime": 1792135672.4257958,
+    "seen": 1792135721.4128923,
+    "ast_hash": "3c88198d23c137bdae1222d133c9e036",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Infrastructure/Updates/LoggingUpdateFailureReporter.cs": {
@@ -2142,9 +2142,9 @@
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Application/Updates/UpdateControllerTests.cs": {
-    "mtime": 1792133426.9407752,
-    "seen": 1792133715.6210818,
-    "ast_hash": "cfa78d820dd8eba30bb630549d6688eb",
+    "mtime": 1792135651.4409926,
+    "seen": 1792135721.4464715,
+    "ast_hash": "719ad6b5bd7064bee3a7ad600022277d",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Infrastructure/Updates/UpdateFailureLogTests.cs": {
