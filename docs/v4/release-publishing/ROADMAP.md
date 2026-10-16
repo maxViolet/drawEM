@@ -9,7 +9,8 @@ Publish Windows x64 releases from GitHub with both a portable ZIP and a
 per-user Velopack installer. Publish checksums and build provenance so users
 can verify artifact integrity and origin. Check for updates at app startup and
 once every 24 hours; download in the background and ask before installing or
-restarting the tray app.
+restarting the tray app. The first releases ship the portable ZIP only; the
+Velopack installer and in-app updates are the last two steps (R4-06, R4-07).
 
 The first public release may be unsigned because the owner set a zero
 additional-cost constraint and selected GitHub distribution. Treat signing as
@@ -40,7 +41,7 @@ Inspected on 2026-10-15:
   `%LOCALAPPDATA%\drawEM`; logs live in `%LOCALAPPDATA%\drawEM\logs`.
 - The portable ZIP has no install step. The user chooses where to extract it,
   and nothing prevents extraction into `%LOCALAPPDATA%\drawEM`. Separation of
-  application files from settings is therefore not guaranteed today. R4-03
+  application files from settings is therefore not guaranteed today. R4-06
   adds that guarantee only for the tested default Velopack install.
 - The public repository currently has no detected license and no GitHub
   Releases. A SignPath Foundation application cannot be assumed eligible.
@@ -56,9 +57,9 @@ Inspected on 2026-10-15:
 | Microsoft Artifact Signing | Not selected under the current budget. | Reconsider only if the owner changes the no-cost constraint. | Basic is USD 9.99/account/month with 5,000 signatures/month, then USD 0.005/signature. Individual eligibility is limited to the US and Canada; organization eligibility is limited to listed countries. A paid Azure subscription is required. [Pricing](https://learn.microsoft.com/en-us/azure/artifact-signing/how-to-change-sku) · [eligibility](https://learn.microsoft.com/en-us/azure/artifact-signing/quickstart) · [subscription requirement](https://learn.microsoft.com/en-us/azure/artifact-signing/faq) |
 | OV certificate on cloud HSM | Not selected. | Hardware-backed key handling can improve key custody but adds a certificate and HSM cost and operational setup. | Not estimated because it conflicts with the owner's zero-cost constraint. CA/B Forum requires publicly trusted code-signing keys to be protected by a hardware crypto module. [CA/B Forum requirements](https://cabforum.org/working-groups/code-signing/requirements/) |
 | Hashes and provenance | Generate `SHA256SUMS.txt` and attest each user-downloadable release artifact with `actions/attest@v4`; users verify with `Get-FileHash` and `gh attestation verify`. | `actions/attest-build-provenance` is not the preferred action for a new integration; its maintainers direct new implementations to `actions/attest`. | No added GitHub charge for a public repository on a current GitHub plan. CI needs `id-token: write`, `attestations: write`, and read access to contents. An attestation proves origin, not that software is safe. [GitHub attestations](https://docs.github.com/en/actions/concepts/security/artifact-attestations) · [current action](https://github.com/actions/attest) |
-| Installer and updates | Velopack Setup.exe and its update feed. Use per-user installation. | Inno Setup/WiX plus a separate update service creates more packaging and update code to own. | Velopack is MIT-licensed. Setup.exe installs per user without elevation. Planned package ID: `drawEM.Desktop`; it must not change after the first release. Verify and record the actual default install directory on Windows in R4-03; it must not be, or contain, `%LOCALAPPDATA%\drawEM`. WPF needs a custom `Main` bootstrap with `VelopackApp.Build().Run()` before WPF initialization. [License](https://github.com/velopack/velopack) · [WPF integration](https://docs.velopack.io/getting-started/wpf) · [installer](https://docs.velopack.io/packaging/operating-systems/windows) |
+| Installer and updates | Velopack Setup.exe and its update feed. Use per-user installation. | Inno Setup/WiX plus a separate update service creates more packaging and update code to own. | Velopack is MIT-licensed. Setup.exe installs per user without elevation. Planned package ID: `drawEM.Desktop`; it must not change after the first release that ships the installer. Verify and record the actual default install directory on Windows in R4-06; it must not be, or contain, `%LOCALAPPDATA%\drawEM`. WPF needs a custom `Main` bootstrap with `VelopackApp.Build().Run()` before WPF initialization. [License](https://github.com/velopack/velopack) · [WPF integration](https://docs.velopack.io/getting-started/wpf) · [installer](https://docs.velopack.io/packaging/operating-systems/windows) |
 | Update UX | Check at startup and at most every 24 hours; download in background; user confirms install and restart. Leave settings under `%LOCALAPPDATA%\drawEM`. | Silent automatic restart is rejected because drawEM is a tray app and users may be drawing or playing audio. | No external account or service. Windows integration and update testing are required. Velopack update checks can use GitHub Releases. [Update integration](https://docs.velopack.io/integrating/overview) · [GitHub source](https://docs.velopack.io/integrating/update-sources) |
-| Distribution | GitHub Releases first, WinGet after a stable release. Keep portable ZIP for manual updates. | Scoop and Chocolatey are deferred because they add catalog-maintenance work without a stated need. | WinGet submission is a community PR with automated validation and moderator review; a version-specific installer URL and SHA-256 are required. First submission is manual; later release automation is a separate step. [First contribution](https://github.com/microsoft/winget-pkgs/blob/master/doc/FirstContribution.md) · [validation](https://learn.microsoft.com/en-us/windows/package-manager/package/winget-validation) |
+| Distribution | GitHub Releases first, WinGet after a stable release. WinGet lists the portable ZIP as a `zip` package with a nested portable executable; moving the listing to the installer later needs a separate task. Keep portable ZIP for manual updates. | Scoop and Chocolatey are deferred because they add catalog-maintenance work without a stated need. | WinGet submission is a community PR with automated validation and moderator review; a version-specific installer URL and SHA-256 are required. First submission is manual; later release automation is a separate step. [First contribution](https://github.com/microsoft/winget-pkgs/blob/master/doc/FirstContribution.md) · [validation](https://learn.microsoft.com/en-us/windows/package-manager/package/winget-validation) |
 | Release safety | Use a verified `vX.Y.Z` tag as the sole version source. Build a draft with generated, owner-reviewed notes; manually publish after all gates pass. | Immediate publishing on tag push is rejected because there is no inspection window. | No added service cost. GitHub's release event `published` can trigger post-publication automation. Keep the tag immutable in practice; do not overwrite a public release. [GitHub release workflow events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows) · [`gh release create`](https://cli.github.com/manual/gh_release_create) |
 | Rollback | Publish a corrected higher version; give manual recovery instructions for installs that cannot launch or update. | Do not promise automatic downgrade. Velopack's normal startup update flow advances to higher versions; downgrade requires explicit application logic and the older full package to remain available. | No external cost. Test update from the previous release to the forward fix. [Velopack specific-version update](https://docs.velopack.io/integrating/specific-version) |
 | Antivirus and SmartScreen | Record real Windows results; publish a verification path and state what signing does and does not establish. | No claim of guaranteed warning-free execution. Store distribution can be reconsidered only as a new owner decision. | Requires a real Windows machine and may require Defender false-positive investigation. Global low-level input hooks can attract security scrutiny; a valid signature does not prove behavior is safe. [Microsoft SmartScreen guidance](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation) |
@@ -98,17 +99,17 @@ and access to the required Windows machines are not included.
 |---:|---|---|---|---:|
 | 1 | [R4-01](step-01-draft-release/task.md) | Tag-versioned Windows publish produces a draft GitHub release and preserves the portable ZIP. | None | 0.5–1 day |
 | 2 | [R4-02](step-02-checksums-provenance/task.md) | The portable ZIP has a SHA-256 entry and a verifiable build attestation. | R4-01 | 0.5 day |
-| 3 | [R4-03](step-03-velopack-installer/task.md) | Velopack creates the per-user installer and packages; checksums and attestations extend to every new download. | R4-01, R4-02 | 1–2 days |
-| 4 | [R4-04](step-04-tray-updates/task.md) | Tray app offers consent-based update installation while preserving settings. | R4-03 | 1–2 days |
-| 5 | [R4-05](step-05-first-release-acceptance/task.md) | Windows install/update evidence and user instructions are ready; first v3.x GitHub release may be published. | R4-02, R4-04, v3 Step 8 gate | 1 day plus manual run |
-| 6 | [R4-06](step-06-signpath-signing/task.md) | If eligible and approved, later releases sign app binaries and installer through SignPath. | R4-05 and owner decisions in ADR-0002 | 1–2 days plus external review |
-| 7 | [R4-07](step-07-winget/task.md) | Stable installer is listed in WinGet; later updates can submit a manifest PR from release automation. | R4-05 | 0.5–1 day plus moderator review |
+| 3 | [R4-03](step-03-first-release-acceptance/task.md) | Windows portable-ZIP evidence and user instructions are ready; first v3.x GitHub release may be published. | R4-02, v3 Step 8 gate | 1 day plus manual run |
+| 4 | [R4-04](step-04-signpath-signing/task.md) | If eligible and approved, later releases sign app binaries through SignPath. | R4-03 and owner decisions in ADR-0002 | 1–2 days plus external review |
+| 5 | [R4-05](step-05-winget/task.md) | Stable portable ZIP is listed in WinGet; later updates can submit a manifest PR from release automation. | R4-03 | 0.5–1 day plus moderator review |
+| 6 | [R4-06](step-06-velopack-installer/task.md) | Velopack creates the per-user installer and packages; checksums, attestations, and signing (if R4-04 is done) extend to every new download. | R4-01, R4-02, R4-03 | 1–2 days |
+| 7 | [R4-07](step-07-tray-updates/task.md) | Tray app offers consent-based update installation while preserving settings. | R4-06 and a published installer release | 1–2 days |
 
-R4-01 through R4-05 can be implemented without waiting for visual effects.
-The first public release cannot precede the v3 Step 8 gate. R4-03/R4-04 may
-touch shared `App.xaml.cs`, `DrawEM.App.csproj`, `README.md`, or `ci.yml`; those
-PRs must name the release-publishing package, check the latest visual-effects
-changes, and rebase when required by [the shared-file rules](../README.md#rules-for-parallel-work).
+No step waits for visual effects. The first public release cannot precede the v3 Step 8
+gate. R4-06/R4-07 may touch shared `App.xaml.cs`, `DrawEM.App.csproj`,
+`README.md`, or `ci.yml`; those PRs must name the release-publishing package,
+check the latest visual-effects changes, and rebase when required by
+[the shared-file rules](../README.md#rules-for-parallel-work).
 S4-12 uses the release pipeline available when it starts and does not wait for
 this package.
 

@@ -6,8 +6,10 @@ for the conditional license and SignPath decision.
 
 Follow the steps in order. The package can be developed independently of visual
 effects, but the first public release must pass the v3 Step 8 release gate.
-Every task has its own `task.md`, `plan.md`, and `acceptance.md` in its step
-folder; each step below links to them.
+The first releases ship the portable ZIP only; the Velopack installer and
+in-app updates are the last two steps. Every task has its own `task.md`,
+`plan.md`, and `acceptance.md` in its step folder; each step below links to
+them.
 
 ## Steps
 
@@ -31,75 +33,81 @@ each download users are expected to verify.
 
 **Done when:** The portable ZIP has a matching checksum and attestation;
 `gh attestation verify` succeeds with `maxViolet/drawEM`; a modified file fails
-verification. R4-03 extends this to Velopack downloads.
+verification. R4-06 extends this to Velopack downloads.
 
 [Task](step-02-checksums-provenance/task.md) · [Plan](step-02-checksums-provenance/plan.md) ·
 [Acceptance](step-02-checksums-provenance/acceptance.md)
 
-### R4-03: package a per-user installer
-
-**Do:** Add Velopack packaging while keeping the portable ZIP. Add the WPF
-startup hook required by Velopack and keep settings in `%LOCALAPPDATA%\drawEM`.
-
-**Done when:** A standard user installs from `Setup.exe` without elevation,
-starts drawEM in the tray, sees a Start menu/uninstall entry, uninstall keeps
-settings in `%LOCALAPPDATA%\drawEM`, the portable ZIP remains usable, and each
-new Velopack download is hashed and attested.
-
-[Task](step-03-velopack-installer/task.md) · [Plan](step-03-velopack-installer/plan.md) ·
-[Acceptance](step-03-velopack-installer/acceptance.md)
-
-### R4-04: add consent-based tray updates
-
-**Do:** Check for updates at startup and no more than once each 24 hours;
-download in the background and ask before applying an update or restarting.
-
-**Done when:** Automated tests prove cadence, deferral, consent, and error
-handling. A Windows upgrade preserves settings and resumes the tray app only
-after the user accepts the restart.
-
-[Task](step-04-tray-updates/task.md) · [Plan](step-04-tray-updates/plan.md) ·
-[Acceptance](step-04-tray-updates/acceptance.md)
-
-### R4-05: pass first-release acceptance
+### R4-03: pass first-release acceptance
 
 **Do:** Record exact build and artifact identities, complete release-blocking
-v3 Step 8 checks, test installation/update/portable paths on Windows 10/11 x64,
-and publish user instructions. The first v3.x GitHub release may be unsigned.
+v3 Step 8 checks, test the portable ZIP on Windows 10/11 x64, and publish
+download, verification, and manual update instructions. The first v3.x GitHub
+release ships the portable ZIP only and may be unsigned.
 
 **Done when:** Every v3 Step 8 check is resolved, release CI passes, all
 required Windows results are recorded, and the owner publishes the reviewed
 draft manually. Record any SmartScreen/Defender warning; do not claim a
 universal warning-free result.
 
-[Task](step-05-first-release-acceptance/task.md) · [Plan](step-05-first-release-acceptance/plan.md) ·
-[Acceptance](step-05-first-release-acceptance/acceptance.md)
+[Task](step-03-first-release-acceptance/task.md) · [Plan](step-03-first-release-acceptance/plan.md) ·
+[Acceptance](step-03-first-release-acceptance/acceptance.md)
 
-### R4-06: add conditional SignPath signing
+### R4-04: add conditional SignPath signing
 
 **Do:** After the owner resolves ADR-0002 and SignPath approves the project,
-integrate the signing request into Velopack packaging. Store the API token in a
-review-protected GitHub Environment, never in the repository.
+sign the drawEM executables and DLLs before the portable ZIP is built. Store
+the API token in a review-protected GitHub Environment, never in the
+repository.
 
-**Done when:** The approved workflow signs every drawEM PE executable and DLL,
-Velopack Setup.exe, and any MSI if one is produced; signature validation passes;
-every release request receives its required human approval. If eligibility or
-approval is denied, record that decision and keep the unsigned path explicit.
+**Done when:** The approved workflow signs every drawEM PE executable and DLL
+in the portable ZIP; signature validation passes; every release request
+receives its required human approval. If eligibility or approval is denied,
+record that decision and keep the unsigned path explicit. R4-06 extends
+signing to Setup.exe and Update.exe.
 
-[Task](step-06-signpath-signing/task.md) · [Plan](step-06-signpath-signing/plan.md) ·
-[Acceptance](step-06-signpath-signing/acceptance.md)
+[Task](step-04-signpath-signing/task.md) · [Plan](step-04-signpath-signing/plan.md) ·
+[Acceptance](step-04-signpath-signing/acceptance.md)
 
-### R4-07: list stable releases in WinGet
+### R4-05: list stable releases in WinGet
 
-**Do:** Submit the first manifest manually after a stable GitHub release. Add
-release-workflow automation for later version-specific manifest pull requests.
+**Do:** Submit the first manifest for the portable ZIP manually after a stable
+GitHub release. Add release-workflow automation for later version-specific
+manifest pull requests.
 
 **Done when:** The manifest validates locally, references the official stable
-installer URL and matching SHA-256, and the accepted package installs from
-WinGet. Record catalog review separately; it does not block GitHub releases.
+ZIP URL and matching SHA-256, and the accepted package installs from WinGet.
+Record catalog review separately; it does not block GitHub releases.
 
-[Task](step-07-winget/task.md) · [Plan](step-07-winget/plan.md) ·
-[Acceptance](step-07-winget/acceptance.md)
+[Task](step-05-winget/task.md) · [Plan](step-05-winget/plan.md) ·
+[Acceptance](step-05-winget/acceptance.md)
+
+### R4-06: package a per-user installer
+
+**Do:** Add Velopack packaging while keeping the portable ZIP. Add the WPF
+startup hook required by Velopack and keep settings in `%LOCALAPPDATA%\drawEM`.
+
+**Done when:** A standard user installs from `Setup.exe` without elevation,
+starts drawEM in the tray, sees a Start menu/uninstall entry, uninstall keeps
+settings in `%LOCALAPPDATA%\drawEM`, the portable ZIP and any WinGet listing
+remain usable, and each new Velopack download is hashed, attested, and signed
+when R4-04 is done.
+
+[Task](step-06-velopack-installer/task.md) · [Plan](step-06-velopack-installer/plan.md) ·
+[Acceptance](step-06-velopack-installer/acceptance.md)
+
+### R4-07: add consent-based tray updates
+
+**Do:** Check for updates at startup and no more than once each 24 hours;
+download in the background and ask before applying an update or restarting.
+Only Velopack installs check for updates.
+
+**Done when:** Automated tests prove cadence, deferral, consent, and error
+handling. A Windows upgrade preserves settings and resumes the tray app only
+after the user accepts the restart.
+
+[Task](step-07-tray-updates/task.md) · [Plan](step-07-tray-updates/plan.md) ·
+[Acceptance](step-07-tray-updates/acceptance.md)
 
 ## First action
 

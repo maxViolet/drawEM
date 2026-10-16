@@ -1,4 +1,4 @@
-# R4-04: acceptance criteria
+# R4-07: acceptance criteria
 
 **Task:** [tray updates](task.md). **Plan:** [implementation](plan.md).
 
@@ -9,9 +9,12 @@
 - [ ] User can defer an update without losing the notification or current
   session; no update installs or restarts before confirmation.
 - [ ] Confirming update closes/restarts safely and launches the new version.
-- [ ] Windows upgrade preserves schema 1/schema 2 settings, sound files, and
+- [ ] Portable ZIP and WinGet portable installs make no update check and show
+  no update prompt.
+- [ ] Windows upgrade preserves schema 1, 2, and 3 settings, sound files, and
   tray behavior; failed/interrupted update has a documented recovery path.
 - [ ] Manual Windows checks record the exact old/new versions and artifact IDs.
+- [ ] Root README documents check, defer, install, and recovery.
 
 ## Evidence
 

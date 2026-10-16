@@ -30,7 +30,7 @@ IDs, and branches, so one developer or agent can work on each at the same time.
 ## Rules for parallel work
 
 - Branch and PR names follow [AGENTS.md](../../AGENTS.md). Use the package's
-  task ID: `S4-06-effect-shortcuts`, `R4-06-signpath-signing`.
+  task ID: `S4-06-effect-shortcuts`, `R4-04-signpath-signing`.
 - Each package changes only its own files where possible. Visual effects owns
   `src/DrawEM.App/**/Effects/**` and the settings/shortcut changes in its
   roadmap. Release publishing owns `.github/workflows/release.yml`, packaging

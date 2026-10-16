@@ -1,4 +1,4 @@
-# R4-03: acceptance criteria
+# R4-06: acceptance criteria
 
 **Task:** [Velopack installer](task.md). **Plan:** [implementation](plan.md).
 
@@ -27,10 +27,17 @@
   claimed to preserve settings.
 - [ ] The custom WPF `Main` runs Velopack hooks before WPF initialization and
   does not initialize tray, hook, or settings services during fast-exit hooks.
-- [ ] Settings remain under `%LOCALAPPDATA%\drawEM`; schema 1 and schema 2
-  files are preserved across install/update.
+- [ ] Settings remain under `%LOCALAPPDATA%\drawEM`; schema 1, 2, and 3
+  files are preserved across install and uninstall.
 - [ ] Windows CI packaging smoke succeeds with the app self-contained,
   not trimmed, and not single-file.
+- [ ] If R4-04 is done: app binaries, Setup.exe, and Update.exe carry valid
+  signatures from the approved publisher, and checksums and attestations
+  identify the signed outputs. Otherwise the unsigned installer is recorded.
+- [ ] If R4-05 is done: the WinGet manifest still points at the portable ZIP
+  and WinGet install of the new version still starts drawEM.
+- [ ] Root README has install, uninstall, and verification instructions for
+  the Setup.exe and states that in-app updates are not yet available.
 
 ## Evidence
 

@@ -33,13 +33,13 @@ Inspected on 2026-10-15:
 |---|---|
 | Area | Decision |
 |---|---|
-| First release | GitHub v3.x after the v3 Step 8 release gate is closed; the release-publishing work can proceed in parallel with visual effects. |
+| First release | GitHub v3.x after the v3 Step 8 release gate is closed, portable ZIP only; the release-publishing work can proceed in parallel with visual effects. |
 | Signing | No paid service. The first release may be unsigned. Consider SignPath Foundation only after the owner chooses a qualifying license, a release in the form to be signed exists, and SignPath approves the project. |
 | Artifact verification | Publish SHA-256 checksums and GitHub build-provenance attestations. |
-| Installer and updates | Velopack Setup.exe, per-user install, update check at startup and every 24 hours, background download, user confirmation before install/restart. |
+| Installer and updates | Last two steps (R4-06, R4-07): Velopack Setup.exe, per-user install, update check at startup and every 24 hours, background download, user confirmation before install/restart. |
 | Portable download | Keep the ZIP as a manually updated option. |
 | Release control | Build a draft from a verified version tag; inspect it before manual publication. Tag is the version source; review generated release notes. |
-| Catalog | Submit to WinGet after a stable release; catalog review does not block the GitHub release. |
+| Catalog | Submit the portable ZIP to WinGet after a stable release; catalog review does not block the GitHub release. |
 | Recovery | Publish a corrected higher version. Do not promise automatic downgrade. |
 
 ## Implementation plan
