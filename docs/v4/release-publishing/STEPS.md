@@ -1,6 +1,6 @@
 # R4: release publishing steps
 
-**Status:** R4-01 done; R4-02 … R4-07 pending. **Contract:** [roadmap](ROADMAP.md).
+**Status:** R4-01 and R4-02 done; R4-03 … R4-07 pending. **Contract:** [roadmap](ROADMAP.md).
 Use the [owner questions in ADR-0002](../../adr/0002-release-signing-license.md)
 for the conditional license and SignPath decision.
 
@@ -111,6 +111,6 @@ after the user accepts the restart.
 
 ## First action
 
-Start [R4-02](step-02-checksums-provenance/task.md): add failing tests for the
-`SHA256SUMS.txt` writer, then add the manifest and attestation to the release
-workflow.
+Start [R4-03](step-03-first-release-acceptance/task.md): reconcile every open
+v3 Step 8 check with the release gate, then test the draft's exact portable ZIP
+on a clean Windows machine.
