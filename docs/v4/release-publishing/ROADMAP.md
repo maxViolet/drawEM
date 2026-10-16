@@ -45,9 +45,10 @@ Inspected on 2026-10-15:
   adds that guarantee only for the tested default Velopack install.
 - The public repository currently has no detected license and no GitHub
   Releases. A SignPath Foundation application cannot be assumed eligible.
-- The v3 Step 8 results still have seven unverified desktop checks. The
-  accepted release gate for this package requires those checks to be resolved
-  before the first public release.
+- The v3 Step 8 results had seven unverified desktop checks. The release
+  gate for this package requires them resolved before the first public
+  release; on 2026-10-16 the owner resolved them as Skipped for the first
+  portable release (high effort, small impact).
 
 ## Decisions and alternatives
 
@@ -133,7 +134,8 @@ Keep evidence in four separate groups:
    separately from GitHub release readiness.
 
 No automated success substitutes for the real Windows install/update checks.
-The first public release gate requires all v3 Step 8 checks resolved, all
+The first public release gate requires all v3 Step 8 checks resolved (Pass,
+or Skipped by owner decision), all
 automated and CI checks passing, and all required manual results recorded.
 Residual SmartScreen warnings are documented rather than treated as a
 universal guarantee failure.

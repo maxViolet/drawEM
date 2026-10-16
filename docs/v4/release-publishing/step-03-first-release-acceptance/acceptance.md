@@ -2,8 +2,8 @@
 
 **Task:** [first-release acceptance](task.md). **Plan:** [implementation](plan.md).
 
-- [ ] All v3 Step 8 release-blocking checks are `Pass`; no required check is
-  `Unverified`.
+- [x] All v3 Step 8 release-blocking checks are `Pass` or `Skipped` by owner
+  decision; no required check is `Unverified`.
 - [ ] Evidence identifies the exact draft tag, commit, publish artifact hashes,
   Windows version, and machine configuration.
 - [ ] SHA-256 and provenance verification pass before the app is run.
@@ -18,23 +18,27 @@
 
 ## Release gate
 
-Every row must be **Pass** before the owner publishes the draft. Values:
-**Pass**, **Fail**, **Unverified** (not run yet).
+Every row must be **Pass** (or **Skipped** by owner decision) before the
+owner publishes the draft. Values:
+**Pass**, **Fail**, **Skipped** (owner decision), **Unverified** (not run
+yet).
 
 ### v3 Step 8 checks still open
 
 From [v3 Step 8 results](../../../v3/STEP-8-ACCEPTANCE-RESULTS.md) on
-2026-10-16. Record the result there and copy it here.
+2026-10-16. **Owner decision, 2026-10-16:** the owner skipped these 7 checks
+for the first portable release. They need extra keyboard layouts or monitors;
+the effort is high and the impact is small. A v4 release still needs them.
 
 | Check | Needs | Result |
 | --- | --- | --- |
-| 2.7 German (Germany): Right Alt/AltGr typing; Left Alt bindings | German layout installed | Unverified |
-| 2.8 Polish (Programmers): Right Alt/AltGr typing; Left Alt bindings | Polish (Programmers) layout installed | Unverified |
-| 4.2 Line and dot physical width at 150% | A 150% monitor | Unverified |
-| 4.3 Line and dot physical width across a mixed-DPI pair | Two monitors with different DPI | Unverified |
-| 4.5 Save clears drawings on all monitors | A second monitor | Unverified |
-| 6.1 v1 smoke test 1–10 with saved settings | A second monitor | Unverified |
-| 6.2 v2 sound scenarios 1–15 with saved settings | A second monitor (scenario 12) | Unverified |
+| 2.7 German (Germany): Right Alt/AltGr typing; Left Alt bindings | German layout installed | Skipped |
+| 2.8 Polish (Programmers): Right Alt/AltGr typing; Left Alt bindings | Polish (Programmers) layout installed | Skipped |
+| 4.2 Line and dot physical width at 150% | A 150% monitor | Skipped |
+| 4.3 Line and dot physical width across a mixed-DPI pair | Two monitors with different DPI | Skipped |
+| 4.5 Save clears drawings on all monitors | A second monitor | Skipped |
+| 6.1 v1 smoke test 1–10 with saved settings | A second monitor | Skipped |
+| 6.2 v2 sound scenarios 1–15 with saved settings | A second monitor (scenario 12) | Skipped |
 
 ### Draft release checks (plan steps 2–4, 6)
 

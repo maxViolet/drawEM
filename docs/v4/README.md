@@ -50,5 +50,6 @@ IDs, and branches, so one developer or agent can work on each at the same time.
   publishing does not wait for effects.
 - The v3 Step 8 Windows acceptance gate still applies before any v4 release.
 - Release publishing's first public v3.x release also waits for the v3 Step 8
-  desktop checks to be resolved. Conditional signing prerequisites are recorded
+  desktop checks to be resolved; the owner skipped the 7 open ones for that
+  release on 2026-10-16. Conditional signing prerequisites are recorded
   in [ADR-0002](../adr/0002-release-signing-license.md).
