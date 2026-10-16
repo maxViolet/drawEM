@@ -12,7 +12,22 @@
     <ApplicationIcon>Assets\drawEM.ico</ApplicationIcon>
     <!-- WFAC010 targets WinForms-hosted apps. WPF owns this process and reads DPI awareness only from app.manifest; WinForms is used for NotifyIcon alone. -->
     <NoWarn>$(NoWarn);WFAC010</NoWarn>
+    <!-- Velopack installs to %LocalAppData%\<id> and deletes that folder on uninstall, so the ID must never be
+         the settings folder name drawEM. The release workflows read it with -getProperty:VelopackPackId.
+         Never change it after the first release that ships the installer. -->
+    <VelopackPackId>drawEM.Desktop</VelopackPackId>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- VelopackPackageIdentityTests reads the ID from here, so the test and vpk pack use one value. -->
+    <AssemblyMetadata Include="VelopackPackId" Value="$(VelopackPackId)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Program.Main runs Velopack's hooks before WPF starts. -->
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" />
+  </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Assets\drawEM.ico" />
@@ -29,6 +44,8 @@
 
   <ItemGroup>
     <PackageReference Include="SkiaSharp.Skottie" Version="4.153.1" />
+    <!-- Same version as the vpk tool in .config/dotnet-tools.json. -->
+    <PackageReference Include="Velopack" Version="1.2.161" />
   </ItemGroup>
 
 </Project>

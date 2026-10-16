@@ -37,6 +37,12 @@ public partial class TrayMenuWindow : Window, ITrayMenu
             new Rect(workArea.X / scale, workArea.Y / scale, workArea.Width / scale, workArea.Height / scale));
     }
 
+    void ITrayMenu.ShowUpdate(string version)
+    {
+        UpdateText.Text = $"Restart to update to {version}";
+        UpdateItem.Visibility = Visibility.Visible;
+    }
+
     /// <summary>Opens the menu with a corner at <paramref name="cursor"/>, inside <paramref name="workArea"/>.</summary>
     internal void ShowAt(Point cursor, Rect workArea)
     {
@@ -69,6 +75,8 @@ public partial class TrayMenuWindow : Window, ITrayMenu
     private void OnSettings(object sender, RoutedEventArgs e) => Choose(TrayMenuCommand.Settings);
 
     private void OnStopEffects(object sender, RoutedEventArgs e) => Choose(TrayMenuCommand.StopEffects);
+
+    private void OnUpdate(object sender, RoutedEventArgs e) => Choose(TrayMenuCommand.Update);
 
     private void OnExit(object sender, RoutedEventArgs e) => Choose(TrayMenuCommand.Exit);
 

@@ -5,6 +5,9 @@ public enum TrayMenuCommand
 {
     Settings,
     StopEffects,
+
+    /// <summary>Restart to apply a downloaded update.</summary>
+    Update,
     Exit,
 }
 
@@ -16,4 +19,7 @@ public interface ITrayMenu
 
     /// <summary>Opens the menu next to the cursor.</summary>
     void Show();
+
+    /// <summary>Shows the restart-to-update command for <paramref name="version"/>, above Exit, from now on.</summary>
+    void ShowUpdate(string version);
 }

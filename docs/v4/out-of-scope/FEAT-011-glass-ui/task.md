@@ -27,7 +27,9 @@ Prototypes: [Settings window](../../../design/settings-glass.html),
 - The switch changes the Settings window and the tray menu at once. The
   choice lasts until the app exits; it is not saved to the settings file.
 - The tray menu keeps its commands and order: **Settings…** (bold),
-  **Stop effects**, a separator, **Exit**. A left or right click on the tray
+  **Stop effects**, a separator, **Exit**. **Restart to update to
+  <version>** (R4-07) appears above the separator once an update is
+  downloaded. A left or right click on the tray
   icon opens it next to the cursor, inside the work area of that monitor.
   A click outside the menu or Escape closes it.
 - Save, Cancel, Restore defaults, shortcut capture, slots, and every other

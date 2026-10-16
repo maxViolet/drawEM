@@ -1,10 +1,12 @@
 ﻿using System.Windows;
 using DrawEM.App.Application.Settings;
+using DrawEM.App.Application.Updates;
 using DrawEM.App.Infrastructure;
 using DrawEM.App.Infrastructure.Drawing;
 using DrawEM.App.Infrastructure.Effects;
 using DrawEM.App.Infrastructure.Settings;
 using DrawEM.App.Infrastructure.Sound;
+using DrawEM.App.Infrastructure.Updates;
 using DrawEM.App.Presentation.Drawing;
 using DrawEM.App.Presentation.Effects;
 using DrawEM.App.Presentation.Settings;
@@ -34,6 +36,8 @@ public partial class App : System.Windows.Application
     private LoggingEffectFailureReporter? effectFailures;
     private Win32DisplayChangeSource? displayChanges;
     private Win32SessionInterruptionSource? sessionInterruptions;
+    private UpdateController? updates;
+    private LoggingUpdateFailureReporter? updateFailures;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -135,6 +139,25 @@ public partial class App : System.Windows.Application
 
             overlayWindow.Show();
 
+            // Built before the tray so that exit stops update work first; checks start once the tray is shown.
+            // A portable copy is not a Velopack install and makes no check.
+            var updateLog = new LoggingUpdateFailureReporter(
+                new UpdateFailureLog(UpdateFailureLog.DefaultPath).Append, TimeProvider.System);
+            updateFailures = updateLog;
+            var updateService = new VelopackUpdateService(
+                UpdateFeed.Create(Environment.GetEnvironmentVariable(UpdateFeed.OverrideVariable), updateLog),
+                updateLog);
+            var updateController = new UpdateController(
+                updateService,
+                updateLog,
+                version => trayApplication?.ShowUpdateReady(version),
+                ConfirmUpdateRestart,
+                // Runs after the tray callback returns, as the tray Exit command does.
+                () => dispatchToUi(() => trayApplication?.Exit()),
+                TimeProvider.System,
+                dispatchToUi);
+            updates = updateController;
+
             // The tray menu and every Settings window share one theme, so the Settings switch changes both.
             var theme = UiThemeState.FromSystem();
             trayApplication = new TrayApplication(
@@ -142,7 +165,7 @@ public partial class App : System.Windows.Application
                 // The sound channel reports its last failures while it stops, so the log drains after it.
                 // Effects stop and close their windows before their animations and failure log are released.
                 new CompositeDisposable(
-                    keyboardHookSource, mouseHookSource, displays, sessions, channelHost, soundLog, effects, animations, effectLog),
+                    updateController, updateLog, keyboardHookSource, mouseHookSource, displays, sessions, channelHost, soundLog, effects, animations, effectLog),
                 overlayWindow,
                 new WpfApplicationLifetime(this),
                 dispatchToUi,
@@ -164,7 +187,9 @@ public partial class App : System.Windows.Application
                 window.Attach(new SettingsViewModel(editor, shortcuts, window));
                 return window;
             });
+            trayApplication.UpdateRequested += updateController.RequestUpdate;
             trayApplication.Start();
+            updateController.Start();
         }
         catch (Exception exception)
         {
@@ -216,6 +241,14 @@ public partial class App : System.Windows.Application
         settingsWindow.Activate();
     }
 
+    /// <summary>Asks before an update restarts drawEM; nothing installs without Yes.</summary>
+    private static bool ConfirmUpdateRestart(string version) =>
+        MessageBox.Show(
+            $"Restart drawEM now to install {version}? Drawing, sound, and effects stop.",
+            "drawEM",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question) == MessageBoxResult.Yes;
+
     /// <summary>Discards an open draft, so its imports are removed before the sound library is left.</summary>
     private void CloseSettings() => settingsWindow?.Close();
 
@@ -229,6 +262,8 @@ public partial class App : System.Windows.Application
 
         CleanupSteps.RunAll(
         [
+            () => updates?.Dispose(),
+            () => updateFailures?.Dispose(),
             () => keyboardHookSource?.Dispose(),
             () => mouseHookSource?.Dispose(),
             () => displayChanges?.Dispose(),

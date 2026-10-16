@@ -33,6 +33,7 @@ public sealed class NotifyIconTrayHost : ITrayHost
             Visible = false,
         };
         notifyIcon.MouseUp += (_, e) => OnIconClick(e.Button);
+        notifyIcon.BalloonTipClicked += (_, _) => UpdateRequested?.Invoke();
         menu.Chosen += OnChosen;
     }
 
@@ -42,7 +43,20 @@ public sealed class NotifyIconTrayHost : ITrayHost
 
     public event Action? StopEffectsRequested;
 
+    public event Action? UpdateRequested;
+
     public void Show() => notifyIcon.Visible = true;
+
+    /// <summary>The balloon is the only one this tray shows, so a balloon click always means the update.</summary>
+    public void ShowUpdateReady(string version)
+    {
+        menu.ShowUpdate(version);
+        notifyIcon.ShowBalloonTip(
+            10_000,
+            "drawEM update ready",
+            $"drawEM {version} is downloaded. Click here or choose Restart to update in the tray menu.",
+            ToolTipIcon.Info);
+    }
 
     /// <summary>A left click opens the same menu as a right click; Settings opens only from the menu.</summary>
     internal void OnIconClick(MouseButtons button)
@@ -62,6 +76,9 @@ public sealed class NotifyIconTrayHost : ITrayHost
                 break;
             case TrayMenuCommand.StopEffects:
                 StopEffectsRequested?.Invoke();
+                break;
+            case TrayMenuCommand.Update:
+                UpdateRequested?.Invoke();
                 break;
             case TrayMenuCommand.Exit:
                 ExitRequested?.Invoke();

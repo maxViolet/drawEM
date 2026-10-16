@@ -32,6 +32,29 @@ public class TrayMenuWindowTests
     }
 
     [Fact]
+    public void UpdateItem_IsHiddenUntilAnUpdateIsReady_ThenShowsTheVersionAboveExit()
+    {
+        StaThread.Run(() =>
+        {
+            var menu = Open(new UiThemeState(UiTheme.Dark));
+            var update = (Button)menu.FindName("UpdateItem");
+            var items = (Panel)update.Parent;
+            var chosen = new List<TrayMenuCommand>();
+            menu.Chosen += chosen.Add;
+            Assert.Equal(Visibility.Collapsed, update.Visibility);
+
+            ((ITrayMenu)menu).ShowUpdate("1.2.3");
+            Click(update);
+
+            Assert.Equal(Visibility.Visible, update.Visibility);
+            Assert.Equal("Restart to update to 1.2.3", ((TextBlock)menu.FindName("UpdateText")).Text);
+            Assert.True(items.Children.IndexOf(update) < items.Children.IndexOf((UIElement)menu.FindName("ExitItem")));
+            Assert.Equal([TrayMenuCommand.Update], chosen);
+            menu.Close();
+        });
+    }
+
+    [Fact]
     public void Escape_ClosesTheMenuWithoutACommand()
     {
         StaThread.Run(() =>

@@ -1,6 +1,6 @@
 # v4 / R4-07: add consent-based tray updates
 
-**Status:** pending. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** none; this is the last release-publishing step.
+**Status:** released in `v4.0.0` on 2026-10-16; the portable no-check case passed. The local-feed and GitHub upgrade checks are not done; the GitHub one needs the next release. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** none; this is the last release-publishing step.
 
 ## Task
 

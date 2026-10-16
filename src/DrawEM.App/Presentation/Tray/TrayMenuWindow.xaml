@@ -93,6 +93,13 @@
                             <TextBlock Text="Stop effects" />
                         </StackPanel>
                     </Button>
+                    <!-- Hidden until a version is downloaded; it then stays until the update is applied. -->
+                    <Button x:Name="UpdateItem" Style="{StaticResource Item}" Click="OnUpdate" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource Glyph}" Text="&#xE777;" Foreground="{DynamicResource Glass.Accent}" />
+                            <TextBlock x:Name="UpdateText" />
+                        </StackPanel>
+                    </Button>
                     <Border Height="1" Margin="10,4" Background="{DynamicResource Glass.Edge}" />
                     <Button x:Name="ExitItem" Style="{StaticResource ExitItem}" Click="OnExit">
                         <StackPanel Orientation="Horizontal">

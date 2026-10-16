@@ -1,6 +1,6 @@
 # v4 / R4-02: publish checksums and provenance
 
-**Status:** pending. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** [R4-03](../step-03-first-release-acceptance/task.md).
+**Status:** done; tag run and verification passed on 2026-10-16. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** [R4-03](../step-03-first-release-acceptance/task.md).
 
 ## Task
 

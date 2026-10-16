@@ -101,6 +101,193 @@ public class ReleaseScriptsTests : IDisposable
         Assert.NotEqual(0, result.ExitCode);
     }
 
+    [Fact]
+    public void Sha256Sums_ForFilesInReverseOrder_WritesSortedHashLinesWithLfAndNoBom()
+    {
+        var first = WriteFile("b-second.zip", "second");
+        var second = WriteFile("a-first.exe", "first");
+        var manifest = Path.Combine(_workDirectory, "out", "SHA256SUMS.txt");
+
+        var result = RunScript("Write-Sha256Sums.ps1", "-Path", $"{first},{second}", "-OutputPath", manifest);
+
+        Assert.True(result.ExitCode == 0, result.Output);
+        var bytes = File.ReadAllBytes(manifest);
+        Assert.False(bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF);
+        Assert.Equal(
+            $"{Sha256(second)}  a-first.exe\n{Sha256(first)}  b-second.zip\n",
+            System.Text.Encoding.UTF8.GetString(bytes));
+    }
+
+    [Fact]
+    public void Sha256Sums_WhenOutputIsAnInput_FailsWithoutManifest()
+    {
+        var input = WriteFile("drawEM.zip", "zip");
+        var manifest = Path.Combine(_workDirectory, "SHA256SUMS.txt");
+        File.WriteAllText(manifest, "old");
+
+        var result = RunScript("Write-Sha256Sums.ps1", "-Path", $"{input},{manifest}", "-OutputPath", manifest);
+
+        Assert.NotEqual(0, result.ExitCode);
+        Assert.Equal("old", File.ReadAllText(manifest));
+    }
+
+    [Fact]
+    public void Sha256Sums_WithDuplicateFileNames_Fails()
+    {
+        var first = WriteFile("drawEM.zip", "one");
+        Directory.CreateDirectory(Path.Combine(_workDirectory, "other"));
+        var second = WriteFile(Path.Combine("other", "drawEM.zip"), "two");
+        var manifest = Path.Combine(_workDirectory, "SHA256SUMS.txt");
+
+        var result = RunScript("Write-Sha256Sums.ps1", "-Path", $"{first},{second}", "-OutputPath", manifest);
+
+        Assert.NotEqual(0, result.ExitCode);
+        Assert.False(File.Exists(manifest));
+    }
+
+    [Fact]
+    public void Sha256Sums_WithMissingInput_Fails()
+    {
+        var manifest = Path.Combine(_workDirectory, "SHA256SUMS.txt");
+
+        var result = RunScript("Write-Sha256Sums.ps1",
+            "-Path", Path.Combine(_workDirectory, "missing.zip"), "-OutputPath", manifest);
+
+        Assert.NotEqual(0, result.ExitCode);
+        Assert.False(File.Exists(manifest));
+    }
+
+    [Theory]
+    [InlineData("1.2.3")]
+    [InlineData("0.0.1-ci.42")]
+    public void VelopackPackage_RenamesSetupAndListsTheThreeDownloads(string version)
+    {
+        var publishDirectory = Path.Combine(_workDirectory, "publish");
+        Directory.CreateDirectory(publishDirectory);
+        var outputDirectory = Path.Combine(_workDirectory, "velopack");
+        var argumentsFile = Path.Combine(_workDirectory, "vpk-arguments.txt");
+
+        var result = RunVelopackPackage(publishDirectory, version, outputDirectory, FakeVpk(argumentsFile));
+
+        Assert.True(result.ExitCode == 0, result.Output);
+        Assert.Equal(
+            [
+                Path.Combine(outputDirectory, $"drawEM-{version}-win-x64-Setup.exe"),
+                Path.Combine(outputDirectory, $"drawEM.Desktop-{version}-full.nupkg"),
+                Path.Combine(outputDirectory, "releases.win.json"),
+            ],
+            result.StdOut.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        Assert.False(File.Exists(Path.Combine(outputDirectory, "drawEM.Desktop-win-Setup.exe")));
+        Assert.Equal(
+            [
+                "pack", "--packId", "drawEM.Desktop", "--packVersion", version,
+                "--packDir", publishDirectory, "--mainExe", "DrawEM.App.exe", "--packTitle", "drawEM",
+                "--icon", Path.Combine(_workDirectory, "drawEM.ico"),
+                "--runtime", "win-x64", "--channel", "win", "--noPortable", "--outputDir", outputDirectory,
+            ],
+            File.ReadAllLines(argumentsFile));
+    }
+
+    [Fact]
+    public void VelopackPackage_WhenPackFails_Fails()
+    {
+        var publishDirectory = Path.Combine(_workDirectory, "publish");
+        Directory.CreateDirectory(publishDirectory);
+
+        var result = RunVelopackPackage(
+            publishDirectory, "1.2.3", Path.Combine(_workDirectory, "velopack"), FakeVpk(exitCode: 3));
+
+        Assert.NotEqual(0, result.ExitCode);
+        Assert.Equal("", result.StdOut.Trim());
+    }
+
+    [Theory]
+    [InlineData("drawEM.Desktop-win-Setup.exe")]
+    [InlineData("drawEM.Desktop-1.2.3-full.nupkg")]
+    [InlineData("releases.win.json")]
+    public void VelopackPackage_WhenAnExpectedFileIsMissing_FailsNamingIt(string missing)
+    {
+        var publishDirectory = Path.Combine(_workDirectory, "publish");
+        Directory.CreateDirectory(publishDirectory);
+
+        var result = RunVelopackPackage(
+            publishDirectory, "1.2.3", Path.Combine(_workDirectory, "velopack"), FakeVpk(skip: missing));
+
+        Assert.NotEqual(0, result.ExitCode);
+        Assert.Contains(missing, result.StdErr);
+        Assert.Equal("", result.StdOut.Trim());
+    }
+
+    [Fact]
+    public void VelopackPackage_WithNonEmptyOutputDirectory_FailsWithoutPacking()
+    {
+        var publishDirectory = Path.Combine(_workDirectory, "publish");
+        Directory.CreateDirectory(publishDirectory);
+        var outputDirectory = Path.Combine(_workDirectory, "velopack");
+        Directory.CreateDirectory(outputDirectory);
+        File.WriteAllText(Path.Combine(outputDirectory, "stale.nupkg"), "");
+        var argumentsFile = Path.Combine(_workDirectory, "vpk-arguments.txt");
+
+        var result = RunVelopackPackage(publishDirectory, "1.2.3", outputDirectory, FakeVpk(argumentsFile));
+
+        Assert.NotEqual(0, result.ExitCode);
+        Assert.False(File.Exists(argumentsFile));
+    }
+
+    [Theory]
+    [InlineData("1.2")]
+    [InlineData("v1.2.3")]
+    [InlineData("1.2.3-")]
+    public void VelopackPackage_WithMalformedVersion_Fails(string version)
+    {
+        var publishDirectory = Path.Combine(_workDirectory, "publish");
+        Directory.CreateDirectory(publishDirectory);
+        var argumentsFile = Path.Combine(_workDirectory, "vpk-arguments.txt");
+
+        var result = RunVelopackPackage(
+            publishDirectory, version, Path.Combine(_workDirectory, "velopack"), FakeVpk(argumentsFile));
+
+        Assert.NotEqual(0, result.ExitCode);
+        Assert.False(File.Exists(argumentsFile));
+    }
+
+    // Stands in for "dotnet vpk": records its arguments, one per line, and writes the files vpk pack writes.
+    private string FakeVpk(string? argumentsFile = null, int exitCode = 0, string? skip = null)
+    {
+        var path = Path.Combine(_workDirectory, "fake-vpk.ps1");
+        File.WriteAllText(path, $$"""
+            $arguments = $args
+            if ('{{argumentsFile}}' -ne '') { [IO.File]::WriteAllLines('{{argumentsFile}}', [string[]] $arguments) }
+            if ({{exitCode}} -ne 0) { exit {{exitCode}} }
+            $id = $arguments[[array]::IndexOf($arguments, '--packId') + 1]
+            $version = $arguments[[array]::IndexOf($arguments, '--packVersion') + 1]
+            $output = $arguments[[array]::IndexOf($arguments, '--outputDir') + 1]
+            New-Item -ItemType Directory -Path $output -Force | Out-Null
+            foreach ($name in "$id-win-Setup.exe", "$id-$version-full.nupkg", 'releases.win.json', 'RELEASES', 'assets.win.json') {
+                if ($name -ne '{{skip}}') { Set-Content -LiteralPath (Join-Path $output $name) -Value $name }
+            }
+            exit 0
+            """);
+        return path;
+    }
+
+    private ScriptResult RunVelopackPackage(
+        string publishDirectory, string version, string outputDirectory, string packCommand) =>
+        RunScript("New-VelopackPackage.ps1",
+            "-PublishDirectory", publishDirectory, "-Version", version, "-OutputDirectory", outputDirectory,
+            "-PackId", "drawEM.Desktop", "-Icon", Path.Combine(_workDirectory, "drawEM.ico"),
+            "-PackCommand", packCommand);
+
+    private string WriteFile(string name, string content)
+    {
+        var path = Path.Combine(_workDirectory, name);
+        File.WriteAllText(path, content);
+        return path;
+    }
+
+    private static string Sha256(string path) =>
+        Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path))).ToLowerInvariant();
+
     // Builds a stand-in publish directory whose executable carries the version resource of the built app assembly.
     private string CreatePublishDirectory(out string publishDirectory)
     {

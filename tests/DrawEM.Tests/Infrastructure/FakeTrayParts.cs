@@ -11,7 +11,11 @@ internal sealed class FakeTrayHost(List<string> calls, bool throwOnDispose = fal
 
     public event Action? StopEffectsRequested;
 
+    public event Action? UpdateRequested;
+
     public void Show() => calls.Add("tray shown");
+
+    public void ShowUpdateReady(string version) => calls.Add("update ready " + version);
 
     public void Dispose()
     {
@@ -27,6 +31,8 @@ internal sealed class FakeTrayHost(List<string> calls, bool throwOnDispose = fal
     public void RequestSettings() => SettingsRequested?.Invoke();
 
     public void RequestStopEffects() => StopEffectsRequested?.Invoke();
+
+    public void RequestUpdate() => UpdateRequested?.Invoke();
 }
 
 internal sealed class FakeDisposable(List<string> calls, string name) : IDisposable
