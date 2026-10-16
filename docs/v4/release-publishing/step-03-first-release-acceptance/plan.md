@@ -4,7 +4,8 @@
 
 1. Reconcile every v3 Step 8 `Unverified` result with the agreed gate. Run each
    required desktop check on hardware that supports the specified layout and
-   monitor setup; record exact results and evidence.
+   monitor setup; record exact results and evidence. Skipped: **Owner decision, 2026-10-16:**
+   the 7 open checks are marked Skipped in the v3 Step 8 results.
 2. Download the draft's exact assets on a clean Windows 10/11 x64 machine.
    Verify SHA-256 and provenance before running them.
 3. Test the portable ZIP as a standard user: extract outside

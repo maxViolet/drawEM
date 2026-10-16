@@ -1,10 +1,11 @@
 # v4 / R4-03: pass first-release acceptance
 
-**Status:** in progress; the README download, verification, manual update, and recovery sections and the evidence template are done, and the v3 Step 8 gate, the Windows checks, and the owner publication are not done. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** [R4-04](../step-04-signpath-signing/task.md) and [R4-05](../step-05-winget/task.md).
+**Status:** in progress; the README download, verification, manual update, and recovery sections and the evidence template are done, the v3 Step 8 checks are skipped by owner decision on 2026-10-16, and the Windows checks, and the owner publication are not done. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** [R4-04](../step-04-signpath-signing/task.md) and [R4-05](../step-05-winget/task.md).
 
 ## Task
 
-Verify the exact draft release on real Windows, close the v3 Step 8 gate, and
+Verify the exact draft release on real Windows, close the v3 Step 8 gate (its
+open checks are skipped by owner decision on 2026-10-16), and
 publish user-facing download, verification, and manual update instructions.
 The first GitHub release ships the portable ZIP only and may be unsigned. The
 Velopack installer and in-app updates come later, in
