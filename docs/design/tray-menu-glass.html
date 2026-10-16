@@ -1,0 +1,108 @@
+<title>drawEM Glass Tray Menu</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<style>
+  /* Layout: fake Windows desktop, taskbar at bottom, tray menu opened above the drawEM tray icon. */
+  :root {
+    --desk-a: #1b1f3a;
+    --desk-b: #ff4500;
+    --desk-c: #2a6df4;
+    --desk-d: #0d0f1c;
+    --fg: #f2f3f8;
+    --muted: rgba(242, 243, 248, 0.55);
+    color-scheme: dark;
+  }
+  html, body { height: 100%; }
+  body { background: var(--desk-d); color: var(--fg); font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
+  .desk {
+    background:
+      radial-gradient(40% 50% at 78% 70%, color-mix(in srgb, var(--desk-b) 70%, transparent), transparent 70%),
+      radial-gradient(45% 55% at 20% 30%, color-mix(in srgb, var(--desk-c) 65%, transparent), transparent 70%),
+      linear-gradient(160deg, var(--desk-a), var(--desk-d));
+  }
+  .desk.light {
+    background:
+      radial-gradient(40% 50% at 78% 70%, #ffb38a, transparent 70%),
+      radial-gradient(45% 55% at 20% 30%, #9cc0ff, transparent 70%),
+      linear-gradient(160deg, #e9ecf6, #cfd5e8);
+  }
+  .stroke { stroke: var(--desk-b); }
+  @media (prefers-reduced-motion: no-preference) {
+    .menu { animation: pop 160ms cubic-bezier(.2,.8,.2,1); transform-origin: bottom right; }
+    @keyframes pop { from { opacity: 0; transform: translateY(6px) scale(.97); } }
+  }
+  .item:focus-visible { outline: 2px solid rgba(255,255,255,.5); outline-offset: -2px; }
+</style>
+
+<div id="desk" class="desk relative h-full w-full overflow-hidden select-none">
+
+  <!-- sample annotation on the desktop -->
+  <svg class="absolute left-[8%] top-[14%] w-[min(420px,70%)] opacity-90" viewBox="0 0 420 160" fill="none" aria-hidden="true">
+    <path class="stroke" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"
+      d="M20 110 C 60 40, 120 30, 170 80 S 260 140, 300 70 S 380 30, 400 60" />
+    <circle class="stroke" cx="300" cy="70" r="34" stroke-width="4" />
+  </svg>
+
+  <!-- wallpaper switch -->
+  <div class="absolute left-4 top-4 flex gap-2 text-xs" style="padding-left: env(safe-area-inset-left,0px)">
+    <button id="wp-dark" class="rounded-full border border-white/15 bg-white/10 px-3 py-1 backdrop-blur-md">Dark wallpaper</button>
+    <button id="wp-light" class="rounded-full border border-white/15 bg-black/10 px-3 py-1 backdrop-blur-md">Light wallpaper</button>
+    <button id="toggle" class="rounded-full border border-white/15 bg-black/10 px-3 py-1 backdrop-blur-md">Close menu</button>
+  </div>
+
+  <!-- tray menu -->
+  <div id="menu" role="menu" aria-label="drawEM"
+    class="menu absolute bottom-14 right-[max(16px,calc(env(safe-area-inset-right,0px)+16px))] w-56 rounded-xl
+           border border-white/10 bg-white/[0.06] p-1.5 backdrop-blur-md
+           shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_0_0_24px_rgba(255,255,255,0.06),0_12px_40px_rgba(0,0,0,0.35)]">
+
+    <button role="menuitem" class="item group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[13px] font-semibold
+      transition-colors hover:bg-white/10 hover:shadow-[inset_0_0_12px_rgba(255,255,255,0.08)]">
+      <svg class="h-4 w-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+      </svg>
+      Settings…
+    </button>
+
+    <button role="menuitem" class="item flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[13px]
+      transition-colors hover:bg-white/10 hover:shadow-[inset_0_0_12px_rgba(255,255,255,0.08)]">
+      <svg class="h-4 w-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <rect x="6" y="6" width="12" height="12" rx="2"/>
+      </svg>
+      Stop effects
+    </button>
+
+    <div class="mx-2 my-1 h-px bg-white/10" role="separator"></div>
+
+    <button role="menuitem" class="item flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[13px]
+      transition-colors hover:bg-[rgba(255,69,0,0.18)] hover:shadow-[inset_0_0_12px_rgba(255,69,0,0.15)]">
+      <svg class="h-4 w-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+      </svg>
+      Exit
+    </button>
+  </div>
+
+  <!-- taskbar -->
+  <div class="absolute inset-x-0 bottom-0 flex h-12 items-center justify-end gap-3 border-t border-white/10 bg-black/40 backdrop-blur-md text-xs"
+    style="padding-left: max(16px, env(safe-area-inset-left,0px)); padding-right: max(16px, env(safe-area-inset-right,0px)); padding-bottom: env(safe-area-inset-bottom,0px)">
+    <button id="tray" title="drawEM" class="grid h-8 w-8 place-items-center rounded-md hover:bg-white/10">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="#ff4500" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+        <path d="M4 18c3-8 6-12 9-8s5 2 7-4"/>
+      </svg>
+    </button>
+    <span class="tabular-nums" style="color: var(--muted)">14:32</span>
+  </div>
+</div>
+
+<script>
+  const desk = document.getElementById('desk');
+  const menu = document.getElementById('menu');
+  const toggle = document.getElementById('toggle');
+  const setMenu = (open) => { menu.hidden = !open; toggle.textContent = open ? 'Close menu' : 'Open menu'; };
+  document.getElementById('wp-dark').onclick = () => desk.classList.remove('light');
+  document.getElementById('wp-light').onclick = () => desk.classList.add('light');
+  toggle.onclick = () => setMenu(menu.hidden);
+  document.getElementById('tray').onclick = () => setMenu(menu.hidden);
+  menu.querySelectorAll('.item').forEach(b => b.onclick = () => setMenu(false));
+</script>
