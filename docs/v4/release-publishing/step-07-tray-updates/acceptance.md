@@ -2,8 +2,8 @@
 
 **Task:** [tray updates](task.md). **Plan:** [implementation](plan.md).
 
-- [ ] `UpdateControllerTests` fail before implementation and pass afterwards.
-- [ ] Deterministic tests prove one startup check and no more than one
+- [x] `UpdateControllerTests` fail before implementation and pass afterwards.
+- [x] Deterministic tests prove one startup check and no more than one
   periodic check per 24 hours, including the +24 h boundary, and no
   overlapping checks.
 - [ ] Update checks/downloads run off the UI, keyboard-hook, and render paths.
@@ -30,11 +30,13 @@
 - [ ] Root README documents check, defer, install, recovery, `update.log`,
   manual updates for portable copies, and the one-time Setup.exe run for
   R4-06 installs.
-- [ ] Delta packages are listed in [out of scope](../../out-of-scope/README.md).
+- [x] Delta packages are listed in [out of scope](../../out-of-scope/README.md).
 
 ## Evidence
 
-- Test results:
+- Test results: `UpdateControllerTests` first failed to compile (types
+  missing), then 15 of 15 passed. Full suite: 837 passed, 0 failed
+  (`dotnet test DrawEM.sln -c Release`, 2026-10-16).
 - Windows version and account type:
 - Old/new build identities:
 - Defer, accept, restart, and recovery results:
@@ -43,7 +45,11 @@
 
 ## Validation
 
-- Automated:
+- Automated: controller cadence, single in-flight check, one notification
+  per version, pending version at startup, consent No/Yes order, failure
+  reporting, and disposal; tray item and `UpdateRequested` forwarding;
+  `update.log` format. Not yet: `VelopackUpdateService`, `App` composition,
+  `LayerDependencyTests` Velopack rule, README section (all wait for R4-06).
 - CI:
 - Manual Windows (local feed):
 - Manual Windows (GitHub feed):

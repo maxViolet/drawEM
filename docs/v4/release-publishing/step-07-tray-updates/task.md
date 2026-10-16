@@ -1,6 +1,6 @@
 # v4 / R4-07: add consent-based tray updates
 
-**Status:** pending. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** none; this is the last release-publishing step.
+**Status:** in progress; the Velopack-free part (controller, tray item, `update.log`) is implemented, and the Velopack adapter and `App` composition wait for R4-06. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** none; this is the last release-publishing step.
 
 ## Task
 
