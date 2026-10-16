@@ -1,17 +1,17 @@
 # Graph Report - worktree-r4-03  (2026-10-16)
 
 ## Corpus Check
-- 337 files · ~152,551 words
+- 337 files · ~153,236 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: (none) 10, .ico 1, .pubxml 1)
 
 ## Summary
-- 3000 nodes · 8814 edges · 129 communities (106 shown, 23 thin omitted)
+- 3000 nodes · 8815 edges · 129 communities (106 shown, 23 thin omitted)
 - Extraction: 83% EXTRACTED · 17% INFERRED · 0% AMBIGUOUS · INFERRED: 1515 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `cfa0f7df`
+- Built from commit: `d4a7d032`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -171,16 +171,6 @@
 
 ## Import Cycles
 - None detected.
-
-## Hyperedges (group relationships)
-- **Effect playback pipeline** — docs_v4_visual_effects_roadmap_v4_effectchannelcontroller, docs_v4_visual_effects_roadmap_v4_ieffectsurface, docs_v4_visual_effects_roadmap_v4_skiasharp_skottie_writeablebitmap_rendering, context_placement, docs_v4_visual_effects_roadmap_v4_built_in_lottie_effect [EXTRACTED 1.00]
-- **Artifact Integrity and Provenance Verification** — docs_v4_release_publishing_step_02_checksums_provenance_plan_sha256sums_manifest, tools_release_write_sha256sums, docs_v4_release_publishing_step_02_checksums_provenance_plan_actions_attest, docs_v4_release_publishing_step_02_checksums_provenance_plan_gh_attestation_verify, docs_v4_release_publishing_step_02_checksums_provenance_acceptance_one_byte_mutation_check [EXTRACTED 1.00]
-- **Code Signing Options Considered** — docs_adr_0002_release_signing_license_signpath_foundation, docs_adr_0002_release_signing_license_microsoft_artifact_signing, docs_adr_0002_release_signing_license_microsoft_store_msix, docs_adr_0002_release_signing_license_unsigned_first_release [EXTRACTED 1.00]
-- **Sound shortcut play and Save interlock flow** — docs_architecture_globalshortcutadapter, docs_architecture_soundchannelhost, docs_architecture_soundchannelcontroller, docs_architecture_settingssaveoperation [EXTRACTED 1.00]
-- **Tray update flow** — docs_v4_release_publishing_step_07_tray_updates_plan_updatecontroller, docs_v4_release_publishing_step_07_tray_updates_plan_velopackupdateservice, docs_v4_release_publishing_step_07_tray_updates_plan_itrayhost, docs_v4_release_publishing_step_07_tray_updates_plan_trayapplication, docs_v4_release_publishing_step_07_tray_updates_plan_wait_exit_then_apply [EXTRACTED 1.00]
-- **Release artifact pipeline** — docs_v4_release_publishing_step_04_signpath_signing_plan_pe_file_signing, docs_v4_release_publishing_step_06_velopack_installer_plan_new_velopackpackage_ps1, docs_v4_release_publishing_step_06_velopack_installer_plan_write_sha256sums_ps1, docs_v4_release_publishing_step_05_winget_plan_winget_manifest [INFERRED 0.85]
-- **Settings directory preservation** — docs_v4_release_publishing_step_06_velopack_installer_task_package_id, docs_v4_release_publishing_step_06_velopack_installer_plan_json_settings_store, docs_v4_release_publishing_step_05_winget_acceptance_localappdata_drawem, docs_v4_release_publishing_step_06_velopack_installer_plan_velopackpackageidentitytests [INFERRED 0.85]
-- **Settings schema migration and rollback** — docs_v4_visual_effects_step_05_effect_settings_schema_acceptance_jsonsettingsstore, docs_v4_visual_effects_step_05_effect_settings_schema_acceptance_settingsjson, docs_v4_visual_effects_roadmap_v4_schema1_migration_backup, docs_v4_visual_effects_roadmap_v4_settings_schema_3, src_drawem_app_infrastructure_settings_readme_v3_rollback_procedure [INFERRED 0.85]
 
 ## Communities (129 total, 23 thin omitted)
 
@@ -616,17 +606,17 @@ Nodes (3): Freehand Drawn Stroke Motif, drawEM Prototype Tray Icon, v3 Step 7 Se
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `drawEM v3 Roadmap: Drawing and Action Settings` connect `drawEM v3 Roadmap: Drawing and Action Settings` to `drawEM architecture`, `Stage 1 Step 2 Review`, `FEAT-005: Assisted E2E Runner`, `Stage 1 sound implementation plan`?**
-  _High betweenness centrality (0.125) - this node is a cross-community bridge._
+- **Why does `v3 Step 8: Publish and verify on Windows (task)` connect `drawEM v3 Roadmap: Drawing and Action Settings` to `FEAT-005: Assisted E2E Runner`?**
+  _High betweenness centrality (0.121) - this node is a cross-community bridge._
 - **Are the 84 inferred relationships involving `ScreenPoint` (e.g. with `.HookCallback()` and `.PushMonitorClip()`) actually correct?**
   _`ScreenPoint` has 84 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `CompletedStrokes`, `ActiveInstance`, `Instance` to the rest of the system?**
   _511 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `SettingsEditorTests` be split into smaller, more focused modules?**
   _Cohesion score 0.14396135265700483 - nodes in this community are weakly interconnected._
-- **Why does `v3 Step 8: Publish and verify on Windows (task)` connect `drawEM v3 Roadmap: Drawing and Action Settings` to `FEAT-005: Assisted E2E Runner`?**
-  _High betweenness centrality (0.097) - this node is a cross-community bridge._
+- **Why does `drawEM v3 Roadmap: Drawing and Action Settings` connect `drawEM v3 Roadmap: Drawing and Action Settings` to `drawEM architecture`, `Stage 1 Step 2 Review`, `FEAT-005: Assisted E2E Runner`, `Stage 1 sound implementation plan`?**
+  _High betweenness centrality (0.120) - this node is a cross-community bridge._
 - **Should `StrokeRenderElement` be split into smaller, more focused modules?**
   _Cohesion score 0.06593406593406594 - nodes in this community are weakly interconnected._
-- **Why does `drawEM architecture` connect `drawEM architecture` to `drawEM v3 Roadmap: Drawing and Action Settings`, `drawEM v4 Roadmap: Built-in Monitor and Cursor Effects`, `Stage 1 sound implementation plan`, `Stage 1 Step 2 Review`, `FIX-006: Single Screen Edge`, `v1 roadmap: drawing`?**
-  _High betweenness centrality (0.093) - this node is a cross-community bridge._
+- **Why does `Window` connect `Window` to `SettingsWindow`, `S4-08 acceptance: choose effects in Settings`, `WidthBox`?**
+  _High betweenness centrality (0.089) - this node is a cross-community bridge._
