@@ -1,6 +1,6 @@
 # v4 / R4-06: package a per-user installer
 
-**Status:** in progress; packaging, `Main`, checksums, and CI smoke are implemented, and the manual Windows install checks are not done. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** [R4-07](../step-07-tray-updates/task.md).
+**Status:** released in `v4.0.0` on 2026-10-16; install and uninstall passed on an administrator account. A standard account and the settings hash comparison are not done. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** [R4-07](../step-07-tray-updates/task.md).
 
 ## Task
 

@@ -1,6 +1,6 @@
 # v4 / R4-03: pass first-release acceptance
 
-**Status:** in progress; the README download, verification, manual update, and recovery sections and the evidence template are done, the v3 Step 8 checks are skipped by owner decision on 2026-10-16, and the Windows checks, and the owner publication are not done. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** [R4-04](../step-04-signpath-signing/task.md) and [R4-05](../step-05-winget/task.md).
+**Status:** released; `v4.0.0` published on 2026-10-16. Input pass-through and the manual ZIP update were not run. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** [R4-04](../step-04-signpath-signing/task.md) and [R4-05](../step-05-winget/task.md).
 
 ## Task
 
