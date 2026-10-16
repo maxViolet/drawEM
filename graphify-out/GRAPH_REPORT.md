@@ -1,17 +1,17 @@
 # Graph Report - worktree-r4-03  (2026-10-16)
 
 ## Corpus Check
-- 337 files · ~152,399 words
+- 337 files · ~153,084 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: (none) 10, .ico 1, .pubxml 1)
 
 ## Summary
-- 3000 nodes · 8813 edges · 129 communities (106 shown, 23 thin omitted)
+- 3000 nodes · 8814 edges · 129 communities (106 shown, 23 thin omitted)
 - Extraction: 83% EXTRACTED · 17% INFERRED · 0% AMBIGUOUS · INFERRED: 1515 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `44e2fac1`
+- Built from commit: `c7e20b7c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -617,7 +617,7 @@ Nodes (3): Freehand Drawn Stroke Motif, drawEM Prototype Tray Icon, v3 Step 7 Se
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `v3 Step 8: Publish and verify on Windows (task)` connect `drawEM v3 Roadmap: Drawing and Action Settings` to `FEAT-005: Assisted E2E Runner`?**
-  _High betweenness centrality (0.108) - this node is a cross-community bridge._
+  _High betweenness centrality (0.121) - this node is a cross-community bridge._
 - **Are the 84 inferred relationships involving `ScreenPoint` (e.g. with `.HookCallback()` and `.PushMonitorClip()`) actually correct?**
   _`ScreenPoint` has 84 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `CompletedStrokes`, `ActiveInstance`, `Instance` to the rest of the system?**
@@ -625,8 +625,8 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `SettingsEditorTests` be split into smaller, more focused modules?**
   _Cohesion score 0.14396135265700483 - nodes in this community are weakly interconnected._
 - **Why does `drawEM v3 Roadmap: Drawing and Action Settings` connect `drawEM v3 Roadmap: Drawing and Action Settings` to `drawEM architecture`, `Stage 1 Step 2 Review`, `FEAT-005: Assisted E2E Runner`, `Stage 1 sound implementation plan`?**
-  _High betweenness centrality (0.093) - this node is a cross-community bridge._
+  _High betweenness centrality (0.120) - this node is a cross-community bridge._
 - **Should `StrokeRenderElement` be split into smaller, more focused modules?**
   _Cohesion score 0.06593406593406594 - nodes in this community are weakly interconnected._
 - **Why does `Window` connect `Window` to `SettingsWindow`, `S4-08 acceptance: choose effects in Settings`, `WidthBox`?**
-  _High betweenness centrality (0.088) - this node is a cross-community bridge._
+  _High betweenness centrality (0.089) - this node is a cross-community bridge._

@@ -1002,9 +1002,9 @@
     "semantic_hash": "d9083cec02be96d0b20e78111319d4a8"
   },
   "README.md": {
-    "mtime": 1792133166.4652605,
-    "seen": 1792133205.4659364,
-    "ast_hash": "f86cc96be30d83d939a660fa56ea0d84",
+    "mtime": 1792133257.6282413,
+    "seen": 1792133312.1469202,
+    "ast_hash": "fe3cd878d8008ae24c569941655fd8eb",
     "semantic_hash": ""
   },
   "docs/ARCHITECTURE.md": {
@@ -1968,10 +1968,10 @@
     "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-03-first-release-acceptance/acceptance.md": {
-    "mtime": 1792127094.5158808,
-    "seen": 1792129042.8509092,
-    "ast_hash": "41885edd4eef227310bbb449b819ed4e",
-    "semantic_hash": "41885edd4eef227310bbb449b819ed4e"
+    "mtime": 1792133303.2812283,
+    "seen": 1792133312.1591053,
+    "ast_hash": "2aee57df9e4b952a8d760accadcfecd9",
+    "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-03-first-release-acceptance/plan.md": {
     "mtime": 1792127094.5158808,
@@ -1980,10 +1980,10 @@
     "semantic_hash": "99bb4bb9f23a5bfe9d98829952d09bb3"
   },
   "docs/v4/release-publishing/step-03-first-release-acceptance/task.md": {
-    "mtime": 1792127094.5158808,
-    "seen": 1792129042.8509133,
-    "ast_hash": "8e9d9f1ab562a01c57b57642d3333b8c",
-    "semantic_hash": "8e9d9f1ab562a01c57b57642d3333b8c"
+    "mtime": 1792133271.7180748,
+    "seen": 1792133312.159263,
+    "ast_hash": "4a8b87aa7d7298eae07d4b2a3dbde6a4",
+    "semantic_hash": ""
   },
   "docs/v4/release-publishing/step-04-signpath-signing/acceptance.md": {
     "mtime": 1792127094.5169492,
