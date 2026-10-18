@@ -1,0 +1,41 @@
+<ResourceDictionary x:Class="DrawEM.App.Presentation.Theme.GlassLight"
+                    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Light glass theme. GlassDark and GlassLight define the same keys. -->
+    <SolidColorBrush x:Key="Glass.Surface" Color="#59FFFFFF" />
+    <!-- Used instead of Glass.Surface where Windows has no system backdrop. -->
+    <SolidColorBrush x:Key="Glass.SurfaceSolid" Color="#FFEEF0F6" />
+    <!-- The faint border around the window, fields, buttons, and cards. A light theme needs a dark edge to show it. -->
+    <SolidColorBrush x:Key="Glass.Edge" Color="#261A1D2B" />
+    <!-- Inner glow: a light line along the top edge, fading downward. -->
+    <LinearGradientBrush x:Key="Glass.GlowTop" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#F2FFFFFF" />
+        <GradientStop Offset="0.35" Color="Transparent" />
+    </LinearGradientBrush>
+    <!-- Inner glow: light along every edge, clear in the middle. -->
+    <RadialGradientBrush x:Key="Glass.GlowInner" RadiusX="0.75" RadiusY="0.75">
+        <GradientStop Offset="0.6" Color="Transparent" />
+        <GradientStop Offset="1" Color="#59FFFFFF" />
+    </RadialGradientBrush>
+    <SolidColorBrush x:Key="Glass.Foreground" Color="#FF1A1D2B" />
+    <SolidColorBrush x:Key="Glass.Muted" Color="#A31A1D2B" />
+    <SolidColorBrush x:Key="Glass.Error" Color="#FFA92F16" />
+    <SolidColorBrush x:Key="Glass.Field" Color="#8CFFFFFF" />
+    <SolidColorBrush x:Key="Glass.FieldSink" Color="#1A1E2850" />
+    <SolidColorBrush x:Key="Glass.Focus" Color="#661A1D2B" />
+    <SolidColorBrush x:Key="Glass.Button" Color="#8CFFFFFF" />
+    <SolidColorBrush x:Key="Glass.ButtonHover" Color="#D9FFFFFF" />
+    <SolidColorBrush x:Key="Glass.ButtonPressed" Color="#59FFFFFF" />
+    <SolidColorBrush x:Key="Glass.TabSelected" Color="#C2FFFFFF" />
+    <SolidColorBrush x:Key="Glass.Footer" Color="#40FFFFFF" />
+    <!-- Drop-downs and tooltips open in their own windows, without the backdrop, so they are opaque. -->
+    <SolidColorBrush x:Key="Glass.Popup" Color="#FFF7F8FB" />
+    <SolidColorBrush x:Key="Glass.Info" Color="#26FF4500" />
+    <SolidColorBrush x:Key="Glass.InfoForeground" Color="#FF694332" />
+    <SolidColorBrush x:Key="Glass.SlotLabel" Color="#FFB63C1C" />
+    <SolidColorBrush x:Key="Glass.ExitHover" Color="#33FF4500" />
+    <SolidColorBrush x:Key="Glass.Accent" Color="#FF4500" />
+    <SolidColorBrush x:Key="Glass.AccentHover" Color="#FF5A1F" />
+    <SolidColorBrush x:Key="Glass.OnAccent" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="Glass.CloseHover" Color="#C42B1C" />
+</ResourceDictionary>

@@ -21,6 +21,10 @@ By default, drawings are OrangeRed (`#FF4500`) and 4 px thick. To change the
 color, line width, or the draw and clear shortcuts, open `Settings…` from the
 tray menu, use the `Drawing` tab, and choose `Save`.
 
+The switch in the upper right corner of `Settings` changes the Settings window
+and the tray menu between dark and light. drawEM starts in the Windows app
+theme; the switch lasts until you exit.
+
 Drawings remain visible while you switch windows, until you clear them, save
 settings, or exit. A stroke stays on the monitor where it began. If the pointer
 crosses to another monitor while drawing, the stroke ends; release and press

@@ -1,8 +1,9 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows;
 using DrawEM.App.Domain.Drawing;
+using DrawEM.App.Presentation.Theme;
 using Microsoft.Win32;
 using WinFormsColorDialog = System.Windows.Forms.ColorDialog;
 using WinFormsDialogResult = System.Windows.Forms.DialogResult;
@@ -16,8 +17,17 @@ public partial class SettingsWindow : Window, ISoundFilePicker
 {
     private SettingsViewModel? ViewModel => DataContext as SettingsViewModel;
 
+    /// <summary>The title bar height in window units: 36 layout units at the window's 1.2 scale.</summary>
+    private const double CaptionHeight = 36 * 1.2;
+
+    /// <summary>Segoe MDL2 Assets glyphs of the maximize button.</summary>
+    private const string MaximizeGlyph = "\uE922";
+    private const string RestoreGlyph = "\uE923";
+
     /// <summary>Set once closing goes ahead; the draft has then ended.</summary>
     private bool closed;
+
+    private readonly UiThemeState theme;
 
     public SettingsWindow()
         : this(SystemParameters.WorkArea.Height)
@@ -27,9 +37,16 @@ public partial class SettingsWindow : Window, ISoundFilePicker
     /// <param name="workAreaHeight">
     /// The usable screen height. The default height is cut to it, so the title bar stays on screen.
     /// </param>
-    public SettingsWindow(double workAreaHeight)
+    /// <param name="theme">The shared theme; without one, the window follows the Windows app theme.</param>
+    public SettingsWindow(double workAreaHeight, UiThemeState? theme = null)
     {
         InitializeComponent();
+        this.theme = theme ?? UiThemeState.FromSystem();
+        GlassBackdrop.Attach(this, this.theme, CaptionHeight, new Thickness(6));
+        ShowTheme();
+        this.theme.Changed += ShowTheme;
+        Closed += (_, _) => this.theme.Changed -= ShowTheme;
+        StateChanged += (_, _) => OnStateChanged();
         Height = Math.Min(Height, workAreaHeight);
         // A capture field must not take focus on open: focusing one starts capture.
         Loaded += (_, _) => HexBox.Focus();
@@ -102,6 +119,33 @@ public partial class SettingsWindow : Window, ISoundFilePicker
 
     private void OnDecreaseMaxLength(object sender, RoutedEventArgs e) =>
         Model<SlotViewModel>(sender).StepMaxLength(-1);
+
+    /// <summary>Shows the shared theme on the switch; the switch then changes nothing.</summary>
+    private void ShowTheme() => ThemeSwitch.IsChecked = theme.Current == UiTheme.Light;
+
+    private void OnThemeSwitched(object sender, RoutedEventArgs e)
+    {
+        if ((ThemeSwitch.IsChecked == true) != (theme.Current == UiTheme.Light))
+        {
+            theme.Toggle();
+        }
+    }
+
+    private void OnMinimize(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    private void OnMaximize(object sender, RoutedEventArgs e) =>
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+
+    /// <summary>
+    /// A maximized window extends past the screen by its resize border, so the content is inset by it. The
+    /// maximize button shows Restore while maximized.
+    /// </summary>
+    private void OnStateChanged()
+    {
+        var maximized = WindowState == WindowState.Maximized;
+        Frame.Margin = maximized ? SystemParameters.WindowResizeBorderThickness : default;
+        MaximizeButton.Content = maximized ? RestoreGlyph : MaximizeGlyph;
+    }
 
     private void OnRestoreDefaults(object sender, RoutedEventArgs e) => ViewModel?.RestoreDefaults();
 
