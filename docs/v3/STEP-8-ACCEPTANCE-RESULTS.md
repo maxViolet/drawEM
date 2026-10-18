@@ -7,7 +7,12 @@ with en-US and ru layouts: 28 of 35 checks pass, 7 are unverified because the
 environment cannot run them. v3 is not releasable until those checks are Pass
 or have an accepted reason.
 
-Result values: **Pass**, **Fail**, **Unverified** (not run, or the environment
+**Owner decision, 2026-10-16:** the owner skipped the 7 unverified v3 Step 8 checks for the first portable release: they need extra keyboard layouts or monitors, the effort is high, and the impact is small (2.7, 2.8, 4.2, 4.3, 4.5, 6.1, 6.2). They are marked **Skipped**
+below. That is the accepted reason for the first portable release (R4-03). It
+does not close them for a v4 release.
+
+Result values: **Pass**, **Fail**, **Skipped** (owner decision above),
+**Unverified** (not run, or the environment
 cannot run it). Automated tests and publish success do not close any manual
 check.
 
@@ -72,8 +77,8 @@ with the observed result and a short note.
 | 2.4 | Capturing an already-bound chord does not dispatch its action. | Pass | 2026-10-07, reported by the operator. |
 | 2.5 | `Tab`, `Alt+Tab`, `Alt+F4`, and `Win` pass through during capture. | Pass | 2026-10-07, reported by the operator. |
 | 2.6 | Capturing `Ctrl+C` and `Ctrl+RightAlt+1` shows invalid-chord feedback. | Pass | 2026-10-07, reported by the operator. |
-| 2.7 | German (Germany): Right Alt/AltGr typing works; Left Alt bindings work. | Unverified | Layout not installed. |
-| 2.8 | Polish (Programmers): Right Alt/AltGr typing works; Left Alt bindings work. | Unverified | Layout not installed. |
+| 2.7 | German (Germany): Right Alt/AltGr typing works; Left Alt bindings work. | Skipped | Layout not installed. |
+| 2.8 | Polish (Programmers): Right Alt/AltGr typing works; Left Alt bindings work. | Skipped | Layout not installed. |
 
 ### 3. Input-language hotkeys (release blocker on failure)
 
@@ -93,10 +98,10 @@ checks.
 | # | Check | Result | Notes |
 | --- | --- | --- | --- |
 | 4.1 | Line and dot physical width match the setting at 100%. | Pass | 2026-10-07, reported by the operator. |
-| 4.2 | Line and dot physical width match the setting at 150%. | Unverified | No 150% monitor available. |
-| 4.3 | Line and dot physical width match across a mixed-DPI pair. | Unverified | One monitor only. |
+| 4.2 | Line and dot physical width match the setting at 150%. | Skipped | No 150% monitor available. |
+| 4.3 | Line and dot physical width match across a mixed-DPI pair. | Skipped | One monitor only. |
 | 4.4 | Saved color is used for new strokes. | Pass | 2026-10-07, reported by the operator. |
-| 4.5 | Save clears drawings on all monitors. | Unverified | Clear on Save passed on the single monitor (operator, 2026-10-07); the all-monitor part needs a second monitor. |
+| 4.5 | Save clears drawings on all monitors. | Skipped | Clear on Save passed on the single monitor (operator, 2026-10-07); the all-monitor part needs a second monitor. |
 
 ### 5. Audible sound
 
@@ -113,8 +118,8 @@ checks.
 
 | # | Check | Result | Notes |
 | --- | --- | --- | --- |
-| 6.1 | [v1 smoke test](../v1/SMOKE-TEST.md) checks 1–10 with saved settings. | Unverified | Single-monitor checks passed (operator, 2026-10-07); multi-monitor parts need a second monitor. |
-| 6.2 | [v2 sound scenarios](../v2/SOUND-BUSINESS-TESTS.md) 1–15 (open v2 Step 4 checks) with saved settings. | Unverified | Scenarios 1–11 and 13–15 passed (operator, 2026-10-07); scenario 12 needs a second monitor. |
+| 6.1 | [v1 smoke test](../v1/SMOKE-TEST.md) checks 1–10 with saved settings. | Skipped | Single-monitor checks passed (operator, 2026-10-07); multi-monitor parts need a second monitor. |
+| 6.2 | [v2 sound scenarios](../v2/SOUND-BUSINESS-TESTS.md) 1–15 (open v2 Step 4 checks) with saved settings. | Skipped | Scenarios 1–11 and 13–15 passed (operator, 2026-10-07); scenario 12 needs a second monitor. |
 
 ## Release blockers
 

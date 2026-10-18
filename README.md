@@ -6,7 +6,9 @@ overlay across the desktop.
 
 ## Use drawEM
 
-1. Run `DrawEM.App.exe` from the published app directory (see
+1. Start drawEM from the Start menu after [installing it](#download-drawem),
+   run `DrawEM.App.exe` from the folder where you extracted the portable ZIP,
+   or run it from a published app directory (see
    [Build and run from source](#build-and-run-from-source)). The icon appears
    in the notification area.
 2. Hold the draw shortcut (default `Ctrl+Alt+Z`) and move the pointer to
@@ -98,6 +100,99 @@ See [Rolling back to a v3 drawEM](src/DrawEM.App/Infrastructure/Settings/README.
 for the exact backup to choose, how to restore sounds, and how to upgrade
 again.
 
+## Download drawEM
+
+Each release on the [GitHub Releases page](https://github.com/maxViolet/drawEM/releases)
+offers two Windows x64 downloads, plus `SHA256SUMS.txt`.
+[Verify a download](#verify-a-download) before you run it.
+
+- `drawEM-<version>-win-x64-Setup.exe` installs drawEM for the current user,
+  without administrator rights. It adds Start menu and Desktop shortcuts and
+  an entry in Settings > Apps > Installed apps.
+- `drawEM-<version>-win-x64.zip` is the portable app. Extract the whole ZIP to
+  a folder you choose, outside `%LOCALAPPDATA%\drawEM`, and run
+  `DrawEM.App.exe`. Keep all extracted files together.
+
+Both use the same settings, sounds, and logs in `%LOCALAPPDATA%\drawEM`. To
+switch from the portable app to the installer, exit drawEM and run the
+Setup.exe; your settings stay. Only the installed app
+[updates itself](#update-drawem).
+
+The release also carries `drawEM.Desktop-<version>-full.nupkg` and
+`releases.win.json`. They are the update feed that the installed app reads;
+you do not need to download them.
+
+To uninstall, exit drawEM, open Settings > Apps > Installed apps, choose
+drawEM, and choose Uninstall. This removes the app files and shortcuts and
+keeps `%LOCALAPPDATA%\drawEM`; delete that folder yourself to remove your
+settings too. Only the default install location is supported.
+
+The files are not code-signed yet. Windows SmartScreen or Microsoft Defender
+may warn before the first start; the warning depends on the computer and
+Windows settings, so no release is guaranteed to start without one.
+
+## Verify a download
+
+Each release has a `SHA256SUMS.txt` that lists its downloads, and each
+download has a build attestation. In the folder with the downloads:
+
+```powershell
+Get-FileHash .\drawEM-<version>-win-x64-Setup.exe -Algorithm SHA256
+Get-Content .\SHA256SUMS.txt
+gh attestation verify .\drawEM-<version>-win-x64-Setup.exe -R maxViolet/drawEM `
+  --signer-workflow maxViolet/drawEM/.github/workflows/release.yml
+```
+
+Use the ZIP's file name instead to check the portable app.
+
+- Hash: the value matching its `SHA256SUMS.txt` line (case does not matter)
+  proves the file is the one the release lists.
+- Provenance: `gh attestation verify` exiting with code 0 proves this
+  repository's release workflow built the file from a specific commit.
+- Authenticode: the files are not signed until the signing decision in
+  [ADR-0002](docs/adr/0002-release-signing-license.md) and R4-04 is made.
+- None of these proves the software is safe.
+
+## Update drawEM
+
+The installed app checks GitHub Releases for a newer version once after it
+starts and then every 24 hours while it runs. It downloads a newer version in
+the background and never installs it on its own:
+
+1. A balloon tip says the update is ready, and the tray menu shows
+   `Restart to update to <version>` above `Exit`.
+2. Click the balloon or that menu item. drawEM asks
+   `Restart drawEM now to install <version>?`
+3. Choose `No` to keep working. The menu item stays, and drawEM offers the
+   same download again after it restarts.
+4. Choose `Yes` to install. drawEM exits as it does from `Exit`, the update is
+   applied, and the new version starts.
+
+A failed check or download does not interrupt drawEM; it is logged to
+`%LOCALAPPDATA%\drawEM\logs\update.log`, and drawEM tries again at the next
+check. Copies installed from a Setup.exe that predates in-app updates have no
+updater: run the newer Setup.exe once, and later updates arrive in the app.
+
+The portable app never checks for updates. Update it by hand:
+
+1. Exit drawEM from the tray icon.
+2. Download and [verify](#verify-a-download) the newer ZIP.
+3. Extract it to a new, empty folder. Do not extract it over the old folder.
+4. Run `DrawEM.App.exe` from the new folder. Your settings and sounds load
+   from `%LOCALAPPDATA%\drawEM`.
+5. When the new version works, delete the old folder.
+
+## Recover from a bad update
+
+If a newer portable version does not start or misbehaves, exit it and run
+`DrawEM.App.exe` from the old folder. If an installed update does not start,
+uninstall drawEM and run the previous Setup.exe from GitHub Releases; settings
+stay. Settings are shared, so the old version loads them as long as it can
+read their format. Going back from v4 to v3 needs extra steps; see
+[Return to drawEM v3](#return-to-drawem-v3). The logs in
+`%LOCALAPPDATA%\drawEM\logs` (`app.log`, `sound.log`, `effect.log`,
+`update.log`) record failures to report in an issue.
+
 ## Build and run from source
 
 Publish the self-contained x64 app with the .NET SDK:
@@ -123,7 +218,7 @@ multi-monitor behavior that unit tests cannot establish.
 
 GitHub Actions builds the solution with warnings as errors, runs the tests, and
 publishes the win-x64 app for every pull request to `main` and every push to
-`main`. Changes that touch only `docs/` or Markdown files skip this run. A
+`main`, then checks that Velopack can package it as an installer. Changes that touch only `docs/` or Markdown files skip this run. A
 separate check verifies branch names and pull request titles against
 [AGENTS.md](AGENTS.md). The .NET SDK version is pinned in `global.json`.
 
@@ -136,9 +231,12 @@ git push origin v0.3.0
 
 The release workflow rejects any other tag form, runs the tests, publishes the
 self-contained app with the tag's version, checks the publish output, and
-attaches `drawEM-<version>-win-x64.zip` to a draft GitHub Release with
-generated notes. Inspect the draft's notes and assets on GitHub, then publish
-it by hand; the workflow never publishes a release.
+builds the portable ZIP and, from the same publish output, the Velopack
+Setup.exe, full package, and `releases.win.json`. It writes `SHA256SUMS.txt`
+for those files, attests each one, and attaches them with the manifest to a
+draft GitHub Release with generated notes. Inspect the draft's notes and
+assets on GitHub, then publish it by hand; the workflow never publishes a
+release.
 
 ## Current limits and plans
 

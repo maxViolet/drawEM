@@ -1,9 +1,9 @@
 # drawEM v4: release publishing
 
-**Status:** in progress; R4-01 done.
+**Status:** in progress; R4-01, R4-02, R4-03, R4-06, and R4-07 released in `v4.0.0` (2026-10-16), with open manual checks in their acceptance files. R4-04 and R4-05 pending.
 **Decision baseline:** 2026-10-15. The signing license and SignPath eligibility
 remain owner decisions in [ADR-0002](../../adr/0002-release-signing-license.md).
-**Next action:** implement [R4-02](step-02-checksums-provenance/task.md).
+**Next action:** start [R4-05](step-05-winget/task.md); run the R4-07 GitHub upgrade check with the next release.
 
 ## Goal
 

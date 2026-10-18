@@ -2,8 +2,8 @@
 
 **Task:** [tray updates](task.md). **Plan:** [implementation](plan.md).
 
-- [ ] `UpdateControllerTests` fail before implementation and pass afterwards.
-- [ ] Deterministic tests prove one startup check and no more than one
+- [x] `UpdateControllerTests` fail before implementation and pass afterwards.
+- [x] Deterministic tests prove one startup check and no more than one
   periodic check per 24 hours, including the +24 h boundary, and no
   overlapping checks.
 - [ ] Update checks/downloads run off the UI, keyboard-hook, and render paths.
@@ -19,7 +19,7 @@
   version starts once with no "already running" dialog.
 - [ ] Portable ZIP and WinGet portable installs make no update check and show
   no update prompt.
-- [ ] `LayerDependencyTests` pass; only Infrastructure references `Velopack`
+- [x] `LayerDependencyTests` pass; only Infrastructure references `Velopack`
   besides `Program.Main`.
 - [ ] Manual Windows, unverified until done: a local-feed upgrade
   (`DRAWEM_UPDATE_FEED`) preserves schema 1, 2, and 3 settings and sound
@@ -27,15 +27,26 @@
 - [ ] Manual Windows, unverified until done: a GitHub upgrade between two
   published releases that both contain R4-07 succeeds; old/new versions and
   artifact IDs are recorded.
-- [ ] Root README documents check, defer, install, recovery, `update.log`,
+- [x] Root README documents check, defer, install, recovery, `update.log`,
   manual updates for portable copies, and the one-time Setup.exe run for
   R4-06 installs.
-- [ ] Delta packages are listed in [out of scope](../../out-of-scope/README.md).
+- [x] Delta packages are listed in [out of scope](../../out-of-scope/README.md).
 
 ## Evidence
 
-- Test results:
-- Windows version and account type:
+- Test results: `UpdateControllerTests` first failed to compile (types
+  missing), then 15 of 15 passed. The Infrastructure layer rule failed once
+  `VelopackUpdateService` existed and passed after `Velopack` was allowed.
+  Full suite on branch `R4-07.1-tray-updates` (on top of R4-06): 867 passed,
+  0 failed (`dotnet test DrawEM.sln -c Release`, 2026-10-16).
+- Windows version and account type: Windows 11 Pro 26H2 (10.0.26300), the owner's development machine, not a
+  clean install. Account `max` is in the local Administrators group; every
+  run was non-elevated (UAC-filtered token), and no UAC prompt appeared.
+- `v4.0.0` (2026-10-16): the installed copy started and wrote no
+  `update.log` line (no published release existed yet, and no failure). The
+  portable ZIP copy, with `VelopackApp.Run()` outside an install, also
+  created no `update.log` and showed no prompt: the "No VelopackLocator" risk
+  did not occur.
 - Old/new build identities:
 - Defer, accept, restart, and recovery results:
 - Time from Yes to the new tray icon:
@@ -43,7 +54,16 @@
 
 ## Validation
 
-- Automated:
-- CI:
-- Manual Windows (local feed):
-- Manual Windows (GitHub feed):
+- Automated: controller cadence, single in-flight check, one notification
+  per version, pending version at startup, consent No/Yes order, failure
+  reporting, and disposal; tray item and `UpdateRequested` forwarding;
+  `update.log` format; `DRAWEM_UPDATE_FEED` feed choice and its log lines;
+  `VelopackUpdateService` fallback when Velopack refuses to create a manager
+  (logged, treated as not installed). Not tested automatically: the Velopack
+  calls themselves. `CheckAndDownloadAsync` runs them in `Task.Run`, so the
+  off-UI-thread criterion holds by code review only until step 6 runs.
+- CI: PR #94 `build-test-publish` passed.
+- Manual Windows (local feed): not done. The portable-copy check from step 6
+  passed on `v4.0.0` (no `update.log`, no prompt).
+- Manual Windows (GitHub feed): not done; needs two published releases that
+  contain R4-07.

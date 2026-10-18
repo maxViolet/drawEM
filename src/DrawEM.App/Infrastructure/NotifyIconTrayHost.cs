@@ -28,6 +28,9 @@ public sealed class NotifyIconTrayHost : ITrayHost
         settingsItem.Click += (_, _) => SettingsRequested?.Invoke();
         var stopEffectsItem = new ToolStripMenuItem("Stop effects");
         stopEffectsItem.Click += (_, _) => StopEffectsRequested?.Invoke();
+        // Hidden until a version is downloaded; it then stays until the update is applied.
+        UpdateItem = new ToolStripMenuItem("Restart to update") { Available = false };
+        UpdateItem.Click += (_, _) => UpdateRequested?.Invoke();
         var exitItem = new ToolStripMenuItem("Exit");
         exitItem.Click += (_, _) => ExitRequested?.Invoke();
 
@@ -40,11 +43,17 @@ public sealed class NotifyIconTrayHost : ITrayHost
         };
         notifyIcon.ContextMenuStrip.Items.Add(settingsItem);
         notifyIcon.ContextMenuStrip.Items.Add(stopEffectsItem);
+        notifyIcon.ContextMenuStrip.Items.Add(UpdateItem);
         notifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
         notifyIcon.ContextMenuStrip.Items.Add(exitItem);
         // A left click shows the same menu as a right click; Settings opens only from the menu.
         notifyIcon.MouseUp += OnMouseUp;
+        notifyIcon.BalloonTipClicked += (_, _) => UpdateRequested?.Invoke();
     }
+
+    internal ContextMenuStrip Menu => notifyIcon.ContextMenuStrip!;
+
+    internal ToolStripMenuItem UpdateItem { get; }
 
     /// <summary>
     /// NotifyIcon's own menu display, which a right click uses. It brings the menu to the foreground, so the
@@ -62,7 +71,21 @@ public sealed class NotifyIconTrayHost : ITrayHost
 
     public event Action? StopEffectsRequested;
 
+    public event Action? UpdateRequested;
+
     public void Show() => notifyIcon.Visible = true;
+
+    /// <summary>The balloon is the only one this tray shows, so a balloon click always means the update.</summary>
+    public void ShowUpdateReady(string version)
+    {
+        UpdateItem.Text = $"Restart to update to {version}";
+        UpdateItem.Available = true;
+        notifyIcon.ShowBalloonTip(
+            10_000,
+            "drawEM update ready",
+            $"drawEM {version} is downloaded. Click here or choose Restart to update in the tray menu.",
+            ToolTipIcon.Info);
+    }
 
     private void OnMouseUp(object? sender, MouseEventArgs e)
     {

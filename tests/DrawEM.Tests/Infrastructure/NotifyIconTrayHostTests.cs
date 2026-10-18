@@ -28,4 +28,35 @@ public class NotifyIconTrayHostTests
             menu.Close();
         });
     }
+
+    [Fact]
+    public void UpdateItem_IsHiddenAtFirst()
+    {
+        StaThread.Run(() =>
+        {
+            using var host = new NotifyIconTrayHost();
+
+            Assert.False(host.UpdateItem.Available);
+        });
+    }
+
+    [Fact]
+    public void ShowUpdateReady_ShowsTheVersionAboveExit_AndAClickRequestsTheUpdate()
+    {
+        StaThread.Run(() =>
+        {
+            using var host = new NotifyIconTrayHost();
+            var requests = 0;
+            host.UpdateRequested += () => requests++;
+
+            host.ShowUpdateReady("1.2.3");
+            host.UpdateItem.PerformClick();
+
+            var items = host.Menu.Items.Cast<ToolStripItem>().ToList();
+            Assert.True(host.UpdateItem.Available);
+            Assert.Equal("Restart to update to 1.2.3", host.UpdateItem.Text);
+            Assert.True(items.IndexOf(host.UpdateItem) < items.FindIndex(item => item.Text == "Exit"));
+            Assert.Equal(1, requests);
+        });
+    }
 }

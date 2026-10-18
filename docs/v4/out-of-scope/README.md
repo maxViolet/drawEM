@@ -16,3 +16,9 @@ Each task gets its own folder here with `task.md`, `plan.md`, and
 ## Tasks
 
 - [FEAT-009: loop an effect and set its length limit per slot](FEAT-009-effect-loop-and-limit/task.md) — implemented
+
+## Not planned
+
+- Velopack delta packages. R4-07 ships full packages only; deltas need the
+  previous release downloaded during packaging. Source:
+  [R4-07 plan](../release-publishing/step-07-tray-updates/plan.md#decisions).

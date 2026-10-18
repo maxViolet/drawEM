@@ -17,7 +17,9 @@ public class LayerDependencyTests
     {
         { Domain, ["System", "Microsoft", Domain] },
         { Application, ["System", "Microsoft", Domain, Application] },
-        { Infrastructure, ["System", "Microsoft", Domain, Application, Infrastructure] },
+        // Velopack installs and updates the app (release roadmap, installer and updates row); besides
+        // Program.Main, only Infrastructure may use it.
+        { Infrastructure, ["System", "Microsoft", Domain, Application, Infrastructure, "Velopack"] },
         // OverlayWindow implements this existing tray-lifecycle port. Other infrastructure
         // dependencies remain forbidden; do not exempt the whole window or namespace.
         // SkiaSharp plays Lottie effects (ADR 0001); only Presentation may use it.
