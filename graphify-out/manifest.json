@@ -1393,7 +1393,7 @@
   },
   "docs/v4/out-of-scope/README.md": {
     "mtime": 1792397118.8152788,
-    "seen": 1792397134.158085,
+    "seen": 1792397159.366821,
     "ast_hash": "87c8bd683df07a0844fe41f5e6047060",
     "semantic_hash": ""
   },
@@ -2299,19 +2299,19 @@
   },
   "docs/v4/out-of-scope/FEAT-012-bezier-smoothing/acceptance.md": {
     "mtime": 1792397118.8117306,
-    "seen": 1792397134.1580756,
+    "seen": 1792397159.3668091,
     "ast_hash": "69d3ca9812581a62e53176e9e344527b",
     "semantic_hash": ""
   },
   "docs/v4/out-of-scope/FEAT-012-bezier-smoothing/plan.md": {
     "mtime": 1792397118.8127425,
-    "seen": 1792397134.15808,
+    "seen": 1792397159.3668146,
     "ast_hash": "5a890538609160e59d191cc755f62bab",
     "semantic_hash": ""
   },
   "docs/v4/out-of-scope/FEAT-012-bezier-smoothing/task.md": {
     "mtime": 1792397118.8142762,
-    "seen": 1792397134.1580822,
+    "seen": 1792397159.366817,
     "ast_hash": "a18df6734a8216e884ab56c4ebdf6b58",
     "semantic_hash": ""
   }
