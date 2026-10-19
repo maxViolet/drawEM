@@ -1,6 +1,6 @@
 # v4 / R4-05: list stable releases in WinGet
 
-**Status:** pending. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** [R4-06](../step-06-velopack-installer/task.md).
+**Status:** in progress; initial manifest submitted as microsoft/winget-pkgs#455876, review pending. **Source:** [roadmap](../ROADMAP.md). **Plan:** [plan](plan.md). **Acceptance:** [criteria](acceptance.md). **Next:** [R4-06](../step-06-velopack-installer/task.md).
 
 ## Task
 
