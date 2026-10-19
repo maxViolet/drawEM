@@ -30,6 +30,7 @@ public partial class App : System.Windows.Application
     private TrayApplication? trayApplication;
     private ApplicationExitPolicy? exitPolicy;
     private SingleInstanceGuard? instanceGuard;
+    private InstanceActivation? activation;
     private SettingsWindow? settingsWindow;
     private EffectChannelController? effectChannel;
     private BuiltInEffectAnimations? effectAnimations;
@@ -47,11 +48,16 @@ public partial class App : System.Windows.Application
         if (instanceGuard is null)
         {
             // Checked before any hook is installed, so the running instance keeps its shortcuts.
-            MessageBox.Show(
-                "drawEM is already running. Use its icon in the notification area.",
-                "drawEM",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            // The running instance opens Settings; the message is left for one that has not started listening.
+            if (!InstanceActivation.Signal(InstanceActivation.DefaultName))
+            {
+                MessageBox.Show(
+                    "drawEM is already running. Use its icon in the notification area.",
+                    "drawEM",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+
             Shutdown();
             return;
         }
@@ -176,7 +182,7 @@ public partial class App : System.Windows.Application
             var settingsSave = new SettingsSaveOperation(
                 store, library, settings, channelHost, effects, shortcuts, saveNotifications);
             var sampler = new SoundSampler(channelHost.Play, channelHost.Stop, settings.CommandFor, playbackFailures);
-            trayApplication.SettingsRequested += () => OpenSettings(() =>
+            Action openSettings = () => OpenSettings(() =>
             {
                 var window = new SettingsWindow(SystemParameters.WorkArea.Height, theme);
                 // Each window samples effects on its own, so it stops only its own sample.
@@ -187,9 +193,12 @@ public partial class App : System.Windows.Application
                 window.Attach(new SettingsViewModel(editor, shortcuts, window));
                 return window;
             });
+            trayApplication.SettingsRequested += openSettings;
             trayApplication.UpdateRequested += updateController.RequestUpdate;
             trayApplication.Start();
             updateController.Start();
+            // A second launch, such as the shortcut clicked after the installer started drawEM, opens Settings.
+            activation = InstanceActivation.Listen(InstanceActivation.DefaultName, () => dispatchToUi(openSettings));
         }
         catch (Exception exception)
         {
@@ -208,7 +217,7 @@ public partial class App : System.Windows.Application
     {
         try
         {
-            CleanupSteps.RunAll([CloseSettings, () => trayApplication?.Dispose()]);
+            CleanupSteps.RunAll([() => activation?.Dispose(), CloseSettings, () => trayApplication?.Dispose()]);
             base.OnExit(e);
         }
         finally
@@ -254,6 +263,7 @@ public partial class App : System.Windows.Application
 
     private void ReleaseStartedResources()
     {
+        activation?.Dispose();
         if (trayApplication is not null)
         {
             trayApplication.Dispose();
