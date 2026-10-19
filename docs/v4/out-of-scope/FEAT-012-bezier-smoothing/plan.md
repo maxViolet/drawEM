@@ -23,6 +23,13 @@ See [task](task.md) and [acceptance criteria](acceptance.md).
      update, and removed when the stroke ends.
    - Keep the reclassification of the active stroke into a completed one: the
      finished pieces stay, the tail becomes the final piece.
+   - Draw every piece with the stroke's round-cap pen. Colors are opaque, so
+     the overlap of pieces at a join is invisible and the incremental drawing
+     matches one geometry. Test it with a pixel comparison on the existing
+     `DeviceSurface` test helper.
+   - Keep the fallback for a stroke whose last point was never seen as
+     active: remove the active visuals and draw the full stroke.
+   - Compare `tools/RenderLagHarness` runs with `None` and `Bezier`.
 5. **Settings UI.** Add the `Developer settings` tab to `SettingsWindow.xaml`
    after `Actions · 8 slots`, with a `Bezier smoothing` check box bound to a
    `SettingsViewModel` property. The draft goes through `SettingsEditor` like
