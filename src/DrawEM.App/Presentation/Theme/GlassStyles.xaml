@@ -129,8 +129,11 @@
                     <StackPanel Orientation="Horizontal" Background="Transparent">
                         <Border x:Name="Box" Width="16" Height="16" CornerRadius="4" VerticalAlignment="Center"
                                 Background="{DynamicResource Glass.Field}" BorderBrush="{DynamicResource Glass.Edge}" BorderThickness="1">
-                            <Path x:Name="Mark" Data="M 3.5 8 L 6.5 11 L 12.5 4.5" Stroke="{DynamicResource Glass.OnAccent}"
-                                  StrokeThickness="1.8" Visibility="Collapsed" />
+                            <!-- Drawn from the origin so the alignment centers it inside the border. -->
+                            <Path x:Name="Mark" Data="M 0 3.5 L 3 6.5 L 9 0" Stroke="{DynamicResource Glass.OnAccent}"
+                                  StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Visibility="Collapsed" />
                         </Border>
                         <ContentPresenter Margin="6,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True" />
                     </StackPanel>
