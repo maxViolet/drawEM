@@ -17,6 +17,7 @@ Each task gets its own folder here with `task.md`, `plan.md`, and
 
 - [FEAT-009: loop an effect and set its length limit per slot](FEAT-009-effect-loop-and-limit/task.md) — implemented
 - [FEAT-011: glass design for Settings and the tray menu](FEAT-011-glass-ui/task.md) — implemented
+- [FEAT-012: smooth strokes with Bézier curves](FEAT-012-bezier-smoothing/task.md) — planned
 
 ## Not planned
 

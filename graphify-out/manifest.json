@@ -1392,10 +1392,10 @@
     "semantic_hash": "f8121164f3b03592820260aa26743765"
   },
   "docs/v4/out-of-scope/README.md": {
-    "mtime": 1792153145.0845385,
-    "seen": 1792394487.269582,
-    "ast_hash": "84aba6841f1bd10c781dfcd783e36ab6",
-    "semantic_hash": "84aba6841f1bd10c781dfcd783e36ab6"
+    "mtime": 1792397118.8152788,
+    "seen": 1792397134.158085,
+    "ast_hash": "87c8bd683df07a0844fe41f5e6047060",
+    "semantic_hash": ""
   },
   "docs/v4/release-publishing/README.md": {
     "mtime": 1792153119.5862358,
@@ -1892,8 +1892,8 @@
   "src/DrawEM.App/Presentation/Effects/BuiltIn/snow.json": {
     "mtime": 1792151142.0767748,
     "seen": 1792394487.269383,
-    "ast_hash": "38ff88684ab4d186553fb4e46cc74416",
-    "semantic_hash": "38ff88684ab4d186553fb4e46cc74416"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Release/ReleaseScriptsTests.cs": {
     "mtime": 1792153119.6355257,
@@ -2296,5 +2296,23 @@
     "seen": 1792394487.2695808,
     "ast_hash": "d1c9dca12c4a9dae81eab85d704598e0",
     "semantic_hash": "d1c9dca12c4a9dae81eab85d704598e0"
+  },
+  "docs/v4/out-of-scope/FEAT-012-bezier-smoothing/acceptance.md": {
+    "mtime": 1792397118.8117306,
+    "seen": 1792397134.1580756,
+    "ast_hash": "69d3ca9812581a62e53176e9e344527b",
+    "semantic_hash": ""
+  },
+  "docs/v4/out-of-scope/FEAT-012-bezier-smoothing/plan.md": {
+    "mtime": 1792397118.8127425,
+    "seen": 1792397134.15808,
+    "ast_hash": "5a890538609160e59d191cc755f62bab",
+    "semantic_hash": ""
+  },
+  "docs/v4/out-of-scope/FEAT-012-bezier-smoothing/task.md": {
+    "mtime": 1792397118.8142762,
+    "seen": 1792397134.1580822,
+    "ast_hash": "a18df6734a8216e884ab56c4ebdf6b58",
+    "semantic_hash": ""
   }
 }
