@@ -58,6 +58,13 @@ public sealed class SettingsWindowTests
             Assert.Contains("RepeatButton.IsEnabled: CanIncreaseMaxLength Active", bindings);
             Assert.Contains("Button.Content: SampleText Active", bindings);
 
+            Assert.Equal(3, tabs.Items.Count);
+            Assert.Contains("CheckBox.IsChecked: BezierSmoothing Active", bindings);
+            tabs.SelectedIndex = 2;
+            Layout(window);
+            var smoothing = Descendants<CheckBox>(window)
+                .Single(box => AutomationProperties.GetName(box) == "Bezier smoothing");
+            Assert.True(smoothing.IsChecked);
             tabs.SelectedIndex = 1;
             Layout(window);
             var effects = ComboBoxes(slots, "Effect");

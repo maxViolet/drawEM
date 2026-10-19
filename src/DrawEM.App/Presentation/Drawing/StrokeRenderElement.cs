@@ -27,6 +27,7 @@ public sealed class StrokeRenderElement : FrameworkElement
     private readonly Dictionary<(HexColor Color, double Thickness), Pen> penCache = [];
     private readonly Dictionary<HexColor, Brush> brushCache = [];
     private DrawingVisual? activeDotVisual;
+    private DrawingVisual? activeTailVisual;
     private int completedRendered;
     private int activePointCount;
     private ScreenPoint? activeFirstPoint;
@@ -60,8 +61,15 @@ public sealed class StrokeRenderElement : FrameworkElement
             var stroke = state.CompletedStrokes[i];
             if (i == completedRendered && IsCurrentlyTrackedActiveStroke(stroke))
             {
-                // Already drawn incrementally while it was the active stroke; visuals
-                // stay as-is and become permanent, only the tracking below retires.
+                // The active figures already contain every canonical path piece. Keep
+                // them in place: the temporary tail is the completed stroke's final
+                // piece, so reclassification only drops tracking references and never
+                // redraws points accumulated during the stroke.
+                activeSegmentVisuals.Clear();
+                activeDotVisual = null;
+                activeTailVisual = null;
+                activePointCount = 0;
+                activeFirstPoint = null;
                 reclassifiedActiveStroke = true;
                 continue;
             }
@@ -73,21 +81,9 @@ public sealed class StrokeRenderElement : FrameworkElement
 
         if (hadNewCompletedStrokes)
         {
-            // Exactly one active stroke exists at a time, and it must have ended
-            // (End/ClearAndExitDrawMode) for CompletedStrokes to grow. Whatever this
-            // renderer was tracking as "active" is stale regardless of outcome: if it
-            // matched, its visuals are now part of the completed picture (keep them,
-            // just retire the tracking); if it did not match (e.g. a move was skipped
-            // before the stroke ended), the partial visuals are a stale duplicate of
-            // what DrawFullStroke just drew and must be removed, not just forgotten.
-            if (reclassifiedActiveStroke)
-            {
-                activeSegmentVisuals.Clear();
-                activeDotVisual = null;
-                activePointCount = 0;
-                activeFirstPoint = null;
-            }
-            else
+            // A tracked stroke's pieces have just become permanent. Otherwise any
+            // partial visuals are stale duplicates of the full stroke drawn above.
+            if (!reclassifiedActiveStroke)
             {
                 RemoveActiveVisuals();
             }
@@ -118,10 +114,15 @@ public sealed class StrokeRenderElement : FrameworkElement
             activeDotVisual = null;
         }
 
-        var fromIndex = Math.Max(activePointCount, 1);
-        if (active.Points.Count > fromIndex)
+        if (active.Style.Smoothing == StrokeSmoothing.Bezier)
         {
-            DrawActiveSegments(active, fromIndex, transform);
+            DrawActiveBezier(active, transform);
+        }
+        else
+        {
+            var fromIndex = Math.Max(activePointCount, 1);
+            if (active.Points.Count > fromIndex)
+                DrawActiveSegments(active, fromIndex, transform);
         }
 
         activeFirstPoint ??= active.Points[0];
@@ -148,16 +149,15 @@ public sealed class StrokeRenderElement : FrameworkElement
             {
                 DrawDot(drawingContext, stroke, transform);
             }
-            else
+            else if (stroke.Style.Smoothing == StrokeSmoothing.None)
             {
                 var pen = GetPen(stroke, transform);
                 for (var i = 1; i < stroke.Points.Count; i++)
-                {
-                    drawingContext.DrawLine(
-                        pen,
-                        transform.ToLocalPoint(stroke.Points[i - 1]),
-                        transform.ToLocalPoint(stroke.Points[i]));
-                }
+                    drawingContext.DrawLine(pen, transform.ToLocalPoint(stroke.Points[i - 1]), transform.ToLocalPoint(stroke.Points[i]));
+            }
+            else
+            {
+                drawingContext.DrawGeometry(null, GetPen(stroke, transform), BuildBezierGeometry(stroke.Points, transform));
             }
             if (clipped) drawingContext.Pop();
         }
@@ -200,12 +200,141 @@ public sealed class StrokeRenderElement : FrameworkElement
         activeSegmentVisuals.Add(visual);
     }
 
+    private void DrawActiveBezier(Stroke active, PhysicalToLocalTransform transform)
+    {
+        if (activeTailVisual is not null)
+        {
+            children.Remove(activeTailVisual);
+            activeTailVisual = null;
+        }
+
+        var count = active.Points.Count;
+        var firstNewPiece = activePointCount == 0 ? 0 : activePointCount - 1;
+        var lastNewPiece = count - 2;
+        if (firstNewPiece <= lastNewPiece)
+        {
+            AddActivePieces(active, transform, firstNewPiece, lastNewPiece);
+        }
+
+        var tail = new DrawingVisual();
+        using (var context = tail.RenderOpen())
+        {
+            var clipped = PushMonitorClip(context, active, transform);
+            context.DrawLine(
+                CreateBezierTailPen(active, transform),
+                transform.ToLocalPoint(Midpoint(active.Points[count - 2], active.Points[count - 1])),
+                transform.ToLocalPoint(active.Points[count - 1]));
+            if (clipped) context.Pop();
+        }
+        children.Add(tail);
+        activeTailVisual = tail;
+    }
+
+    private void AddActivePieces(
+        Stroke active, PhysicalToLocalTransform transform, int firstPiece, int lastPiece)
+    {
+        var visual = new DrawingVisual();
+        using (var context = visual.RenderOpen())
+        {
+            var brush = GetBrush(active.Style.Color);
+            var width = LocalWidth(active, transform);
+            // Each piece gets its round start cap at its join and a flat end cap;
+            // the following piece supplies the join cap without double-compositing.
+            var startPen = new Pen(brush, width)
+            {
+                StartLineCap = PenLineCap.Round,
+                EndLineCap = PenLineCap.Flat,
+                LineJoin = PenLineJoin.Round,
+            };
+            startPen.Freeze();
+            for (var piece = firstPiece; piece <= lastPiece; piece++)
+            {
+                var geometry = new StreamGeometry();
+                using (var path = geometry.Open())
+                {
+                    if (piece == 0)
+                    {
+                        path.BeginFigure(transform.ToLocalPoint(active.Points[0]), false, false);
+                        path.LineTo(transform.ToLocalPoint(Midpoint(active.Points[0], active.Points[1])), true, false);
+                    }
+                    else
+                    {
+                        var start = Midpoint(active.Points[piece - 1], active.Points[piece]);
+                        path.BeginFigure(transform.ToLocalPoint(start), false, false);
+                        path.QuadraticBezierTo(
+                            transform.ToLocalPoint(active.Points[piece]),
+                            transform.ToLocalPoint(Midpoint(active.Points[piece], active.Points[piece + 1])),
+                            true,
+                            false);
+                    }
+                }
+                context.DrawGeometry(null, startPen, geometry);
+            }
+        }
+        children.Add(visual);
+        activeSegmentVisuals.Add(visual);
+    }
+
+    private static StreamGeometry BuildBezierGeometry(
+        IReadOnlyList<ScreenPoint> points, PhysicalToLocalTransform transform)
+    {
+        var geometry = new StreamGeometry();
+        using (var context = geometry.Open())
+        {
+            var pieces = StrokeSmoothingGeometry.CreatePieces(points);
+            context.BeginFigure(transform.ToLocalPoint(pieces[0] switch
+            {
+                StrokePathPiece.Line line => line.Start,
+                StrokePathPiece.Quadratic quadratic => quadratic.Start,
+                _ => throw new InvalidOperationException("Unknown stroke path piece."),
+            }), false, false);
+            foreach (var piece in pieces)
+            {
+                switch (piece)
+                {
+                    case StrokePathPiece.Line line:
+                        context.LineTo(transform.ToLocalPoint(line.End), true, false);
+                        break;
+                    case StrokePathPiece.Quadratic quadratic:
+                        context.QuadraticBezierTo(
+                            transform.ToLocalPoint(quadratic.Control),
+                            transform.ToLocalPoint(quadratic.End),
+                            true,
+                            false);
+                        break;
+                }
+            }
+        }
+        return geometry;
+    }
+
+    private static ScreenPoint Midpoint(ScreenPoint first, ScreenPoint second) =>
+        StrokeSmoothingGeometry.Midpoint(first, second);
+
+    private Pen CreateBezierTailPen(Stroke stroke, PhysicalToLocalTransform transform)
+    {
+        var pen = new Pen(GetBrush(stroke.Style.Color), LocalWidth(stroke, transform))
+        {
+            StartLineCap = PenLineCap.Round,
+            EndLineCap = PenLineCap.Round,
+            LineJoin = PenLineJoin.Round,
+        };
+        pen.Freeze();
+        return pen;
+    }
+
     private void RemoveActiveVisuals()
     {
         if (activeDotVisual is not null)
         {
             children.Remove(activeDotVisual);
             activeDotVisual = null;
+        }
+
+        if (activeTailVisual is not null)
+        {
+            children.Remove(activeTailVisual);
+            activeTailVisual = null;
         }
 
         foreach (var segmentVisual in activeSegmentVisuals)
@@ -221,6 +350,7 @@ public sealed class StrokeRenderElement : FrameworkElement
     private void ResetAll()
     {
         children.Clear();
+        activeTailVisual = null;
         activeSegmentVisuals.Clear();
         activeDotVisual = null;
         completedRendered = 0;

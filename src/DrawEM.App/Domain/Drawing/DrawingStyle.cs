@@ -48,4 +48,10 @@ public readonly record struct StrokeWidth
     public override string ToString() => Pixels.ToString(CultureInfo.InvariantCulture);
 }
 
-public sealed record DrawingStyle(HexColor Color, StrokeWidth Width);
+public enum StrokeSmoothing
+{
+    None,
+    Bezier,
+}
+
+public sealed record DrawingStyle(HexColor Color, StrokeWidth Width, StrokeSmoothing Smoothing = StrokeSmoothing.Bezier);

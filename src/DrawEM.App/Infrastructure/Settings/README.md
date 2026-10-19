@@ -4,14 +4,15 @@
 `%LOCALAPPDATA%\drawEM\settings.json`. Domain and Application see only
 `SettingsSnapshot` and the `ISettingsStore` port.
 
-## Schema version 3
+## Schema version 4
 
 ```json
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "drawing": {
     "color": "#FF4500",
     "width": 4,
+    "smoothing": "bezier",
     "drawShortcut": "Ctrl+Alt+Z",
     "clearShortcut": "Ctrl+Alt+X"
   },
@@ -43,26 +44,23 @@
   filled slot, a known effect ID and a valid maximum length in every effect
   slot, and no duplicate active shortcut.
 
+- `drawing.smoothing` is `"none"` or `"bezier"`; a missing or unknown value in
+  schema 4 is invalid. Schemas 1–3 load with `"bezier"`.
+
 Schema 1 (v3) has the same layout and allows only `sound` actions. Schema 2
 adds effect actions without `loop` and `maxSeconds`; they load as Loop off and
-10 seconds.
+10 seconds. Schema 3 adds effect loop and length settings.
 
 ## Version policy
 
-- The writer always writes `CurrentSchemaVersion` (3), including when every
+- The writer always writes `CurrentSchemaVersion` (4), including when every
   slot holds a sound or is empty.
-- The reader accepts versions 1, 2, and 3. A missing, non-integer, older
+- The reader accepts versions 1, 2, 3, and 4. A missing, non-integer, older
   unknown, or newer version is reported as unsupported, with the version
   number in the reason; the file is treated like any other unreadable file.
-- An unknown action type, an `effect` action in a schema 1 file, an empty
-  `effectId`, an ID the catalog does not know, a non-boolean `loop`, or a
-  non-integer or out-of-range `maxSeconds` makes the file unreadable, with the
-  slot number and invalid field in the reason. The slot is never silently
-  emptied.
-- Schemas 1 and 2 load into the current model with their sounds, shortcuts,
-  and file names unchanged. Effect actions from schema 2 receive the playback
-  defaults. A migration never rewrites the file on load; schema 3 is written
-  on the next Save.
+- Schemas 1–3 load into the current model with smoothing set to `Bezier`. A
+  migration never rewrites the file on load; schema 4 is written on the next
+  Save.
 - A later schema bumps the version and adds a forward migration from every
   earlier version in the reader.
 - v2 kept sound assignments in code, so there is nothing to migrate: a first

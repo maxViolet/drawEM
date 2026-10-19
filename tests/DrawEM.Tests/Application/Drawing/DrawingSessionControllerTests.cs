@@ -65,8 +65,10 @@ public class DrawingSessionControllerTests
     [Fact]
     public void NewStroke_UsesStyleActiveWhenItStarts()
     {
-        var first = new DrawingStyle(new HexColor(0x1E, 0x90, 0xC8), new StrokeWidth(StrokeWidth.Min));
-        var second = new DrawingStyle(new HexColor(0x00, 0xFF, 0x00), new StrokeWidth(StrokeWidth.Max));
+        var first = new DrawingStyle(
+            new HexColor(0x1E, 0x90, 0xC8), new StrokeWidth(StrokeWidth.Min), StrokeSmoothing.Bezier);
+        var second = new DrawingStyle(
+            new HexColor(0x00, 0xFF, 0x00), new StrokeWidth(StrokeWidth.Max), StrokeSmoothing.None);
         var current = first;
         var session = new DrawingSessionController(() => current);
         DrawingState lastState = default!;

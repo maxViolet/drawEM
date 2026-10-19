@@ -34,6 +34,32 @@ public sealed class JsonSettingsStoreTests : IDisposable
         Directory.Delete(directory, recursive: true);
     }
 
+    [Theory]
+    [InlineData(StrokeSmoothing.None, "\"none\"")]
+    [InlineData(StrokeSmoothing.Bezier, "\"bezier\"")]
+    public void SettingsJson_RoundTripsSmoothing(StrokeSmoothing smoothing, string serialized)
+    {
+        var source = SettingsSnapshot.Default;
+        var snapshot = SettingsSnapshot.Validate(
+            source.Style with { Smoothing = smoothing },
+            source.DrawShortcut, source.ClearShortcut, source.Slots).Snapshot!;
+
+        var json = Encoding.UTF8.GetString(SettingsJson.Serialize(snapshot));
+        var loaded = SettingsJson.Deserialize(Encoding.UTF8.GetBytes(json));
+
+        Assert.Contains($"\"smoothing\": {serialized}", json);
+        Assert.Equal(smoothing, loaded.Style.Smoothing);
+    }
+
+    [Fact]
+    public void SettingsJson_RejectsUnknownSmoothing()
+    {
+        var json = Encoding.UTF8.GetString(SettingsJson.Serialize(SettingsSnapshot.Default))
+            .Replace("\"smoothing\": \"bezier\"", "\"smoothing\": \"unknown\"", StringComparison.Ordinal);
+
+        Assert.Throws<SettingsFormatException>(() => SettingsJson.Deserialize(Encoding.UTF8.GetBytes(json)));
+    }
+
     [Fact]
     public void DefaultDirectory_IsDrawEMUnderCurrentUserLocalAppData()
     {
@@ -106,9 +132,10 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         var json = File.ReadAllText(SettingsPath);
 
-        Assert.Contains("\"schemaVersion\": 3", json);
+        Assert.Contains("\"schemaVersion\": 4", json);
         Assert.Contains("\"color\": \"#00FF7F\"", json);
         Assert.Contains("\"width\": 12", json);
+        Assert.Contains("\"smoothing\": \"bezier\"", json);
         Assert.Contains("\"drawShortcut\": \"Ctrl+Shift+D\"", json);
         Assert.Contains("\"shortcut\": \"Alt+Shift+F3\"", json);
         Assert.Contains("\"action\": null", json);
@@ -141,7 +168,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
     }
 
     [Theory]
-    [InlineData(4)]
+    [InlineData(5)]
     [InlineData(0)]
     public void Load_UnsupportedSchemaVersion_IsUnreadableWithVersionInReason(int version)
     {
@@ -184,6 +211,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
         var snapshot = Loaded(Store().Load());
 
         Assert.Equal(Custom(), snapshot);
+        Assert.Equal(StrokeSmoothing.Bezier, snapshot.Style.Smoothing);
         Assert.Equal(before, File.ReadAllBytes(SettingsPath));
         Assert.Equal([SettingsPath], Directory.GetFiles(directory));
     }
@@ -226,6 +254,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
         var effect = Assert.IsType<EffectAction>(snapshot.Slots[1].Action);
         Assert.Equal(new EffectId("confetti"), effect.Effect);
         Assert.Equal("Ctrl+Alt+2", effect.Shortcut!.ToString());
+        Assert.Equal(StrokeSmoothing.Bezier, snapshot.Style.Smoothing);
         Assert.Equal(new EffectId("focus-ring"), Assert.IsType<EffectAction>(snapshot.Slots[2].Action).Effect);
         Assert.True(snapshot.Slots[3].IsEmpty);
         Assert.False(effect.Loop);
@@ -242,6 +271,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         var snapshot = Loaded(Store().Load());
 
+        Assert.Equal(StrokeSmoothing.Bezier, snapshot.Style.Smoothing);
         var looping = Assert.IsType<EffectAction>(snapshot.Slots[1].Action);
         Assert.True(looping.Loop);
         Assert.Equal(TimeSpan.FromSeconds(42), looping.MaxLength);
@@ -325,7 +355,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
         Store().Save(loaded);
 
         Assert.Equal(original, File.ReadAllBytes(BackupPath));
-        Assert.Equal(3, SchemaVersion(File.ReadAllBytes(SettingsPath)));
+        Assert.Equal(4, SchemaVersion(File.ReadAllBytes(SettingsPath)));
         Assert.Equal(loaded, Loaded(Store().Load()));
     }
 

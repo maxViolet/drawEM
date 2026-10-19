@@ -94,6 +94,16 @@ public sealed class SettingsViewModel : BindableBase
     /// <summary>The draft color as <c>#RRGGBB</c>, for binding.</summary>
     public string Color => editor.Color.ToString();
 
+
+    public bool BezierSmoothing
+    {
+        get => editor.Smoothing == StrokeSmoothing.Bezier;
+        set
+        {
+            editor.SetSmoothing(value ? StrokeSmoothing.Bezier : StrokeSmoothing.None);
+            Refresh();
+        }
+    }
     public string WidthText
     {
         get => widthText;
