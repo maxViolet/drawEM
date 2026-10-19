@@ -24,8 +24,13 @@ namespace RenderLagHarness;
 internal static class Program
 {
     [STAThread]
-    private static void Main()
+    private static void Main(string[] args)
     {
+        var smoothing = args.Length == 0 || string.Equals(args[0], "bezier", StringComparison.OrdinalIgnoreCase)
+            ? StrokeSmoothing.Bezier
+            : string.Equals(args[0], "none", StringComparison.OrdinalIgnoreCase)
+                ? StrokeSmoothing.None
+                : throw new ArgumentException("Pass 'none' or 'bezier' to select stroke smoothing.", nameof(args));
         var rates = new[] { 125, 500, 1000 };
         var scenarios = new (string Name, Func<ScenarioSeed> Seed)[]
         {
@@ -40,7 +45,7 @@ internal static class Program
 
         // Cold start: first run of the process, before any JIT warmup on this code path.
         var coldSeed = scenarios[0].Seed();
-        var (cold, coldSamples) = RunScenario("empty-canvas [cold]", coldSeed, rate: 500, eventCount: 500);
+        var (cold, coldSamples) = RunScenario($"empty-canvas [{smoothing}] [cold]", coldSeed, rate: 500, eventCount: 500, smoothing: smoothing);
         results.Add(cold);
         Console.WriteLine(cold.Summarize());
         worst = cold;
@@ -51,7 +56,7 @@ internal static class Program
             foreach (var rate in rates)
             {
                 var eventCount = rate; // ~1 nominal second of events per run, budget-capped below
-                var (result, sampleList) = RunScenario(name, seed(), rate, eventCount);
+                var (result, sampleList) = RunScenario($"{name} [{smoothing}]", seed(), rate, eventCount, smoothing);
                 results.Add(result);
                 Console.WriteLine(result.Summarize());
 
@@ -81,12 +86,13 @@ internal static class Program
         string name,
         ScenarioSeed seed,
         int rate,
-        int eventCount)
+        int eventCount,
+        StrokeSmoothing smoothing)
     {
         (RunResult Result, List<Sample> Samples)? outcome = null;
         var thread = new Thread(() =>
         {
-            outcome = RunOnDispatcherThread(name, seed, rate, eventCount);
+            outcome = RunOnDispatcherThread(name, seed, rate, eventCount, smoothing);
         });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
@@ -98,10 +104,12 @@ internal static class Program
         string name,
         ScenarioSeed seed,
         int rate,
-        int eventCount)
+        int eventCount,
+        StrokeSmoothing smoothing)
     {
         var dispatcher = Dispatcher.CurrentDispatcher;
-        var controller = new DrawingSessionController();
+        var controller = new DrawingSessionController(
+            () => DrawEM.App.Domain.Settings.SettingsSnapshot.Default.Style with { Smoothing = smoothing });
         var renderElement = new StrokeRenderElement();
         var inputGate = new DrawingModeInputGate();
         var mouseSource = new FakeMouseHookSource();

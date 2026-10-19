@@ -1,6 +1,6 @@
 # v4 / FEAT-012: smooth strokes with Bézier curves
 
-**Status:** planned. **Source:** [v4 out of scope](../README.md).
+**Status:** implemented; manual UI check pending. **Source:** [v4 out of scope](../README.md).
 
 See [implementation plan](plan.md) and [acceptance criteria](acceptance.md).
 

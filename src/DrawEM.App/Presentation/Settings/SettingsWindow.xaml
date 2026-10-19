@@ -307,6 +307,14 @@
                     </ScrollViewer>
                 </DockPanel>
             </TabItem>
+            <TabItem Header="Developer settings">
+                <StackPanel Margin="4">
+                    <TextBlock Text="Drawing" FontSize="15" FontWeight="SemiBold" />
+                    <CheckBox Content="Bezier smoothing" Margin="0,12,0,0"
+                              AutomationProperties.Name="Bezier smoothing"
+                              IsChecked="{Binding BezierSmoothing}" />
+                </StackPanel>
+            </TabItem>
         </TabControl>
     </DockPanel>
     </Border>

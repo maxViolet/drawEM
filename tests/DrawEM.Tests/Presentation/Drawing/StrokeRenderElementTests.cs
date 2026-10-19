@@ -61,7 +61,36 @@ public class StrokeRenderElementTests
     }
 
     [Fact]
-    public void UpdateState_RendersSinglePointStroke()
+    public void UpdateState_ClipsIncrementalBezierPiecesToTheirStartingMonitor()
+    {
+        StaThread.Run(() =>
+        {
+            var element = NewElement();
+            var bounds = new MonitorBounds(0, 0, 10, 20);
+            var points = new[]
+            {
+                new ScreenPoint(5, 10),
+                new ScreenPoint(10, 10),
+                new ScreenPoint(15, 10),
+            };
+            var stroke = new Stroke(points, DefaultStyle, bounds);
+            var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
+
+            element.UpdateState(new DrawingState([], stroke, true, 0), transform);
+
+            Assert.True(PixelAlphaAt(element, 9, 10) > 0);
+            Assert.Equal((byte)0, PixelAlphaAt(element, 11, 10));
+
+            element.UpdateState(new DrawingState([stroke], null, false, 0), transform);
+
+            Assert.Equal((byte)0, PixelAlphaAt(element, 11, 10));
+        });
+    }
+
+    [Theory]
+    [InlineData(StrokeSmoothing.None)]
+    [InlineData(StrokeSmoothing.Bezier)]
+    public void UpdateState_RendersSinglePointStrokeAsDot(StrokeSmoothing smoothing)
     {
         StaThread.Run(() =>
         {
@@ -75,7 +104,7 @@ public class StrokeRenderElementTests
             element.UpdateState(
                 new DrawingState(
                     [],
-                    new Stroke([new ScreenPoint(10, 10)], DefaultStyle),
+                    new Stroke([new ScreenPoint(10, 10)], DefaultStyle with { Smoothing = smoothing }),
                     true,
                     0),
                 new PhysicalToLocalTransform(0, 0, Matrix.Identity));
@@ -112,6 +141,78 @@ public class StrokeRenderElementTests
 
             Assert.Equal((byte)255, PixelAlphaAt(element, 17, 10));
             Assert.Equal((byte)255, PixelAlphaAt(element, 10, 10));
+        });
+    }
+
+    [Fact]
+    public void UpdateState_BezierIncrementalStrokeMatchesFullReRenderAfterCompletion()
+    {
+        StaThread.Run(() =>
+        {
+            var points = new[]
+            {
+                new ScreenPoint(2, 2),
+                new ScreenPoint(5, 13),
+                new ScreenPoint(11, 8),
+                new ScreenPoint(15, 17),
+                new ScreenPoint(18, 3),
+            };
+            var stroke = new Stroke(points, DefaultStyle);
+            var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
+            var incremental = NewElement();
+            for (var count = 1; count <= points.Length; count++)
+            {
+                incremental.UpdateState(
+                    new DrawingState([], new Stroke(points[..count], DefaultStyle), true, 0), transform);
+            }
+            incremental.UpdateState(new DrawingState([stroke], null, false, 0), transform);
+
+            var full = NewElement();
+            full.UpdateState(new DrawingState([stroke], null, false, 0), transform);
+            var incrementalPixels = RenderPixels(incremental, SmallSurfaceSize, SmallSurfaceSize, 1.0);
+            var fullPixels = RenderPixels(full, SmallSurfaceSize, SmallSurfaceSize, 1.0);
+
+            var maxDifference = 0;
+            var maxIndex = 0;
+            for (var index = 0; index < fullPixels.Length; index++)
+            {
+                var difference = Math.Abs(incrementalPixels[index] - fullPixels[index]);
+                if (difference > maxDifference)
+                {
+                    maxDifference = difference;
+                    maxIndex = index;
+                }
+            }
+
+            var pixelIndex = maxIndex / BytesPerPixel;
+            var channel = maxIndex % BytesPerPixel;
+            Assert.True(maxDifference <= 20,
+                $"Max channel difference {maxDifference} at ({pixelIndex % SmallSurfaceSize}, " +
+                $"{pixelIndex / SmallSurfaceSize}), channel {channel}; incremental=" +
+                $"{incrementalPixels[maxIndex]}, full={fullPixels[maxIndex]}.");
+        });
+    }
+
+    private static StrokeRenderElement NewElement()
+    {
+        var element = new StrokeRenderElement { Width = SmallSurfaceSize, Height = SmallSurfaceSize };
+        element.Measure(new Size(SmallSurfaceSize, SmallSurfaceSize));
+        element.Arrange(new Rect(0, 0, SmallSurfaceSize, SmallSurfaceSize));
+        return element;
+    }
+    [Fact]
+    public void UpdateState_NoneUsesRawStraightSegmentsWhileBezierRoundsTheCorner()
+    {
+        StaThread.Run(() =>
+        {
+            var points = new[] { new ScreenPoint(2, 2), new ScreenPoint(10, 2), new ScreenPoint(10, 10) };
+            var none = new DeviceSurface(SmallSurfaceSize, SmallSurfaceSize, 1.0);
+            var bezier = new DeviceSurface(SmallSurfaceSize, SmallSurfaceSize, 1.0);
+            none.Render(new Stroke(points, DefaultStyle with { Smoothing = StrokeSmoothing.None }));
+            bezier.Render(new Stroke(points, DefaultStyle with { Smoothing = StrokeSmoothing.Bezier }));
+
+            Assert.Equal(Opaque(DefaultStyle.Color), none.PixelAt(10, 2));
+            Assert.NotEqual(none.PixelAt(10, 2), bezier.PixelAt(10, 2));
         });
     }
 

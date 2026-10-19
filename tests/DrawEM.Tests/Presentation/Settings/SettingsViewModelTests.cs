@@ -588,6 +588,27 @@ public sealed class SettingsViewModelTests
 
         Assert.Equal(1, effectSampler.Stops);
     }
+    [Fact]
+    public void Smoothing_IsDraftOnlyUntilSaveAndCancelLeavesActiveStyleUnchanged()
+    {
+        var model = Model();
+        Assert.True(model.BezierSmoothing);
+
+        model.BezierSmoothing = false;
+        Assert.Equal(StrokeSmoothing.Bezier, active.Style.Smoothing);
+        Assert.Empty(saver.Saved);
+
+        Assert.True(model.Save());
+        Assert.Equal(StrokeSmoothing.None, Assert.Single(saver.Saved).Style.Smoothing);
+        Assert.Equal(StrokeSmoothing.Bezier, active.Style.Smoothing);
+
+        var cancelled = Model();
+        cancelled.BezierSmoothing = false;
+        cancelled.Close();
+        Assert.Equal(StrokeSmoothing.Bezier, active.Style.Smoothing);
+        Assert.Single(saver.Saved);
+    }
+
 
     [Fact]
     public void RestoreDefaults_ChangesOnlyTheDraft()
@@ -604,6 +625,7 @@ public sealed class SettingsViewModelTests
         Assert.All(model.Slots, slot => Assert.True(slot.HasAction));
         Assert.All(model.Slots, slot => Assert.Equal(SlotKind.Effect, slot.Kind));
         Assert.True(model.CanSave);
+        Assert.True(model.BezierSmoothing);
         Assert.Equal(TestSettings.WithSounds((1, Applause)), active);
         Assert.Empty(saver.Saved);
         Assert.True(model.Save());

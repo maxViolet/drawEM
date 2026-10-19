@@ -13,6 +13,12 @@ public class SettingsSnapshotTests
     private static readonly Shortcut Clear = Keys("Ctrl+Alt+X");
 
     [Fact]
+    public void Default_UsesBezierStrokeSmoothing()
+    {
+        Assert.Equal(StrokeSmoothing.Bezier, SettingsSnapshot.Default.Style.Smoothing);
+    }
+
+    [Fact]
     public void Default_IsOrangeRedFourPixelsDefaultShortcutsAndEightEffectSlots()
     {
         var defaults = SettingsSnapshot.Default;
@@ -37,7 +43,7 @@ public class SettingsSnapshotTests
         });
     }
 
-    [Fact]
+[Fact]
     public void Validate_AcceptsFilledAndEmptySlots()
     {
         var slots = EmptySlots();

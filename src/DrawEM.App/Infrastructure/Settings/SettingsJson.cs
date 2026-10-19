@@ -28,7 +28,7 @@ public sealed class SettingsFormatException : Exception
 /// </summary>
 public static class SettingsJson
 {
-    public const int CurrentSchemaVersion = 3;
+    public const int CurrentSchemaVersion = 4;
 
     public static byte[] Serialize(SettingsSnapshot snapshot)
     {
@@ -46,6 +46,7 @@ public static class SettingsJson
             json.WriteStartObject("drawing");
             json.WriteString("color", snapshot.Style.Color.ToString());
             json.WriteNumber("width", snapshot.Style.Width.Pixels);
+            json.WriteString("smoothing", snapshot.Style.Smoothing == StrokeSmoothing.None ? "none" : "bezier");
             json.WriteString("drawShortcut", snapshot.DrawShortcut.ToString());
             json.WriteString("clearShortcut", snapshot.ClearShortcut.ToString());
             json.WriteEndObject();
@@ -156,7 +157,15 @@ public static class SettingsJson
                     $"drawing.width {width} is outside {StrokeWidth.Min}–{StrokeWidth.Max}.");
             }
 
-            var style = new DrawingStyle(color.Value, new StrokeWidth(width));
+            var smoothing = version < 4
+                ? StrokeSmoothing.Bezier
+                : String(drawing, "smoothing") switch
+                {
+                    "none" => StrokeSmoothing.None,
+                    "bezier" => StrokeSmoothing.Bezier,
+                    var value => throw new SettingsFormatException($"drawing.smoothing '{value}' is not supported."),
+                };
+            var style = new DrawingStyle(color.Value, new StrokeWidth(width), smoothing);
             var draw = ShortcutProperty(drawing, "drawShortcut");
             var clear = ShortcutProperty(drawing, "clearShortcut");
 

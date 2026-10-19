@@ -51,7 +51,7 @@ public sealed class SettingsEditor
 
     /// <summary>The draft width in physical pixels. It may be outside 1–20; <see cref="Validate"/> reports that.</summary>
     public int Width { get; private set; }
-
+    public StrokeSmoothing Smoothing { get; private set; }
     public Shortcut? DrawShortcut { get; private set; }
 
     public Shortcut? ClearShortcut { get; private set; }
@@ -66,6 +66,7 @@ public sealed class SettingsEditor
     public void SetColor(HexColor color) => Color = color;
 
     public void SetWidth(int pixels) => Width = pixels;
+    public void SetSmoothing(StrokeSmoothing smoothing) => Smoothing = smoothing;
 
     /// <summary>Draw and clear always have a shortcut; a slot has one only while it is filled.</summary>
     public bool AcceptsShortcut(SettingsCommand command) =>
@@ -228,6 +229,7 @@ public sealed class SettingsEditor
     {
         Color = snapshot.Style.Color;
         Width = snapshot.Style.Width.Pixels;
+        Smoothing = snapshot.Style.Smoothing;
         DrawShortcut = snapshot.DrawShortcut;
         ClearShortcut = snapshot.ClearShortcut;
         slots = snapshot.Slots.ToArray();
@@ -261,5 +263,5 @@ public sealed class SettingsEditor
         ?? throw new InvalidOperationException($"Slot {slot} is not an effect.");
 
     private DrawingStyle Style() =>
-        new(Color, StrokeWidth.IsValid(Width) ? new StrokeWidth(Width) : default);
+        new(Color, StrokeWidth.IsValid(Width) ? new StrokeWidth(Width) : default, Smoothing);
 }
