@@ -128,4 +128,11 @@ internal static class NativeMethods
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     internal static extern IntPtr GetModuleHandle(string? lpModuleName);
 
+    /// <summary>dwProcessId value for AllowSetForegroundWindow that lets any process take the foreground.</summary>
+    internal const uint ASFW_ANY = unchecked((uint)-1);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool AllowSetForegroundWindow(uint dwProcessId);
+
 }
