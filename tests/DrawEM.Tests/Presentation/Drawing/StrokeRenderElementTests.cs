@@ -60,6 +60,33 @@ public class StrokeRenderElementTests
         });
     }
 
+    [Fact]
+    public void UpdateState_ClipsIncrementalBezierPiecesToTheirStartingMonitor()
+    {
+        StaThread.Run(() =>
+        {
+            var element = NewElement();
+            var bounds = new MonitorBounds(0, 0, 10, 20);
+            var points = new[]
+            {
+                new ScreenPoint(5, 10),
+                new ScreenPoint(10, 10),
+                new ScreenPoint(15, 10),
+            };
+            var stroke = new Stroke(points, DefaultStyle, bounds);
+            var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
+
+            element.UpdateState(new DrawingState([], stroke, true, 0), transform);
+
+            Assert.True(PixelAlphaAt(element, 9, 10) > 0);
+            Assert.Equal((byte)0, PixelAlphaAt(element, 11, 10));
+
+            element.UpdateState(new DrawingState([stroke], null, false, 0), transform);
+
+            Assert.Equal((byte)0, PixelAlphaAt(element, 11, 10));
+        });
+    }
+
     [Theory]
     [InlineData(StrokeSmoothing.None)]
     [InlineData(StrokeSmoothing.Bezier)]

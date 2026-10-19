@@ -558,9 +558,9 @@
     "semantic_hash": "c85aa05424755d401b8b54369ae3e8ad"
   },
   "src/DrawEM.App/Presentation/Drawing/StrokeRenderElement.cs": {
-    "mtime": 1792397695.4167273,
-    "seen": 1792397728.9928315,
-    "ast_hash": "b1f42151dea5f2458951880127a80a1c",
+    "mtime": 1792401086.0542705,
+    "seen": 1792401179.2338188,
+    "ast_hash": "91ce05f1deb1f9dafb467bdb21e140a7",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Effects/BuiltInEffectAnimations.cs": {
@@ -900,9 +900,9 @@
     "semantic_hash": "af5c3af1c178eb95ade765c03c006922"
   },
   "tests/DrawEM.Tests/Presentation/Drawing/StrokeRenderElementTests.cs": {
-    "mtime": 1792397695.4294393,
-    "seen": 1792397728.9930003,
-    "ast_hash": "5d6297b5f74dff7b027c77758f38c4d5",
+    "mtime": 1792401041.8367817,
+    "seen": 1792401179.2654073,
+    "ast_hash": "78226d89e65157f604999c6adf140a9f",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Presentation/Effects/BuiltInEffectAnimationsTests.cs": {
@@ -2298,9 +2298,9 @@
     "semantic_hash": "d1c9dca12c4a9dae81eab85d704598e0"
   },
   "docs/v4/out-of-scope/FEAT-012-bezier-smoothing/acceptance.md": {
-    "mtime": 1792397695.373863,
-    "seen": 1792397728.9932134,
-    "ast_hash": "ec5528596ab41970704d42635aef8946",
+    "mtime": 1792401154.763033,
+    "seen": 1792401179.2982972,
+    "ast_hash": "efaba0dee8fad26363b6a121ad515a27",
     "semantic_hash": ""
   },
   "docs/v4/out-of-scope/FEAT-012-bezier-smoothing/plan.md": {

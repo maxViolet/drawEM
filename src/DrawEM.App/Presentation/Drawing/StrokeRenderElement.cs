@@ -236,6 +236,7 @@ public sealed class StrokeRenderElement : FrameworkElement
         var visual = new DrawingVisual();
         using (var context = visual.RenderOpen())
         {
+            var clipped = PushMonitorClip(context, active, transform);
             var brush = GetBrush(active.Style.Color);
             var width = LocalWidth(active, transform);
             // Each piece gets its round start cap at its join and a flat end cap;
@@ -270,6 +271,7 @@ public sealed class StrokeRenderElement : FrameworkElement
                 }
                 context.DrawGeometry(null, startPen, geometry);
             }
+            if (clipped) context.Pop();
         }
         children.Add(visual);
         activeSegmentVisuals.Add(visual);
