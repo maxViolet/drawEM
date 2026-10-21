@@ -16,6 +16,7 @@ using DrawEM.Tests.Application.Settings;
 namespace DrawEM.Tests.Presentation.Settings;
 
 /// <summary>Shows the real window off-screen, to catch XAML and binding mistakes.</summary>
+[Collection(WpfCollection.Name)]
 public sealed class SettingsWindowTests
 {
     [Fact]
