@@ -37,3 +37,4 @@
 - Do not rebuild the graphify graph in a PR. The `Graphify weekly` workflow rebuilds it every Monday and opens a `DOC: refresh graphify graph` PR.
 - Do not add the "Generated with Claude Code" attribution line to the PR body.
 - Dependabot pull requests are `FIX` work. Dependabot cannot set a branch number and name, so their title is `FIX: <summary>` without a number (the prefix is set in `.github/dependabot.yml`), and the `dependabot/...` branch is not checked. The `PR lint` workflow checks only their title.
+- Graphify weekly pull requests are `DOC` work opened by `github-actions[bot]` from the fixed branch `graphify-weekly-refresh` with the fixed title `DOC: refresh graphify graph`, without a number. The `PR lint` workflow checks only their title.

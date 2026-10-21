@@ -34,6 +34,15 @@ jobs:
             exit 0
           fi
 
+          # The Graphify weekly workflow opens DOC work with a fixed branch and title (see AGENTS.md).
+          if [[ "$AUTHOR" == 'github-actions[bot]' && "$BRANCH" == 'graphify-weekly-refresh' ]]; then
+            if [[ "$TITLE" != 'DOC: refresh graphify graph' ]]; then
+              echo "::error::Graphify weekly title '$TITLE' must be 'DOC: refresh graphify graph'."
+              exit 1
+            fi
+            exit 0
+          fi
+
           if [[ ! "$BRANCH" =~ ^($id)-[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
             echo "::error::Branch '$BRANCH' must be '<TYPE>-<NNN>-<description>' or '<task-id>-<description>', lowercase words joined by hyphens."
             status=1
