@@ -3,6 +3,7 @@ using DrawEM.App.Infrastructure;
 
 namespace DrawEM.Tests.Infrastructure;
 
+[Collection(WpfCollection.Name)]
 public class NotifyIconTrayHostTests
 {
     [Theory]

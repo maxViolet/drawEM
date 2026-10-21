@@ -8,6 +8,7 @@ using DrawEM.App.Presentation.Drawing;
 
 namespace DrawEM.Tests.Presentation.Drawing;
 
+[Collection(WpfCollection.Name)]
 public class StrokeRenderElementTests
 {
     /// <summary>OrangeRed <c>#FF4500</c>, 4 physical pixels.</summary>

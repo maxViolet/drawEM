@@ -9,6 +9,7 @@ using DrawEM.App.Presentation.Tray;
 
 namespace DrawEM.Tests.Presentation.Tray;
 
+[Collection(WpfCollection.Name)]
 public class TrayMenuWindowTests
 {
     [Theory]
