@@ -48,9 +48,14 @@ public class InstanceActivationTests
     [Fact]
     public void Signal_AfterListenerDisposed_ReturnsFalse()
     {
-        InstanceActivation.Listen(name, () => { }).Dispose();
+        // The thread pool releases the event asynchronously unless Dispose waits for it; load it to catch that race.
+        Parallel.For(0, 500, i =>
+        {
+            var attemptName = $"{name}-{i}";
+            InstanceActivation.Listen(attemptName, () => { }).Dispose();
 
-        Assert.False(InstanceActivation.Signal(name));
+            Assert.False(InstanceActivation.Signal(attemptName), $"attempt {i}");
+        });
     }
 
     [Fact]
