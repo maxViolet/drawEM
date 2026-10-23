@@ -43,7 +43,8 @@ Recorded 2026-10-23 on the development PC.
 `Application/Video/VideoSupportPolicy` accepts exactly this; every limit is the
 edge of the tested matrix:
 
-- **Container:** non-fragmented ISO MP4; QuickTime (`qt  `) brand rejected.
+- **Container:** non-fragmented ISO MP4; QuickTime (`qt  `) brand rejected;
+  each track has one sample description (`stsd` entry).
 - **Video:** exactly one H.264 `avc1` track, Constrained Baseline (profile 66
   with constraint_set1), Main (77), or High (100), so 8-bit 4:2:0; at most
   1920×1080 (landscape) and 60 fps.
@@ -70,11 +71,11 @@ holds the exact FFmpeg arguments and pins FFmpeg `7.1.1-essentials_build-www.gya
 
 ### Automated tests
 
-`dotnet test DrawEM.sln -c Release` → 967 passed, 0 failed. Video tests:
+`dotnet test DrawEM.sln -c Release` → 968 passed, 0 failed. Video tests:
 
 | Test class | Covers |
 |---|---|
-| `Mp4VideoValidatorTests` | Five supported fixtures accepted with codec, profile, size, frame rate, audio; seven rejected fixtures return the expected `VideoValidationFailure` and name the codec or cause, each under 30 s; missing file → `Unreadable`; file held open by a writer is still validated |
+| `Mp4VideoValidatorTests` | Five supported fixtures accepted with codec, profile, size, frame rate, audio; seven rejected fixtures return the expected `VideoValidationFailure` and name the codec or cause, each under 30 s; missing file → `Unreadable`; file held open by a writer is still validated; a track with a second sample description → `UnsupportedContainer` |
 | `VideoSupportPolicyTests` | Size, frame-rate, H.264 profile, channel and sample-rate edges; other video/audio codecs named; track counts; QuickTime brand; fragmented movie |
 | `MediaVideoPlayerTests` (`Category=WindowsMedia`) | Five supported fixtures open, report tracks and size, reach natural end, and release the file after `Dispose`; forced open failure; file removed after validation; dispose during playback raises nothing later |
 
@@ -147,7 +148,8 @@ S5-01 adds no managed import, Settings UI, or Settings draft change.
 
 - Support covers only the profile above. HEVC, AV1, VP9, Opus, HE-AAC,
   10-bit, 4:2:2/4:4:4, portrait or larger than 1920×1080, above 60 fps,
-  fragmented MP4, and multi-track files are rejected because they were not
+  fragmented MP4, multi-track files, and tracks with more than one sample
+  description are rejected because they were not
   tested or depend on optional codec packages.
 - Validation reads headers only. A stream whose SPS contradicts its `avcC`,
   or with damaged media data, passes validation; the first fails at open (see

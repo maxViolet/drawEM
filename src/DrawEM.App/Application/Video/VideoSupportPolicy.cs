@@ -5,7 +5,8 @@ namespace DrawEM.App.Application.Video;
 /// (docs/v5/step-01-video-decoder-and-formats/acceptance.md). Every limit here is the edge of the tested
 /// fixture matrix, not of what Windows might play:
 /// <list type="bullet">
-/// <item>a non-fragmented ISO MP4 (any major brand except QuickTime <c>qt  </c>);</item>
+/// <item>a non-fragmented ISO MP4 (any major brand except QuickTime <c>qt  </c>) whose tracks each have one
+/// sample description (the infrastructure probe rejects more before this policy runs);</item>
 /// <item>exactly one H.264 <c>avc1</c> video track: Constrained Baseline, Main, or High (8-bit 4:2:0),
 /// at most 1920×1080 (landscape) and 60 fps;</item>
 /// <item>no audio, or exactly one AAC-LC <c>mp4a</c> track, mono or stereo, at 44.1 or 48 kHz.</item>

@@ -1,5 +1,7 @@
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using DrawEM.App.Application.Video;
 using DrawEM.App.Infrastructure.Video;
 
@@ -80,5 +82,72 @@ public class Mp4VideoValidatorTests
         {
             File.Delete(copy);
         }
+    }
+
+    [Fact]
+    public void TrackWithSecondSampleDescription_IsUnsupportedContainer()
+    {
+        // Only the first description is checked against the profile; samples may switch to a later one,
+        // so a supported first entry must not stand for the whole track.
+        var path = Path.Combine(Path.GetTempPath(), "drawEM-tests", Guid.NewGuid().ToString("N") + ".mp4");
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllBytes(path, WithFirstSampleDescriptionTwice(File.ReadAllBytes(VideoFixtures.Path("h264-high-aac.mp4"))));
+        try
+        {
+            var result = new Mp4VideoValidator().Validate(path);
+
+            Assert.Equal(VideoValidationFailure.UnsupportedContainer, result.Failure);
+            Assert.Contains("sample descriptions", result.Message);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    /// <summary>
+    /// Copies the first <c>stsd</c> entry in the file after itself, raising the entry count and every enclosing
+    /// box size. The fixture keeps <c>moov</c> after <c>mdat</c>, so no chunk offset moves.
+    /// </summary>
+    private static byte[] WithFirstSampleDescriptionTwice(byte[] file)
+    {
+        var enclosing = new List<int>();
+        Assert.True(FindStsd(file, 0, file.Length, enclosing));
+        var stsd = enclosing[^1];
+        var entry = stsd + 16;
+        var entrySize = (int)BinaryPrimitives.ReadUInt32BigEndian(file.AsSpan(entry));
+
+        var patched = new byte[file.Length + entrySize];
+        file.AsSpan(0, entry + entrySize).CopyTo(patched);
+        file.AsSpan(entry, entrySize).CopyTo(patched.AsSpan(entry + entrySize));
+        file.AsSpan(entry + entrySize).CopyTo(patched.AsSpan(entry + 2 * entrySize));
+        BinaryPrimitives.WriteUInt32BigEndian(patched.AsSpan(stsd + 12), BinaryPrimitives.ReadUInt32BigEndian(file.AsSpan(stsd + 12)) + 1);
+        foreach (var box in enclosing)
+        {
+            BinaryPrimitives.WriteUInt32BigEndian(patched.AsSpan(box), BinaryPrimitives.ReadUInt32BigEndian(file.AsSpan(box)) + (uint)entrySize);
+        }
+
+        return patched;
+    }
+
+    /// <summary>Collects the offsets of the boxes from the top level down to the first <c>stsd</c>, inclusive.</summary>
+    private static bool FindStsd(byte[] file, int start, int end, List<int> enclosing)
+    {
+        for (var at = start; at + 8 <= end;)
+        {
+            var size = (int)BinaryPrimitives.ReadUInt32BigEndian(file.AsSpan(at));
+            var type = Encoding.ASCII.GetString(file, at + 4, 4);
+            enclosing.Add(at);
+            if (type == "stsd"
+                || (type is "moov" or "trak" or "mdia" or "minf" or "stbl" && FindStsd(file, at + 8, at + size, enclosing)))
+            {
+                return true;
+            }
+
+            enclosing.RemoveAt(enclosing.Count - 1);
+            at += size;
+        }
+
+        return false;
     }
 }

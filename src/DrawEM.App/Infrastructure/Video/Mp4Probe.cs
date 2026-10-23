@@ -161,9 +161,17 @@ internal static class Mp4Probe
         var description = Required(table, "stbl", "stsd");
         Need(description, 8, "stsd");
         var entries = Children(description[8..], "stsd");
+        var trackKind = kind == "vide" ? "video" : "audio";
         if (entries.Count == 0)
         {
-            throw Corrupt($"a {(kind == "vide" ? "video" : "audio")} track has no sample description.");
+            throw Corrupt($"a {trackKind} track has no sample description.");
+        }
+
+        // Samples may switch to any listed description, and only one is checked against the profile.
+        if (entries.Count > 1)
+        {
+            throw new Mp4FormatException(VideoValidationFailure.UnsupportedContainer,
+                $"A {trackKind} track has {entries.Count} sample descriptions; drawEM plays tracks with one.");
         }
 
         var entry = entries[0];
