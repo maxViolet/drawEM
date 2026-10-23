@@ -29,8 +29,6 @@ public static class VideoSupportPolicy
     private const string AudioLimits =
         "drawEM plays AAC-LC audio in mono or stereo at 44.1 or 48 kHz, or video without sound.";
 
-    private static readonly int[] SampleRates = [44100, 48000];
-
     public static VideoValidationResult Evaluate(Mp4MediaInfo info)
     {
         if (info.MajorBrand == "qt  ")
@@ -137,7 +135,7 @@ public static class VideoSupportPolicy
                 $"The audio codec {name} is not supported. {AudioLimits}");
         }
 
-        if (audio.Channels is < 1 or > 2 || !SampleRates.Contains(audio.SampleRate))
+        if (audio.Channels is not (1 or 2) || audio.SampleRate is not (44100 or 48000))
         {
             return Reject(VideoValidationFailure.UnsupportedAudio,
                 $"AAC-LC audio with {audio.Channels} channels at {audio.SampleRate} Hz is not supported. {AudioLimits}");

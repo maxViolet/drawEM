@@ -9,7 +9,6 @@ using DrawEM.App.Application.Video;
 using DrawEM.App.Infrastructure.Video;
 using Microsoft.Win32;
 using NAudio.Wave;
-using Image = System.Windows.Controls.Image;
 
 namespace VideoPlaybackSpike;
 
