@@ -158,5 +158,6 @@ S5-01 adds no managed import, Settings UI, or Settings draft change.
 - Tested on one PC with optional codec packages installed; a PC without
   them was not tested. H.264 and AAC decoding are built into Windows
   [INFERENCE: not checked on a clean install].
-- `MediaVideoPlayerTests` need the Windows media stack; whether GitHub's
-  `windows-latest` runner provides it is shown by the PR's CI run.
+- `MediaVideoPlayerTests` need the Windows media stack. GitHub's
+  `windows-latest` runner provides it: CI run 39968422821 (PR #108) passed all
+  967 tests, including them.
