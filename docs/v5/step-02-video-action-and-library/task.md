@@ -9,8 +9,8 @@ See [implementation plan](plan.md) and [acceptance criteria](acceptance.md).
 ## Task
 
 Represent a video as one selectable action in any of the eight existing
-action slots. Persist a managed video reference and the slot's Loop setting;
-provide Settings import, assignment, Sample, Save, Cancel, and cleanup behavior.
+action slots. Persist a managed video reference; provide Settings import,
+assignment, Sample, Save, Cancel, and cleanup behavior.
 
 ## Required behavior
 
@@ -19,8 +19,6 @@ provide Settings import, assignment, Sample, Save, Cancel, and cleanup behavior.
   S5-01. Import copies the source into a per-user drawEM-managed video library.
 - Store the library file name and display name in settings, never the original
   absolute source path.
-- Loop is off by default. The draft can enable it without affecting currently
-  running playback until Settings Save succeeds.
 - Sample previews the draft-selected video without saving its assignment.
 - Cancel, closing Settings, and Save stop any Settings Sample before discarding
   its draft or deleting a now-unreferenced imported copy. Save stops playback

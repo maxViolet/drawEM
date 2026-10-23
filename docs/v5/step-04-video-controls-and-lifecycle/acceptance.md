@@ -4,8 +4,7 @@ See [task](task.md) and [implementation plan](plan.md).
 
 - [ ] [gate] A shortcut starts a saved video once on key-down; key hold and
   auto-repeat do not start additional instances.
-- [ ] [gate] A fresh press of the same shortcut restarts at the beginning;
-  tests cover Loop off and Loop on.
+- [ ] [gate] A fresh press of the same shortcut restarts at the beginning.
 - [ ] [gate] Cursor transition stops video on the old monitor, never resumes
   it on return, and a new invocation targets the new cursor monitor.
 - [ ] [gate] Tray > Stop video stops every active video while preserving

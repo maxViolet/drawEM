@@ -9,7 +9,7 @@ See [task](task.md) and [implementation plan](plan.md).
 - [ ] [gate] Every S5-01 supported fixture passes and every negative fixture
   fails safely on the published artifact.
 - [ ] [gate] Windows Settings checks pass for import, error display, Sample,
-  Loop, Save, Cancel, and last-reference cleanup.
+  Save, Cancel, and last-reference cleanup.
 - [ ] [gate] Windows checks pass for monitor targeting, transition stop,
   display topology changes, aspect fit, DPI, negative coordinates, ordering
   above the focused application, layer order, click-through, and

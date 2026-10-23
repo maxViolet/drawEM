@@ -3,7 +3,7 @@
 See [task](task.md) and [implementation plan](plan.md).
 
 - [ ] [gate] Automated tests prove start, stop, replacement, restart, natural
-  completion, Loop, and failure release the owned playback instance exactly
+  completion and failure release the owned playback instance exactly
   once.
 - [ ] [gate] Automated layout tests prove the full monitor bounds are used and
   the complete source aspect ratio is preserved with black letterboxing.

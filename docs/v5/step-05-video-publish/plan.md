@@ -9,7 +9,7 @@ See [task](task.md) and [acceptance criteria](acceptance.md).
    the target Windows machine. Verify all selected MP4 profiles, unsupported
    files, embedded audio, and recovery after a playback error.
 3. **Settings scenarios.** Exercise video import, rejected import, slot
-   assignment, Loop, Sample, Save, Cancel, clear, and cleanup of the final
+   assignment, Sample, Save, Cancel, clear, and cleanup of the final
    managed-file reference.
 4. **Monitor and layering scenarios.** On one and two monitors, verify cursor
    targeting, transition stop, 16:9 and non-16:9 aspect fit, mixed DPI,
@@ -18,7 +18,7 @@ See [task](task.md) and [acceptance criteria](acceptance.md).
 5. **Stop and session scenarios.** Verify Stop video across monitors, clear
    behavior, global sound coexistence, session lock, sleep/wake, and app exit.
 6. **Resource cycle.** Run 100 start/restart/stop cycles, then 100 natural
-   completion cycles with Loop off. After each batch, confirm playback
+   completion cycles. After each batch, confirm playback
    instances and video surfaces return to zero after all playback ends; sample
    live counts at the end of each batch and again after a second identical
    batch using the playback diagnostics. The permitted delta is zero objects

@@ -20,13 +20,13 @@ the tested matrix proves that claim.
 ## Required outcome
 
 - A recorded playback-path decision based on tests in the target Windows
-  environment, including video and embedded audio.
+  environment, including video and audio when present.
 - A named set of supported MP4 codec profiles, each backed by a positive
   fixture, plus at least one unsupported or corrupt negative fixture.
-- A bounded validation result that Settings can show before changing the draft
+- A bounded validation result that S5-02 can show before changing the draft
   slot when the selected file is unsupported.
-- A documented decoder failure result for a file that passes import checks but
-  fails when opened for playback.
+- A documented playback-open/decode failure result for a file that passed
+  decoder validation but fails when opened for playback.
 
 ## Out of scope
 

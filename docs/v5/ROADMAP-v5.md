@@ -36,8 +36,8 @@ supersedes v4's clear-only-drawings behavior for v5.
   files outside the proven support profile with a useful error and leaves the
   draft assignment unchanged. A later playback failure is reported without
   crashing the tray application.
-- Each video slot has a Loop setting, off by default. With Loop off the file
-  plays once. With Loop on it restarts until stopped.
+- Every video plays once. Natural end-of-file stops playback and releases
+  the player and surface resources.
 
 ### Playback surface and input
 
@@ -62,8 +62,7 @@ supersedes v4's clear-only-drawings behavior for v5.
 | Same video shortcut pressed again | Stop the current instance and restart from the beginning |
 | Different video shortcut pressed during playback | Stop the current instance and start the selected video from the beginning on the invocation monitor |
 | Video shortcut pressed during Settings Sample | Stop Sample and start the saved slot video; Sample never changes the saved assignment |
-| Video reaches end with Loop off | Stop playback and release the player and surface resources |
-| Video reaches end with Loop on | Restart from the beginning |
+| Video reaches end | Stop playback and release the player and surface resources |
 | Cursor enters another monitor | Stop video on the previous monitor; do not resume when the cursor returns |
 | Tray > Stop video | Stop videos on every monitor |
 | Clear shortcut (default `Ctrl+Alt+X`) | Clear drawings and stop video and effects on the monitor under the cursor; keep global sound playing |
@@ -80,7 +79,6 @@ command does not clear drawings, stop effects, or stop global sound.
 - **Video action:** a saved action-slot entry that references an imported MP4.
 - **Managed video library:** drawEM-owned per-user copies referenced by video
   actions; cleanup may remove only copies with no saved or active preview use.
-- **Loop:** a per-video-action setting that restarts playback after end-of-file.
 - **Sample:** temporary playback of the Settings draft selection; it does not
   assign or persist the video in a saved action slot.
 
@@ -99,7 +97,7 @@ command does not clear drawings, stop effects, or stop global sound.
    and negative fixtures before committing the rest of the implementation to a
    decoder contract.
 2. **S5-02 — Video action and library.** Add the domain action, settings
-   migration, managed import and cleanup, slot editor, Loop setting, and draft
+   migration, managed import and cleanup, slot editor, and draft
    Sample entry point.
 3. **S5-03 — Fullscreen playback.** Add the playback channel and surface,
    aspect-fit rendering, embedded audio, click-through behavior, and layer order.
