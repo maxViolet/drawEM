@@ -1,6 +1,6 @@
 # v5 / S5-01: prove MP4 playback and choose supported profiles
 
-**Status:** planned. **Source:** [v5 roadmap](../ROADMAP-v5.md#delivery-order).
+**Status:** done; evidence in [acceptance](acceptance.md#evidence). **Source:** [v5 roadmap](../ROADMAP-v5.md#delivery-order).
 **Depends on:** none. **Next:** [S5-02](../step-02-video-action-and-library/task.md).
 
 See [implementation plan](plan.md) and [acceptance criteria](acceptance.md).
