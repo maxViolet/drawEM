@@ -27,12 +27,14 @@ App.xaml.cs  (composition root)
 │   ├── shared keyboard hook and tray lifecycle (tray Settings and Exit)
 │   ├── Drawing (mouse input, shared drawing/sound shortcut adapter, input gate)
 │   ├── Settings (JSON settings store, failure dialogs)
-│   └── Sound (managed sound library, draft sampler, failure log, MediaPlayer adapter)
+│   ├── Sound (managed sound library, draft sampler, failure log, MediaPlayer adapter)
+│   └── Video (MP4 header probe and validator, MediaPlayer video adapter; v5 S5-01)
 │
 ├── Application
 │   ├── Drawing (DrawingSessionController)
 │   ├── Settings (active snapshot, Save operation, SettingsEditor draft, capture port)
-│   └── Sound (play command, playback ports, SoundChannelController)
+│   ├── Sound (play command, playback ports, SoundChannelController)
+│   └── Video (MP4 support policy, validation result, playback results)
 │
 ├── Domain
 │   ├── Drawing (DrawingState, Stroke, ScreenPoint, DrawingStyle)

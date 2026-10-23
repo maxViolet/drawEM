@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <!-- System.Drawing captures the screen under the playback window. -->
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Remove="System.Drawing" />
+    <Using Remove="System.Windows.Forms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WASAPI loopback capture checks that embedded audio reaches the default render device. -->
+    <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DrawEM.App\DrawEM.App.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\tests\DrawEM.Tests\Fixtures\Video\*.mp4" LinkBase="Fixtures\Video" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
