@@ -10,8 +10,7 @@ See [task](task.md) and [acceptance criteria](acceptance.md).
    suppress a bound shortcut for the same key lifecycle as sound/effect
    actions.
 3. **Restart behavior.** A fresh press of the currently playing slot ends the
-   old instance and starts at time zero. Test that loop mode does not turn a
-   shortcut press into pause or stop.
+   old instance and starts at time zero.
 4. **Monitor transition.** Connect active-monitor changes to video stop. Test
    that returning the cursor never resumes the old playback and that an
    invocation on the new monitor targets that monitor.

@@ -3,7 +3,7 @@
 See [task](task.md) and [acceptance criteria](acceptance.md).
 
 1. **Playback contract tests first.** Add failing tests for start, stop,
-   completion, looping, restart, error, and disposal using a deterministic
+   completion, restart, error, and disposal using a deterministic
    playback seam. Include a start failure and an asynchronous decoder failure.
 2. **Playback channel.** Implement a channel that owns one active video
    instance, replaces/restarts it from the beginning, reports failures, and
@@ -19,7 +19,7 @@ See [task](task.md) and [acceptance criteria](acceptance.md).
    -> effects, including when either surface starts or stops while video is
    active.
 6. **Audio and completion.** Play embedded audio at system volume, handle
-   natural completion and Loop, and ensure a video stop leaves global sound
+   natural completion, and ensure a video stop leaves global sound
    untouched.
 7. **Windows surface check.** On the target Windows display, record visual
    results for 16:9 and non-16:9 content, mixed DPI, negative coordinates,

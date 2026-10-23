@@ -16,7 +16,7 @@ and stop playback during shutdown or Windows session interruption.
 
 - A saved video shortcut starts on key-down; holding it does not repeat.
 - Pressing the same shortcut again after release stops the current instance
-  and starts it again from the beginning, whether Loop is on or off.
+  and starts it again from the beginning.
 - Moving the cursor to another monitor stops video on the previous monitor and
   does not restart it when the cursor returns.
 - Tray > Stop video stops video on every monitor and leaves drawings, effects,

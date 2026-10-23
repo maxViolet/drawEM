@@ -24,7 +24,7 @@ underlying application.
 - Do not activate the surface or intercept mouse, keyboard, or wheel input.
 - Play the video's embedded audio through the system volume. It can overlap
   the global sound channel; stopping video stops only its own audio.
-- Release the player and surface at natural completion when Loop is off.
+- Release the player and surface at natural completion.
 
 ## Out of scope
 

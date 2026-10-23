@@ -4,8 +4,6 @@ See [task](task.md) and [implementation plan](plan.md).
 
 - [ ] [gate] Each of the eight slots validates zero or one action of type
   sound, effect, or video; duplicate slot numbers and invalid shortcuts fail.
-- [ ] [gate] Loop defaults off, round-trips through settings, and does not
-  alter older sound/effect assignments.
 - [ ] [gate] Import copies an accepted MP4 into the managed library and stores
   no absolute source path in settings.
 - [ ] [gate] Unsupported, corrupt, missing, or copy-failing imports leave the
