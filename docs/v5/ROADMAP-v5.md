@@ -1,7 +1,7 @@
 # drawEM v5 roadmap: fullscreen MP4 video
 
-**Status:** proposed product and implementation plan. All five steps are
-planned; no v5 implementation or acceptance evidence is recorded.
+**Status:** proposed product and implementation plan. S5-01 is done (WPF
+`MediaPlayer`, H.264 + AAC-LC profile below); S5-02 through S5-05 are planned.
 **Date:** 2026-10-21.
 **Terms:** [v5 glossary](README.md#terms). **Step order:** [STEPS.md](STEPS.md).
 
@@ -31,11 +31,13 @@ supersedes v4's clear-only-drawings behavior for v5.
   arbitrary source path.
 - The copy remains while any saved slot refers to it. Removing the last
   reference and saving makes it eligible for cleanup.
-- MP4 is a container, not a single codec. S5-01 must select and prove the
-  supported codec profiles on the target Windows environment. Import rejects
-  files outside the proven support profile with a useful error and leaves the
-  draft assignment unchanged. A later playback failure is reported without
-  crashing the tray application.
+- MP4 is a container, not a single codec. S5-01 proved this support profile on
+  Windows through WPF `MediaPlayer` ([evidence](step-01-video-decoder-and-formats/acceptance.md#evidence)):
+  a non-fragmented MP4 with one H.264 Constrained Baseline, Main, or High video
+  track up to 1920×1080 and 60 fps, and no audio or one AAC-LC mono/stereo
+  track at 44.1 or 48 kHz. Import rejects files outside it with a useful error
+  and leaves the draft assignment unchanged. A later playback failure is
+  reported without crashing the tray application.
 - Every video plays once. Natural end-of-file stops playback and releases
   the player and surface resources.
 
