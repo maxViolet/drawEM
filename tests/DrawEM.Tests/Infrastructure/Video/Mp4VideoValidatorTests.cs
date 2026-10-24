@@ -85,6 +85,44 @@ public class Mp4VideoValidatorTests
     }
 
     [Fact]
+    public void MovieHeaderOfMillionsOfEmptyBoxes_IsClassifiedWithoutPerBoxAllocation()
+    {
+        // 32 MiB of 8-byte 'free' boxes inside moov: the header itself is the only large allocation allowed.
+        const int boxes = 4 * 1024 * 1024;
+        var movieBody = boxes * 8;
+        var file = new byte[16 + 8 + movieBody];
+        BinaryPrimitives.WriteUInt32BigEndian(file, 16);
+        "ftypisom"u8.CopyTo(file.AsSpan(4));
+        BinaryPrimitives.WriteUInt32BigEndian(file.AsSpan(16), (uint)(8 + movieBody));
+        "moov"u8.CopyTo(file.AsSpan(20));
+        for (var at = 24; at < file.Length; at += 8)
+        {
+            BinaryPrimitives.WriteUInt32BigEndian(file.AsSpan(at), 8);
+            "free"u8.CopyTo(file.AsSpan(at + 4));
+        }
+
+        var path = Path.Combine(Path.GetTempPath(), "drawEM-tests", Guid.NewGuid().ToString("N") + ".mp4");
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllBytes(path, file);
+        try
+        {
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            var watch = Stopwatch.StartNew();
+            var result = new Mp4VideoValidator().Validate(path);
+            watch.Stop();
+            var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+            Assert.Equal(VideoValidationFailure.NoVideoTrack, result.Failure);
+            Assert.True(allocated < movieBody + 8 * 1024 * 1024, $"Validation allocated {allocated:N0} bytes.");
+            Assert.True(watch.Elapsed < ValidationBudget, $"Validation took {watch.Elapsed}.");
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void TrackWithSecondSampleDescription_IsUnsupportedContainer()
     {
         // Only the first description is checked against the profile; samples may switch to a later one,

@@ -18,6 +18,9 @@ internal static class Mp4Probe
 
     private const int MaxTopLevelBoxes = 4096;
 
+    /// <summary>The supported profile allows two tracks; this only bounds the track list a hostile header can build.</summary>
+    private const int MaxTracks = 64;
+
     /// <exception cref="Mp4FormatException">The stream is not an MP4 or its headers are damaged.</exception>
     /// <exception cref="IOException">The stream cannot be read.</exception>
     public static Mp4MediaInfo Read(Stream stream)
@@ -128,17 +131,25 @@ internal static class Mp4Probe
     private static Mp4MediaInfo ReadMovie(string brand, byte[] movie)
     {
         var fragmented = false;
+        var tracks = 0;
         var video = new List<Mp4VideoTrack>();
         var audio = new List<Mp4AudioTrack>();
-        foreach (var box in Children(movie, "moov"))
+        var reader = new BoxReader(movie, "moov");
+        while (reader.Next(out var type, out var body))
         {
-            if (box.Type == "mvex")
+            if (Is(type, "mvex"))
             {
                 fragmented = true;
             }
-            else if (box.Type == "trak")
+            else if (Is(type, "trak"))
             {
-                ReadTrack(box.Body(movie), video, audio);
+                if (++tracks > MaxTracks)
+                {
+                    throw new Mp4FormatException(VideoValidationFailure.UnsupportedContainer,
+                        $"The MP4 file has more than {MaxTracks} tracks.");
+                }
+
+                ReadTrack(body, video, audio);
             }
         }
 
@@ -160,31 +171,36 @@ internal static class Mp4Probe
         var table = Required(Required(media, "mdia", "minf"), "minf", "stbl");
         var description = Required(table, "stbl", "stsd");
         Need(description, 8, "stsd");
-        var entries = Children(description[8..], "stsd");
         var trackKind = kind == "vide" ? "video" : "audio";
-        if (entries.Count == 0)
+        var entries = new BoxReader(description[8..], "stsd");
+        if (!entries.Next(out var entryType, out var entryBody))
         {
             throw Corrupt($"a {trackKind} track has no sample description.");
         }
 
         // Samples may switch to any listed description, and only one is checked against the profile.
-        if (entries.Count > 1)
+        var count = 1;
+        while (entries.Next(out _, out _))
         {
-            throw new Mp4FormatException(VideoValidationFailure.UnsupportedContainer,
-                $"A {trackKind} track has {entries.Count} sample descriptions; drawEM plays tracks with one.");
+            count++;
         }
 
-        var entry = entries[0];
-        var entryBody = entry.Body(description[8..]);
+        if (count > 1)
+        {
+            throw new Mp4FormatException(VideoValidationFailure.UnsupportedContainer,
+                $"A {trackKind} track has {count} sample descriptions; drawEM plays tracks with one.");
+        }
+
+        var entryName = FourCc(entryType);
         if (kind == "vide")
         {
             var samples = SampleCount(table);
             var frameRate = samples > 0 && duration > 0 && timescale > 0 ? samples * (double)timescale / duration : 0;
-            video.Add(ReadVisualEntry(entry.Type, entryBody, frameRate));
+            video.Add(ReadVisualEntry(entryName, entryBody, frameRate));
         }
         else
         {
-            audio.Add(ReadAudioEntry(entry.Type, entryBody));
+            audio.Add(ReadAudioEntry(entryName, entryBody));
         }
     }
 
@@ -343,11 +359,11 @@ internal static class Mp4Probe
     /// <summary>The body of the first <paramref name="type"/> child of <paramref name="parent"/>.</summary>
     private static bool TryFind(ReadOnlySpan<byte> parent, string parentType, string type, out ReadOnlySpan<byte> body)
     {
-        foreach (var box in Children(parent, parentType))
+        var reader = new BoxReader(parent, parentType);
+        while (reader.Next(out var childType, out body))
         {
-            if (box.Type == type)
+            if (Is(childType, type))
             {
-                body = box.Body(parent);
                 return true;
             }
         }
@@ -356,43 +372,9 @@ internal static class Mp4Probe
         return false;
     }
 
-    private static List<Box> Children(ReadOnlySpan<byte> parent, string parentType)
-    {
-        var boxes = new List<Box>();
-        var at = 0;
-        while (at < parent.Length)
-        {
-            if (parent.Length - at < 8)
-            {
-                throw Corrupt($"a '{parentType}' box ends inside a child box header.");
-            }
-
-            long size = BinaryPrimitives.ReadUInt32BigEndian(parent[at..]);
-            var type = FourCc(parent.Slice(at + 4, 4));
-            var headerSize = 8;
-            if (size == 1)
-            {
-                Need(parent, at + 16, parentType);
-                var large = BinaryPrimitives.ReadUInt64BigEndian(parent[(at + 8)..]);
-                size = large > int.MaxValue ? long.MaxValue : (long)large;
-                headerSize = 16;
-            }
-            else if (size == 0)
-            {
-                size = parent.Length - at;
-            }
-
-            if (size < headerSize || size > parent.Length - at)
-            {
-                throw Corrupt($"the '{type}' box inside '{parentType}' has an invalid size.");
-            }
-
-            boxes.Add(new Box(type, at + headerSize, (int)size - headerSize));
-            at += (int)size;
-        }
-
-        return boxes;
-    }
+    /// <summary>Compares a four-byte box type with <paramref name="name"/> without allocating a string.</summary>
+    private static bool Is(ReadOnlySpan<byte> type, string name) =>
+        type[0] == name[0] && type[1] == name[1] && type[2] == name[2] && type[3] == name[3];
 
     private static void Need(ReadOnlySpan<byte> data, int bytes, string type)
     {
@@ -410,9 +392,61 @@ internal static class Mp4Probe
     private static Mp4FormatException Corrupt(string detail) =>
         new(VideoValidationFailure.Corrupt, "The MP4 file is damaged or incomplete: " + detail);
 
-    private readonly record struct Box(string Type, int Offset, int Length)
+    /// <summary>
+    /// Walks the child boxes of one box body in order without allocating, so a header made of millions of tiny
+    /// boxes costs time linear in its size and no memory.
+    /// </summary>
+    private ref struct BoxReader
     {
-        public ReadOnlySpan<byte> Body(ReadOnlySpan<byte> parent) => parent.Slice(Offset, Length);
+        private readonly ReadOnlySpan<byte> parent;
+        private readonly string parentType;
+        private int at;
+
+        public BoxReader(ReadOnlySpan<byte> parent, string parentType)
+        {
+            this.parent = parent;
+            this.parentType = parentType;
+        }
+
+        /// <exception cref="Mp4FormatException">A child header is cut off or its size does not fit the parent.</exception>
+        public bool Next(out ReadOnlySpan<byte> type, out ReadOnlySpan<byte> body)
+        {
+            if (at >= parent.Length)
+            {
+                type = default;
+                body = default;
+                return false;
+            }
+
+            if (parent.Length - at < 8)
+            {
+                throw Corrupt($"a '{parentType}' box ends inside a child box header.");
+            }
+
+            long size = BinaryPrimitives.ReadUInt32BigEndian(parent[at..]);
+            type = parent.Slice(at + 4, 4);
+            var headerSize = 8;
+            if (size == 1)
+            {
+                Need(parent, at + 16, parentType);
+                var large = BinaryPrimitives.ReadUInt64BigEndian(parent[(at + 8)..]);
+                size = large > int.MaxValue ? long.MaxValue : (long)large;
+                headerSize = 16;
+            }
+            else if (size == 0)
+            {
+                size = parent.Length - at;
+            }
+
+            if (size < headerSize || size > parent.Length - at)
+            {
+                throw Corrupt($"the '{FourCc(type)}' box inside '{parentType}' has an invalid size.");
+            }
+
+            body = parent.Slice(at + headerSize, (int)size - headerSize);
+            at += (int)size;
+            return true;
+        }
     }
 }
 

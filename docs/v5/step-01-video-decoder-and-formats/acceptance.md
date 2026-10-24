@@ -14,8 +14,10 @@ See [task](task.md) and [implementation plan](plan.md).
 - [x] [gate] At least one unsupported or corrupt MP4 fixture is rejected with
   a diagnostic identifying the failure class and, when available, codec or
   container; this gate checks decoder validation only.
-- [x] [gate] A forced playback-open/decode failure after successful validation
+- [ ] [gate] A forced playback-open/decode failure after successful validation
   releases partial player resources and does not crash the tray application.
+  Player level passes; the tray application was not run with a video
+  (**Unverified**, see [forced failure](#forced-playback-open-failure)).
 - [x] [gate] Validation of malformed and unsupported fixtures completes
   within 30 seconds per file on the recorded target Windows machine. S5-01
   creates no managed import or Settings draft.
@@ -71,11 +73,14 @@ holds the exact FFmpeg arguments and pins FFmpeg `7.1.1-essentials_build-www.gya
 
 ### Automated tests
 
-`dotnet test DrawEM.sln -c Release` → 968 passed, 0 failed. Video tests:
+`dotnet test DrawEM.sln -c Release` → 969 passed, 0 failed (three consecutive
+runs). One earlier full run had one `MediaVideoPlayerTests` case fail
+(`h264-main-aac-mono44k.mp4`); it passed on rerun and in the three runs above,
+and its message was not captured. Video tests:
 
 | Test class | Covers |
 |---|---|
-| `Mp4VideoValidatorTests` | Five supported fixtures accepted with codec, profile, size, frame rate, audio; seven rejected fixtures return the expected `VideoValidationFailure` and name the codec or cause, each under 30 s; missing file → `Unreadable`; file held open by a writer is still validated; a track with a second sample description → `UnsupportedContainer` |
+| `Mp4VideoValidatorTests` | Five supported fixtures accepted with codec, profile, size, frame rate, audio; seven rejected fixtures return the expected `VideoValidationFailure` and name the codec or cause, each under 30 s; missing file → `Unreadable`; file held open by a writer is still validated; a track with a second sample description → `UnsupportedContainer`; a 32 MiB `moov` of 4 Mi empty boxes is classified with no per-box allocation |
 | `VideoSupportPolicyTests` | Size, frame-rate, H.264 profile, channel and sample-rate edges; other video/audio codecs named; track counts; QuickTime brand; fragmented movie |
 | `MediaVideoPlayerTests` (`Category=WindowsMedia`) | Five supported fixtures open, report tracks and size, reach natural end, and release the file after `Dispose`; forced open failure; file removed after validation; dispose during playback raises nothing later |
 
@@ -131,6 +136,10 @@ validator's message is the useful one for S5-02.
 right after, no exception reaches the Dispatcher, and the process continues to
 the next fixture. `MediaVideoPlayerTests` checks the same, plus a file deleted
 between validation and open (`0x80070002`).
+
+Not shown: the tray application itself. S5-01 does not connect the player to
+`TrayApplication`; the spike and tests run the player in their own process. The
+gate's tray part stays **Unverified** until S5-03 plays video in the app.
 
 ### S5-02 input contract
 
