@@ -1,1891 +1,1891 @@
 {
   ".claude/settings.json": {
-    "mtime": 1792409323.8209262,
-    "seen": 1792409640.123543,
+    "mtime": 1793003690.8687577,
+    "seen": 1793003722.129995,
     "ast_hash": "d1a96f8af1c34d3f2670fb4b2d514d34",
     "semantic_hash": "d1a96f8af1c34d3f2670fb4b2d514d34"
   },
   "DrawEM.sln": {
-    "mtime": 1792409323.829872,
-    "seen": 1792409640.1235557,
+    "mtime": 1793003690.8727832,
+    "seen": 1793003722.1300082,
     "ast_hash": "714d1ccd659392de8ac2e9e621540db6",
     "semantic_hash": "714d1ccd659392de8ac2e9e621540db6"
   },
   "global.json": {
-    "mtime": 1792409323.961977,
-    "seen": 1792409640.1235573,
+    "mtime": 1793003690.9143562,
+    "seen": 1793003722.1300106,
     "ast_hash": "dbb7d4d94bf71575905ff943c2fba06c",
     "semantic_hash": "dbb7d4d94bf71575905ff943c2fba06c"
   },
   "src/DrawEM.App/App.xaml": {
-    "mtime": 1792409323.9871812,
-    "seen": 1792409640.1235595,
+    "mtime": 1793003690.9322207,
+    "seen": 1793003722.1300125,
     "ast_hash": "7f0789536f1e33a65c24619af3edce03",
     "semantic_hash": "7f0789536f1e33a65c24619af3edce03"
   },
   "src/DrawEM.App/App.xaml.cs": {
-    "mtime": 1792409585.3547783,
-    "seen": 1792409640.1235611,
+    "mtime": 1793003690.9322207,
+    "seen": 1793003722.1300142,
     "ast_hash": "14b700bb9a26390508a9961313e16a02",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Application/Drawing/DrawingSessionController.cs": {
-    "mtime": 1792409323.9922976,
-    "seen": 1792409640.123563,
+    "mtime": 1793003690.934239,
+    "seen": 1793003722.130016,
     "ast_hash": "97ec5a275c0255c880d542cb7e4a81f2",
     "semantic_hash": "97ec5a275c0255c880d542cb7e4a81f2"
   },
   "src/DrawEM.App/Application/Effects/EffectChannelController.cs": {
-    "mtime": 1792409323.9928083,
-    "seen": 1792409640.1235645,
+    "mtime": 1793003690.934239,
+    "seen": 1793003722.130018,
     "ast_hash": "44bd252faa2eb774ff32e11f6bfe2550",
     "semantic_hash": "44bd252faa2eb774ff32e11f6bfe2550"
   },
   "src/DrawEM.App/Application/Effects/EffectInstance.cs": {
-    "mtime": 1792409323.9947693,
-    "seen": 1792409640.1235662,
+    "mtime": 1793003690.934239,
+    "seen": 1793003722.1300197,
     "ast_hash": "de9bd8f51d635dd97b034d6a988cbd96",
     "semantic_hash": "de9bd8f51d635dd97b034d6a988cbd96"
   },
   "src/DrawEM.App/Application/Effects/EffectPlaybackException.cs": {
-    "mtime": 1792409323.9958048,
-    "seen": 1792409640.1235673,
+    "mtime": 1793003690.934239,
+    "seen": 1793003722.130021,
     "ast_hash": "2c3a435b89354b69176b7f67c27e1339",
     "semantic_hash": "2c3a435b89354b69176b7f67c27e1339"
   },
   "src/DrawEM.App/Application/Effects/IEffectFailureReporter.cs": {
-    "mtime": 1792409323.9958048,
-    "seen": 1792409640.123569,
+    "mtime": 1793003690.934239,
+    "seen": 1793003722.130023,
     "ast_hash": "808ee80b46d5a2fb20c99b41c26b5da0",
     "semantic_hash": "808ee80b46d5a2fb20c99b41c26b5da0"
   },
   "src/DrawEM.App/Application/Effects/IEffectSurface.cs": {
-    "mtime": 1792409323.9973502,
-    "seen": 1792409640.1235702,
+    "mtime": 1793003690.934239,
+    "seen": 1793003722.1300247,
     "ast_hash": "658a7d0ef5338a6ebd6c836496845804",
     "semantic_hash": "658a7d0ef5338a6ebd6c836496845804"
   },
   "src/DrawEM.App/Application/Effects/StartEffectCommand.cs": {
-    "mtime": 1792409323.9973502,
-    "seen": 1792409640.1235716,
+    "mtime": 1793003690.934239,
+    "seen": 1793003722.130026,
     "ast_hash": "88b5d010adab2ee49059cfc898c8d52c",
     "semantic_hash": "88b5d010adab2ee49059cfc898c8d52c"
   },
   "src/DrawEM.App/Application/Settings/ActiveSettings.cs": {
-    "mtime": 1792409323.9973502,
-    "seen": 1792409640.123573,
+    "mtime": 1793003690.9362493,
+    "seen": 1793003722.1300275,
     "ast_hash": "5cb9c59238cb93e908cd77a4466d5a5b",
     "semantic_hash": "5cb9c59238cb93e908cd77a4466d5a5b"
   },
   "src/DrawEM.App/Application/Settings/ISettingsStore.cs": {
-    "mtime": 1792409323.9999013,
-    "seen": 1792409640.1235766,
+    "mtime": 1793003690.9362493,
+    "seen": 1793003722.1300309,
     "ast_hash": "77097afc321d36d49b6ae563ef185feb",
     "semantic_hash": "77097afc321d36d49b6ae563ef185feb"
   },
   "src/DrawEM.App/Application/Settings/IShortcutCapture.cs": {
-    "mtime": 1792409324.0021417,
-    "seen": 1792409640.123578,
+    "mtime": 1793003690.9370255,
+    "seen": 1793003722.1300323,
     "ast_hash": "51cf70ae4062f85e319d6e8eb3fd74a4",
     "semantic_hash": "51cf70ae4062f85e319d6e8eb3fd74a4"
   },
   "src/DrawEM.App/Application/Settings/ISoundLibrary.cs": {
-    "mtime": 1792409324.0021417,
-    "seen": 1792409640.1235795,
+    "mtime": 1793003690.9370255,
+    "seen": 1793003722.1300342,
     "ast_hash": "05f881c86c17fae3968e6cd7045a9ef0",
     "semantic_hash": "05f881c86c17fae3968e6cd7045a9ef0"
   },
   "src/DrawEM.App/Application/Settings/SettingsEditor.cs": {
-    "mtime": 1792409490.6928754,
-    "seen": 1792409640.1235807,
+    "mtime": 1793003690.9370255,
+    "seen": 1793003722.1300356,
     "ast_hash": "c47199158fec9611f0fb664d440d02e3",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Application/Settings/SettingsSaveOperation.cs": {
-    "mtime": 1792409324.0046053,
-    "seen": 1792409640.123582,
+    "mtime": 1793003690.9370255,
+    "seen": 1793003722.1300373,
     "ast_hash": "7419ad2aa257f4aba3f500aef2d94bb2",
     "semantic_hash": "7419ad2aa257f4aba3f500aef2d94bb2"
   },
   "src/DrawEM.App/Application/Settings/SettingsStartup.cs": {
-    "mtime": 1792409324.0046053,
-    "seen": 1792409640.1235833,
+    "mtime": 1793003690.9370255,
+    "seen": 1793003722.1300387,
     "ast_hash": "74f07b45e3424f549aa56c2ba8ea06c9",
     "semantic_hash": "74f07b45e3424f549aa56c2ba8ea06c9"
   },
   "src/DrawEM.App/Application/Sound/ISoundFailureReporter.cs": {
-    "mtime": 1792409324.006906,
-    "seen": 1792409640.1235847,
+    "mtime": 1793003690.9382606,
+    "seen": 1793003722.1300406,
     "ast_hash": "1d4db5d9a139c568ad46e87c2218fe0b",
     "semantic_hash": "1d4db5d9a139c568ad46e87c2218fe0b"
   },
   "src/DrawEM.App/Application/Sound/ISoundPlayer.cs": {
-    "mtime": 1792409324.006906,
-    "seen": 1792409640.123586,
+    "mtime": 1793003690.9382606,
+    "seen": 1793003722.130042,
     "ast_hash": "a0e60462f63045e9c245c8c6ca731700",
     "semantic_hash": "a0e60462f63045e9c245c8c6ca731700"
   },
   "src/DrawEM.App/Application/Sound/ISoundPlayerFactory.cs": {
-    "mtime": 1792409324.006906,
-    "seen": 1792409640.1235876,
+    "mtime": 1793003690.9382606,
+    "seen": 1793003722.1300437,
     "ast_hash": "c037f20e8e2a898d15c13ba2397d6247",
     "semantic_hash": "c037f20e8e2a898d15c13ba2397d6247"
   },
   "src/DrawEM.App/Application/Sound/PlaySoundCommand.cs": {
-    "mtime": 1792409324.008653,
-    "seen": 1792409640.1235888,
+    "mtime": 1793003690.9382606,
+    "seen": 1793003722.1300452,
     "ast_hash": "36640816be6b06b78fbe6d7e7d27fe21",
     "semantic_hash": "36640816be6b06b78fbe6d7e7d27fe21"
   },
   "src/DrawEM.App/Application/Sound/SoundChannelController.cs": {
-    "mtime": 1792409324.0091586,
-    "seen": 1792409640.1235902,
+    "mtime": 1793003690.939052,
+    "seen": 1793003722.1300466,
     "ast_hash": "49fff0b59db81443b14abde932606195",
     "semantic_hash": "49fff0b59db81443b14abde932606195"
   },
   "src/DrawEM.App/Application/Sound/SoundId.cs": {
-    "mtime": 1792409324.0091586,
-    "seen": 1792409640.123592,
+    "mtime": 1793003690.939052,
+    "seen": 1793003722.1300483,
     "ast_hash": "ef800092f45860f290ff0c3ab9c28fe5",
     "semantic_hash": "ef800092f45860f290ff0c3ab9c28fe5"
   },
   "src/DrawEM.App/Application/Sound/SoundPlaybackException.cs": {
-    "mtime": 1792409324.0114105,
-    "seen": 1792409640.1235933,
+    "mtime": 1793003690.939052,
+    "seen": 1793003722.1300495,
     "ast_hash": "0c59034692ab99db17513f0aaef029ba",
     "semantic_hash": "0c59034692ab99db17513f0aaef029ba"
   },
   "src/DrawEM.App/AssemblyInfo.cs": {
-    "mtime": 1792409324.0114105,
-    "seen": 1792409640.1236007,
+    "mtime": 1793003690.9402711,
+    "seen": 1793003722.1300564,
     "ast_hash": "eba3d0f769ea27f398997763747084ab",
     "semantic_hash": "eba3d0f769ea27f398997763747084ab"
   },
   "src/DrawEM.App/Domain/Drawing/DrawingState.cs": {
-    "mtime": 1792409324.0159123,
-    "seen": 1792409640.1236022,
+    "mtime": 1793003690.9420266,
+    "seen": 1793003722.130058,
     "ast_hash": "34b66b4aa6a5452733d9f81d7b7f01d6",
     "semantic_hash": "34b66b4aa6a5452733d9f81d7b7f01d6"
   },
   "src/DrawEM.App/Domain/Drawing/DrawingStyle.cs": {
-    "mtime": 1792409490.697993,
-    "seen": 1792409640.1236033,
+    "mtime": 1793003690.9420266,
+    "seen": 1793003722.1300595,
     "ast_hash": "bc5a3877a5080f090acf7d46114c394f",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Domain/Drawing/MonitorBounds.cs": {
-    "mtime": 1792409324.0176587,
-    "seen": 1792409640.1236048,
+    "mtime": 1793003690.9420266,
+    "seen": 1793003722.130061,
     "ast_hash": "e1aa282a999acdd80900605d61b9ad73",
     "semantic_hash": "e1aa282a999acdd80900605d61b9ad73"
   },
   "src/DrawEM.App/Domain/Effects/BuiltInEffect.cs": {
-    "mtime": 1792409324.0181637,
-    "seen": 1792409640.123608,
+    "mtime": 1793003690.9420266,
+    "seen": 1793003722.1300647,
     "ast_hash": "69969a5a5800702e4733beff1ac470be",
     "semantic_hash": "69969a5a5800702e4733beff1ac470be"
   },
   "src/DrawEM.App/Domain/Effects/EffectCatalog.cs": {
-    "mtime": 1792409324.0181637,
-    "seen": 1792409640.1236093,
+    "mtime": 1793003690.9420266,
+    "seen": 1793003722.1300662,
     "ast_hash": "2c0ba5bd8cc6232f087140f541637282",
     "semantic_hash": "2c0ba5bd8cc6232f087140f541637282"
   },
   "src/DrawEM.App/Domain/Effects/EffectId.cs": {
-    "mtime": 1792409324.0181637,
-    "seen": 1792409640.1236107,
+    "mtime": 1793003690.9420266,
+    "seen": 1793003722.1300678,
     "ast_hash": "b8b77a2ae7c670412a3040994355a86e",
     "semantic_hash": "b8b77a2ae7c670412a3040994355a86e"
   },
   "src/DrawEM.App/Domain/Effects/EffectPlacement.cs": {
-    "mtime": 1792409324.0181637,
-    "seen": 1792409640.123612,
+    "mtime": 1793003690.9420266,
+    "seen": 1793003722.1300693,
     "ast_hash": "7e478e4e46dbab54be620816c37cf62f",
     "semantic_hash": "7e478e4e46dbab54be620816c37cf62f"
   },
   "src/DrawEM.App/Domain/Settings/ActionSlot.cs": {
-    "mtime": 1792409324.020995,
-    "seen": 1792409640.123613,
+    "mtime": 1793003690.9420266,
+    "seen": 1793003722.1300704,
     "ast_hash": "c9470043758efb829bcdd3ec2c490f05",
     "semantic_hash": "c9470043758efb829bcdd3ec2c490f05"
   },
   "src/DrawEM.App/Domain/Settings/SettingsSnapshot.cs": {
-    "mtime": 1792409324.0230014,
-    "seen": 1792409640.1236145,
+    "mtime": 1793003690.9420266,
+    "seen": 1793003722.130072,
     "ast_hash": "efb5d92f871ce1b7dc66e7cad09dd914",
     "semantic_hash": "efb5d92f871ce1b7dc66e7cad09dd914"
   },
   "src/DrawEM.App/Domain/Settings/Shortcut.cs": {
-    "mtime": 1792409324.0235078,
-    "seen": 1792409640.1236157,
+    "mtime": 1793003690.9440424,
+    "seen": 1793003722.1300735,
     "ast_hash": "284e3a0b1334b52329420c47261b2297",
     "semantic_hash": "284e3a0b1334b52329420c47261b2297"
   },
   "src/DrawEM.App/Domain/Settings/ShortcutKey.cs": {
-    "mtime": 1792409324.0235078,
-    "seen": 1792409640.123617,
+    "mtime": 1793003690.9440424,
+    "seen": 1793003722.130075,
     "ast_hash": "572638fe292747867ebac02948e44232",
     "semantic_hash": "572638fe292747867ebac02948e44232"
   },
   "src/DrawEM.App/Domain/Sound/SoundReference.cs": {
-    "mtime": 1792409324.0262597,
-    "seen": 1792409640.1236184,
+    "mtime": 1793003690.9440424,
+    "seen": 1793003722.1300764,
     "ast_hash": "88f0d2346a91641aed188e440d86ece4",
     "semantic_hash": "88f0d2346a91641aed188e440d86ece4"
   },
   "src/DrawEM.App/DrawEM.App.csproj": {
-    "mtime": 1792409490.697993,
-    "seen": 1792409640.1236198,
+    "mtime": 1793003690.9440424,
+    "seen": 1793003722.1300778,
     "ast_hash": "67ffe2afb4a6128c92168f11c6a2b37e",
     "semantic_hash": "67ffe2afb4a6128c92168f11c6a2b37e"
   },
   "src/DrawEM.App/Infrastructure/AppFailureLog.cs": {
-    "mtime": 1792409324.0278215,
-    "seen": 1792409640.1236212,
+    "mtime": 1793003690.9440424,
+    "seen": 1793003722.1300795,
     "ast_hash": "fd7204f5d33105dde51e5cb8218ca3a8",
     "semantic_hash": "fd7204f5d33105dde51e5cb8218ca3a8"
   },
   "src/DrawEM.App/Infrastructure/ApplicationExitPolicy.cs": {
-    "mtime": 1792409324.029334,
-    "seen": 1792409640.1236224,
+    "mtime": 1793003690.9460526,
+    "seen": 1793003722.1300807,
     "ast_hash": "efd124f3264d5bc92ba458913002ecff",
     "semantic_hash": "efd124f3264d5bc92ba458913002ecff"
   },
   "src/DrawEM.App/Infrastructure/BackgroundLogWriter.cs": {
-    "mtime": 1792409324.029334,
-    "seen": 1792409640.1236236,
+    "mtime": 1793003690.9460526,
+    "seen": 1793003722.1300824,
     "ast_hash": "d5aee1e1d46fd777e554ac4d70bf3e73",
     "semantic_hash": "d5aee1e1d46fd777e554ac4d70bf3e73"
   },
   "src/DrawEM.App/Infrastructure/CleanupSteps.cs": {
-    "mtime": 1792409324.029334,
-    "seen": 1792409640.123625,
+    "mtime": 1793003690.9460526,
+    "seen": 1793003722.1300838,
     "ast_hash": "09a353759444442ccdf5c614419b37ab",
     "semantic_hash": "09a353759444442ccdf5c614419b37ab"
   },
   "src/DrawEM.App/Infrastructure/CompositeDisposable.cs": {
-    "mtime": 1792409324.029334,
-    "seen": 1792409640.1236262,
+    "mtime": 1793003690.9460526,
+    "seen": 1793003722.1300855,
     "ast_hash": "8ac95a20f8f539e3bf1f60efb85ecd06",
     "semantic_hash": "8ac95a20f8f539e3bf1f60efb85ecd06"
   },
   "src/DrawEM.App/Infrastructure/Drawing/DrawingModeInputGate.cs": {
-    "mtime": 1792409324.0333247,
-    "seen": 1792409640.1236274,
+    "mtime": 1793003690.9460526,
+    "seen": 1793003722.1300867,
     "ast_hash": "0b236ad9a8515071c775188392234c8c",
     "semantic_hash": "0b236ad9a8515071c775188392234c8c"
   },
   "src/DrawEM.App/Infrastructure/Drawing/GlobalMouseInputAdapter.cs": {
-    "mtime": 1792409324.0343304,
-    "seen": 1792409640.123629,
+    "mtime": 1793003690.9460526,
+    "seen": 1793003722.130088,
     "ast_hash": "d4b26773a445f36eaee21a9a717f3eb1",
     "semantic_hash": "d4b26773a445f36eaee21a9a717f3eb1"
   },
   "src/DrawEM.App/Infrastructure/Drawing/GlobalShortcutAdapter.cs": {
-    "mtime": 1792409324.035337,
-    "seen": 1792409640.1236305,
+    "mtime": 1793003690.9460526,
+    "seen": 1793003722.1300895,
     "ast_hash": "5f7d43433c91d66e2bfbb8a0d371a303",
     "semantic_hash": "5f7d43433c91d66e2bfbb8a0d371a303"
   },
   "src/DrawEM.App/Infrastructure/Drawing/ICursorPositionSource.cs": {
-    "mtime": 1792409324.03638,
-    "seen": 1792409640.1236322,
+    "mtime": 1793003690.9460526,
+    "seen": 1793003722.1300907,
     "ast_hash": "96139c3e0a77bc884280d06d2ea4580e",
     "semantic_hash": "96139c3e0a77bc884280d06d2ea4580e"
   },
   "src/DrawEM.App/Infrastructure/Drawing/IMonitorBoundsSource.cs": {
-    "mtime": 1792409324.03638,
-    "seen": 1792409640.1236334,
+    "mtime": 1793003690.9460526,
+    "seen": 1793003722.1300924,
     "ast_hash": "a6826802a29cbe6b98d53b2dfb9fb081",
     "semantic_hash": "a6826802a29cbe6b98d53b2dfb9fb081"
   },
   "src/DrawEM.App/Infrastructure/Drawing/IMouseHookSource.cs": {
-    "mtime": 1792409324.037385,
-    "seen": 1792409640.1236346,
+    "mtime": 1793003690.9480681,
+    "seen": 1793003722.1300936,
     "ast_hash": "e3c4f0ada3df845d69567e581e3e1674",
     "semantic_hash": "e3c4f0ada3df845d69567e581e3e1674"
   },
   "src/DrawEM.App/Infrastructure/Drawing/NativeMethods.cs": {
-    "mtime": 1792409324.038412,
-    "seen": 1792409640.1236362,
+    "mtime": 1793003690.9480681,
+    "seen": 1793003722.130095,
     "ast_hash": "c534bead793e3cb69d254a0dd2f60080",
     "semantic_hash": "c534bead793e3cb69d254a0dd2f60080"
   },
   "src/DrawEM.App/Infrastructure/Drawing/ShortcutBindings.cs": {
-    "mtime": 1792409324.0394166,
-    "seen": 1792409640.1236374,
+    "mtime": 1793003690.9480681,
+    "seen": 1793003722.1300964,
     "ast_hash": "a291452c468fca1f143752cb2700f34b",
     "semantic_hash": "a291452c468fca1f143752cb2700f34b"
   },
   "src/DrawEM.App/Infrastructure/Drawing/Win32CursorPositionSource.cs": {
-    "mtime": 1792409324.0394166,
-    "seen": 1792409640.123639,
+    "mtime": 1793003690.9480681,
+    "seen": 1793003722.1300979,
     "ast_hash": "899e52a772b7e91bd471fca1505bba0d",
     "semantic_hash": "899e52a772b7e91bd471fca1505bba0d"
   },
   "src/DrawEM.App/Infrastructure/Drawing/Win32MonitorBoundsSource.cs": {
-    "mtime": 1792409324.0394166,
-    "seen": 1792409640.1236405,
+    "mtime": 1793003690.9480681,
+    "seen": 1793003722.1300995,
     "ast_hash": "3efdd9bf627f6f374a3721e5316266d2",
     "semantic_hash": "3efdd9bf627f6f374a3721e5316266d2"
   },
   "src/DrawEM.App/Infrastructure/Drawing/Win32MouseHookSource.cs": {
-    "mtime": 1792409324.0404587,
-    "seen": 1792409640.1236415,
+    "mtime": 1793003690.9480681,
+    "seen": 1793003722.130101,
     "ast_hash": "72615819faebffd5a661e2cc7fc51757",
     "semantic_hash": "72615819faebffd5a661e2cc7fc51757"
   },
   "src/DrawEM.App/Infrastructure/Effects/EffectFailure.cs": {
-    "mtime": 1792409324.0414636,
-    "seen": 1792409640.123643,
+    "mtime": 1793003690.9480681,
+    "seen": 1793003722.1301022,
     "ast_hash": "0f0aa89cd31c94d0e8d6f15f4f290024",
     "semantic_hash": "0f0aa89cd31c94d0e8d6f15f4f290024"
   },
   "src/DrawEM.App/Infrastructure/Effects/EffectFailureLog.cs": {
-    "mtime": 1792409324.0424912,
-    "seen": 1792409640.1236444,
+    "mtime": 1793003690.9480681,
+    "seen": 1793003722.1301036,
     "ast_hash": "312c030150ecd2da4c0172b4e8700737",
     "semantic_hash": "312c030150ecd2da4c0172b4e8700737"
   },
   "src/DrawEM.App/Infrastructure/Effects/EffectMonitorGuard.cs": {
-    "mtime": 1792409324.0434957,
-    "seen": 1792409640.1236458,
+    "mtime": 1793003690.950079,
+    "seen": 1793003722.1301048,
     "ast_hash": "43b4d14b1f7d1ccfae719720eeb99821",
     "semantic_hash": "43b4d14b1f7d1ccfae719720eeb99821"
   },
   "src/DrawEM.App/Infrastructure/IKeyboardHookSource.cs": {
-    "mtime": 1792409324.0507238,
-    "seen": 1792409640.123659,
+    "mtime": 1793003690.950079,
+    "seen": 1793003722.13012,
     "ast_hash": "323df1dcc2c14e4a1a824d3cae1c2540",
     "semantic_hash": "323df1dcc2c14e4a1a824d3cae1c2540"
   },
   "src/DrawEM.App/Infrastructure/INeutralKeyEmitter.cs": {
-    "mtime": 1792409324.052229,
-    "seen": 1792409640.1236606,
+    "mtime": 1793003690.952088,
+    "seen": 1793003722.1301215,
     "ast_hash": "ed457ece073c8773696d525cd0f9a2ba",
     "semantic_hash": "ed457ece073c8773696d525cd0f9a2ba"
   },
   "src/DrawEM.App/Infrastructure/KeyboardHookEvents.cs": {
-    "mtime": 1792409324.052229,
-    "seen": 1792409640.1236658,
+    "mtime": 1793003690.952088,
+    "seen": 1793003722.1301272,
     "ast_hash": "0a5a0d986e3d7fc72023318eaf905c38",
     "semantic_hash": "0a5a0d986e3d7fc72023318eaf905c38"
   },
   "src/DrawEM.App/Infrastructure/NativeMethods.cs": {
-    "mtime": 1792409572.1350083,
-    "seen": 1792409640.1236672,
+    "mtime": 1793003690.952088,
+    "seen": 1793003722.1301286,
     "ast_hash": "91a5e16b0be26a354f1f870fcd06ba69",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Infrastructure/NotifyIconTrayHost.cs": {
-    "mtime": 1792409490.697993,
-    "seen": 1792409640.1236687,
+    "mtime": 1793003690.952088,
+    "seen": 1793003722.1301303,
     "ast_hash": "5b5523460584394673bc6470be20b43e",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Infrastructure/Settings/JsonSettingsStore.cs": {
-    "mtime": 1792409324.0557134,
-    "seen": 1792409640.1236703,
+    "mtime": 1793003690.952088,
+    "seen": 1793003722.1301317,
     "ast_hash": "2404e8085071657d3a1f6123843ee4d7",
     "semantic_hash": "2404e8085071657d3a1f6123843ee4d7"
   },
   "src/DrawEM.App/Infrastructure/Settings/SettingsFailureDialog.cs": {
-    "mtime": 1792409324.057225,
-    "seen": 1792409640.1236715,
+    "mtime": 1793003690.952088,
+    "seen": 1793003722.130133,
     "ast_hash": "82d8c0a0b20c06411e46dfa94d7ce42a",
     "semantic_hash": "82d8c0a0b20c06411e46dfa94d7ce42a"
   },
   "src/DrawEM.App/Infrastructure/Settings/SettingsJson.cs": {
-    "mtime": 1792409490.70052,
-    "seen": 1792409640.1236732,
+    "mtime": 1793003690.9540973,
+    "seen": 1793003722.1301346,
     "ast_hash": "f7678a919357c49facfafe427a31d6e7",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Infrastructure/Settings/SettingsSaveNotifications.cs": {
-    "mtime": 1792409324.058239,
-    "seen": 1792409640.1236746,
+    "mtime": 1793003690.9540973,
+    "seen": 1793003722.1301358,
     "ast_hash": "f65bc013458fcd21b1e7cd7bf12ab8e0",
     "semantic_hash": "f65bc013458fcd21b1e7cd7bf12ab8e0"
   },
   "src/DrawEM.App/Infrastructure/SingleInstanceGuard.cs": {
-    "mtime": 1792409324.0597515,
-    "seen": 1792409640.123676,
+    "mtime": 1793003690.9540973,
+    "seen": 1793003722.1301372,
     "ast_hash": "04cc923d1b0b6078a69560e7b1354544",
     "semantic_hash": "04cc923d1b0b6078a69560e7b1354544"
   },
   "src/DrawEM.App/Infrastructure/Sound/LoggingSoundFailureReporter.cs": {
-    "mtime": 1792409324.0597515,
-    "seen": 1792409640.1236777,
+    "mtime": 1793003690.9540973,
+    "seen": 1793003722.1301384,
     "ast_hash": "278ccd67131cf91fab33da873f6be7d6",
     "semantic_hash": "278ccd67131cf91fab33da873f6be7d6"
   },
   "src/DrawEM.App/Infrastructure/Sound/ManagedSoundLibrary.cs": {
-    "mtime": 1792409324.0622873,
-    "seen": 1792409640.123679,
+    "mtime": 1793003690.9540973,
+    "seen": 1793003722.1301396,
     "ast_hash": "a8ea009cc91a5a56bd64d215888a4d6a",
     "semantic_hash": "a8ea009cc91a5a56bd64d215888a4d6a"
   },
   "src/DrawEM.App/Infrastructure/Sound/MediaSoundPlayer.cs": {
-    "mtime": 1792409324.0622873,
-    "seen": 1792409640.1236804,
+    "mtime": 1793003690.9540973,
+    "seen": 1793003722.1301413,
     "ast_hash": "7b8bdb65e4e2ccbbb59d59c8c846ae3c",
     "semantic_hash": "7b8bdb65e4e2ccbbb59d59c8c846ae3c"
   },
   "src/DrawEM.App/Infrastructure/Sound/MediaSoundPlayerFactory.cs": {
-    "mtime": 1792409324.0622873,
-    "seen": 1792409640.1236818,
+    "mtime": 1793003690.9540973,
+    "seen": 1793003722.1301425,
     "ast_hash": "7d09eca96a981225a52800c7b7d43e09",
     "semantic_hash": "7d09eca96a981225a52800c7b7d43e09"
   },
   "src/DrawEM.App/Infrastructure/Sound/SoundAssignment.cs": {
-    "mtime": 1792409324.0649343,
-    "seen": 1792409640.1236827,
+    "mtime": 1793003690.9561083,
+    "seen": 1793003722.1301436,
     "ast_hash": "4cba15cdcb86a7c829bcb508c3ecf434",
     "semantic_hash": "4cba15cdcb86a7c829bcb508c3ecf434"
   },
   "src/DrawEM.App/Infrastructure/Sound/SoundAssignments.cs": {
-    "mtime": 1792409324.0649343,
-    "seen": 1792409640.1236842,
+    "mtime": 1793003690.9561083,
+    "seen": 1793003722.1301453,
     "ast_hash": "fd434bffc8c19a58cfb28dd135f740c1",
     "semantic_hash": "fd434bffc8c19a58cfb28dd135f740c1"
   },
   "src/DrawEM.App/Infrastructure/Sound/SoundChannelHost.cs": {
-    "mtime": 1792409324.0674808,
-    "seen": 1792409640.1236854,
+    "mtime": 1793003690.9561083,
+    "seen": 1793003722.1301465,
     "ast_hash": "e3175dcda46ab40d5f6000b3e87f661f",
     "semantic_hash": "e3175dcda46ab40d5f6000b3e87f661f"
   },
   "src/DrawEM.App/Infrastructure/Sound/SoundChannelShutdownTimeoutException.cs": {
-    "mtime": 1792409324.0674808,
-    "seen": 1792409640.1236866,
+    "mtime": 1793003690.9561083,
+    "seen": 1793003722.1301482,
     "ast_hash": "0aaf14490feaa910247e7f54b13c6591",
     "semantic_hash": "0aaf14490feaa910247e7f54b13c6591"
   },
   "src/DrawEM.App/Infrastructure/Sound/SoundFailure.cs": {
-    "mtime": 1792409324.0674808,
-    "seen": 1792409640.1236882,
+    "mtime": 1793003690.9561083,
+    "seen": 1793003722.1301494,
     "ast_hash": "ba10ed378db99b293902e5629802fe7d",
     "semantic_hash": "ba10ed378db99b293902e5629802fe7d"
   },
   "src/DrawEM.App/Infrastructure/Sound/SoundFailureLog.cs": {
-    "mtime": 1792409324.0674808,
-    "seen": 1792409640.1236894,
+    "mtime": 1793003690.9561083,
+    "seen": 1793003722.1301506,
     "ast_hash": "153c611aa0a9bd95579f90bf92ce9505",
     "semantic_hash": "153c611aa0a9bd95579f90bf92ce9505"
   },
   "src/DrawEM.App/Infrastructure/Sound/SoundSampler.cs": {
-    "mtime": 1792409324.0674808,
-    "seen": 1792409640.1236908,
+    "mtime": 1793003690.9561083,
+    "seen": 1793003722.130152,
     "ast_hash": "9c52285857dbe2d884641aaecf046167",
     "semantic_hash": "9c52285857dbe2d884641aaecf046167"
   },
   "src/DrawEM.App/Infrastructure/Sound/SoundSlot.cs": {
-    "mtime": 1792409324.0700114,
-    "seen": 1792409640.123692,
+    "mtime": 1793003690.9561083,
+    "seen": 1793003722.1301532,
     "ast_hash": "472cae5b92ae27ce784ee0efd69d2997",
     "semantic_hash": "472cae5b92ae27ce784ee0efd69d2997"
   },
   "src/DrawEM.App/Infrastructure/StartupFailure.cs": {
-    "mtime": 1792409324.0700114,
-    "seen": 1792409640.1236935,
+    "mtime": 1793003690.9578733,
+    "seen": 1793003722.1301546,
     "ast_hash": "5c23d6703f1730368c8b44e0ef8922e5",
     "semantic_hash": "5c23d6703f1730368c8b44e0ef8922e5"
   },
   "src/DrawEM.App/Infrastructure/TextFileLogSink.cs": {
-    "mtime": 1792409324.0700114,
-    "seen": 1792409640.123695,
+    "mtime": 1793003690.9578733,
+    "seen": 1793003722.1301558,
     "ast_hash": "f0c9041e2f9d2ee12c7746378f064391",
     "semantic_hash": "f0c9041e2f9d2ee12c7746378f064391"
   },
   "src/DrawEM.App/Infrastructure/TrayApplication.cs": {
-    "mtime": 1792409490.70052,
-    "seen": 1792409640.123696,
+    "mtime": 1793003690.9578733,
+    "seen": 1793003722.1301572,
     "ast_hash": "a92d0bb00504808d9a0010c111bb0380",
     "semantic_hash": "a92d0bb00504808d9a0010c111bb0380"
   },
   "src/DrawEM.App/Infrastructure/VirtualKeys.cs": {
-    "mtime": 1792409324.0725389,
-    "seen": 1792409640.1237054,
+    "mtime": 1793003690.9578733,
+    "seen": 1793003722.1301668,
     "ast_hash": "365b0519406c67591f6d59538bb45d07",
     "semantic_hash": "365b0519406c67591f6d59538bb45d07"
   },
   "src/DrawEM.App/Infrastructure/Win32KeyboardHookSource.cs": {
-    "mtime": 1792409324.0725389,
-    "seen": 1792409640.1237066,
+    "mtime": 1793003690.9578733,
+    "seen": 1793003722.1301684,
     "ast_hash": "b0ee801e838ec02d95ca7cd0caf97654",
     "semantic_hash": "b0ee801e838ec02d95ca7cd0caf97654"
   },
   "src/DrawEM.App/Infrastructure/WpfApplicationLifetime.cs": {
-    "mtime": 1792409324.0725389,
-    "seen": 1792409640.123708,
+    "mtime": 1793003690.9598856,
+    "seen": 1793003722.1301696,
     "ast_hash": "d09e2ef02e372b9e26cb7b57931543d5",
     "semantic_hash": "d09e2ef02e372b9e26cb7b57931543d5"
   },
   "src/DrawEM.App/Presentation/Drawing/IOverlayView.cs": {
-    "mtime": 1792409324.0750663,
-    "seen": 1792409640.1237092,
+    "mtime": 1793003690.9598856,
+    "seen": 1793003722.1301708,
     "ast_hash": "c068f07b69f3e0f53e9fd5ffff4c9362",
     "semantic_hash": "c068f07b69f3e0f53e9fd5ffff4c9362"
   },
   "src/DrawEM.App/Presentation/Drawing/NativeMethods.cs": {
-    "mtime": 1792409324.0750663,
-    "seen": 1792409640.1237104,
+    "mtime": 1793003690.9598856,
+    "seen": 1793003722.1301725,
     "ast_hash": "4a67de8b9573bba4b7331ccd647cef6a",
     "semantic_hash": "4a67de8b9573bba4b7331ccd647cef6a"
   },
   "src/DrawEM.App/Presentation/Drawing/OverlayWindow.xaml": {
-    "mtime": 1792409324.0750663,
-    "seen": 1792409640.123712,
+    "mtime": 1793003690.9598856,
+    "seen": 1793003722.1301737,
     "ast_hash": "03c6bda172b58dfe4d90f80201f112d0",
     "semantic_hash": "03c6bda172b58dfe4d90f80201f112d0"
   },
   "src/DrawEM.App/Presentation/Drawing/OverlayWindow.xaml.cs": {
-    "mtime": 1792409324.0775955,
-    "seen": 1792409640.1237133,
+    "mtime": 1793003690.9598856,
+    "seen": 1793003722.1301749,
     "ast_hash": "4875710b761e35f244eae790bf0b9dbb",
     "semantic_hash": "4875710b761e35f244eae790bf0b9dbb"
   },
   "src/DrawEM.App/Presentation/Drawing/OverlayWindowAdapter.cs": {
-    "mtime": 1792409324.0775955,
-    "seen": 1792409640.1237144,
+    "mtime": 1793003690.9598856,
+    "seen": 1793003722.1301765,
     "ast_hash": "c0d7535818827d6dae6159ed355dadec",
     "semantic_hash": "c0d7535818827d6dae6159ed355dadec"
   },
   "src/DrawEM.App/Presentation/Drawing/PhysicalToLocalTransform.cs": {
-    "mtime": 1792409324.0803869,
-    "seen": 1792409640.1237159,
+    "mtime": 1793003690.9618986,
+    "seen": 1793003722.1301777,
     "ast_hash": "c85aa05424755d401b8b54369ae3e8ad",
     "semantic_hash": "c85aa05424755d401b8b54369ae3e8ad"
   },
   "src/DrawEM.App/Presentation/Drawing/StrokeRenderElement.cs": {
-    "mtime": 1792409490.7065253,
-    "seen": 1792409640.123717,
+    "mtime": 1793003690.9618986,
+    "seen": 1793003722.1301792,
     "ast_hash": "91ce05f1deb1f9dafb467bdb21e140a7",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Effects/BuiltInEffectAnimations.cs": {
-    "mtime": 1792409324.107821,
-    "seen": 1792409640.1237185,
+    "mtime": 1793003690.9777398,
+    "seen": 1793003722.1301804,
     "ast_hash": "5d2de4e0a7ecf184236f672856c12052",
     "semantic_hash": "5d2de4e0a7ecf184236f672856c12052"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/confetti.json": {
-    "mtime": 1792409324.0905888,
-    "seen": 1792409640.1237283,
+    "mtime": 1793003690.9659214,
+    "seen": 1793003722.130192,
     "ast_hash": "2bb59d88b2388a6a6b964faec2c2e9b8",
     "semantic_hash": "2bb59d88b2388a6a6b964faec2c2e9b8"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/focus-ring.json": {
-    "mtime": 1792409324.095163,
-    "seen": 1792409640.1237326,
+    "mtime": 1793003690.967932,
+    "seen": 1793003722.1301966,
     "ast_hash": "ac80c9900a8473f8f4fdf68b00379bc6",
     "semantic_hash": "ac80c9900a8473f8f4fdf68b00379bc6"
   },
   "src/DrawEM.App/Presentation/Effects/EffectCanvasPlacement.cs": {
-    "mtime": 1792409324.1104443,
-    "seen": 1792409640.123741,
+    "mtime": 1793003690.9777398,
+    "seen": 1793003722.1302056,
     "ast_hash": "3fb62605cbec7f75c9d842d7b67877da",
     "semantic_hash": "3fb62605cbec7f75c9d842d7b67877da"
   },
   "src/DrawEM.App/Presentation/Effects/EffectRenderLayout.cs": {
-    "mtime": 1792409324.111956,
-    "seen": 1792409640.123742,
+    "mtime": 1793003690.9777398,
+    "seen": 1793003722.1302073,
     "ast_hash": "61cb375d9ea2577d01778b222eaa6989",
     "semantic_hash": "61cb375d9ea2577d01778b222eaa6989"
   },
   "src/DrawEM.App/Presentation/Effects/EffectSurfaceLayout.cs": {
-    "mtime": 1792409324.111956,
-    "seen": 1792409640.1237435,
+    "mtime": 1793003690.9777398,
+    "seen": 1793003722.1302087,
     "ast_hash": "d7e093e953296b72237e1341b7011750",
     "semantic_hash": "d7e093e953296b72237e1341b7011750"
   },
   "src/DrawEM.App/Presentation/Effects/EffectSurfaceWindow.cs": {
-    "mtime": 1792409324.1134799,
-    "seen": 1792409640.1237447,
+    "mtime": 1793003690.9777398,
+    "seen": 1793003722.1302104,
     "ast_hash": "0d64de94886d9fb12b012cd8b2e6e5a3",
     "semantic_hash": "0d64de94886d9fb12b012cd8b2e6e5a3"
   },
   "src/DrawEM.App/Presentation/Effects/LottieEffectSurface.cs": {
-    "mtime": 1792409324.1134799,
-    "seen": 1792409640.1237457,
+    "mtime": 1793003690.9797509,
+    "seen": 1793003722.1302116,
     "ast_hash": "a8b2e4031fc908b077f5c23f83c98590",
     "semantic_hash": "a8b2e4031fc908b077f5c23f83c98590"
   },
   "src/DrawEM.App/Presentation/Effects/LottiePlayback.cs": {
-    "mtime": 1792409324.1154845,
-    "seen": 1792409640.1237473,
+    "mtime": 1793003690.9817674,
+    "seen": 1793003722.130213,
     "ast_hash": "741f618c723034c277d147d0461d73ba",
     "semantic_hash": "741f618c723034c277d147d0461d73ba"
   },
   "src/DrawEM.App/Presentation/Effects/NativeMethods.cs": {
-    "mtime": 1792409324.1159914,
-    "seen": 1792409640.1237485,
+    "mtime": 1793003690.9837885,
+    "seen": 1793003722.1302145,
     "ast_hash": "e24ae940dc867e7952f416fba2dc3831",
     "semantic_hash": "e24ae940dc867e7952f416fba2dc3831"
   },
   "src/DrawEM.App/Presentation/Settings/SettingsViewModel.cs": {
-    "mtime": 1792409490.707039,
-    "seen": 1792409640.12375,
+    "mtime": 1793003690.9837885,
+    "seen": 1793003722.130216,
     "ast_hash": "cc9678f1f306e1b6dc3d47448872d599",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Settings/SettingsWindow.xaml": {
-    "mtime": 1792409490.707039,
-    "seen": 1792409640.1237514,
+    "mtime": 1793003690.9858067,
+    "seen": 1793003722.1302176,
     "ast_hash": "79e7a3ae09c60e0b9c46299a271e5cf4",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Settings/SettingsWindow.xaml.cs": {
-    "mtime": 1792409490.707039,
-    "seen": 1792409640.1237526,
+    "mtime": 1793003690.9858067,
+    "seen": 1793003722.130219,
     "ast_hash": "81ada92a2531d57a086efd8ebe48382b",
     "semantic_hash": "81ada92a2531d57a086efd8ebe48382b"
   },
   "src/DrawEM.App/Presentation/Sound/Namespace.cs": {
-    "mtime": 1792409324.1179957,
-    "seen": 1792409640.123754,
+    "mtime": 1793003690.9858067,
+    "seen": 1793003722.1302202,
     "ast_hash": "fa2fdd73c4fe425faff76352ca32ca84",
     "semantic_hash": "fa2fdd73c4fe425faff76352ca32ca84"
   },
   "tests/DrawEM.Tests/Application/Drawing/DrawingSessionControllerTests.cs": {
-    "mtime": 1792409490.7143068,
-    "seen": 1792409640.1237743,
+    "mtime": 1793003690.9936454,
+    "seen": 1793003722.130242,
     "ast_hash": "83592c683c2c51c27e80e3cf7da5f823",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Application/Effects/EffectChannelControllerTests.cs": {
-    "mtime": 1792409324.1269393,
-    "seen": 1792409640.1237755,
+    "mtime": 1793003690.9936454,
+    "seen": 1793003722.1302433,
     "ast_hash": "aa2f4b9c51a258b695414bdb6f630ea1",
     "semantic_hash": "aa2f4b9c51a258b695414bdb6f630ea1"
   },
   "tests/DrawEM.Tests/Application/Settings/ActiveSettingsTests.cs": {
-    "mtime": 1792409324.1269393,
-    "seen": 1792409640.1237767,
+    "mtime": 1793003690.9936454,
+    "seen": 1793003722.1302445,
     "ast_hash": "935689c73336009ce42620e545674ef2",
     "semantic_hash": "935689c73336009ce42620e545674ef2"
   },
   "tests/DrawEM.Tests/Application/Settings/SettingsEditorTests.cs": {
-    "mtime": 1792409324.1279514,
-    "seen": 1792409640.123778,
+    "mtime": 1793003690.9936454,
+    "seen": 1793003722.1302462,
     "ast_hash": "739e7503a1b2fb5bf4cd54dbcab1e73d",
     "semantic_hash": "739e7503a1b2fb5bf4cd54dbcab1e73d"
   },
   "tests/DrawEM.Tests/Application/Settings/SettingsFakes.cs": {
-    "mtime": 1792409324.1279514,
-    "seen": 1792409640.1237793,
+    "mtime": 1793003690.9956703,
+    "seen": 1793003722.1302474,
     "ast_hash": "53bb400f61a15b759bd5dbacdc358d92",
     "semantic_hash": "53bb400f61a15b759bd5dbacdc358d92"
   },
   "tests/DrawEM.Tests/Application/Settings/SettingsStartupTests.cs": {
-    "mtime": 1792409324.1304631,
-    "seen": 1792409640.1237805,
+    "mtime": 1793003690.9956703,
+    "seen": 1793003722.1302488,
     "ast_hash": "f66a9497353c7698a7fc37c53290520f",
     "semantic_hash": "f66a9497353c7698a7fc37c53290520f"
   },
   "tests/DrawEM.Tests/Application/Sound/SoundChannelControllerTests.cs": {
-    "mtime": 1792409324.1319866,
-    "seen": 1792409640.123782,
+    "mtime": 1793003690.9956703,
+    "seen": 1793003722.13025,
     "ast_hash": "6b07f58b076fbe41990efc32ea81c6e2",
     "semantic_hash": "6b07f58b076fbe41990efc32ea81c6e2"
   },
   "tests/DrawEM.Tests/Architecture/LayerDependencyTests.cs": {
-    "mtime": 1792409490.7169497,
-    "seen": 1792409640.1237848,
+    "mtime": 1793003690.9956703,
+    "seen": 1793003722.1302528,
     "ast_hash": "c3725b94563e8e0e0235d50b196db842",
     "semantic_hash": "c3725b94563e8e0e0235d50b196db842"
   },
   "tests/DrawEM.Tests/Architecture/NativeFunctionBridgeRule.cs": {
-    "mtime": 1792409324.1330998,
-    "seen": 1792409640.123786,
+    "mtime": 1793003690.9956703,
+    "seen": 1793003722.1302543,
     "ast_hash": "767746998f26a01b0bdcc93c41a9563a",
     "semantic_hash": "767746998f26a01b0bdcc93c41a9563a"
   },
   "tests/DrawEM.Tests/Architecture/NativeFunctionBridgeRuleTests.cs": {
-    "mtime": 1792409324.134527,
-    "seen": 1792409640.1237874,
+    "mtime": 1793003690.9956703,
+    "seen": 1793003722.1302557,
     "ast_hash": "fe3bb9fa83cd702896f05e63b7a0b32b",
     "semantic_hash": "fe3bb9fa83cd702896f05e63b7a0b32b"
   },
   "tests/DrawEM.Tests/Architecture/RetiredSoundAssignmentsTests.cs": {
-    "mtime": 1792409324.135558,
-    "seen": 1792409640.1237888,
+    "mtime": 1793003690.9956703,
+    "seen": 1793003722.130257,
     "ast_hash": "29db242891fad9e2ba09ee8e22a823f9",
     "semantic_hash": "29db242891fad9e2ba09ee8e22a823f9"
   },
   "tests/DrawEM.Tests/Domain/Effects/EffectCatalogTests.cs": {
-    "mtime": 1792409324.1365626,
-    "seen": 1792409640.12379,
+    "mtime": 1793003690.9976974,
+    "seen": 1793003722.130258,
     "ast_hash": "ea671eb91725ec3bfc95a21ba55744cd",
     "semantic_hash": "ea671eb91725ec3bfc95a21ba55744cd"
   },
   "tests/DrawEM.Tests/Domain/Settings/SettingsSnapshotTests.cs": {
-    "mtime": 1792409490.7169497,
-    "seen": 1792409640.1237917,
+    "mtime": 1793003690.9976974,
+    "seen": 1793003722.1302598,
     "ast_hash": "c1fbaf7fabc97b633658b529baadd010",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Domain/Settings/ShortcutTests.cs": {
-    "mtime": 1792409324.1375902,
-    "seen": 1792409640.123793,
+    "mtime": 1793003690.9976974,
+    "seen": 1793003722.130261,
     "ast_hash": "77d216cf53f0a56c09b5268170685d2e",
     "semantic_hash": "77d216cf53f0a56c09b5268170685d2e"
   },
   "tests/DrawEM.Tests/DrawEM.Tests.csproj": {
-    "mtime": 1792409324.1385963,
-    "seen": 1792409640.1237957,
+    "mtime": 1793003690.9976974,
+    "seen": 1793003722.130264,
     "ast_hash": "775c0cf30bdb711bd208ab7cb0ef15a5",
     "semantic_hash": "775c0cf30bdb711bd208ab7cb0ef15a5"
   },
   "tests/DrawEM.Tests/Infrastructure/AppFailureLogTests.cs": {
-    "mtime": 1792409324.1406326,
-    "seen": 1792409640.1237972,
+    "mtime": 1793003690.9976974,
+    "seen": 1793003722.1302657,
     "ast_hash": "b22c466d4a7f637f960ef2e50044b081",
     "semantic_hash": "b22c466d4a7f637f960ef2e50044b081"
   },
   "tests/DrawEM.Tests/Infrastructure/AppIconTests.cs": {
-    "mtime": 1792409324.1406326,
-    "seen": 1792409640.1237986,
-    "ast_hash": "82d54fdb0151d18b844eb13df7fc20df",
-    "semantic_hash": "82d54fdb0151d18b844eb13df7fc20df"
+    "mtime": 1793003690.9976974,
+    "seen": 1793003722.130267,
+    "ast_hash": "ca969ad56567848b2d718e8151b9ee6c",
+    "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Infrastructure/CompositeDisposableTests.cs": {
-    "mtime": 1792409324.1416633,
-    "seen": 1792409640.1237998,
+    "mtime": 1793003690.9997237,
+    "seen": 1793003722.130268,
     "ast_hash": "f769144559b3ba509e5f384e0f0f602a",
     "semantic_hash": "f769144559b3ba509e5f384e0f0f602a"
   },
   "tests/DrawEM.Tests/Infrastructure/Drawing/EffectShortcutTests.cs": {
-    "mtime": 1792409324.1426675,
-    "seen": 1792409640.123801,
+    "mtime": 1793003690.9997237,
+    "seen": 1793003722.1302698,
     "ast_hash": "1f2145c648bc47a4b488615985a8beaf",
     "semantic_hash": "1f2145c648bc47a4b488615985a8beaf"
   },
   "tests/DrawEM.Tests/Infrastructure/Drawing/FakeDrawingSources.cs": {
-    "mtime": 1792409324.1436813,
-    "seen": 1792409640.1238024,
+    "mtime": 1793003690.9997237,
+    "seen": 1793003722.1302712,
     "ast_hash": "ac28dbcc25b0b452036f371b5ac7bc6a",
     "semantic_hash": "ac28dbcc25b0b452036f371b5ac7bc6a"
   },
   "tests/DrawEM.Tests/Infrastructure/Drawing/GlobalMouseInputAdapterTests.cs": {
-    "mtime": 1792409324.1451936,
-    "seen": 1792409640.1238039,
+    "mtime": 1793003690.9997237,
+    "seen": 1793003722.1302726,
     "ast_hash": "17b4dcc71aeac0844fdc2b3a13dc1400",
     "semantic_hash": "17b4dcc71aeac0844fdc2b3a13dc1400"
   },
   "tests/DrawEM.Tests/Infrastructure/Drawing/GlobalShortcutAdapterTests.cs": {
-    "mtime": 1792409324.1451936,
-    "seen": 1792409640.1238053,
+    "mtime": 1793003690.9997237,
+    "seen": 1793003722.1302738,
     "ast_hash": "33569776f7237995a46c3c59526b64e8",
     "semantic_hash": "33569776f7237995a46c3c59526b64e8"
   },
   "tests/DrawEM.Tests/Infrastructure/Drawing/ShortcutBindingsTests.cs": {
-    "mtime": 1792409324.1451936,
-    "seen": 1792409640.1238067,
+    "mtime": 1793003690.9997237,
+    "seen": 1793003722.1302752,
     "ast_hash": "4b0e82c28d51e3251550a258bb074250",
     "semantic_hash": "4b0e82c28d51e3251550a258bb074250"
   },
   "tests/DrawEM.Tests/Infrastructure/Drawing/ShortcutCaptureTests.cs": {
-    "mtime": 1792409324.1451936,
-    "seen": 1792409640.123808,
+    "mtime": 1793003691.0017493,
+    "seen": 1793003722.1302767,
     "ast_hash": "1b8de6781cb6aabf677ffde13845a0ab",
     "semantic_hash": "1b8de6781cb6aabf677ffde13845a0ab"
   },
   "tests/DrawEM.Tests/Infrastructure/Effects/EffectFailureLogTests.cs": {
-    "mtime": 1792409324.1477315,
-    "seen": 1792409640.1238093,
+    "mtime": 1793003691.0017493,
+    "seen": 1793003722.130278,
     "ast_hash": "a6fd9d7f589d3564129034600dccacc2",
     "semantic_hash": "a6fd9d7f589d3564129034600dccacc2"
   },
   "tests/DrawEM.Tests/Infrastructure/Effects/EffectMonitorGuardTests.cs": {
-    "mtime": 1792409324.1477315,
-    "seen": 1792409640.1238122,
+    "mtime": 1793003691.0017493,
+    "seen": 1793003722.130281,
     "ast_hash": "fa9654500da5af0e7b9c0903ffb1a545",
     "semantic_hash": "fa9654500da5af0e7b9c0903ffb1a545"
   },
   "tests/DrawEM.Tests/Infrastructure/Settings/JsonSettingsStoreTests.cs": {
-    "mtime": 1792409490.7195086,
-    "seen": 1792409640.1238208,
+    "mtime": 1793003691.0037758,
+    "seen": 1793003722.13029,
     "ast_hash": "27ccbfcaa54f14bb3252c12757126169",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Infrastructure/Settings/RuntimeMediaTests.cs": {
-    "mtime": 1792409324.155351,
-    "seen": 1792409640.1238225,
+    "mtime": 1793003691.0037758,
+    "seen": 1793003722.1302912,
     "ast_hash": "d5de86cc34ccb04e195462b82a488c1f",
     "semantic_hash": "d5de86cc34ccb04e195462b82a488c1f"
   },
   "tests/DrawEM.Tests/Infrastructure/Settings/RuntimeSettingsTests.cs": {
-    "mtime": 1792409324.155351,
-    "seen": 1792409640.1238236,
+    "mtime": 1793003691.0037758,
+    "seen": 1793003722.1302924,
     "ast_hash": "9092345c2ffd883696a8a7cc5549e42e",
     "semantic_hash": "9092345c2ffd883696a8a7cc5549e42e"
   },
   "tests/DrawEM.Tests/Infrastructure/Settings/SettingsSaveOperationTests.cs": {
-    "mtime": 1792409324.158425,
-    "seen": 1792409640.1238248,
+    "mtime": 1793003691.0037758,
+    "seen": 1793003722.130294,
     "ast_hash": "43ea21f48be8c311d8ceba5a0833ce9c",
     "semantic_hash": "43ea21f48be8c311d8ceba5a0833ce9c"
   },
   "tests/DrawEM.Tests/Infrastructure/Settings/SettingsSaveStuckSoundTests.cs": {
-    "mtime": 1792409324.158425,
-    "seen": 1792409640.1238263,
+    "mtime": 1793003691.0055523,
+    "seen": 1793003722.1302953,
     "ast_hash": "33b0e21575bfa89795b9434618e543cb",
     "semantic_hash": "33b0e21575bfa89795b9434618e543cb"
   },
   "tests/DrawEM.Tests/Infrastructure/SingleInstanceGuardTests.cs": {
-    "mtime": 1792409324.1604445,
-    "seen": 1792409640.1238275,
+    "mtime": 1793003691.0055523,
+    "seen": 1793003722.1302965,
     "ast_hash": "f1c3e5f0d8b02c04cdb27d6f34fbdaf9",
     "semantic_hash": "f1c3e5f0d8b02c04cdb27d6f34fbdaf9"
   },
   "tests/DrawEM.Tests/Infrastructure/Sound/LoggingSoundFailureReporterTests.cs": {
-    "mtime": 1792409324.1630082,
-    "seen": 1792409640.12383,
+    "mtime": 1793003691.0055523,
+    "seen": 1793003722.1302998,
     "ast_hash": "4ebd53f31ec243ea881eb6d50b413b2c",
     "semantic_hash": "4ebd53f31ec243ea881eb6d50b413b2c"
   },
   "tests/DrawEM.Tests/Infrastructure/Sound/ManagedSoundLibraryTests.cs": {
-    "mtime": 1792409324.1630082,
-    "seen": 1792409640.1238313,
+    "mtime": 1793003691.0055523,
+    "seen": 1793003722.1303015,
     "ast_hash": "f8e1698ac815b53e0fdeca74ee5f22c6",
     "semantic_hash": "f8e1698ac815b53e0fdeca74ee5f22c6"
   },
   "tests/DrawEM.Tests/Infrastructure/Sound/MediaSoundPlayerFactoryTests.cs": {
-    "mtime": 1792409324.1655388,
-    "seen": 1792409640.1238332,
+    "mtime": 1793003691.0055523,
+    "seen": 1793003722.1303027,
     "ast_hash": "a55837fa2f6ec002198761e78b482ad2",
     "semantic_hash": "a55837fa2f6ec002198761e78b482ad2"
   },
   "tests/DrawEM.Tests/Infrastructure/Sound/SoundChannelHostTests.cs": {
-    "mtime": 1792409324.1655388,
-    "seen": 1792409640.1238341,
+    "mtime": 1793003691.0075786,
+    "seen": 1793003722.1303043,
     "ast_hash": "6dcd995d31093f3522a85e6f1945c6f0",
     "semantic_hash": "6dcd995d31093f3522a85e6f1945c6f0"
   },
   "tests/DrawEM.Tests/Infrastructure/Sound/SoundFailureLogTests.cs": {
-    "mtime": 1792409324.1655388,
-    "seen": 1792409640.1238356,
+    "mtime": 1793003691.0075786,
+    "seen": 1793003722.1303055,
     "ast_hash": "bca242e39e89e7881269a67d12b248f0",
     "semantic_hash": "bca242e39e89e7881269a67d12b248f0"
   },
   "tests/DrawEM.Tests/Infrastructure/Sound/SoundSamplerTests.cs": {
-    "mtime": 1792409324.1680696,
-    "seen": 1792409640.1238372,
+    "mtime": 1793003691.0075786,
+    "seen": 1793003722.130307,
     "ast_hash": "58d3e21bf135a501a03e2d261acacce8",
     "semantic_hash": "58d3e21bf135a501a03e2d261acacce8"
   },
   "tests/DrawEM.Tests/Infrastructure/StartupFailureTests.cs": {
-    "mtime": 1792409324.1680696,
-    "seen": 1792409640.1238384,
+    "mtime": 1793003691.0075786,
+    "seen": 1793003722.1303086,
     "ast_hash": "8d4be827dafed8f02db75800675d5fff",
     "semantic_hash": "8d4be827dafed8f02db75800675d5fff"
   },
   "tests/DrawEM.Tests/Infrastructure/TrayApplicationTests.cs": {
-    "mtime": 1792409490.7210195,
-    "seen": 1792409640.1238399,
+    "mtime": 1793003691.0075786,
+    "seen": 1793003722.1303098,
     "ast_hash": "634bb7d07ed1e4385767d1e8444cef1b",
     "semantic_hash": "634bb7d07ed1e4385767d1e8444cef1b"
   },
   "tests/DrawEM.Tests/ManualTimeProvider.cs": {
-    "mtime": 1792409324.170654,
-    "seen": 1792409640.1238453,
+    "mtime": 1793003691.009593,
+    "seen": 1793003722.1303155,
     "ast_hash": "5795151e87bc901ce60aab6bada3008e",
     "semantic_hash": "5795151e87bc901ce60aab6bada3008e"
   },
   "tests/DrawEM.Tests/Presentation/Drawing/OverlayWindowAdapterTests.cs": {
-    "mtime": 1792409324.170654,
-    "seen": 1792409640.1238468,
+    "mtime": 1793003691.009593,
+    "seen": 1793003722.1303167,
     "ast_hash": "af5c3af1c178eb95ade765c03c006922",
     "semantic_hash": "af5c3af1c178eb95ade765c03c006922"
   },
   "tests/DrawEM.Tests/Presentation/Drawing/StrokeRenderElementTests.cs": {
-    "mtime": 1792409490.7234135,
-    "seen": 1792409640.123848,
-    "ast_hash": "78226d89e65157f604999c6adf140a9f",
+    "mtime": 1793003691.009593,
+    "seen": 1793003722.1303184,
+    "ast_hash": "365b27952a25c49abf602b09538e2fe7",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Presentation/Effects/BuiltInEffectAnimationsTests.cs": {
-    "mtime": 1792409324.17319,
-    "seen": 1792409640.1238494,
+    "mtime": 1793003691.0116043,
+    "seen": 1793003722.1303198,
     "ast_hash": "1ae9030480534b47c6015a21e1b8d7e2",
     "semantic_hash": "1ae9030480534b47c6015a21e1b8d7e2"
   },
   "tests/DrawEM.Tests/Presentation/Effects/EffectCanvasPlacementTests.cs": {
-    "mtime": 1792409324.175718,
-    "seen": 1792409640.123851,
+    "mtime": 1793003691.0116043,
+    "seen": 1793003722.1303215,
     "ast_hash": "22c6f0b843391a5a04bc367906d8f90e",
     "semantic_hash": "22c6f0b843391a5a04bc367906d8f90e"
   },
   "tests/DrawEM.Tests/Presentation/Effects/EffectRenderLayoutTests.cs": {
-    "mtime": 1792409324.175718,
-    "seen": 1792409640.1238523,
+    "mtime": 1793003691.0116043,
+    "seen": 1793003722.1303227,
     "ast_hash": "c1f30c5106a7bcf3a6c71453855f719f",
     "semantic_hash": "c1f30c5106a7bcf3a6c71453855f719f"
   },
   "tests/DrawEM.Tests/Presentation/Effects/EffectSurfaceCoordinateTests.cs": {
-    "mtime": 1792409324.178265,
-    "seen": 1792409640.1238537,
+    "mtime": 1793003691.0116043,
+    "seen": 1793003722.130324,
     "ast_hash": "e3396dc36460dbbda7599bbe15018798",
     "semantic_hash": "e3396dc36460dbbda7599bbe15018798"
   },
   "tests/DrawEM.Tests/Presentation/Settings/SettingsViewModelTests.cs": {
-    "mtime": 1792409490.7234135,
-    "seen": 1792409640.1238565,
+    "mtime": 1793003691.0116043,
+    "seen": 1793003722.1303267,
     "ast_hash": "7f927a46b6155d773f3075363da3e95a",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Presentation/Settings/SettingsWindowTests.cs": {
-    "mtime": 1792409490.7244267,
-    "seen": 1792409640.123858,
-    "ast_hash": "6bf34416730201ffe50e450ba8c7e6fe",
+    "mtime": 1793003691.0116043,
+    "seen": 1793003722.1303284,
+    "ast_hash": "82c97332c4970e5a72a2e4350acbd3e0",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/StaThread.cs": {
-    "mtime": 1792409324.1833117,
-    "seen": 1792409640.1238697,
+    "mtime": 1793003691.0136142,
+    "seen": 1793003722.1303406,
     "ast_hash": "ba2fc6fbe54212ca8b8341c547a5c3c2",
     "semantic_hash": "ba2fc6fbe54212ca8b8341c547a5c3c2"
   },
   "tests/DrawEM.Tests/TestSettings.cs": {
-    "mtime": 1792409324.1833117,
-    "seen": 1792409640.1238713,
+    "mtime": 1793003691.0156288,
+    "seen": 1793003722.130342,
     "ast_hash": "93703d9a8e9761c0cbdebbf2a43d6f98",
     "semantic_hash": "93703d9a8e9761c0cbdebbf2a43d6f98"
   },
   "tools/RenderLagHarness/Program.cs": {
-    "mtime": 1792409490.727478,
-    "seen": 1792409640.1238725,
+    "mtime": 1793003691.0156288,
+    "seen": 1793003722.130345,
     "ast_hash": "070382568f8c98735a8b88856d6ed935",
     "semantic_hash": ""
   },
   "tools/RenderLagHarness/RenderLagHarness.csproj": {
-    "mtime": 1792409324.1870205,
-    "seen": 1792409640.123874,
+    "mtime": 1793003691.0156288,
+    "seen": 1793003722.1303468,
     "ast_hash": "f253b8c9987b03fb9d81a4e47379b246",
     "semantic_hash": "f253b8c9987b03fb9d81a4e47379b246"
   },
   ".github/dependabot.yml": {
-    "mtime": 1792409323.823035,
-    "seen": 1792409640.1238809,
+    "mtime": 1793003690.8687577,
+    "seen": 1793003722.1303542,
     "ast_hash": "bc9429899e42fd5a9b84614361e9dfeb",
     "semantic_hash": "bc9429899e42fd5a9b84614361e9dfeb"
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1792409490.6601672,
-    "seen": 1792409640.1238823,
+    "mtime": 1793003690.8687577,
+    "seen": 1793003722.1303556,
     "ast_hash": "e633b7ad3036405355ec1a2999f7365a",
     "semantic_hash": "e633b7ad3036405355ec1a2999f7365a"
   },
   ".github/workflows/pr-lint.yml": {
-    "mtime": 1792409323.8250966,
-    "seen": 1792409640.1238837,
-    "ast_hash": "0fa42f73e345e2d98a75aef86b09b97e",
-    "semantic_hash": "0fa42f73e345e2d98a75aef86b09b97e"
+    "mtime": 1793003690.8707707,
+    "seen": 1793003722.1303587,
+    "ast_hash": "19e5a6bf8549d85b3cba00c185eda860",
+    "semantic_hash": ""
   },
   ".github/workflows/release.yml": {
-    "mtime": 1792409490.6601672,
-    "seen": 1792409640.1238852,
+    "mtime": 1793003690.8707707,
+    "seen": 1793003722.1303601,
     "ast_hash": "42ac81cbb12be06b8ebfed5464afd13c",
     "semantic_hash": "42ac81cbb12be06b8ebfed5464afd13c"
   },
   "AGENTS.md": {
-    "mtime": 1792409323.829872,
-    "seen": 1792409640.1238863,
-    "ast_hash": "60f51d3058d2ea9862e35fdb35cd183e",
-    "semantic_hash": "60f51d3058d2ea9862e35fdb35cd183e"
+    "mtime": 1793003690.8727832,
+    "seen": 1793003722.1303616,
+    "ast_hash": "b039c188cf371743de0f04a3e9f5b5d5",
+    "semantic_hash": ""
   },
   "CONTEXT.md": {
-    "mtime": 1792409323.829872,
-    "seen": 1792409640.123889,
+    "mtime": 1793003690.8727832,
+    "seen": 1793003722.1303644,
     "ast_hash": "d9083cec02be96d0b20e78111319d4a8",
     "semantic_hash": "d9083cec02be96d0b20e78111319d4a8"
   },
   "README.md": {
-    "mtime": 1792409490.6601672,
-    "seen": 1792409640.1238902,
+    "mtime": 1793003690.8727832,
+    "seen": 1793003722.1303658,
     "ast_hash": "70614f2c01cc10b5ac6901847282db39",
     "semantic_hash": "70614f2c01cc10b5ac6901847282db39"
   },
   "docs/ARCHITECTURE.md": {
-    "mtime": 1792409323.832981,
-    "seen": 1792409640.1238914,
+    "mtime": 1793003690.8727832,
+    "seen": 1793003722.1303673,
     "ast_hash": "5acef01cdae99ef2a4e60e8a5957819e",
     "semantic_hash": "5acef01cdae99ef2a4e60e8a5957819e"
   },
   "docs/adr/0001-lottie-built-in-effects.md": {
-    "mtime": 1792409323.8349912,
-    "seen": 1792409640.1238928,
+    "mtime": 1793003690.8727832,
+    "seen": 1793003722.1303687,
     "ast_hash": "280caa130682b380c46c60a9a7a6fe4f",
     "semantic_hash": "280caa130682b380c46c60a9a7a6fe4f"
   },
   "docs/v1/ROADMAP-v1.md": {
-    "mtime": 1792409323.8349912,
-    "seen": 1792409640.123898,
+    "mtime": 1793003690.8747947,
+    "seen": 1793003722.1303744,
     "ast_hash": "544179b6eaf8f0d7770065506e1feeb0",
     "semantic_hash": "544179b6eaf8f0d7770065506e1feeb0"
   },
   "docs/v1/S07-ACCEPTANCE-RESULTS.md": {
-    "mtime": 1792409323.8375514,
-    "seen": 1792409640.1238995,
+    "mtime": 1793003690.8747947,
+    "seen": 1793003722.1303756,
     "ast_hash": "82576cd7a58aead972d31757590d03fb",
     "semantic_hash": "82576cd7a58aead972d31757590d03fb"
   },
   "docs/v1/SMOKE-TEST.md": {
-    "mtime": 1792409323.8375514,
-    "seen": 1792409640.1239007,
+    "mtime": 1793003690.8747947,
+    "seen": 1793003722.130377,
     "ast_hash": "79d0fd7ef072a1e0a533aa57decd8841",
     "semantic_hash": "79d0fd7ef072a1e0a533aa57decd8841"
   },
   "docs/v1/steps/F03-render-lag-harness-after-raw.md": {
-    "mtime": 1792409323.8401687,
-    "seen": 1792409640.1239018,
+    "mtime": 1793003690.8747947,
+    "seen": 1793003722.1303782,
     "ast_hash": "ec2254d8ffe4fff82269d8dca29ff838",
     "semantic_hash": "ec2254d8ffe4fff82269d8dca29ff838"
   },
   "docs/v1/steps/F03-render-lag-harness-before-raw.md": {
-    "mtime": 1792409323.8401687,
-    "seen": 1792409640.1239033,
+    "mtime": 1793003690.8747947,
+    "seen": 1793003722.13038,
     "ast_hash": "0d2a6a454c020df0c1c0105e22e24c50",
     "semantic_hash": "0d2a6a454c020df0c1c0105e22e24c50"
   },
   "docs/v1/steps/F03-render-lag-harness-results.md": {
-    "mtime": 1792409323.8427129,
-    "seen": 1792409640.1239047,
+    "mtime": 1793003690.8768096,
+    "seen": 1793003722.1303816,
     "ast_hash": "cce448d6196a552d80bc7cda754c437d",
     "semantic_hash": "cce448d6196a552d80bc7cda754c437d"
   },
   "docs/v1/steps/F03-render-lag-investigation-plan.md": {
-    "mtime": 1792409323.8427129,
-    "seen": 1792409640.1239061,
+    "mtime": 1793003690.8768096,
+    "seen": 1793003722.1303828,
     "ast_hash": "21a1e67c4408e310a62a76efd3cd3b7b",
     "semantic_hash": "21a1e67c4408e310a62a76efd3cd3b7b"
   },
   "docs/v1/steps/S06-lifecycle-and-packaging-plan.md": {
-    "mtime": 1792409323.8427129,
-    "seen": 1792409640.123907,
+    "mtime": 1793003690.8768096,
+    "seen": 1793003722.1303844,
     "ast_hash": "ae40bf35ca0e5ebcad5b3ca241fde1ba",
     "semantic_hash": "ae40bf35ca0e5ebcad5b3ca241fde1ba"
   },
   "docs/v1/steps/S07-acceptance-pass-plan.md": {
-    "mtime": 1792409323.8452713,
-    "seen": 1792409640.1239085,
+    "mtime": 1793003690.8768096,
+    "seen": 1793003722.1303859,
     "ast_hash": "39bdebb133b5ce198e4ea315c8c199dc",
     "semantic_hash": "39bdebb133b5ce198e4ea315c8c199dc"
   },
   "docs/v2/ROADMAP-v2.md": {
-    "mtime": 1792409323.8452713,
-    "seen": 1792409640.12391,
+    "mtime": 1793003690.8768096,
+    "seen": 1793003722.1303873,
     "ast_hash": "3bd82ae808085237ab7029ced2c1dc0d",
     "semantic_hash": "3bd82ae808085237ab7029ced2c1dc0d"
   },
   "docs/v2/SOUND-BUSINESS-TESTS.md": {
-    "mtime": 1792409323.8478196,
-    "seen": 1792409640.1239114,
+    "mtime": 1793003690.8768096,
+    "seen": 1793003722.1303885,
     "ast_hash": "acffead898d2e61ae04f1651f706fef0",
     "semantic_hash": "acffead898d2e61ae04f1651f706fef0"
   },
   "docs/v2/STAGE-1-ACCEPTANCE-RESULTS.md": {
-    "mtime": 1792409323.8478196,
-    "seen": 1792409640.1239128,
+    "mtime": 1793003690.8785653,
+    "seen": 1793003722.13039,
     "ast_hash": "019bcd17885d41482ffbb40be356248c",
     "semantic_hash": "019bcd17885d41482ffbb40be356248c"
   },
   "docs/v2/STAGE-1-SOUND-IMPLEMENTATION-PLAN.md": {
-    "mtime": 1792409323.8478196,
-    "seen": 1792409640.123914,
+    "mtime": 1793003690.8785653,
+    "seen": 1793003722.1303914,
     "ast_hash": "4d5a3cd59590edd8245991c11821418d",
     "semantic_hash": "4d5a3cd59590edd8245991c11821418d"
   },
   "docs/v2/stage-1/step-1-sound-command/acceptance.md": {
-    "mtime": 1792409323.8504262,
-    "seen": 1792409640.1239154,
+    "mtime": 1793003690.8785653,
+    "seen": 1793003722.1303926,
     "ast_hash": "f350c6eceb298dfc099a778c02d31f1a",
     "semantic_hash": "f350c6eceb298dfc099a778c02d31f1a"
   },
   "docs/v2/stage-1/step-1-sound-command/plan.md": {
-    "mtime": 1792409323.8504262,
-    "seen": 1792409640.123917,
+    "mtime": 1793003690.8785653,
+    "seen": 1793003722.1303937,
     "ast_hash": "3fb4ca17e81947344785a357be702fe3",
     "semantic_hash": "3fb4ca17e81947344785a357be702fe3"
   },
   "docs/v2/stage-1/step-1-sound-command/review.md": {
-    "mtime": 1792409323.8504262,
-    "seen": 1792409640.1239183,
+    "mtime": 1793003690.8785653,
+    "seen": 1793003722.1303952,
     "ast_hash": "6b2a9269faed6355d3fcb647ef4b6bdb",
     "semantic_hash": "6b2a9269faed6355d3fcb647ef4b6bdb"
   },
   "docs/v2/stage-1/step-1-sound-command/task.md": {
-    "mtime": 1792409323.852962,
-    "seen": 1792409640.12392,
+    "mtime": 1793003690.8785653,
+    "seen": 1793003722.1303964,
     "ast_hash": "1dab908f7f959879c33a5e4d594bbb4f",
     "semantic_hash": "1dab908f7f959879c33a5e4d594bbb4f"
   },
   "docs/v2/stage-1/step-2-sound-channel/acceptance.md": {
-    "mtime": 1792409323.8552616,
-    "seen": 1792409640.1239212,
+    "mtime": 1793003690.8785653,
+    "seen": 1793003722.1303978,
     "ast_hash": "9e5e984f7c207eab7117bf31c2040ed9",
     "semantic_hash": "9e5e984f7c207eab7117bf31c2040ed9"
   },
   "docs/v2/stage-1/step-2-sound-channel/plan.md": {
-    "mtime": 1792409323.8552616,
-    "seen": 1792409640.123922,
+    "mtime": 1793003690.8785653,
+    "seen": 1793003722.130399,
     "ast_hash": "c1a74757ddadf4d880e78627ee7623d3",
     "semantic_hash": "c1a74757ddadf4d880e78627ee7623d3"
   },
   "docs/v2/stage-1/step-2-sound-channel/review.md": {
-    "mtime": 1792409323.8575366,
-    "seen": 1792409640.1239238,
+    "mtime": 1793003690.880582,
+    "seen": 1793003722.1304004,
     "ast_hash": "cc3ddba8738a8dc1dd544294cd8f82af",
     "semantic_hash": "cc3ddba8738a8dc1dd544294cd8f82af"
   },
   "docs/v2/stage-1/step-2-sound-channel/task.md": {
-    "mtime": 1792409323.8580687,
-    "seen": 1792409640.123925,
+    "mtime": 1793003690.880582,
+    "seen": 1793003722.130402,
     "ast_hash": "c22cb11b2229d2bfe070544c8c955e7b",
     "semantic_hash": "c22cb11b2229d2bfe070544c8c955e7b"
   },
   "docs/v2/stage-1/step-3-sound-shortcuts/acceptance.md": {
-    "mtime": 1792409323.859099,
-    "seen": 1792409640.1239262,
+    "mtime": 1793003690.880582,
+    "seen": 1793003722.1304035,
     "ast_hash": "a16fd23a55aa2bfa220071225bdfb3f3",
     "semantic_hash": "a16fd23a55aa2bfa220071225bdfb3f3"
   },
   "docs/v2/stage-1/step-3-sound-shortcuts/plan.md": {
-    "mtime": 1792409323.8596087,
-    "seen": 1792409640.1239276,
+    "mtime": 1793003690.8813622,
+    "seen": 1793003722.130405,
     "ast_hash": "d4ce82cdb50010f82c2ee2ba25364fce",
     "semantic_hash": "d4ce82cdb50010f82c2ee2ba25364fce"
   },
   "docs/v2/stage-1/step-3-sound-shortcuts/task.md": {
-    "mtime": 1792409323.8606386,
-    "seen": 1792409640.1239288,
+    "mtime": 1793003690.8813622,
+    "seen": 1793003722.1304061,
     "ast_hash": "acdee3feb15380de95987e61882c12ad",
     "semantic_hash": "acdee3feb15380de95987e61882c12ad"
   },
   "docs/v2/stage-1/step-4-publish/acceptance.md": {
-    "mtime": 1792409323.8606386,
-    "seen": 1792409640.1239302,
+    "mtime": 1793003690.8813622,
+    "seen": 1793003722.1304076,
     "ast_hash": "8a1ae7b49f946ffd178958197d408c1b",
     "semantic_hash": "8a1ae7b49f946ffd178958197d408c1b"
   },
   "docs/v2/stage-1/step-4-publish/plan.md": {
-    "mtime": 1792409323.8621707,
-    "seen": 1792409640.1239314,
+    "mtime": 1793003690.8813622,
+    "seen": 1793003722.1304092,
     "ast_hash": "6103caacf8f3b5fe6e0c651acfd0d6f7",
     "semantic_hash": "6103caacf8f3b5fe6e0c651acfd0d6f7"
   },
   "docs/v2/stage-1/step-4-publish/task.md": {
-    "mtime": 1792409323.8621707,
-    "seen": 1792409640.1239326,
+    "mtime": 1793003690.8813622,
+    "seen": 1793003722.1304104,
     "ast_hash": "c24c93624eaf03b20ff92887428bfaf5",
     "semantic_hash": "c24c93624eaf03b20ff92887428bfaf5"
   },
   "docs/v2/stage-1/step-5-call-microphone/acceptance.md": {
-    "mtime": 1792409323.8621707,
-    "seen": 1792409640.123934,
+    "mtime": 1793003690.8813622,
+    "seen": 1793003722.1304119,
     "ast_hash": "b5ccab4e30922ec9433457d45b69e8f4",
     "semantic_hash": "b5ccab4e30922ec9433457d45b69e8f4"
   },
   "docs/v2/stage-1/step-5-call-microphone/plan.md": {
-    "mtime": 1792409323.8647912,
-    "seen": 1792409640.1239355,
+    "mtime": 1793003690.8825939,
+    "seen": 1793003722.130413,
     "ast_hash": "de91553339dcbcb31858f7417dc6c899",
     "semantic_hash": "de91553339dcbcb31858f7417dc6c899"
   },
   "docs/v2/stage-1/step-5-call-microphone/task.md": {
-    "mtime": 1792409323.8647912,
-    "seen": 1792409640.1239364,
+    "mtime": 1793003690.8825939,
+    "seen": 1793003722.1304142,
     "ast_hash": "c79a399f344a545587a1ac83c59f4e6d",
     "semantic_hash": "c79a399f344a545587a1ac83c59f4e6d"
   },
   "docs/v3/ROADMAP-v3.md": {
-    "mtime": 1792409323.8647912,
-    "seen": 1792409640.1239378,
+    "mtime": 1793003690.8825939,
+    "seen": 1793003722.130416,
     "ast_hash": "68e5d4a3e080f041ae685af3166e17ed",
     "semantic_hash": "68e5d4a3e080f041ae685af3166e17ed"
   },
   "docs/v3/STEP-8-ACCEPTANCE-RESULTS.md": {
-    "mtime": 1792409490.6627104,
-    "seen": 1792409640.1239393,
+    "mtime": 1793003690.883388,
+    "seen": 1793003722.1304173,
     "ast_hash": "12c7f736f4dc3b5a2e7e4ddc0e6f9a65",
     "semantic_hash": "12c7f736f4dc3b5a2e7e4ddc0e6f9a65"
   },
   "docs/v3/additional-fixes/FEAT-005-e2e-runner/task.md": {
-    "mtime": 1792409323.8699028,
-    "seen": 1792409640.1239407,
+    "mtime": 1793003690.883388,
+    "seen": 1793003722.1304188,
     "ast_hash": "e82cab6d205402002b819ed06ef7a3b7",
     "semantic_hash": "e82cab6d205402002b819ed06ef7a3b7"
   },
   "docs/v3/additional-fixes/FIX-006-single-screen-edge/task.md": {
-    "mtime": 1792409323.8699028,
-    "seen": 1792409640.123942,
+    "mtime": 1793003690.883388,
+    "seen": 1793003722.1304202,
     "ast_hash": "e71b5ec951357e915b5d7408bb2bbea2",
     "semantic_hash": "e71b5ec951357e915b5d7408bb2bbea2"
   },
   "docs/v3/additional-fixes/README.md": {
-    "mtime": 1792409323.8699028,
-    "seen": 1792409640.123943,
+    "mtime": 1793003690.883388,
+    "seen": 1793003722.1304214,
     "ast_hash": "2dd1b987a8b38bac8b0ecae3b0445146",
     "semantic_hash": "2dd1b987a8b38bac8b0ecae3b0445146"
   },
   "docs/v3/step-1-settings/acceptance.md": {
-    "mtime": 1792409323.8724494,
-    "seen": 1792409640.1239445,
+    "mtime": 1793003690.8846087,
+    "seen": 1793003722.1304228,
     "ast_hash": "18daf0b55d123a0304381a70e0dbebc4",
     "semantic_hash": "18daf0b55d123a0304381a70e0dbebc4"
   },
   "docs/v3/step-1-settings/plan.md": {
-    "mtime": 1792409323.8724494,
-    "seen": 1792409640.1239457,
+    "mtime": 1793003690.8846087,
+    "seen": 1793003722.1304243,
     "ast_hash": "6e6cb436e4b203ba9edd5c2017496aed",
     "semantic_hash": "6e6cb436e4b203ba9edd5c2017496aed"
   },
   "docs/v3/step-1-settings/task.md": {
-    "mtime": 1792409323.8724494,
-    "seen": 1792409640.123947,
+    "mtime": 1793003690.8846087,
+    "seen": 1793003722.1304257,
     "ast_hash": "19a338917b1b51b606b4e642b86f14b8",
     "semantic_hash": "19a338917b1b51b606b4e642b86f14b8"
   },
   "docs/v3/step-2-sound-library/acceptance.md": {
-    "mtime": 1792409323.875009,
-    "seen": 1792409640.1239483,
+    "mtime": 1793003690.8846087,
+    "seen": 1793003722.130427,
     "ast_hash": "63a62470d2f48504398696bf9802102d",
     "semantic_hash": "63a62470d2f48504398696bf9802102d"
   },
   "docs/v3/step-2-sound-library/plan.md": {
-    "mtime": 1792409323.875009,
-    "seen": 1792409640.1239495,
+    "mtime": 1793003690.8854144,
+    "seen": 1793003722.1304283,
     "ast_hash": "fcc7bee1656e4ecf33d4d87fae5cbd0d",
     "semantic_hash": "fcc7bee1656e4ecf33d4d87fae5cbd0d"
   },
   "docs/v3/step-2-sound-library/task.md": {
-    "mtime": 1792409323.875009,
-    "seen": 1792409640.1239512,
+    "mtime": 1793003690.8854144,
+    "seen": 1793003722.1304302,
     "ast_hash": "034ff95354c4c2af62e9c86f7810294c",
     "semantic_hash": "034ff95354c4c2af62e9c86f7810294c"
   },
   "docs/v3/step-3-action-routing/acceptance.md": {
-    "mtime": 1792409323.8775687,
-    "seen": 1792409640.1239524,
+    "mtime": 1793003690.8854144,
+    "seen": 1793003722.1304314,
     "ast_hash": "1daa25f89a806464dc0426196a3afcf9",
     "semantic_hash": "1daa25f89a806464dc0426196a3afcf9"
   },
   "docs/v3/step-3-action-routing/plan.md": {
-    "mtime": 1792409323.8775687,
-    "seen": 1792409640.1239533,
+    "mtime": 1793003690.8854144,
+    "seen": 1793003722.130433,
     "ast_hash": "2d8a94de46b79fd19335f9f2cee92946",
     "semantic_hash": "2d8a94de46b79fd19335f9f2cee92946"
   },
   "docs/v3/step-3-action-routing/task.md": {
-    "mtime": 1792409323.8775687,
-    "seen": 1792409640.1239548,
+    "mtime": 1793003690.886621,
+    "seen": 1793003722.1304343,
     "ast_hash": "53238caf53eba483adfc52f359b3bc1c",
     "semantic_hash": "53238caf53eba483adfc52f359b3bc1c"
   },
   "docs/v3/step-4-shortcut-capture/acceptance.md": {
-    "mtime": 1792409323.8801954,
-    "seen": 1792409640.1239564,
+    "mtime": 1793003690.886621,
+    "seen": 1793003722.1304355,
     "ast_hash": "067a88cbb870b2ec2fb13f8b559d5d13",
     "semantic_hash": "067a88cbb870b2ec2fb13f8b559d5d13"
   },
   "docs/v3/step-4-shortcut-capture/plan.md": {
-    "mtime": 1792409323.8801954,
-    "seen": 1792409640.1239579,
+    "mtime": 1793003690.886621,
+    "seen": 1793003722.1304371,
     "ast_hash": "5c3f5b54c641cc0ba6af118e401d5918",
     "semantic_hash": "5c3f5b54c641cc0ba6af118e401d5918"
   },
   "docs/v3/step-4-shortcut-capture/task.md": {
-    "mtime": 1792409323.8801954,
-    "seen": 1792409640.123959,
+    "mtime": 1793003690.886621,
+    "seen": 1793003722.1304383,
     "ast_hash": "10249b2a304e6da94d085d6cbc76e20c",
     "semantic_hash": "10249b2a304e6da94d085d6cbc76e20c"
   },
   "docs/v3/step-5-drawing-style/acceptance.md": {
-    "mtime": 1792409323.882755,
-    "seen": 1792409640.1239603,
+    "mtime": 1793003690.8874397,
+    "seen": 1793003722.1304398,
     "ast_hash": "3d4b7f314a19a316c757d86991e1b2a2",
     "semantic_hash": "3d4b7f314a19a316c757d86991e1b2a2"
   },
   "docs/v3/step-5-drawing-style/plan.md": {
-    "mtime": 1792409323.882755,
-    "seen": 1792409640.1239617,
+    "mtime": 1793003690.8874397,
+    "seen": 1793003722.1304412,
     "ast_hash": "4940b1f55f7da79fe53cc988c1df4ee8",
     "semantic_hash": "4940b1f55f7da79fe53cc988c1df4ee8"
   },
   "docs/v3/step-5-drawing-style/task.md": {
-    "mtime": 1792409323.882755,
-    "seen": 1792409640.1239629,
+    "mtime": 1793003690.8874397,
+    "seen": 1793003722.1304429,
     "ast_hash": "9763b5f5a84bfd858face3bbdf6db717",
     "semantic_hash": "9763b5f5a84bfd858face3bbdf6db717"
   },
   "docs/v3/step-6-runtime-settings/acceptance.md": {
-    "mtime": 1792409323.8853095,
-    "seen": 1792409640.123964,
+    "mtime": 1793003690.8874397,
+    "seen": 1793003722.130444,
     "ast_hash": "28b57678a6c148008de75de46aab5f81",
     "semantic_hash": "28b57678a6c148008de75de46aab5f81"
   },
   "docs/v3/step-6-runtime-settings/omp-prompt.md": {
-    "mtime": 1792409323.8853095,
-    "seen": 1792409640.1239655,
+    "mtime": 1793003690.8874397,
+    "seen": 1793003722.1304452,
     "ast_hash": "3bb0a14059557978f1369ad114c927ac",
     "semantic_hash": "3bb0a14059557978f1369ad114c927ac"
   },
   "docs/v3/step-6-runtime-settings/plan.md": {
-    "mtime": 1792409323.8853095,
-    "seen": 1792409640.1239667,
+    "mtime": 1793003690.8886352,
+    "seen": 1793003722.1304471,
     "ast_hash": "f1a83607ede78b96c060a1c966cf8e4f",
     "semantic_hash": "f1a83607ede78b96c060a1c966cf8e4f"
   },
   "docs/v3/step-6-runtime-settings/task.md": {
-    "mtime": 1792409323.8878522,
-    "seen": 1792409640.1239676,
+    "mtime": 1793003690.8886352,
+    "seen": 1793003722.1304483,
     "ast_hash": "ec1568f3f3a3b71ea41ed246fc5bd34e",
     "semantic_hash": "ec1568f3f3a3b71ea41ed246fc5bd34e"
   },
   "docs/v3/step-7-settings-window/acceptance.md": {
-    "mtime": 1792409323.8878522,
-    "seen": 1792409640.1239693,
+    "mtime": 1793003690.8886352,
+    "seen": 1793003722.13045,
     "ast_hash": "d9c1e1dc47ccbe4b1b937af1680b5b34",
     "semantic_hash": "d9c1e1dc47ccbe4b1b937af1680b5b34"
   },
   "docs/v3/step-7-settings-window/plan.md": {
-    "mtime": 1792409323.890377,
-    "seen": 1792409640.1239707,
+    "mtime": 1793003690.8886352,
+    "seen": 1793003722.1304512,
     "ast_hash": "adc7530a83c260ce302121a461dab460",
     "semantic_hash": "adc7530a83c260ce302121a461dab460"
   },
   "docs/v3/step-7-settings-window/prototype.html": {
-    "mtime": 1792409323.8921306,
-    "seen": 1792409640.1239722,
+    "mtime": 1793003690.889467,
+    "seen": 1793003722.1304526,
     "ast_hash": "369de7858c8d3dab4bb6d6f04ecf5786",
     "semantic_hash": "369de7858c8d3dab4bb6d6f04ecf5786"
   },
   "docs/v3/step-7-settings-window/task.md": {
-    "mtime": 1792409323.8921306,
-    "seen": 1792409640.1239734,
+    "mtime": 1793003690.889467,
+    "seen": 1793003722.130454,
     "ast_hash": "894e5d9004ba217497e0b7bc697976ae",
     "semantic_hash": "894e5d9004ba217497e0b7bc697976ae"
   },
   "docs/v3/step-8-publish/acceptance.md": {
-    "mtime": 1792409323.8926415,
-    "seen": 1792409640.1239746,
+    "mtime": 1793003690.889467,
+    "seen": 1793003722.1304553,
     "ast_hash": "54ebb55493eb5a5226d5e524a356c4e1",
     "semantic_hash": "54ebb55493eb5a5226d5e524a356c4e1"
   },
   "docs/v3/step-8-publish/plan.md": {
-    "mtime": 1792409323.8926415,
-    "seen": 1792409640.123976,
+    "mtime": 1793003690.889467,
+    "seen": 1793003722.130457,
     "ast_hash": "afab3a6c4e8d82e6cbc80cbcbd206853",
     "semantic_hash": "afab3a6c4e8d82e6cbc80cbcbd206853"
   },
   "docs/v3/step-8-publish/task.md": {
-    "mtime": 1792409323.8943944,
-    "seen": 1792409640.1239772,
+    "mtime": 1793003690.889467,
+    "seen": 1793003722.130458,
     "ast_hash": "f290b96c43a25aafac31b62c38ba91aa",
     "semantic_hash": "f290b96c43a25aafac31b62c38ba91aa"
   },
   "docs/v4/README.md": {
-    "mtime": 1792409490.6627104,
-    "seen": 1792409640.1239786,
+    "mtime": 1793003690.8906527,
+    "seen": 1793003722.1304595,
     "ast_hash": "f8121164f3b03592820260aa26743765",
     "semantic_hash": "f8121164f3b03592820260aa26743765"
   },
   "docs/v4/out-of-scope/README.md": {
-    "mtime": 1792409490.6652505,
-    "seen": 1792409640.123992,
+    "mtime": 1793003690.893512,
+    "seen": 1793003722.1304748,
     "ast_hash": "3cd53dc199fbf1fe1c8c996c2ab698a1",
     "semantic_hash": ""
   },
   "docs/v4/release-publishing/README.md": {
-    "mtime": 1792409490.6652505,
-    "seen": 1792409640.1239934,
+    "mtime": 1793003690.893512,
+    "seen": 1793003722.1304762,
     "ast_hash": "c14bdc94a91aa2b8813529d45c85984e",
     "semantic_hash": "c14bdc94a91aa2b8813529d45c85984e"
   },
   "docs/v4/release-publishing/TODO.md": {
-    "mtime": 1792409323.9043987,
-    "seen": 1792409640.1239974,
+    "mtime": 1793003690.8944328,
+    "seen": 1793003722.1304805,
     "ast_hash": "6ce5113184e6806a60600fd0fbfc2e0f",
     "semantic_hash": "6ce5113184e6806a60600fd0fbfc2e0f"
   },
   "docs/v4/visual-effects/ROADMAP-v4.md": {
-    "mtime": 1792409323.9304967,
-    "seen": 1792409640.1240265,
+    "mtime": 1793003690.9006095,
+    "seen": 1793003722.130511,
     "ast_hash": "aa5c09d3d8fcf743edfe79425d657a9a",
     "semantic_hash": "aa5c09d3d8fcf743edfe79425d657a9a"
   },
   "docs/v4/visual-effects/STEPS.md": {
-    "mtime": 1792409323.9304967,
-    "seen": 1792409640.124028,
+    "mtime": 1793003690.9006095,
+    "seen": 1793003722.1305125,
     "ast_hash": "b1badd132659c43c4c19d4be791ec7b0",
     "semantic_hash": "b1badd132659c43c4c19d4be791ec7b0"
   },
   "docs/v4/visual-effects/step-01-effect-surface/acceptance.md": {
-    "mtime": 1792409323.9327536,
-    "seen": 1792409640.1240292,
+    "mtime": 1793003690.9006095,
+    "seen": 1793003722.130514,
     "ast_hash": "1e67b47ac69e66c6c665a09e024c83bf",
     "semantic_hash": "1e67b47ac69e66c6c665a09e024c83bf"
   },
   "docs/v4/visual-effects/step-01-effect-surface/plan.md": {
-    "mtime": 1792409323.9327536,
-    "seen": 1792409640.1240304,
+    "mtime": 1793003690.9006095,
+    "seen": 1793003722.130515,
     "ast_hash": "b95d6bf9024028c87619a8aeb6a98d35",
     "semantic_hash": "b95d6bf9024028c87619a8aeb6a98d35"
   },
   "docs/v4/visual-effects/step-01-effect-surface/task.md": {
-    "mtime": 1792409323.9327536,
-    "seen": 1792409640.124032,
+    "mtime": 1793003690.9006095,
+    "seen": 1793003722.1305168,
     "ast_hash": "3850fc5e818d46c81babb5e23d47dd46",
     "semantic_hash": "3850fc5e818d46c81babb5e23d47dd46"
   },
   "docs/v4/visual-effects/step-02-effect-channel/acceptance.md": {
-    "mtime": 1792409323.9350052,
-    "seen": 1792409640.1240332,
+    "mtime": 1793003690.9006095,
+    "seen": 1793003722.130518,
     "ast_hash": "be76c5838278367ee3a89b4140796e7a",
     "semantic_hash": "be76c5838278367ee3a89b4140796e7a"
   },
   "docs/v4/visual-effects/step-02-effect-channel/plan.md": {
-    "mtime": 1792409323.9350052,
-    "seen": 1792409640.124035,
+    "mtime": 1793003690.9022503,
+    "seen": 1793003722.1305194,
     "ast_hash": "e630ba5d105f084c4744aac392cbc2b0",
     "semantic_hash": "e630ba5d105f084c4744aac392cbc2b0"
   },
   "docs/v4/visual-effects/step-02-effect-channel/task.md": {
-    "mtime": 1792409323.936755,
-    "seen": 1792409640.124036,
+    "mtime": 1793003690.9022503,
+    "seen": 1793003722.1305206,
     "ast_hash": "f50d9026767ac0776e105d175a2ef043",
     "semantic_hash": "f50d9026767ac0776e105d175a2ef043"
   },
   "docs/v4/visual-effects/step-03-built-in-effects/acceptance.md": {
-    "mtime": 1792409323.9372642,
-    "seen": 1792409640.1240373,
+    "mtime": 1793003690.902636,
+    "seen": 1793003722.130522,
     "ast_hash": "0ae9991bbd290aeec52db25e3b36a4a3",
     "semantic_hash": "0ae9991bbd290aeec52db25e3b36a4a3"
   },
   "docs/v4/visual-effects/step-03-built-in-effects/plan.md": {
-    "mtime": 1792409323.939027,
-    "seen": 1792409640.1240387,
+    "mtime": 1793003690.902636,
+    "seen": 1793003722.1305234,
     "ast_hash": "78944a6578f7a73c67ccd41b6795c40b",
     "semantic_hash": "78944a6578f7a73c67ccd41b6795c40b"
   },
   "docs/v4/visual-effects/step-03-built-in-effects/task.md": {
-    "mtime": 1792409323.9395387,
-    "seen": 1792409640.1240401,
+    "mtime": 1793003690.902636,
+    "seen": 1793003722.1305246,
     "ast_hash": "a448f4b5604d81ab5c1417657876cb50",
     "semantic_hash": "a448f4b5604d81ab5c1417657876cb50"
   },
   "docs/v4/visual-effects/step-04-effect-action-model/acceptance.md": {
-    "mtime": 1792409323.9395387,
-    "seen": 1792409640.1240416,
+    "mtime": 1793003690.902636,
+    "seen": 1793003722.130526,
     "ast_hash": "24bbca8902213c1e2eecd62e7e11a3cb",
     "semantic_hash": "24bbca8902213c1e2eecd62e7e11a3cb"
   },
   "docs/v4/visual-effects/step-04-effect-action-model/plan.md": {
-    "mtime": 1792409323.941292,
-    "seen": 1792409640.1240427,
+    "mtime": 1793003690.902636,
+    "seen": 1793003722.1305273,
     "ast_hash": "4ef2085394c94c23f69709bb3a85521b",
     "semantic_hash": "4ef2085394c94c23f69709bb3a85521b"
   },
   "docs/v4/visual-effects/step-04-effect-action-model/task.md": {
-    "mtime": 1792409323.941809,
-    "seen": 1792409640.1240442,
+    "mtime": 1793003690.902636,
+    "seen": 1793003722.1305285,
     "ast_hash": "999de44ffaed157c4eee87cb1c2f4a8b",
     "semantic_hash": "999de44ffaed157c4eee87cb1c2f4a8b"
   },
   "docs/v4/visual-effects/step-05-effect-settings-schema/acceptance.md": {
-    "mtime": 1792409323.941809,
-    "seen": 1792409640.1240456,
+    "mtime": 1793003690.9042645,
+    "seen": 1793003722.13053,
     "ast_hash": "a93362e27dd489bf42ab9e7cda665b1c",
     "semantic_hash": "a93362e27dd489bf42ab9e7cda665b1c"
   },
   "docs/v4/visual-effects/step-05-effect-settings-schema/plan.md": {
-    "mtime": 1792409323.9435632,
-    "seen": 1792409640.1240468,
+    "mtime": 1793003690.904662,
+    "seen": 1793003722.1305315,
     "ast_hash": "47c5d341228a612a099f916d5e5ccb00",
     "semantic_hash": "47c5d341228a612a099f916d5e5ccb00"
   },
   "docs/v4/visual-effects/step-05-effect-settings-schema/task.md": {
-    "mtime": 1792409323.944072,
-    "seen": 1792409640.1240485,
+    "mtime": 1793003690.904662,
+    "seen": 1793003722.1305332,
     "ast_hash": "f222c929af499288bbdad3a492c3078f",
     "semantic_hash": "f222c929af499288bbdad3a492c3078f"
   },
   "docs/v4/visual-effects/step-06-effect-shortcuts/acceptance.md": {
-    "mtime": 1792409323.944072,
-    "seen": 1792409640.1240494,
+    "mtime": 1793003690.904662,
+    "seen": 1793003722.1305344,
     "ast_hash": "3978bcae165432c80b2665e521655cf9",
     "semantic_hash": "3978bcae165432c80b2665e521655cf9"
   },
   "docs/v4/visual-effects/step-06-effect-shortcuts/plan.md": {
-    "mtime": 1792409323.9463382,
-    "seen": 1792409640.1240509,
+    "mtime": 1793003690.904662,
+    "seen": 1793003722.1305356,
     "ast_hash": "b5e19e5bbea5ba8e94312d018cfc0098",
     "semantic_hash": "b5e19e5bbea5ba8e94312d018cfc0098"
   },
   "docs/v4/visual-effects/step-06-effect-shortcuts/task.md": {
-    "mtime": 1792409323.9463382,
-    "seen": 1792409640.1240523,
+    "mtime": 1793003690.904662,
+    "seen": 1793003722.1305373,
     "ast_hash": "df0549eb1573c6b1babad77fa1accd62",
     "semantic_hash": "df0549eb1573c6b1babad77fa1accd62"
   },
   "docs/v4/visual-effects/step-07-effect-monitor-transitions/acceptance.md": {
-    "mtime": 1792409323.9480927,
-    "seen": 1792409640.1240537,
+    "mtime": 1793003690.904662,
+    "seen": 1793003722.1305385,
     "ast_hash": "73d367339321f4d33ce530efa2b7840a",
     "semantic_hash": "73d367339321f4d33ce530efa2b7840a"
   },
   "docs/v4/visual-effects/step-07-effect-monitor-transitions/plan.md": {
-    "mtime": 1792409323.9486017,
-    "seen": 1792409640.1240551,
+    "mtime": 1793003690.904662,
+    "seen": 1793003722.13054,
     "ast_hash": "57eb4b759088ac14e1fc6e9ce01d7e05",
     "semantic_hash": "57eb4b759088ac14e1fc6e9ce01d7e05"
   },
   "docs/v4/visual-effects/step-07-effect-monitor-transitions/task.md": {
-    "mtime": 1792409323.9486017,
-    "seen": 1792409640.1240563,
+    "mtime": 1793003690.9062846,
+    "seen": 1793003722.1305413,
     "ast_hash": "dcb2e7626b77a6d3120095e09204b446",
     "semantic_hash": "dcb2e7626b77a6d3120095e09204b446"
   },
   "docs/v4/visual-effects/step-08-effect-settings-ui/acceptance.md": {
-    "mtime": 1792409323.950863,
-    "seen": 1792409640.1240575,
+    "mtime": 1793003690.9066887,
+    "seen": 1793003722.1305425,
     "ast_hash": "c572eb82a0e184ceb32d8d3f4bb8804d",
     "semantic_hash": "c572eb82a0e184ceb32d8d3f4bb8804d"
   },
   "docs/v4/visual-effects/step-08-effect-settings-ui/plan.md": {
-    "mtime": 1792409323.950863,
-    "seen": 1792409640.124059,
+    "mtime": 1793003690.9066887,
+    "seen": 1793003722.1305442,
     "ast_hash": "1e5dbe4cb8529c1782fa122a7dab00d2",
     "semantic_hash": "1e5dbe4cb8529c1782fa122a7dab00d2"
   },
   "docs/v4/visual-effects/step-08-effect-settings-ui/task.md": {
-    "mtime": 1792409323.950863,
-    "seen": 1792409640.1240602,
+    "mtime": 1793003690.9066887,
+    "seen": 1793003722.1305454,
     "ast_hash": "40d15d1b204b8f3e1c84f4c46caa8783",
     "semantic_hash": "40d15d1b204b8f3e1c84f4c46caa8783"
   },
   "docs/v4/visual-effects/step-09-effect-sample/acceptance.md": {
-    "mtime": 1792409323.9526174,
-    "seen": 1792409640.1240613,
+    "mtime": 1793003690.9066887,
+    "seen": 1793003722.1305466,
     "ast_hash": "b3df292a757ca494a8081829ee54e932",
     "semantic_hash": "b3df292a757ca494a8081829ee54e932"
   },
   "docs/v4/visual-effects/step-09-effect-sample/plan.md": {
-    "mtime": 1792409323.9531267,
-    "seen": 1792409640.124063,
+    "mtime": 1793003690.9066887,
+    "seen": 1793003722.1305482,
     "ast_hash": "bc3bdb95cf1c73e0f4434fab4f4d7595",
     "semantic_hash": "bc3bdb95cf1c73e0f4434fab4f4d7595"
   },
   "docs/v4/visual-effects/step-09-effect-sample/task.md": {
-    "mtime": 1792409323.9531267,
-    "seen": 1792409640.1240644,
+    "mtime": 1793003690.9066887,
+    "seen": 1793003722.1305494,
     "ast_hash": "c9ae3956de0080765164b39743406712",
     "semantic_hash": "c9ae3956de0080765164b39743406712"
   },
   "docs/v4/visual-effects/step-10-effect-save-runtime/acceptance.md": {
-    "mtime": 1792409323.9553907,
-    "seen": 1792409640.1240664,
+    "mtime": 1793003690.9066887,
+    "seen": 1793003722.1305509,
     "ast_hash": "8e4225f451e4273ee49748a9bc290291",
     "semantic_hash": "8e4225f451e4273ee49748a9bc290291"
   },
   "docs/v4/visual-effects/step-10-effect-save-runtime/plan.md": {
-    "mtime": 1792409323.9553907,
-    "seen": 1792409640.1240675,
+    "mtime": 1793003690.908305,
+    "seen": 1793003722.1305523,
     "ast_hash": "d4649c6ca0de24d2ac36cc332eb180e2",
     "semantic_hash": "d4649c6ca0de24d2ac36cc332eb180e2"
   },
   "docs/v4/visual-effects/step-10-effect-save-runtime/task.md": {
-    "mtime": 1792409323.957652,
-    "seen": 1792409640.124069,
+    "mtime": 1793003690.908305,
+    "seen": 1793003722.1305535,
     "ast_hash": "9f2137c686cb92f79ea624b04c34f440",
     "semantic_hash": "9f2137c686cb92f79ea624b04c34f440"
   },
   "docs/v4/visual-effects/step-11-effect-lifecycle/acceptance.md": {
-    "mtime": 1792409323.9581828,
-    "seen": 1792409640.1240706,
+    "mtime": 1793003690.9087172,
+    "seen": 1793003722.130555,
     "ast_hash": "856e2ef7638ad7121bb0a13029cb00db",
     "semantic_hash": "856e2ef7638ad7121bb0a13029cb00db"
   },
   "docs/v4/visual-effects/step-11-effect-lifecycle/plan.md": {
-    "mtime": 1792409323.9592104,
-    "seen": 1792409640.124072,
+    "mtime": 1793003690.9087172,
+    "seen": 1793003722.130556,
     "ast_hash": "bcfc5f8c0258a06ffdd7ed37027be109",
     "semantic_hash": "bcfc5f8c0258a06ffdd7ed37027be109"
   },
   "docs/v4/visual-effects/step-11-effect-lifecycle/task.md": {
-    "mtime": 1792409323.9597182,
-    "seen": 1792409640.124074,
+    "mtime": 1793003690.9087172,
+    "seen": 1793003722.1305575,
     "ast_hash": "fb3efb43ac906bc2317498d28e3a3a5c",
     "semantic_hash": "fb3efb43ac906bc2317498d28e3a3a5c"
   },
   "docs/v4/visual-effects/step-12-effect-publish/acceptance.md": {
-    "mtime": 1792409323.9597182,
-    "seen": 1792409640.1240754,
+    "mtime": 1793003690.9087172,
+    "seen": 1793003722.1305587,
     "ast_hash": "e244be01df648b465a3f5bb7c4ca81de",
     "semantic_hash": "e244be01df648b465a3f5bb7c4ca81de"
   },
   "docs/v4/visual-effects/step-12-effect-publish/plan.md": {
-    "mtime": 1792409323.961977,
-    "seen": 1792409640.1240773,
+    "mtime": 1793003690.9087172,
+    "seen": 1793003722.13056,
     "ast_hash": "a1795e1ec62ddd411f87a4999d0544d4",
     "semantic_hash": "a1795e1ec62ddd411f87a4999d0544d4"
   },
   "docs/v4/visual-effects/step-12-effect-publish/task.md": {
-    "mtime": 1792409323.961977,
-    "seen": 1792409640.1240795,
+    "mtime": 1793003690.9087172,
+    "seen": 1793003722.1305614,
     "ast_hash": "b9db71c0447b945318206d2679e607b5",
     "semantic_hash": "b9db71c0447b945318206d2679e607b5"
   },
   "src/DrawEM.App/Application/Sound/README.md": {
-    "mtime": 1792409324.0091586,
-    "seen": 1792409640.1240807,
+    "mtime": 1793003690.939052,
+    "seen": 1793003722.1305861,
     "ast_hash": "6df07ce3fcfe184547a15562b26323b6",
     "semantic_hash": "6df07ce3fcfe184547a15562b26323b6"
   },
   "src/DrawEM.App/Domain/Sound/README.md": {
-    "mtime": 1792409324.0252542,
-    "seen": 1792409640.1240828,
+    "mtime": 1793003690.9440424,
+    "seen": 1793003722.1305878,
     "ast_hash": "3a4ab54d3701b941fc398b53adc519bb",
     "semantic_hash": "3a4ab54d3701b941fc398b53adc519bb"
   },
   "src/DrawEM.App/Infrastructure/Settings/README.md": {
-    "mtime": 1792409490.70052,
-    "seen": 1792409640.124085,
+    "mtime": 1793003690.952088,
+    "seen": 1793003722.1305895,
     "ast_hash": "67cc220e7058cfe27839e3bf08208c9d",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Infrastructure/Sound/README.md": {
-    "mtime": 1792409324.0649343,
-    "seen": 1792409640.1240864,
+    "mtime": 1793003690.9540973,
+    "seen": 1793003722.130591,
     "ast_hash": "c52bd06f1476b224bd410ca6e1ba99aa",
     "semantic_hash": "c52bd06f1476b224bd410ca6e1ba99aa"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/LICENSE.md": {
-    "mtime": 1792409324.0829265,
-    "seen": 1792409640.1240876,
+    "mtime": 1793003690.9618986,
+    "seen": 1793003722.1305923,
     "ast_hash": "a05c93e90d28a6e38ddadb6ad1a5d9f1",
     "semantic_hash": "a05c93e90d28a6e38ddadb6ad1a5d9f1"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/SOURCES.md": {
-    "mtime": 1792409324.0829265,
-    "seen": 1792409640.124089,
+    "mtime": 1793003690.9618986,
+    "seen": 1793003722.1305935,
     "ast_hash": "58a08ea3bb6a3e5ff12bac69cc92993d",
     "semantic_hash": "58a08ea3bb6a3e5ff12bac69cc92993d"
   },
   "src/DrawEM.App/Presentation/Sound/README.md": {
-    "mtime": 1792409324.1205282,
-    "seen": 1792409640.1240907,
+    "mtime": 1793003690.9878252,
+    "seen": 1793003722.130595,
     "ast_hash": "7a484df42e765aa51ae73c94341f1182",
     "semantic_hash": "7a484df42e765aa51ae73c94341f1182"
   },
   "docs/v3/step-7-settings-window/prototype-tray-icon.svg": {
-    "mtime": 1792409323.890377,
-    "seen": 1792409640.124092,
+    "mtime": 1793003690.889467,
+    "seen": 1793003722.1305964,
     "ast_hash": "6bed9c581f5e35bf87297a3239fc28ca",
     "semantic_hash": "6bed9c581f5e35bf87297a3239fc28ca"
   },
   "src/DrawEM.App/Assets/drawEM.svg": {
-    "mtime": 1792409324.013662,
-    "seen": 1792409640.1240938,
+    "mtime": 1793003690.9410787,
+    "seen": 1793003722.1305976,
     "ast_hash": "5496bfd41eda4c898c7bab0af384da98",
     "semantic_hash": "5496bfd41eda4c898c7bab0af384da98"
   },
   "src/DrawEM.App/Infrastructure/Effects/IDisplayChangeSource.cs": {
-    "mtime": 1792409324.0465577,
-    "seen": 1792409640.1236506,
+    "mtime": 1793003690.950079,
+    "seen": 1793003722.1301103,
     "ast_hash": "9211300dc0a5f9c3f20e6904de2063c7",
     "semantic_hash": "9211300dc0a5f9c3f20e6904de2063c7"
   },
   "src/DrawEM.App/Infrastructure/Effects/IEffectStartQueue.cs": {
-    "mtime": 1792409324.047562,
-    "seen": 1792409640.1236517,
+    "mtime": 1793003690.950079,
+    "seen": 1793003722.130112,
     "ast_hash": "2e250c9f8a9ffeb12d5b6f1a2a86af4d",
     "semantic_hash": "2e250c9f8a9ffeb12d5b6f1a2a86af4d"
   },
   "src/DrawEM.App/Infrastructure/Effects/LoggingEffectFailureReporter.cs": {
-    "mtime": 1792409324.0497112,
-    "seen": 1792409640.123655,
+    "mtime": 1793003690.950079,
+    "seen": 1793003722.1301153,
     "ast_hash": "d246c8bd0fbb87630cd1e65a402d884a",
     "semantic_hash": "d246c8bd0fbb87630cd1e65a402d884a"
   },
   "src/DrawEM.App/Infrastructure/Effects/Win32DisplayChangeSource.cs": {
-    "mtime": 1792409324.0497112,
-    "seen": 1792409640.1236565,
+    "mtime": 1793003690.950079,
+    "seen": 1793003722.130117,
     "ast_hash": "fc9b8e5f4e337320e0a88e312cc3360f",
     "semantic_hash": "fc9b8e5f4e337320e0a88e312cc3360f"
   },
   "src/DrawEM.App/Application/Settings/IEffectSampler.cs": {
-    "mtime": 1792409323.9999013,
-    "seen": 1792409640.1235747,
+    "mtime": 1793003690.9362493,
+    "seen": 1793003722.1300292,
     "ast_hash": "8fe2bee776a4df11aeedd2112c7d63ad",
     "semantic_hash": "8fe2bee776a4df11aeedd2112c7d63ad"
   },
   "src/DrawEM.App/Infrastructure/Effects/EffectSampler.cs": {
-    "mtime": 1792409324.044522,
-    "seen": 1792409640.1236472,
+    "mtime": 1793003690.950079,
+    "seen": 1793003722.1301064,
     "ast_hash": "a54a14e98f606f0907cd9f45ea8007b3",
     "semantic_hash": "a54a14e98f606f0907cd9f45ea8007b3"
   },
   "tests/DrawEM.Tests/Infrastructure/Effects/EffectSamplerTests.cs": {
-    "mtime": 1792409324.1502678,
-    "seen": 1792409640.1238136,
+    "mtime": 1793003691.0017493,
+    "seen": 1793003722.1302822,
     "ast_hash": "07559c22d6f5f13ccadc87744f1ad0c7",
     "semantic_hash": "07559c22d6f5f13ccadc87744f1ad0c7"
   },
   "tests/DrawEM.Tests/Infrastructure/Effects/FakeEffectSources.cs": {
-    "mtime": 1792409324.1528008,
-    "seen": 1792409640.1238148,
+    "mtime": 1793003691.0017493,
+    "seen": 1793003722.1302836,
     "ast_hash": "5f8956d43c2487cf6b9a7618677a5ede",
     "semantic_hash": "5f8956d43c2487cf6b9a7618677a5ede"
   },
   "CLAUDE.md": {
-    "mtime": 1792409323.829872,
-    "seen": 1792409640.1238875,
-    "ast_hash": "590ee0511921383fc9c2c97e262f1d91",
-    "semantic_hash": "590ee0511921383fc9c2c97e262f1d91"
+    "mtime": 1793003690.8727832,
+    "seen": 1793003722.130363,
+    "ast_hash": "f51a2054298657c827c7e4d189b294e0",
+    "semantic_hash": ""
   },
   "src/DrawEM.App/Infrastructure/Effects/ISessionInterruptionSource.cs": {
-    "mtime": 1792409324.048707,
-    "seen": 1792409640.1236534,
+    "mtime": 1793003690.950079,
+    "seen": 1793003722.1301138,
     "ast_hash": "a5abce9bcf36034d53612786c94c23e0",
     "semantic_hash": "a5abce9bcf36034d53612786c94c23e0"
   },
   "src/DrawEM.App/Infrastructure/Effects/Win32SessionInterruptionSource.cs": {
-    "mtime": 1792409324.0507238,
-    "seen": 1792409640.1236577,
+    "mtime": 1793003690.950079,
+    "seen": 1793003722.1301184,
     "ast_hash": "c1f43e5903a7e6dcd43b4aec66220bb3",
     "semantic_hash": "c1f43e5903a7e6dcd43b4aec66220bb3"
   },
   "tests/DrawEM.Tests/Infrastructure/Effects/EffectLifecycleTests.cs": {
-    "mtime": 1792409324.1477315,
-    "seen": 1792409640.1238108,
+    "mtime": 1793003691.0017493,
+    "seen": 1793003722.1302795,
     "ast_hash": "265151d92628eb08495b9ffa7726d28b",
     "semantic_hash": "265151d92628eb08495b9ffa7726d28b"
   },
   "tests/DrawEM.Tests/Infrastructure/Sound/FakeSoundSources.cs": {
-    "mtime": 1792409324.1604445,
-    "seen": 1792409640.1238286,
+    "mtime": 1793003691.0055523,
+    "seen": 1793003722.1302984,
     "ast_hash": "65a51cc41717903cae952a30b23834f2",
     "semantic_hash": "65a51cc41717903cae952a30b23834f2"
   },
   "src/DrawEM.App/Infrastructure/Effects/EffectStopRoutes.cs": {
-    "mtime": 1792409324.045528,
-    "seen": 1792409640.1236491,
+    "mtime": 1793003690.950079,
+    "seen": 1793003722.1301084,
     "ast_hash": "f7b9117ddd56606d2b547a1efa89d9c2",
     "semantic_hash": "f7b9117ddd56606d2b547a1efa89d9c2"
   },
   "tests/DrawEM.Tests/Infrastructure/FakeTrayParts.cs": {
-    "mtime": 1792409490.7195086,
-    "seen": 1792409640.1238165,
+    "mtime": 1793003691.0017493,
+    "seen": 1793003722.1302853,
     "ast_hash": "d8c19aecf817c3a3a582b028d19db910",
     "semantic_hash": "d8c19aecf817c3a3a582b028d19db910"
   },
   "tests/DrawEM.Tests/Infrastructure/NotifyIconTrayHostTests.cs": {
-    "mtime": 1792409490.7195086,
-    "seen": 1792409640.1238196,
-    "ast_hash": "9e151fcd88d515a61892d72570bfc15f",
+    "mtime": 1793003691.0037758,
+    "seen": 1793003722.1302884,
+    "ast_hash": "2160029960e66461296b1afbb67d7569",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/big-bada-boom.json": {
-    "mtime": 1792409324.0829265,
-    "seen": 1792409640.12372,
+    "mtime": 1793003690.9639106,
+    "seen": 1793003722.1301825,
     "ast_hash": "6ed8554fd7f0a07ec22d93f5226b5cf2",
     "semantic_hash": "6ed8554fd7f0a07ec22d93f5226b5cf2"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/celebration-confetti.json": {
-    "mtime": 1792409324.0854583,
-    "seen": 1792409640.1237211,
+    "mtime": 1793003690.9639106,
+    "seen": 1793003722.1301842,
     "ast_hash": "62f870f7ab2452934c3d8c0d1719533b",
     "semantic_hash": "62f870f7ab2452934c3d8c0d1719533b"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/confetti-02.json": {
-    "mtime": 1792409324.0854583,
-    "seen": 1792409640.1237228,
+    "mtime": 1793003690.9639106,
+    "seen": 1793003722.130186,
     "ast_hash": "22c2599a3c96b1e0ec5fce56913fd5c1",
     "semantic_hash": "22c2599a3c96b1e0ec5fce56913fd5c1"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/confetti-effects.json": {
-    "mtime": 1792409324.0879889,
-    "seen": 1792409640.1237242,
+    "mtime": 1793003690.9659214,
+    "seen": 1793003722.1301875,
     "ast_hash": "ace91f9ceceaa7fc8ee30444d64befe8",
     "semantic_hash": "ace91f9ceceaa7fc8ee30444d64befe8"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/confetti-party.json": {
-    "mtime": 1792409324.0900843,
-    "seen": 1792409640.123726,
+    "mtime": 1793003690.9659214,
+    "seen": 1793003722.130189,
     "ast_hash": "90609269ebc9ca7674b2924b1d0b73e7",
     "semantic_hash": "90609269ebc9ca7674b2924b1d0b73e7"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/confetti-transparent.json": {
-    "mtime": 1792409324.0905888,
-    "seen": 1792409640.123727,
+    "mtime": 1793003690.9659214,
+    "seen": 1793003722.1301906,
     "ast_hash": "2efd2fc126bf0dae679bf87f41959b4b",
     "semantic_hash": "2efd2fc126bf0dae679bf87f41959b4b"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/fireworks-red-white-blue.json": {
-    "mtime": 1792409324.0926037,
-    "seen": 1792409640.12373,
+    "mtime": 1793003690.967932,
+    "seen": 1793003722.1301937,
     "ast_hash": "bca113678219a5d67ea884b90fa18ee3",
     "semantic_hash": "bca113678219a5d67ea884b90fa18ee3"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/fireworks-teal-red.json": {
-    "mtime": 1792409324.0926037,
-    "seen": 1792409640.1237311,
+    "mtime": 1793003690.967932,
+    "seen": 1793003722.1301951,
     "ast_hash": "07f0af72b97d3bfde10753e01d90d1c9",
     "semantic_hash": "07f0af72b97d3bfde10753e01d90d1c9"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/let-it-snow.json": {
-    "mtime": 1792409324.095163,
-    "seen": 1792409640.123734,
+    "mtime": 1793003690.967932,
+    "seen": 1793003722.130198,
     "ast_hash": "c30214c00bd4fab26ef730c6313e0371",
     "semantic_hash": "c30214c00bd4fab26ef730c6313e0371"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/loader-cat.json": {
-    "mtime": 1792409324.095163,
-    "seen": 1792409640.1237352,
+    "mtime": 1793003690.967932,
+    "seen": 1793003722.1302,
     "ast_hash": "47ac964697f90ffa8e34bd11241e9a21",
     "semantic_hash": "47ac964697f90ffa8e34bd11241e9a21"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/season-fireworks.json": {
-    "mtime": 1792409324.097708,
-    "seen": 1792409640.1237366,
+    "mtime": 1793003690.969941,
+    "seen": 1793003722.1302016,
     "ast_hash": "2b9c9b16a331db63acae071cf8b3fd5e",
     "semantic_hash": "2b9c9b16a331db63acae071cf8b3fd5e"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/snow-falling.json": {
-    "mtime": 1792409324.097708,
-    "seen": 1792409640.123738,
+    "mtime": 1793003690.969941,
+    "seen": 1793003722.1302028,
     "ast_hash": "6354c4ecc03bab71857ecfbc4cf14312",
     "semantic_hash": "6354c4ecc03bab71857ecfbc4cf14312"
   },
   "src/DrawEM.App/Presentation/Effects/BuiltIn/winner-fireworks.json": {
-    "mtime": 1792409324.107821,
-    "seen": 1792409640.1237395,
+    "mtime": 1793003690.9777398,
+    "seen": 1793003722.1302044,
     "ast_hash": "e7688505fb1014741966dda9f33d927c",
     "semantic_hash": "e7688505fb1014741966dda9f33d927c"
   },
   "docs/v4/out-of-scope/FEAT-009-effect-loop-and-limit/acceptance.md": {
-    "mtime": 1792409323.8971827,
-    "seen": 1792409640.1239798,
+    "mtime": 1793003690.8906527,
+    "seen": 1793003722.1304612,
     "ast_hash": "c32be0600c818bae89f4ae992eba64c9",
     "semantic_hash": "c32be0600c818bae89f4ae992eba64c9"
   },
   "docs/v4/out-of-scope/FEAT-009-effect-loop-and-limit/plan.md": {
-    "mtime": 1792409323.8971827,
-    "seen": 1792409640.123981,
+    "mtime": 1793003690.8914936,
+    "seen": 1793003722.1304626,
     "ast_hash": "a9036c8c3904fdf1779136a35cf31c56",
     "semantic_hash": "a9036c8c3904fdf1779136a35cf31c56"
   },
   "docs/v4/out-of-scope/FEAT-009-effect-loop-and-limit/task.md": {
-    "mtime": 1792409323.8992283,
-    "seen": 1792409640.1239827,
+    "mtime": 1793003690.8914936,
+    "seen": 1793003722.1304646,
     "ast_hash": "3915fc9ff3aab2569840194475b2fa25",
     "semantic_hash": "3915fc9ff3aab2569840194475b2fa25"
   },
   "tests/DrawEM.Tests/Presentation/Effects/LottiePlaybackTests.cs": {
-    "mtime": 1792409324.179286,
-    "seen": 1792409640.1238554,
+    "mtime": 1793003691.0116043,
+    "seen": 1793003722.1303256,
     "ast_hash": "79baba7683612ba9a1b279280e42c7b1",
     "semantic_hash": "79baba7683612ba9a1b279280e42c7b1"
   },
@@ -1896,447 +1896,573 @@
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Release/ReleaseScriptsTests.cs": {
-    "mtime": 1792409490.726458,
-    "seen": 1792409640.1238658,
+    "mtime": 1793003691.0136142,
+    "seen": 1793003722.1303358,
     "ast_hash": "e8bf7251048dead0ebf47e3f6493d4d1",
     "semantic_hash": "e8bf7251048dead0ebf47e3f6493d4d1"
   },
   "tools/release/Get-ReleaseVersion.ps1": {
-    "mtime": 1792409324.1870205,
-    "seen": 1792409640.1238754,
+    "mtime": 1793003691.0156288,
+    "seen": 1793003722.1303482,
     "ast_hash": "0469a97e86ecdc3647f0005d0aff46ef",
     "semantic_hash": "0469a97e86ecdc3647f0005d0aff46ef"
   },
   "tools/release/New-ReleasePackage.ps1": {
-    "mtime": 1792409324.1880364,
-    "seen": 1792409640.1238768,
+    "mtime": 1793003691.0156288,
+    "seen": 1793003722.1303496,
     "ast_hash": "97230bfedfc7354c3ff338b8a01e7bf6",
     "semantic_hash": "97230bfedfc7354c3ff338b8a01e7bf6"
   },
   "docs/adr/0002-release-signing-license.md": {
-    "mtime": 1792409323.8349912,
-    "seen": 1792409640.123894,
+    "mtime": 1793003690.8747947,
+    "seen": 1793003722.1303701,
     "ast_hash": "ae014d594b68879686fe260a3f48879b",
     "semantic_hash": "ae014d594b68879686fe260a3f48879b"
   },
   "docs/v4/release-publishing/ROADMAP.md": {
-    "mtime": 1792409490.6652505,
-    "seen": 1792409640.1239948,
+    "mtime": 1793003690.8944328,
+    "seen": 1793003722.130478,
     "ast_hash": "c13cdb37cfbe73c798c32d01c63673f8",
     "semantic_hash": "c13cdb37cfbe73c798c32d01c63673f8"
   },
   "docs/v4/release-publishing/STEPS.md": {
-    "mtime": 1792409490.667764,
-    "seen": 1792409640.1239963,
+    "mtime": 1793003690.8944328,
+    "seen": 1793003722.130479,
     "ast_hash": "f42c142589114f04d41754ec6855258a",
     "semantic_hash": "f42c142589114f04d41754ec6855258a"
   },
   "docs/v4/release-publishing/step-01-draft-release/acceptance.md": {
-    "mtime": 1792409323.9059427,
-    "seen": 1792409640.1239986,
+    "mtime": 1793003690.8944328,
+    "seen": 1793003722.130482,
     "ast_hash": "bd9617c837021df5298927d1bb224d1f",
     "semantic_hash": "bd9617c837021df5298927d1bb224d1f"
   },
   "docs/v4/release-publishing/step-01-draft-release/plan.md": {
-    "mtime": 1792409323.9059427,
-    "seen": 1792409640.124,
+    "mtime": 1793003690.8944328,
+    "seen": 1793003722.1304834,
     "ast_hash": "64e343738ead9d37cdf0c1448dced482",
     "semantic_hash": "64e343738ead9d37cdf0c1448dced482"
   },
   "docs/v4/release-publishing/step-01-draft-release/task.md": {
-    "mtime": 1792409323.9059427,
-    "seen": 1792409640.1240015,
+    "mtime": 1793003690.8944328,
+    "seen": 1793003722.1304848,
     "ast_hash": "d0537d1e6be5e5abe5ba3cecd97910e4",
     "semantic_hash": "d0537d1e6be5e5abe5ba3cecd97910e4"
   },
   "docs/v4/release-publishing/step-02-checksums-provenance/acceptance.md": {
-    "mtime": 1792409490.667764,
-    "seen": 1792409640.124003,
+    "mtime": 1793003690.8944328,
+    "seen": 1793003722.1304862,
     "ast_hash": "15c33c9bc4a6058b2e5499780d09b316",
     "semantic_hash": "15c33c9bc4a6058b2e5499780d09b316"
   },
   "docs/v4/release-publishing/step-02-checksums-provenance/plan.md": {
-    "mtime": 1792409323.9098206,
-    "seen": 1792409640.1240041,
+    "mtime": 1793003690.8944328,
+    "seen": 1793003722.1304874,
     "ast_hash": "f556acbf534af951f49a72931acc8a14",
     "semantic_hash": "f556acbf534af951f49a72931acc8a14"
   },
   "docs/v4/release-publishing/step-02-checksums-provenance/task.md": {
-    "mtime": 1792409490.667764,
-    "seen": 1792409640.1240053,
+    "mtime": 1793003690.8964465,
+    "seen": 1793003722.1304889,
     "ast_hash": "c2ba8b6d4c61f6978802a964528c3b40",
     "semantic_hash": "c2ba8b6d4c61f6978802a964528c3b40"
   },
   "docs/v4/release-publishing/step-03-first-release-acceptance/acceptance.md": {
-    "mtime": 1792409490.6693397,
-    "seen": 1792409640.1240067,
+    "mtime": 1793003690.8964465,
+    "seen": 1793003722.13049,
     "ast_hash": "ab8aa40faaaf5b50fa362f5c6593a309",
     "semantic_hash": "ab8aa40faaaf5b50fa362f5c6593a309"
   },
   "docs/v4/release-publishing/step-03-first-release-acceptance/plan.md": {
-    "mtime": 1792409490.6698802,
-    "seen": 1792409640.1240082,
+    "mtime": 1793003690.8964465,
+    "seen": 1793003722.1304917,
     "ast_hash": "5b337f3e45b41eb960670f6b2efc5803",
     "semantic_hash": "5b337f3e45b41eb960670f6b2efc5803"
   },
   "docs/v4/release-publishing/step-03-first-release-acceptance/task.md": {
-    "mtime": 1792409490.6698802,
-    "seen": 1792409640.1240094,
+    "mtime": 1793003690.8964465,
+    "seen": 1793003722.1304932,
     "ast_hash": "66ada7af59f416cf0daeb4b52047294b",
     "semantic_hash": "66ada7af59f416cf0daeb4b52047294b"
   },
   "docs/v4/release-publishing/step-04-signpath-signing/acceptance.md": {
-    "mtime": 1792409323.9171398,
-    "seen": 1792409640.1240106,
+    "mtime": 1793003690.8964465,
+    "seen": 1793003722.1304948,
     "ast_hash": "42072c4d189a1320a9ad59bec35d2830",
     "semantic_hash": "42072c4d189a1320a9ad59bec35d2830"
   },
   "docs/v4/release-publishing/step-04-signpath-signing/plan.md": {
-    "mtime": 1792409323.9188957,
-    "seen": 1792409640.1240118,
+    "mtime": 1793003690.8964465,
+    "seen": 1793003722.130496,
     "ast_hash": "fca2dcc6bcbed4243257f0daefe475c5",
     "semantic_hash": "fca2dcc6bcbed4243257f0daefe475c5"
   },
   "docs/v4/release-publishing/step-04-signpath-signing/task.md": {
-    "mtime": 1792409323.9194083,
-    "seen": 1792409640.1240134,
+    "mtime": 1793003690.8964465,
+    "seen": 1793003722.1304972,
     "ast_hash": "663d3e00beaf42530942cb14a8ade1ba",
     "semantic_hash": "663d3e00beaf42530942cb14a8ade1ba"
   },
   "docs/v4/release-publishing/step-05-winget/acceptance.md": {
-    "mtime": 1792409323.9194083,
-    "seen": 1792409640.1240146,
+    "mtime": 1793003690.8964465,
+    "seen": 1793003722.130499,
     "ast_hash": "bd0ff34e8c748114583d4c9ffcb778a5",
     "semantic_hash": "bd0ff34e8c748114583d4c9ffcb778a5"
   },
   "docs/v4/release-publishing/step-05-winget/plan.md": {
-    "mtime": 1792409323.9216638,
-    "seen": 1792409640.1240158,
+    "mtime": 1793003690.8984594,
+    "seen": 1793003722.1305003,
     "ast_hash": "614a47db4898699b508e23cbc27311e8",
     "semantic_hash": "614a47db4898699b508e23cbc27311e8"
   },
   "docs/v4/release-publishing/step-05-winget/task.md": {
-    "mtime": 1792409323.9216638,
-    "seen": 1792409640.1240175,
+    "mtime": 1793003690.8984594,
+    "seen": 1793003722.130502,
     "ast_hash": "31678ebc2a4823709f7d683730ad702f",
     "semantic_hash": "31678ebc2a4823709f7d683730ad702f"
   },
   "docs/v4/release-publishing/step-06-velopack-installer/acceptance.md": {
-    "mtime": 1792409490.6698802,
-    "seen": 1792409640.1240187,
+    "mtime": 1793003690.8984594,
+    "seen": 1793003722.1305032,
     "ast_hash": "f6dff335e4f26b657d5b60b42c4838aa",
     "semantic_hash": "f6dff335e4f26b657d5b60b42c4838aa"
   },
   "docs/v4/release-publishing/step-06-velopack-installer/plan.md": {
-    "mtime": 1792409490.6698802,
-    "seen": 1792409640.1240203,
+    "mtime": 1793003690.8984594,
+    "seen": 1793003722.1305046,
     "ast_hash": "81532b6915c0bef37391389d35cc0801",
     "semantic_hash": "81532b6915c0bef37391389d35cc0801"
   },
   "docs/v4/release-publishing/step-06-velopack-installer/task.md": {
-    "mtime": 1792409490.6716278,
-    "seen": 1792409640.1240215,
+    "mtime": 1793003690.899473,
+    "seen": 1793003722.130506,
     "ast_hash": "c4f77d01315d7c406be5e6804c5df767",
     "semantic_hash": "c4f77d01315d7c406be5e6804c5df767"
   },
   "docs/v4/release-publishing/step-07-tray-updates/acceptance.md": {
-    "mtime": 1792409490.6716278,
-    "seen": 1792409640.1240227,
+    "mtime": 1793003690.899473,
+    "seen": 1793003722.130507,
     "ast_hash": "3a44f7c8e03730531c6fce108aa3c57e",
     "semantic_hash": "3a44f7c8e03730531c6fce108aa3c57e"
   },
   "docs/v4/release-publishing/step-07-tray-updates/plan.md": {
-    "mtime": 1792409323.9282346,
-    "seen": 1792409640.1240244,
+    "mtime": 1793003690.899473,
+    "seen": 1793003722.1305082,
     "ast_hash": "8ba4d150cd5eac516c858467d046f644",
     "semantic_hash": "8ba4d150cd5eac516c858467d046f644"
   },
   "docs/v4/release-publishing/step-07-tray-updates/task.md": {
-    "mtime": 1792409490.6716278,
-    "seen": 1792409640.1240253,
+    "mtime": 1793003690.9002402,
+    "seen": 1793003722.1305099,
     "ast_hash": "da659980a6735221195b0446ecc6384f",
     "semantic_hash": "da659980a6735221195b0446ecc6384f"
   },
   "tools/release/Write-Sha256Sums.ps1": {
-    "mtime": 1792409490.7284832,
-    "seen": 1792409640.1238797,
+    "mtime": 1793003691.0156288,
+    "seen": 1793003722.130353,
     "ast_hash": "aa30a2de90239dbef3859543abffe2dd",
     "semantic_hash": "aa30a2de90239dbef3859543abffe2dd"
   },
   ".config/dotnet-tools.json": {
-    "mtime": 1792409490.6601672,
-    "seen": 1792409640.123552,
+    "mtime": 1793003690.8687577,
+    "seen": 1793003722.1300023,
     "ast_hash": "8902b45543ee2b0a07f685b004a5f8f3",
     "semantic_hash": "8902b45543ee2b0a07f685b004a5f8f3"
   },
   "src/DrawEM.App/Program.cs": {
-    "mtime": 1792409490.7143068,
-    "seen": 1792409640.1237726,
+    "mtime": 1793003690.9916186,
+    "seen": 1793003722.1302404,
     "ast_hash": "fa4c547c8726458a079de9922421f783",
     "semantic_hash": "fa4c547c8726458a079de9922421f783"
   },
   "tests/DrawEM.Tests/Release/VelopackHookExitTests.cs": {
-    "mtime": 1792409490.726458,
-    "seen": 1792409640.1238673,
+    "mtime": 1793003691.0136142,
+    "seen": 1793003722.1303375,
     "ast_hash": "5ad0c0406febf1ded57f944512184403",
     "semantic_hash": "5ad0c0406febf1ded57f944512184403"
   },
   "tests/DrawEM.Tests/Release/VelopackPackageIdentityTests.cs": {
-    "mtime": 1792409490.727478,
-    "seen": 1792409640.1238685,
+    "mtime": 1793003691.0136142,
+    "seen": 1793003722.1303391,
     "ast_hash": "695a69ad1f0ad872cba83201b71967ca",
     "semantic_hash": "695a69ad1f0ad872cba83201b71967ca"
   },
   "tools/release/New-VelopackPackage.ps1": {
-    "mtime": 1792409490.7284832,
-    "seen": 1792409640.1238782,
+    "mtime": 1793003691.0156288,
+    "seen": 1793003722.1303513,
     "ast_hash": "1e53c034465287da013ecd9d481355ff",
     "semantic_hash": "1e53c034465287da013ecd9d481355ff"
   },
   "src/DrawEM.App/Application/Updates/IUpdateFailureReporter.cs": {
-    "mtime": 1792409490.6928754,
-    "seen": 1792409640.1235952,
+    "mtime": 1793003690.9402711,
+    "seen": 1793003722.1300516,
     "ast_hash": "69bc9bf65a73d8dfd380b837222eae30",
     "semantic_hash": "69bc9bf65a73d8dfd380b837222eae30"
   },
   "src/DrawEM.App/Application/Updates/IUpdateService.cs": {
-    "mtime": 1792409490.6954248,
-    "seen": 1792409640.123597,
+    "mtime": 1793003690.9402711,
+    "seen": 1793003722.1300533,
     "ast_hash": "25ba86e58eada744e239ee53418d60d4",
     "semantic_hash": "25ba86e58eada744e239ee53418d60d4"
   },
   "src/DrawEM.App/Application/Updates/UpdateController.cs": {
-    "mtime": 1792409490.6954248,
-    "seen": 1792409640.123599,
+    "mtime": 1793003690.9402711,
+    "seen": 1793003722.130055,
     "ast_hash": "3c88198d23c137bdae1222d133c9e036",
     "semantic_hash": "3c88198d23c137bdae1222d133c9e036"
   },
   "src/DrawEM.App/Infrastructure/Updates/LoggingUpdateFailureReporter.cs": {
-    "mtime": 1792409490.7039907,
-    "seen": 1792409640.123698,
+    "mtime": 1793003690.9578733,
+    "seen": 1793003722.130159,
     "ast_hash": "aeff0ae3dac9fe32f6e3185836114ca6",
     "semantic_hash": "aeff0ae3dac9fe32f6e3185836114ca6"
   },
   "src/DrawEM.App/Infrastructure/Updates/UpdateFailure.cs": {
-    "mtime": 1792409490.7039907,
-    "seen": 1792409640.1236994,
+    "mtime": 1793003690.9578733,
+    "seen": 1793003722.1301603,
     "ast_hash": "b2fc9d0209254ba3e531d9b1a103f2a9",
     "semantic_hash": "b2fc9d0209254ba3e531d9b1a103f2a9"
   },
   "src/DrawEM.App/Infrastructure/Updates/UpdateFailureLog.cs": {
-    "mtime": 1792409490.7039907,
-    "seen": 1792409640.1237006,
+    "mtime": 1793003690.9578733,
+    "seen": 1793003722.1301622,
     "ast_hash": "d45d53f06355872e7f93f5f5e2cef4de",
     "semantic_hash": "d45d53f06355872e7f93f5f5e2cef4de"
   },
   "src/DrawEM.App/Infrastructure/Updates/UpdateFeed.cs": {
-    "mtime": 1792409490.7039907,
-    "seen": 1792409640.123702,
+    "mtime": 1793003690.9578733,
+    "seen": 1793003722.1301641,
     "ast_hash": "d8d189d6b154f1667e6102da67e6a62b",
     "semantic_hash": "d8d189d6b154f1667e6102da67e6a62b"
   },
   "src/DrawEM.App/Infrastructure/Updates/VelopackUpdateService.cs": {
-    "mtime": 1792409490.7055075,
-    "seen": 1792409640.1237037,
+    "mtime": 1793003690.9578733,
+    "seen": 1793003722.1301656,
     "ast_hash": "acbc53ccbac66b16259675ef34d5ca3a",
     "semantic_hash": "acbc53ccbac66b16259675ef34d5ca3a"
   },
   "tests/DrawEM.Tests/Application/Updates/UpdateControllerTests.cs": {
-    "mtime": 1792409490.7169497,
-    "seen": 1792409640.123783,
+    "mtime": 1793003690.9956703,
+    "seen": 1793003722.1302514,
     "ast_hash": "719ad6b5bd7064bee3a7ad600022277d",
     "semantic_hash": "719ad6b5bd7064bee3a7ad600022277d"
   },
   "tests/DrawEM.Tests/Infrastructure/Updates/UpdateFailureLogTests.cs": {
-    "mtime": 1792409490.721894,
-    "seen": 1792409640.1238413,
+    "mtime": 1793003691.009593,
+    "seen": 1793003722.1303115,
     "ast_hash": "4f3f38f4cfa1b97659fe48be93477b3e",
     "semantic_hash": "4f3f38f4cfa1b97659fe48be93477b3e"
   },
   "tests/DrawEM.Tests/Infrastructure/Updates/UpdateFeedTests.cs": {
-    "mtime": 1792409490.7224047,
-    "seen": 1792409640.1238427,
+    "mtime": 1793003691.009593,
+    "seen": 1793003722.1303127,
     "ast_hash": "bf6bc72870bbe35018ae2ac51d171bba",
     "semantic_hash": "bf6bc72870bbe35018ae2ac51d171bba"
   },
   "tests/DrawEM.Tests/Infrastructure/Updates/VelopackUpdateServiceTests.cs": {
-    "mtime": 1792409490.7224047,
-    "seen": 1792409640.1238441,
+    "mtime": 1793003691.009593,
+    "seen": 1793003722.1303144,
     "ast_hash": "990ace6f986f64e0680cf6104cc20bc9",
     "semantic_hash": "990ace6f986f64e0680cf6104cc20bc9"
   },
   "src/DrawEM.App/Infrastructure/ITrayMenu.cs": {
-    "mtime": 1792409490.697993,
-    "seen": 1792409640.1236622,
+    "mtime": 1793003690.952088,
+    "seen": 1793003722.1301234,
     "ast_hash": "2a8021d330f77251df79b827281d8e06",
     "semantic_hash": "2a8021d330f77251df79b827281d8e06"
   },
   "src/DrawEM.App/Presentation/Theme/GlassBackdrop.cs": {
-    "mtime": 1792409490.7090447,
-    "seen": 1792409640.1237555,
+    "mtime": 1793003690.9878252,
+    "seen": 1793003722.1302218,
     "ast_hash": "05e17cfe6621d1e5c46363bdcbdebc8e",
     "semantic_hash": "05e17cfe6621d1e5c46363bdcbdebc8e"
   },
   "src/DrawEM.App/Presentation/Theme/GlassDark.xaml": {
-    "mtime": 1792409490.7090447,
-    "seen": 1792409640.1237571,
+    "mtime": 1793003690.9895926,
+    "seen": 1793003722.1302233,
     "ast_hash": "96d916a62a7b4b78eb0182db1b9f4f58",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Theme/GlassDark.xaml.cs": {
-    "mtime": 1792409490.7090447,
-    "seen": 1792409640.1237586,
+    "mtime": 1793003690.9895926,
+    "seen": 1793003722.1302247,
     "ast_hash": "286ef73be30382100dd00971f1339230",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Theme/GlassLight.xaml": {
-    "mtime": 1792409490.7090447,
-    "seen": 1792409640.1237602,
+    "mtime": 1793003690.9895926,
+    "seen": 1793003722.1302261,
     "ast_hash": "c4a1da2e96f0ce2c6bfc022c348a0815",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Theme/GlassLight.xaml.cs": {
-    "mtime": 1792409490.7090447,
-    "seen": 1792409640.1237614,
+    "mtime": 1793003690.9895926,
+    "seen": 1793003722.1302276,
     "ast_hash": "341ba5247597eadf6c0a4db51cd0029a",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Theme/GlassStyles.xaml": {
-    "mtime": 1792409490.711578,
-    "seen": 1792409640.1237628,
+    "mtime": 1793003690.9895926,
+    "seen": 1793003722.130229,
     "ast_hash": "c2a3365a82491e881090335d0d15020e",
     "semantic_hash": "c2a3365a82491e881090335d0d15020e"
   },
   "src/DrawEM.App/Presentation/Theme/GlassStyles.xaml.cs": {
-    "mtime": 1792409490.711578,
-    "seen": 1792409640.1237645,
+    "mtime": 1793003690.9895926,
+    "seen": 1793003722.1302304,
     "ast_hash": "0f5ebc0cacf323ce8044da27be4f5383",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Theme/NativeMethods.cs": {
-    "mtime": 1792409490.711578,
-    "seen": 1792409640.1237657,
+    "mtime": 1793003690.9895926,
+    "seen": 1793003722.1302323,
     "ast_hash": "259a52d9d0342dd9a91db7e8cee28d71",
     "semantic_hash": "259a52d9d0342dd9a91db7e8cee28d71"
   },
   "src/DrawEM.App/Presentation/Theme/UiThemeState.cs": {
-    "mtime": 1792409490.711578,
-    "seen": 1792409640.1237674,
+    "mtime": 1793003690.9916186,
+    "seen": 1793003722.1302338,
     "ast_hash": "8c18e99859bef64593d7305e513b00c7",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Tray/TrayMenuPlacement.cs": {
-    "mtime": 1792409490.711578,
-    "seen": 1792409640.1237686,
+    "mtime": 1793003690.9916186,
+    "seen": 1793003722.1302357,
     "ast_hash": "68d194cd9c9c1d75ebc267fb3fca6f14",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Presentation/Tray/TrayMenuWindow.xaml": {
-    "mtime": 1792409490.711578,
-    "seen": 1792409640.1237698,
+    "mtime": 1793003690.9916186,
+    "seen": 1793003722.1302373,
     "ast_hash": "4d116ab8c571e18a8b31979947e5a7a0",
     "semantic_hash": "4d116ab8c571e18a8b31979947e5a7a0"
   },
   "src/DrawEM.App/Presentation/Tray/TrayMenuWindow.xaml.cs": {
-    "mtime": 1792409490.7143068,
-    "seen": 1792409640.1237712,
+    "mtime": 1793003690.9916186,
+    "seen": 1793003722.130239,
     "ast_hash": "eb4011fc22faddc6da094c6657b463ef",
     "semantic_hash": "eb4011fc22faddc6da094c6657b463ef"
   },
   "tests/DrawEM.Tests/Presentation/Theme/GlassBackdropTests.cs": {
-    "mtime": 1792409490.7244267,
-    "seen": 1792409640.1238596,
+    "mtime": 1793003691.0136142,
+    "seen": 1793003722.1303296,
     "ast_hash": "312c478ecba11e67a9c1201916944b80",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Presentation/Theme/UiThemeStateTests.cs": {
-    "mtime": 1792409490.725453,
-    "seen": 1792409640.1238616,
+    "mtime": 1793003691.0136142,
+    "seen": 1793003722.130331,
     "ast_hash": "b7309c46ff3bea58d28cd2aa7594dddf",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Presentation/Tray/TrayMenuPlacementTests.cs": {
-    "mtime": 1792409490.725453,
-    "seen": 1792409640.123863,
+    "mtime": 1793003691.0136142,
+    "seen": 1793003722.1303325,
     "ast_hash": "9f289ee6c53a56d8a60add1d44c541ae",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Presentation/Tray/TrayMenuWindowTests.cs": {
-    "mtime": 1792409490.726458,
-    "seen": 1792409640.1238644,
-    "ast_hash": "4aed433b0b16f2a6727a1b2023326fee",
-    "semantic_hash": "4aed433b0b16f2a6727a1b2023326fee"
+    "mtime": 1793003691.0136142,
+    "seen": 1793003722.130334,
+    "ast_hash": "64a9b1d8f168600f41695d5cb4c74760",
+    "semantic_hash": ""
   },
   "docs/design/settings-glass.html": {
-    "mtime": 1792409490.6601672,
-    "seen": 1792409640.1238954,
+    "mtime": 1793003690.8747947,
+    "seen": 1793003722.1303716,
     "ast_hash": "5e4adbfc2cf2b31bb74d78fc97428b75",
     "semantic_hash": ""
   },
   "docs/design/tray-menu-glass.html": {
-    "mtime": 1792409490.6627104,
-    "seen": 1792409640.1238966,
+    "mtime": 1793003690.8747947,
+    "seen": 1793003722.130373,
     "ast_hash": "5d75095a0701252927bf015f3971ad72",
     "semantic_hash": ""
   },
   "docs/v4/out-of-scope/FEAT-011-glass-ui/acceptance.md": {
-    "mtime": 1792409490.6627104,
-    "seen": 1792409640.1239839,
+    "mtime": 1793003690.8914936,
+    "seen": 1793003722.1304657,
     "ast_hash": "9322bb7fd6488e24180b46b0a6b0c0c2",
     "semantic_hash": "9322bb7fd6488e24180b46b0a6b0c0c2"
   },
   "docs/v4/out-of-scope/FEAT-011-glass-ui/plan.md": {
-    "mtime": 1792409490.6627104,
-    "seen": 1792409640.123985,
+    "mtime": 1793003690.8914936,
+    "seen": 1793003722.1304674,
     "ast_hash": "c8460cc8509fa4141ae600a2508c5403",
     "semantic_hash": ""
   },
   "docs/v4/out-of-scope/FEAT-011-glass-ui/task.md": {
-    "mtime": 1792409490.6627104,
-    "seen": 1792409640.1239865,
+    "mtime": 1793003690.8914936,
+    "seen": 1793003722.1304688,
     "ast_hash": "d1c9dca12c4a9dae81eab85d704598e0",
     "semantic_hash": "d1c9dca12c4a9dae81eab85d704598e0"
   },
   "docs/v4/out-of-scope/FEAT-012-bezier-smoothing/acceptance.md": {
-    "mtime": 1792409490.6652505,
-    "seen": 1792409640.123988,
+    "mtime": 1793003690.892665,
+    "seen": 1793003722.1304705,
     "ast_hash": "efaba0dee8fad26363b6a121ad515a27",
     "semantic_hash": ""
   },
   "docs/v4/out-of-scope/FEAT-012-bezier-smoothing/plan.md": {
-    "mtime": 1792409490.6652505,
-    "seen": 1792409640.1239893,
+    "mtime": 1793003690.892665,
+    "seen": 1793003722.130472,
     "ast_hash": "5a890538609160e59d191cc755f62bab",
     "semantic_hash": ""
   },
   "docs/v4/out-of-scope/FEAT-012-bezier-smoothing/task.md": {
-    "mtime": 1792409490.6652505,
-    "seen": 1792409640.1239908,
+    "mtime": 1793003690.893512,
+    "seen": 1793003722.1304734,
     "ast_hash": "cb16f4e8bd68538deb1bcbae76ed543d",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Domain/Drawing/StrokeSmoothingGeometry.cs": {
-    "mtime": 1792409490.697993,
-    "seen": 1792409640.1236067,
+    "mtime": 1793003690.9420266,
+    "seen": 1793003722.1300628,
     "ast_hash": "ca1568ddacb72d84ea62b0b6a60ce57d",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Domain/StrokeSmoothingGeometryTests.cs": {
-    "mtime": 1792409490.7169497,
-    "seen": 1792409640.1237943,
+    "mtime": 1793003690.9976974,
+    "seen": 1793003722.1302626,
     "ast_hash": "5468e0ad57207dd3e43be688e3395c70",
     "semantic_hash": ""
   },
   "src/DrawEM.App/Infrastructure/InstanceActivation.cs": {
-    "mtime": 1792409572.3260167,
-    "seen": 1792409640.1236641,
-    "ast_hash": "f6e33f8c8d1db7abdab5bb5d0093a48e",
+    "mtime": 1793003690.952088,
+    "seen": 1793003722.1301253,
+    "ast_hash": "9bc81346d809c373d8193696a5d4ec9c",
     "semantic_hash": ""
   },
   "tests/DrawEM.Tests/Infrastructure/InstanceActivationTests.cs": {
-    "mtime": 1792409526.3191242,
-    "seen": 1792409640.1238177,
-    "ast_hash": "bc12040363fb3dc72c2c9190d659d8cd",
+    "mtime": 1793003691.0037758,
+    "seen": 1793003722.130287,
+    "ast_hash": "61586ebab0d23e60c4910d180f0134c0",
+    "semantic_hash": ""
+  },
+  ".mcp.json": {
+    "mtime": 1793003690.8727832,
+    "seen": 1793003722.1300056,
+    "ast_hash": "5cd80f706657a92537c516307972b7ca",
+    "semantic_hash": ""
+  },
+  "tests/DrawEM.Tests/WpfCollection.cs": {
+    "mtime": 1793003691.0156288,
+    "seen": 1793003722.1303434,
+    "ast_hash": "1451501708822b193aab4c369cfca1bb",
+    "semantic_hash": ""
+  },
+  ".github/workflows/graphify-weekly.yml": {
+    "mtime": 1793003690.8707707,
+    "seen": 1793003722.1303573,
+    "ast_hash": "d05dc6ea62bd88eaab3d443e6d80e913",
+    "semantic_hash": ""
+  },
+  "docs/v5/README.md": {
+    "mtime": 1793003690.9103193,
+    "seen": 1793003722.1305628,
+    "ast_hash": "d1bbcba3203111a205a552f9dcc18c99",
+    "semantic_hash": ""
+  },
+  "docs/v5/ROADMAP-v5.md": {
+    "mtime": 1793003690.9103193,
+    "seen": 1793003722.1305642,
+    "ast_hash": "2f42e1e21a8342ee8f2762d9458c4bc9",
+    "semantic_hash": ""
+  },
+  "docs/v5/STEPS.md": {
+    "mtime": 1793003690.9103193,
+    "seen": 1793003722.1305654,
+    "ast_hash": "1279c16c92cf3c335e67c6b3473723c7",
+    "semantic_hash": ""
+  },
+  "docs/v5/step-01-video-decoder-and-formats/acceptance.md": {
+    "mtime": 1793003690.9103193,
+    "seen": 1793003722.1305666,
+    "ast_hash": "cafc6e94a7bca3a09411ef53659b5976",
+    "semantic_hash": ""
+  },
+  "docs/v5/step-01-video-decoder-and-formats/plan.md": {
+    "mtime": 1793003690.9103193,
+    "seen": 1793003722.1305683,
+    "ast_hash": "d06b72d9869b35e5fe2a14d27e43014b",
+    "semantic_hash": ""
+  },
+  "docs/v5/step-01-video-decoder-and-formats/task.md": {
+    "mtime": 1793003690.9103193,
+    "seen": 1793003722.1305692,
+    "ast_hash": "48ee5a84450990bb8e0d5815c8907716",
+    "semantic_hash": ""
+  },
+  "docs/v5/step-02-video-action-and-library/acceptance.md": {
+    "mtime": 1793003690.9103193,
+    "seen": 1793003722.1305704,
+    "ast_hash": "81c8dd0ec0f0c0e726bfae66c583069c",
+    "semantic_hash": ""
+  },
+  "docs/v5/step-02-video-action-and-library/plan.md": {
+    "mtime": 1793003690.9103193,
+    "seen": 1793003722.1305718,
+    "ast_hash": "d2a0f24d999be07a9472eea0653976de",
+    "semantic_hash": ""
+  },
+  "docs/v5/step-02-video-action-and-library/task.md": {
+    "mtime": 1793003690.9123423,
+    "seen": 1793003722.130573,
+    "ast_hash": "42d99fda23a2cd8836942d626e9ee241",
+    "semantic_hash": ""
+  },
+  "docs/v5/step-03-fullscreen-video-playback/acceptance.md": {
+    "mtime": 1793003690.9123423,
+    "seen": 1793003722.1305742,
+    "ast_hash": "fbfc55a66370f87e164ace72ee24f38d",
+    "semantic_hash": ""
+  },
+  "docs/v5/step-03-fullscreen-video-playback/plan.md": {
+    "mtime": 1793003690.9123423,
+    "seen": 1793003722.1305757,
+    "ast_hash": "555427218aaf3f88f80f32e6ec21f783",
+    "semantic_hash": ""
+  },
+  "docs/v5/step-03-fullscreen-video-playback/task.md": {
+    "mtime": 1793003690.9123423,
+    "seen": 1793003722.1305768,
+    "ast_hash": "31b1dac69678ef586c604336f466f2dd",
+    "semantic_hash": ""
+  },
+  "docs/v5/step-04-video-controls-and-lifecycle/acceptance.md": {
+    "mtime": 1793003690.9143562,
+    "seen": 1793003722.1305778,
+    "ast_hash": "5916faeb199bb3fa337cc14f9ae21bb9",
+    "semantic_hash": ""
+  },
+  "docs/v5/step-04-video-controls-and-lifecycle/plan.md": {
+    "mtime": 1793003690.9143562,
+    "seen": 1793003722.1305792,
+    "ast_hash": "ea311a57c8a8adeb5c7550fee74682bd",
+    "semantic_hash": ""
+  },
+  "docs/v5/step-04-video-controls-and-lifecycle/task.md": {
+    "mtime": 1793003690.9143562,
+    "seen": 1793003722.1305804,
+    "ast_hash": "ec6d3399d9af1d938b007391494c167c",
+    "semantic_hash": ""
+  },
+  "docs/v5/step-05-video-publish/acceptance.md": {
+    "mtime": 1793003690.9143562,
+    "seen": 1793003722.1305819,
+    "ast_hash": "5ad5486352403356cb9e1473a571196a",
+    "semantic_hash": ""
+  },
+  "docs/v5/step-05-video-publish/plan.md": {
+    "mtime": 1793003690.9143562,
+    "seen": 1793003722.1305833,
+    "ast_hash": "1f08efefefb429b4e412bbda6909532d",
+    "semantic_hash": ""
+  },
+  "docs/v5/step-05-video-publish/task.md": {
+    "mtime": 1793003690.9143562,
+    "seen": 1793003722.1305842,
+    "ast_hash": "e2b82311ada6c7b987f0b7baa4465fbf",
     "semantic_hash": ""
   }
 }
