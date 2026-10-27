@@ -116,8 +116,10 @@ public class StrokeRenderElementTests
         });
     }
 
-    [Fact]
-    public void UpdateState_GrowingActiveStroke_RendersEachIncrementalSegment()
+    [Theory]
+    [InlineData(StrokeSmoothing.Bezier)]
+    [InlineData(StrokeSmoothing.None)]
+    public void UpdateState_GrowingActiveStroke_RendersEachIncrementalSegment(StrokeSmoothing smoothing)
     {
         StaThread.Run(() =>
         {
@@ -125,17 +127,18 @@ public class StrokeRenderElementTests
             element.Measure(new Size(20, 20));
             element.Arrange(new Rect(0, 0, 20, 20));
             var transform = new PhysicalToLocalTransform(0, 0, Matrix.Identity);
+            var style = DefaultStyle with { Smoothing = smoothing };
 
             element.UpdateState(
-                new DrawingState([], new Stroke([new ScreenPoint(2, 10)], DefaultStyle), true, 0),
+                new DrawingState([], new Stroke([new ScreenPoint(2, 10)], style), true, 0),
                 transform);
             element.UpdateState(
-                new DrawingState([], new Stroke([new ScreenPoint(2, 10), new ScreenPoint(10, 10)], DefaultStyle), true, 0),
+                new DrawingState([], new Stroke([new ScreenPoint(2, 10), new ScreenPoint(10, 10)], style), true, 0),
                 transform);
             element.UpdateState(
                 new DrawingState(
                     [],
-                    new Stroke([new ScreenPoint(2, 10), new ScreenPoint(10, 10), new ScreenPoint(17, 10)], DefaultStyle),
+                    new Stroke([new ScreenPoint(2, 10), new ScreenPoint(10, 10), new ScreenPoint(17, 10)], style),
                     true,
                     0),
                 transform);
