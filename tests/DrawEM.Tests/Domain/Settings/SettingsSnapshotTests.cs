@@ -128,6 +128,23 @@ public class SettingsSnapshotTests
         Assert.Equal([new SettingsError(SettingsErrorCode.InvalidWidth)], result.Errors);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(9)]
+    public void SettingsCommand_ForSlotRejectsNumberOutsideOneToEight(int slot)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => SettingsCommand.ForSlot(slot));
+    }
+
+    [Fact]
+    public void SettingsCommand_HasNoPublicConstructorAndOnlyDrawAndClearWithoutSlot()
+    {
+        Assert.Empty(typeof(SettingsCommand).GetConstructors());
+        Assert.Equal(SettingsCommand.Draw, default);
+        Assert.Equal((SettingsCommandKind.Clear, 0), (SettingsCommand.Clear.Kind, SettingsCommand.Clear.Slot));
+        Assert.Equal((SettingsCommandKind.Slot, 8), (SettingsCommand.ForSlot(8).Kind, SettingsCommand.ForSlot(8).Slot));
+    }
+
     [Fact]
     public void SoundAction_WithRejectsNullSound()
     {

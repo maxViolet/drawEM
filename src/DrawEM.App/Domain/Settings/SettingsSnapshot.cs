@@ -4,14 +4,31 @@ using DrawEM.App.Domain.Effects;
 
 namespace DrawEM.App.Domain.Settings;
 
-/// <summary>A command that owns a shortcut: drawing, clear, or one numbered action slot.</summary>
-public readonly record struct SettingsCommand(SettingsCommandKind Kind, int Slot = 0)
+/// <summary>
+/// A command that owns a shortcut: drawing, clear, or one numbered action slot. <see cref="Slot"/> is 1–8
+/// for a slot command and 0 otherwise; <c>default</c> is <see cref="Draw"/>.
+/// </summary>
+public readonly record struct SettingsCommand
 {
-    public static SettingsCommand Draw { get; } = new(SettingsCommandKind.Draw);
+    private SettingsCommand(SettingsCommandKind kind, int slot)
+    {
+        Kind = kind;
+        Slot = slot;
+    }
 
-    public static SettingsCommand Clear { get; } = new(SettingsCommandKind.Clear);
+    public static SettingsCommand Draw { get; } = new(SettingsCommandKind.Draw, 0);
 
-    public static SettingsCommand ForSlot(int slot) => new(SettingsCommandKind.Slot, slot);
+    public static SettingsCommand Clear { get; } = new(SettingsCommandKind.Clear, 0);
+
+    public SettingsCommandKind Kind { get; }
+
+    public int Slot { get; }
+
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="slot"/> is outside 1–8.</exception>
+    public static SettingsCommand ForSlot(int slot) =>
+        slot is < 1 or > ActionSlot.Count
+            ? throw new ArgumentOutOfRangeException(nameof(slot), slot, $"Slot number must be 1–{ActionSlot.Count}.")
+            : new(SettingsCommandKind.Slot, slot);
 
     public override string ToString() => Kind switch
     {
