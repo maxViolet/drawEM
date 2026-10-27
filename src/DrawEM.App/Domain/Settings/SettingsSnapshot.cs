@@ -47,9 +47,6 @@ public enum SettingsErrorCode
     /// names the ID.
     /// </summary>
     UnknownEffect,
-
-    /// <summary>An effect max length is not a whole number from 1–60 seconds.</summary>
-    InvalidEffectLength,
 }
 
 public sealed record SettingsError(
@@ -71,8 +68,6 @@ public sealed record SettingsError(
             SettingsErrorCode.DuplicateShortcut => $"{Name(Command)} uses the same shortcut as {Name(Other)}.",
             SettingsErrorCode.InvalidWidth => $"Width must be {StrokeWidth.Min}–{StrokeWidth.Max} physical pixels.",
             SettingsErrorCode.UnknownEffect => $"{Name(Command)} uses unsupported effect \"{Effect?.Value}\".",
-            SettingsErrorCode.InvalidEffectLength =>
-                $"{Name(Command)} max length must be a whole number from {EffectAction.MinSeconds}–{EffectAction.MaxSeconds} seconds.",
             _ => $"Settings must contain exactly slots 1–{ActionSlot.Count} in order.",
         };
     }
@@ -162,13 +157,6 @@ public sealed record SettingsSnapshot
                     SettingsErrorCode.UnknownEffect,
                     SettingsCommand.ForSlot(slot.Number),
                     Effect: effectAction.Effect));
-            }
-
-            if (!EffectAction.IsValidMaxLength(effectAction.MaxLength))
-            {
-                errors.Add(new SettingsError(
-                    SettingsErrorCode.InvalidEffectLength,
-                    SettingsCommand.ForSlot(slot.Number)));
             }
         }
 

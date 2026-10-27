@@ -169,19 +169,28 @@ public class SettingsSnapshotTests
     [Theory]
     [InlineData(0)]
     [InlineData(61)]
-    public void Validate_RejectsEffectLengthOutsideOneToSixtySeconds(int seconds)
+    [InlineData(1.5)]
+    public void EffectAction_RejectsLengthThatIsNotWholeSecondsFromOneToSixty(double seconds)
     {
-        var slots = EmptySlots();
-        slots[0] = new ActionSlot(
-            1,
-            new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+1"), false, TimeSpan.FromSeconds(seconds)));
+        var length = TimeSpan.FromSeconds(seconds);
+        var valid = new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+1"));
 
-        var result = SettingsSnapshot.Validate(Style, Draw, Clear, slots);
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+1"), false, length));
+        Assert.Throws<ArgumentOutOfRangeException>(() => valid with { MaxLength = length });
+    }
 
-        Assert.Equal(
-            [new SettingsError(SettingsErrorCode.InvalidEffectLength, SettingsCommand.ForSlot(1))],
-            result.Errors);
-        Assert.Equal("Slot 1 max length must be a whole number from 1–60 seconds.", result.Errors[0].ToString());
+    [Theory]
+    [InlineData(1)]
+    [InlineData(60)]
+    public void EffectAction_AcceptsWholeSecondsFromOneToSixty(int seconds)
+    {
+        var length = TimeSpan.FromSeconds(seconds);
+        var valid = new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+1"));
+
+        Assert.Equal(length, new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+1"), false, length).MaxLength);
+        Assert.Equal(length, (valid with { MaxLength = length }).MaxLength);
+        Assert.Null((valid with { MaxLength = null }).MaxLength);
     }
 
     [Fact]

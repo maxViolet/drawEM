@@ -50,10 +50,27 @@ public sealed record EffectAction(
         init => effect = value ?? throw new ArgumentNullException(nameof(Effect));
     }
 
-    public static bool IsValidMaxLength(TimeSpan? length) =>
+    private readonly TimeSpan? maxLength = CheckMaxLength(MaxLength);
+
+    /// <summary>
+    /// <c>null</c> for no limit, else a whole number of seconds from <see cref="MinSeconds"/> to
+    /// <see cref="MaxSeconds"/>: the constructor and <c>with</c> both reject any other value.
+    /// </summary>
+    public TimeSpan? MaxLength
+    {
+        get => maxLength;
+        init => maxLength = CheckMaxLength(value);
+    }
+
+    private static TimeSpan? CheckMaxLength(TimeSpan? length) =>
         length is null
         || length.Value.Ticks % TimeSpan.TicksPerSecond == 0
-        && length.Value.TotalSeconds is >= MinSeconds and <= MaxSeconds;
+        && length.Value.TotalSeconds is >= MinSeconds and <= MaxSeconds
+            ? length
+            : throw new ArgumentOutOfRangeException(
+                nameof(MaxLength),
+                length,
+                $"Max length must be a whole number from {MinSeconds}–{MaxSeconds} seconds.");
 }
 
 /// <summary>One of the eight numbered action slots. A slot with no action is empty and has no shortcut.</summary>
