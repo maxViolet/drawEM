@@ -22,11 +22,7 @@ internal sealed class LottiePlayback : IEffectPlayback
     private readonly long started = Stopwatch.GetTimestamp();
     private readonly LottieFrameLoop frames;
     private EffectSurfaceWindow? window;
-    private WriteableBitmap? bitmap;
-    private SKSurface? surface;
-    private IntPtr surfaceBuffer;
-    private SKRect destination;
-    private Int32Rect dirty;
+    private LottieFrameRenderer? renderer;
     private bool subscribed;
     private bool released;
 
@@ -90,9 +86,8 @@ internal sealed class LottiePlayback : IEffectPlayback
         finally
         {
             window = null;
-            surface?.Dispose();
-            surface = null;
-            bitmap = null;
+            renderer?.Dispose();
+            renderer = null;
         }
     }
 
@@ -120,11 +115,12 @@ internal sealed class LottiePlayback : IEffectPlayback
                 throw new ArgumentOutOfRangeException(nameof(command), command.Placement, "Unknown effect placement.");
         }
 
-        bitmap = window.ShowBitmap(layout);
-        dirty = new Int32Rect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight);
-        destination = SKRect.Create(
-            (float)layout.Destination.X, (float)layout.Destination.Y,
-            (float)layout.Destination.Width, (float)layout.Destination.Height);
+        renderer = new LottieFrameRenderer(
+            animation,
+            window.ShowBitmap(layout),
+            SKRect.Create(
+                (float)layout.Destination.X, (float)layout.Destination.Y,
+                (float)layout.Destination.Width, (float)layout.Destination.Height));
         CompositionTarget.Rendering += OnRendering;
         subscribed = true;
     }
@@ -189,33 +185,5 @@ internal sealed class LottiePlayback : IEffectPlayback
         return (TimeSpan.FromTicks(elapsed.Ticks % duration.Ticks), PlaybackState.Playing);
     }
 
-    private void Draw(double seconds)
-    {
-        var target = bitmap!;
-        target.Lock();
-        try
-        {
-            // The back buffer normally keeps its address; a new address needs a new surface over it.
-            if (surface is null || surfaceBuffer != target.BackBuffer)
-            {
-                surface?.Dispose();
-                var info = new SKImageInfo(
-                    target.PixelWidth, target.PixelHeight, SKColorType.Bgra8888, SKAlphaType.Premul);
-                surface = SKSurface.Create(info, target.BackBuffer, target.BackBufferStride)
-                    ?? throw new InvalidOperationException("Skia could not create a surface over the bitmap.");
-                surfaceBuffer = target.BackBuffer;
-            }
-
-            var canvas = surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-            animation.SeekFrameTime(seconds);
-            animation.Render(canvas, destination);
-            canvas.Flush();
-            target.AddDirtyRect(dirty);
-        }
-        finally
-        {
-            target.Unlock();
-        }
-    }
+    private void Draw(double seconds) => renderer!.Draw(seconds);
 }
