@@ -18,26 +18,24 @@ namespace DrawEM.App.Presentation.Effects;
 internal sealed class LottiePlayback : IEffectPlayback
 {
     private readonly Animation animation;
-    private readonly Action frameStarting;
     private readonly Action dpiChanged;
-    private readonly bool loop;
     private readonly long started = Stopwatch.GetTimestamp();
+    private readonly LottieFrameLoop frames;
     private EffectSurfaceWindow? window;
     private WriteableBitmap? bitmap;
     private SKSurface? surface;
     private IntPtr surfaceBuffer;
     private SKRect destination;
     private Int32Rect dirty;
-    private TimeSpan lastRenderingTime = TimeSpan.MinValue;
     private bool subscribed;
     private bool released;
 
     private LottiePlayback(Animation animation, bool loop, Action frameStarting, Action dpiChanged)
     {
         this.animation = animation;
-        this.loop = loop;
-        this.frameStarting = frameStarting;
         this.dpiChanged = dpiChanged;
+        frames = new LottieFrameLoop(
+            animation.Duration, loop, () => Stopwatch.GetElapsedTime(started), frameStarting, Draw, Complete, Fail);
     }
 
     public event Action? Completed;
@@ -142,40 +140,22 @@ internal sealed class LottiePlayback : IEffectPlayback
 
     private void OnRendering(object? sender, EventArgs e)
     {
-        // Rendering can be raised more than once for one frame; only the first call draws.
-        var renderingTime = ((RenderingEventArgs)e).RenderingTime;
-        if (released || renderingTime == lastRenderingTime)
+        if (!released)
         {
-            return;
+            frames.Render(((RenderingEventArgs)e).RenderingTime);
         }
+    }
 
-        lastRenderingTime = renderingTime;
-        var frame = PlaybackPosition(Stopwatch.GetElapsedTime(started), animation.Duration, loop);
-        if (frame.State == PlaybackState.Completed)
-        {
-            Unsubscribe();
-            Completed?.Invoke();
-            return;
-        }
+    private void Complete()
+    {
+        Unsubscribe();
+        Completed?.Invoke();
+    }
 
-        if (frame.State == PlaybackState.CannotLoop)
-        {
-            Unsubscribe();
-            Failed?.Invoke("The effect has no length, so it cannot loop.");
-            return;
-        }
-
-        // A static event keeps this playback alive, so any throw must end it here rather than escape.
-        try
-        {
-            frameStarting();
-            Draw(frame.Position.TotalSeconds);
-        }
-        catch (Exception exception)
-        {
-            Unsubscribe();
-            Failed?.Invoke($"The effect could not be drawn: {exception.Message}");
-        }
+    private void Fail(string reason)
+    {
+        Unsubscribe();
+        Failed?.Invoke(reason);
     }
 
     internal enum PlaybackState
