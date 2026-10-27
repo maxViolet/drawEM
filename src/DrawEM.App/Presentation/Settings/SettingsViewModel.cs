@@ -375,28 +375,50 @@ public sealed class SettingsViewModel : BindableBase
     private void Refresh()
     {
         var errors = editor.Validate();
+        HexError = HexColor.TryParse(hexText.Trim(), out _) ? null : HexFormatError;
+        WidthError = errors.Any(error => error.Code == SettingsErrorCode.InvalidWidth) ? WidthFormatError : null;
+        Errors = string.Join(Environment.NewLine, ErrorLines(errors));
+        ShowFieldErrors(FieldErrors(errors));
+        foreach (var slot in Slots)
+        {
+            slot.RaiseAllChanged();
+        }
+
+        RaiseAllChanged();
+    }
+
+    /// <summary>The message beside each shortcut field that has an error; the first error of a field wins.</summary>
+    private static Dictionary<SettingsCommand, string> FieldErrors(IReadOnlyList<SettingsError> errors)
+    {
         var fieldErrors = new Dictionary<SettingsCommand, string>();
         foreach (var error in errors)
         {
-            if (error.Command is not { } command)
+            if (error.Command is { } command)
             {
-                continue;
-            }
-
-            switch (error.Code)
-            {
-                case SettingsErrorCode.DuplicateShortcut:
-                    fieldErrors.TryAdd(command, $"Same shortcut as {Name(error.Other!.Value)}.");
-                    fieldErrors.TryAdd(error.Other!.Value, $"Same shortcut as {Name(command)}.");
-                    break;
-                case SettingsErrorCode.MissingShortcut:
-                    fieldErrors.TryAdd(command, "A shortcut is required.");
-                    break;
+                AddFieldError(fieldErrors, error, command);
             }
         }
 
-        HexError = HexColor.TryParse(hexText.Trim(), out _) ? null : HexFormatError;
-        WidthError = errors.Any(error => error.Code == SettingsErrorCode.InvalidWidth) ? WidthFormatError : null;
+        return fieldErrors;
+    }
+
+    private static void AddFieldError(Dictionary<SettingsCommand, string> fieldErrors, SettingsError error, SettingsCommand command)
+    {
+        switch (error.Code)
+        {
+            case SettingsErrorCode.DuplicateShortcut:
+                fieldErrors.TryAdd(command, $"Same shortcut as {Name(error.Other!.Value)}.");
+                fieldErrors.TryAdd(error.Other!.Value, $"Same shortcut as {Name(command)}.");
+                break;
+            case SettingsErrorCode.MissingShortcut:
+                fieldErrors.TryAdd(command, "A shortcut is required.");
+                break;
+        }
+    }
+
+    /// <summary>Every reason the draft cannot be saved, color first, then in validation order.</summary>
+    private List<string> ErrorLines(IReadOnlyList<SettingsError> errors)
+    {
         var lines = new List<string>();
         if (HexError is not null)
         {
@@ -406,20 +428,16 @@ public sealed class SettingsViewModel : BindableBase
         lines.AddRange(errors.Select(error => error.Code == SettingsErrorCode.InvalidWidth
             ? $"Line width: {WidthFormatError}"
             : error.Describe(Name)));
-        Errors = string.Join(Environment.NewLine, lines);
+        return lines;
+    }
 
+    private void ShowFieldErrors(Dictionary<SettingsCommand, string> fieldErrors)
+    {
         foreach (var field in Fields)
         {
             field.ValidationError = fieldErrors.GetValueOrDefault(field.Command);
             field.RaiseAllChanged();
         }
-
-        foreach (var slot in Slots)
-        {
-            slot.RaiseAllChanged();
-        }
-
-        RaiseAllChanged();
     }
 
     /// <summary>The command as the window labels it.</summary>
@@ -571,12 +589,10 @@ public sealed class SlotViewModel : BindableBase
         get => HasEffect && MaxLength is null;
         set
         {
-            if (!HasEffect || Loop || value == NoLimit)
+            if (CanSetNoLimit && value != NoLimit)
             {
-                return;
+                owner.SetEffectMaxLength(this, value ? null : DrawEM.App.Domain.Settings.EffectAction.DefaultMaxLength);
             }
-
-            owner.SetEffectMaxLength(this, value ? null : DrawEM.App.Domain.Settings.EffectAction.DefaultMaxLength);
         }
     }
 

@@ -339,6 +339,26 @@ public sealed class SettingsViewModelTests
     }
 
     [Fact]
+    public void NoLimit_ChangesNothingWhileLoopingOrOnASoundSlotOrWhenUnchanged()
+    {
+        active = SettingsWithEffect(2, loop: true, TimeSpan.FromSeconds(18));
+        var model = Model();
+        var effect = model.Slots[1];
+        var empty = model.Slots[0];
+
+        effect.NoLimit = true;
+        empty.NoLimit = true;
+        effect.Loop = false;
+        effect.NoLimit = false;
+
+        Assert.Equal("18 s", effect.MaxLengthText);
+        Assert.False(empty.NoLimit);
+        Assert.True(model.Save());
+        var action = Assert.IsType<EffectAction>(Assert.Single(saver.Saved).Slots[1].Action);
+        Assert.Equal(TimeSpan.FromSeconds(18), action.MaxLength);
+    }
+
+    [Fact]
     public void MaxLengthStepper_ClampsToOneThroughSixtyAndDisablesOnlyAtALimit()
     {
         active = SettingsWithEffect(2, loop: false, TimeSpan.FromSeconds(10));
