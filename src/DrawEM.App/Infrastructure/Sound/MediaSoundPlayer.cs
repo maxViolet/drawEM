@@ -68,30 +68,13 @@ public sealed class MediaSoundPlayer : ISoundPlayer
     /// throws: removing a handler can re-enter WPF's lazy engine setup and fail again. Returns the first
     /// failure, or <c>null</c>.
     /// </summary>
-    private Exception? Release(MediaPlayer target)
-    {
-        Exception? first = null;
-        Action[] steps =
+    private Exception? Release(MediaPlayer target) =>
+        CleanupSteps.Failures(
         [
             () => target.MediaEnded -= OnMediaEnded,
             () => target.MediaFailed -= OnMediaFailed,
             target.Close,
-        ];
-
-        foreach (var step in steps)
-        {
-            try
-            {
-                step();
-            }
-            catch (Exception exception)
-            {
-                first ??= exception;
-            }
-        }
-
-        return first;
-    }
+        ]).FirstOrDefault();
 
     private void OnMediaEnded(object? sender, EventArgs e) => Completed?.Invoke();
 
