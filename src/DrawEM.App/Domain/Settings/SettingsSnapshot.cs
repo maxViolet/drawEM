@@ -45,9 +45,6 @@ public enum SettingsErrorCode
     /// <summary>A filled slot has no sound.</summary>
     MissingSound,
 
-    /// <summary>A shortcut fails <see cref="Shortcut.TryCreate"/> rules.</summary>
-    InvalidShortcut,
-
     /// <summary>An effect slot has no effect ID.</summary>
     MissingEffect,
 
@@ -80,7 +77,6 @@ public sealed record SettingsError(
             SettingsErrorCode.DuplicateShortcut => $"{Name(Command)} uses the same shortcut as {Name(Other)}.",
             SettingsErrorCode.InvalidWidth => $"Width must be {StrokeWidth.Min}–{StrokeWidth.Max} physical pixels.",
             SettingsErrorCode.MissingSound => $"{Name(Command)} requires a sound.",
-            SettingsErrorCode.InvalidShortcut => $"{Name(Command)} has an invalid shortcut.",
             SettingsErrorCode.MissingEffect => $"{Name(Command)} requires an effect.",
             SettingsErrorCode.UnknownEffect => $"{Name(Command)} uses unsupported effect \"{Effect?.Value}\".",
             SettingsErrorCode.InvalidEffectLength =>
@@ -208,10 +204,6 @@ public sealed record SettingsSnapshot
             if (shortcut is null)
             {
                 errors.Add(new SettingsError(SettingsErrorCode.MissingShortcut, command));
-            }
-            else if (!Shortcut.TryCreate(shortcut.Modifiers, shortcut.Key, out _, out _))
-            {
-                errors.Add(new SettingsError(SettingsErrorCode.InvalidShortcut, command));
             }
             else if (owners.TryGetValue(shortcut, out var owner))
             {
