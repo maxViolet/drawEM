@@ -1,11 +1,9 @@
-using System.Runtime.InteropServices;
-using DrawEM.App.Domain.Drawing;
-
 namespace DrawEM.App.Infrastructure.Drawing;
 
-public sealed class Win32MouseHookSource : IMouseHookSource, IDisposable
+public sealed class Win32MouseHookSource : IDisposable
 {
     private readonly NativeMethods.LowLevelHookProc proc;
+    private readonly MouseHookEvents events = new();
     private IntPtr hookHandle;
 
     public Win32MouseHookSource()
@@ -20,35 +18,12 @@ public sealed class Win32MouseHookSource : IMouseHookSource, IDisposable
         }
     }
 
-    public event Action<ScreenPoint>? PointerMoved;
+    public IMouseHookSource Events => events;
 
-    public event Func<bool>? PointerButtonActivity;
-
-    public event Func<bool>? PointerWheelActivity;
-
-    private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
-    {
-        if (nCode >= NativeMethods.HC_ACTION)
-        {
-            var data = Marshal.PtrToStructure<NativeMethods.MSLLHOOKSTRUCT>(lParam);
-            var message = wParam.ToInt32();
-
-            if (message == NativeMethods.WM_MOUSEMOVE)
-            {
-                PointerMoved?.Invoke(new ScreenPoint(data.pt.X, data.pt.Y));
-            }
-            else if (NativeMethods.IsPointerButtonMessage(message) && ShouldSuppressPointerButton())
-            {
-                return NativeMethods.SuppressMessage;
-            }
-            else if (NativeMethods.IsPointerWheelMessage(message) && ShouldSuppressPointerWheel())
-            {
-                return NativeMethods.SuppressMessage;
-            }
-        }
-
-        return NativeMethods.CallNextHookEx(hookHandle, nCode, wParam, lParam);
-    }
+    private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam) =>
+        events.HandleHook(nCode, wParam.ToInt32(), lParam)
+            ? NativeMethods.SuppressMessage
+            : NativeMethods.CallNextHookEx(hookHandle, nCode, wParam, lParam);
 
     public void Dispose()
     {
@@ -58,8 +33,4 @@ public sealed class Win32MouseHookSource : IMouseHookSource, IDisposable
             hookHandle = IntPtr.Zero;
         }
     }
-
-    private bool ShouldSuppressPointerButton() => PointerButtonActivity?.Invoke() ?? false;
-
-    private bool ShouldSuppressPointerWheel() => PointerWheelActivity?.Invoke() ?? false;
 }
