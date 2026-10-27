@@ -4,14 +4,31 @@ using DrawEM.App.Domain.Effects;
 
 namespace DrawEM.App.Domain.Settings;
 
-/// <summary>A command that owns a shortcut: drawing, clear, or one numbered action slot.</summary>
-public readonly record struct SettingsCommand(SettingsCommandKind Kind, int Slot = 0)
+/// <summary>
+/// A command that owns a shortcut: drawing, clear, or one numbered action slot. <see cref="Slot"/> is 1–8
+/// for a slot command and 0 otherwise; <c>default</c> is <see cref="Draw"/>.
+/// </summary>
+public readonly record struct SettingsCommand
 {
-    public static SettingsCommand Draw { get; } = new(SettingsCommandKind.Draw);
+    private SettingsCommand(SettingsCommandKind kind, int slot)
+    {
+        Kind = kind;
+        Slot = slot;
+    }
 
-    public static SettingsCommand Clear { get; } = new(SettingsCommandKind.Clear);
+    public static SettingsCommand Draw { get; } = new(SettingsCommandKind.Draw, 0);
 
-    public static SettingsCommand ForSlot(int slot) => new(SettingsCommandKind.Slot, slot);
+    public static SettingsCommand Clear { get; } = new(SettingsCommandKind.Clear, 0);
+
+    public SettingsCommandKind Kind { get; }
+
+    public int Slot { get; }
+
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="slot"/> is outside 1–8.</exception>
+    public static SettingsCommand ForSlot(int slot) =>
+        slot is < 1 or > ActionSlot.Count
+            ? throw new ArgumentOutOfRangeException(nameof(slot), slot, $"Slot number must be 1–{ActionSlot.Count}.")
+            : new(SettingsCommandKind.Slot, slot);
 
     public override string ToString() => Kind switch
     {
@@ -42,23 +59,11 @@ public enum SettingsErrorCode
     /// <summary>The stroke width is outside 1–20, for example <c>default(StrokeWidth)</c>.</summary>
     InvalidWidth,
 
-    /// <summary>A filled slot has no sound.</summary>
-    MissingSound,
-
-    /// <summary>A shortcut fails <see cref="Shortcut.TryCreate"/> rules.</summary>
-    InvalidShortcut,
-
-    /// <summary>An effect slot has no effect ID.</summary>
-    MissingEffect,
-
     /// <summary>
     /// An effect slot names an ID that is not in <see cref="EffectCatalog"/>. <see cref="SettingsError.Effect"/>
     /// names the ID.
     /// </summary>
     UnknownEffect,
-
-    /// <summary>An effect max length is not a whole number from 1–60 seconds.</summary>
-    InvalidEffectLength,
 }
 
 public sealed record SettingsError(
@@ -79,12 +84,7 @@ public sealed record SettingsError(
             SettingsErrorCode.MissingShortcut => $"{Name(Command)} requires a shortcut.",
             SettingsErrorCode.DuplicateShortcut => $"{Name(Command)} uses the same shortcut as {Name(Other)}.",
             SettingsErrorCode.InvalidWidth => $"Width must be {StrokeWidth.Min}–{StrokeWidth.Max} physical pixels.",
-            SettingsErrorCode.MissingSound => $"{Name(Command)} requires a sound.",
-            SettingsErrorCode.InvalidShortcut => $"{Name(Command)} has an invalid shortcut.",
-            SettingsErrorCode.MissingEffect => $"{Name(Command)} requires an effect.",
             SettingsErrorCode.UnknownEffect => $"{Name(Command)} uses unsupported effect \"{Effect?.Value}\".",
-            SettingsErrorCode.InvalidEffectLength =>
-                $"{Name(Command)} max length must be a whole number from {EffectAction.MinSeconds}–{EffectAction.MaxSeconds} seconds.",
             _ => $"Settings must contain exactly slots 1–{ActionSlot.Count} in order.",
         };
     }
@@ -161,11 +161,6 @@ public sealed record SettingsSnapshot
             errors.Add(new SettingsError(SettingsErrorCode.InvalidWidth));
         }
 
-        foreach (var slot in slotList.Where(slot => slot.Action is SoundAction { Sound: null }))
-        {
-            errors.Add(new SettingsError(SettingsErrorCode.MissingSound, SettingsCommand.ForSlot(slot.Number)));
-        }
-
         foreach (var slot in slotList)
         {
             if (slot.Action is not EffectAction effectAction)
@@ -173,23 +168,12 @@ public sealed record SettingsSnapshot
                 continue;
             }
 
-            if (effectAction.Effect is null)
-            {
-                errors.Add(new SettingsError(SettingsErrorCode.MissingEffect, SettingsCommand.ForSlot(slot.Number)));
-            }
-            else if (!EffectCatalog.TryFind(effectAction.Effect, out _))
+            if (!EffectCatalog.TryFind(effectAction.Effect, out _))
             {
                 errors.Add(new SettingsError(
                     SettingsErrorCode.UnknownEffect,
                     SettingsCommand.ForSlot(slot.Number),
                     Effect: effectAction.Effect));
-            }
-
-            if (!EffectAction.IsValidMaxLength(effectAction.MaxLength))
-            {
-                errors.Add(new SettingsError(
-                    SettingsErrorCode.InvalidEffectLength,
-                    SettingsCommand.ForSlot(slot.Number)));
             }
         }
 
@@ -208,10 +192,6 @@ public sealed record SettingsSnapshot
             if (shortcut is null)
             {
                 errors.Add(new SettingsError(SettingsErrorCode.MissingShortcut, command));
-            }
-            else if (!Shortcut.TryCreate(shortcut.Modifiers, shortcut.Key, out _, out _))
-            {
-                errors.Add(new SettingsError(SettingsErrorCode.InvalidShortcut, command));
             }
             else if (owners.TryGetValue(shortcut, out var owner))
             {

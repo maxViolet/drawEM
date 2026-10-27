@@ -392,9 +392,6 @@ public sealed class SettingsViewModel : BindableBase
                 case SettingsErrorCode.MissingShortcut:
                     fieldErrors.TryAdd(command, "A shortcut is required.");
                     break;
-                case SettingsErrorCode.InvalidShortcut:
-                    fieldErrors.TryAdd(command, "This shortcut is not valid.");
-                    break;
             }
         }
 
