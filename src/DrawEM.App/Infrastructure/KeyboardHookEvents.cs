@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace DrawEM.App.Infrastructure;
 
 /// <summary>
@@ -32,4 +34,27 @@ public sealed class KeyboardHookEvents : IKeyboardHookSource
 
         return handleKey?.Invoke(vkCode, direction) ?? false;
     }
+
+    /// <summary>
+    /// Routes the raw arguments of a low-level keyboard hook callback. A negative <paramref name="nCode"/> and a
+    /// message that is not a key press or release pass through unread.
+    /// </summary>
+    /// <returns><c>true</c> to hide the event from the focused application.</returns>
+    internal bool HandleHook(int nCode, int message, IntPtr lParam)
+    {
+        if (nCode < NativeMethods.HC_ACTION || Direction(message) is not { } direction)
+        {
+            return false;
+        }
+
+        var data = Marshal.PtrToStructure<NativeMethods.KBDLLHOOKSTRUCT>(lParam);
+        return Handle((int)data.vkCode, direction, (nuint)data.dwExtraInfo);
+    }
+
+    private static KeyDirection? Direction(int message) => message switch
+    {
+        NativeMethods.WM_KEYDOWN or NativeMethods.WM_SYSKEYDOWN => KeyDirection.Down,
+        NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP => KeyDirection.Up,
+        _ => null,
+    };
 }
