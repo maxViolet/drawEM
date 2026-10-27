@@ -151,7 +151,7 @@ public sealed record SettingsSnapshot
         var slotList = slots.ToArray();
         var errors = new List<SettingsError>();
 
-        if (slotList.Length != ActionSlot.Count || slotList.Where((slot, index) => slot.Number != index + 1).Any())
+        if (!HasSlotLayout(slotList))
         {
             errors.Add(new SettingsError(SettingsErrorCode.SlotLayout));
         }
@@ -161,51 +161,61 @@ public sealed record SettingsSnapshot
             errors.Add(new SettingsError(SettingsErrorCode.InvalidWidth));
         }
 
-        foreach (var slot in slotList)
-        {
-            if (slot.Action is not EffectAction effectAction)
-            {
-                continue;
-            }
+        errors.AddRange(UnknownEffects(slotList));
+        errors.AddRange(ShortcutErrors(ActiveShortcuts(draw, clear, slotList)));
 
-            if (!EffectCatalog.TryFind(effectAction.Effect, out _))
+        return errors.Count > 0
+            ? new SettingsValidation(null, errors.AsReadOnly())
+            : new SettingsValidation(new SettingsSnapshot(style, draw!, clear!, Array.AsReadOnly(slotList)), []);
+    }
+
+    /// <summary>Exactly slots 1–8, in order.</summary>
+    private static bool HasSlotLayout(ActionSlot[] slots) =>
+        slots.Length == ActionSlot.Count && !slots.Where((slot, index) => slot.Number != index + 1).Any();
+
+    private static IEnumerable<SettingsError> UnknownEffects(IEnumerable<ActionSlot> slots)
+    {
+        foreach (var slot in slots)
+        {
+            if (slot.Action is EffectAction { Effect: var effect } && !EffectCatalog.TryFind(effect, out _))
             {
-                errors.Add(new SettingsError(
+                yield return new SettingsError(
                     SettingsErrorCode.UnknownEffect,
                     SettingsCommand.ForSlot(slot.Number),
-                    Effect: effectAction.Effect));
+                    Effect: effect);
             }
         }
+    }
 
-        var active = new List<(SettingsCommand Command, Shortcut? Shortcut)>
-        {
-            (SettingsCommand.Draw, draw),
-            (SettingsCommand.Clear, clear),
-        };
-        active.AddRange(slotList
+    /// <summary>Draw, clear, and every filled slot, in that order, with their shortcuts.</summary>
+    private static IEnumerable<(SettingsCommand Command, Shortcut? Shortcut)> ActiveShortcuts(
+        Shortcut? draw,
+        Shortcut? clear,
+        IEnumerable<ActionSlot> slots) =>
+        new[] { (SettingsCommand.Draw, draw), (SettingsCommand.Clear, clear) }.Concat(slots
             .Where(slot => !slot.IsEmpty)
             .Select(slot => (SettingsCommand.ForSlot(slot.Number), slot.Action!.Shortcut)));
 
+    /// <summary>A missing shortcut, or one an earlier command already owns.</summary>
+    private static IEnumerable<SettingsError> ShortcutErrors(
+        IEnumerable<(SettingsCommand Command, Shortcut? Shortcut)> active)
+    {
         var owners = new Dictionary<Shortcut, SettingsCommand>();
         foreach (var (command, shortcut) in active)
         {
             if (shortcut is null)
             {
-                errors.Add(new SettingsError(SettingsErrorCode.MissingShortcut, command));
+                yield return new SettingsError(SettingsErrorCode.MissingShortcut, command);
             }
             else if (owners.TryGetValue(shortcut, out var owner))
             {
-                errors.Add(new SettingsError(SettingsErrorCode.DuplicateShortcut, command, owner));
+                yield return new SettingsError(SettingsErrorCode.DuplicateShortcut, command, owner);
             }
             else
             {
                 owners.Add(shortcut, command);
             }
         }
-
-        return errors.Count > 0
-            ? new SettingsValidation(null, errors.AsReadOnly())
-            : new SettingsValidation(new SettingsSnapshot(style, draw!, clear!, Array.AsReadOnly(slotList)), []);
     }
 
     public bool Equals(SettingsSnapshot? other) =>
