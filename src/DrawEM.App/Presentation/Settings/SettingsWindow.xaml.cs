@@ -165,29 +165,42 @@ public partial class SettingsWindow : Window, ISoundFilePicker
 
     private void OnWidthKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key is Key.Up or Key.Down && ViewModel is { } model)
+        if (WidthStep(e.Key) is { } pixels && ViewModel is { } model)
         {
-            model.StepWidth(e.Key == Key.Up ? 1 : -1);
+            model.StepWidth(pixels);
             WidthBox.CaretIndex = WidthBox.Text.Length;
             e.Handled = true;
         }
     }
 
+    /// <summary>Up and Down step the width by one pixel; other keys type into the box.</summary>
+    private static int? WidthStep(Key key) => key switch
+    {
+        Key.Up => 1,
+        Key.Down => -1,
+        _ => null,
+    };
+
+    /// <summary>Asks for a color, starting from the given one; <c>null</c> when cancelled. Tests replace it.</summary>
+    internal Func<HexColor, HexColor?> PickColor { get; set; } = ShowColorDialog;
+
     private void OnPickColor(object sender, RoutedEventArgs e)
     {
-        if (ViewModel is not { } model)
+        if (ViewModel is { } model && PickColor(model.DraftColor) is { } color)
         {
-            return;
+            model.SetColor(color);
         }
+    }
 
+    private static HexColor? ShowColorDialog(HexColor current)
+    {
         using var dialog = new WinFormsColorDialog
         {
             FullOpen = true,
-            Color = System.Drawing.Color.FromArgb(model.DraftColor.Red, model.DraftColor.Green, model.DraftColor.Blue),
+            Color = System.Drawing.Color.FromArgb(current.Red, current.Green, current.Blue),
         };
-        if (dialog.ShowDialog() == WinFormsDialogResult.OK)
-        {
-            model.SetColor(new HexColor(dialog.Color.R, dialog.Color.G, dialog.Color.B));
-        }
+        return dialog.ShowDialog() == WinFormsDialogResult.OK
+            ? new HexColor(dialog.Color.R, dialog.Color.G, dialog.Color.B)
+            : null;
     }
 }
