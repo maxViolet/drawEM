@@ -129,17 +129,11 @@ public class SettingsSnapshotTests
     }
 
     [Fact]
-    public void Validate_RejectsFilledSlotWithoutSound()
+    public void SoundAction_WithRejectsNullSound()
     {
-        var slots = EmptySlots();
         var filled = new SoundAction(new SoundReference("a.wav", "a.wav"), Keys("Ctrl+Alt+1"));
-        slots[0] = new ActionSlot(1, filled with { Sound = null! });
 
-        var result = SettingsSnapshot.Validate(Style, Draw, Clear, slots);
-
-        Assert.False(result.IsValid);
-        Assert.Equal([new SettingsError(SettingsErrorCode.MissingSound, SettingsCommand.ForSlot(1))], result.Errors);
-        Assert.Equal("Slot 1 requires a sound.", result.Errors[0].ToString());
+        Assert.Throws<ArgumentNullException>(() => filled with { Sound = null! });
     }
 
     [Fact]
@@ -217,16 +211,11 @@ public class SettingsSnapshotTests
     }
 
     [Fact]
-    public void Validate_RejectsEffectSlotWithoutEffect()
+    public void EffectAction_WithRejectsNullEffect()
     {
-        var slots = EmptySlots();
         var filled = new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+1"));
-        slots[0] = new ActionSlot(1, filled with { Effect = null! });
 
-        var result = SettingsSnapshot.Validate(Style, Draw, Clear, slots);
-
-        Assert.Equal([new SettingsError(SettingsErrorCode.MissingEffect, SettingsCommand.ForSlot(1))], result.Errors);
-        Assert.Equal("Slot 1 requires an effect.", result.Errors[0].ToString());
+        Assert.Throws<ArgumentNullException>(() => filled with { Effect = null! });
     }
 
     [Fact]

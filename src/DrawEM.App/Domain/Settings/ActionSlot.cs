@@ -12,11 +12,14 @@ public abstract record SlotAction(Shortcut? Shortcut);
 
 public sealed record SoundAction(SoundReference Sound, Shortcut? Shortcut) : SlotAction(Shortcut)
 {
-    /// <summary>
-    /// Never <c>null</c> when constructed; a <c>with</c> expression can still clear it, so
-    /// <see cref="SettingsSnapshot.Validate"/> checks it again.
-    /// </summary>
-    public SoundReference Sound { get; init; } = Sound ?? throw new ArgumentNullException(nameof(Sound));
+    private readonly SoundReference sound = Sound ?? throw new ArgumentNullException(nameof(Sound));
+
+    /// <summary>Never <c>null</c>: the constructor and <c>with</c> both reject it.</summary>
+    public SoundReference Sound
+    {
+        get => sound;
+        init => sound = value ?? throw new ArgumentNullException(nameof(Sound));
+    }
 }
 
 /// <summary>
@@ -38,11 +41,14 @@ public sealed record EffectAction(
     {
     }
 
-    /// <summary>
-    /// Never <c>null</c> when constructed; a <c>with</c> expression can still clear it, so
-    /// <see cref="SettingsSnapshot.Validate"/> checks it again.
-    /// </summary>
-    public EffectId Effect { get; init; } = Effect ?? throw new ArgumentNullException(nameof(Effect));
+    private readonly EffectId effect = Effect ?? throw new ArgumentNullException(nameof(Effect));
+
+    /// <summary>Never <c>null</c>: the constructor and <c>with</c> both reject it.</summary>
+    public EffectId Effect
+    {
+        get => effect;
+        init => effect = value ?? throw new ArgumentNullException(nameof(Effect));
+    }
 
     public static bool IsValidMaxLength(TimeSpan? length) =>
         length is null

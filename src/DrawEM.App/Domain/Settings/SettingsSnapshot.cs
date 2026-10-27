@@ -42,12 +42,6 @@ public enum SettingsErrorCode
     /// <summary>The stroke width is outside 1–20, for example <c>default(StrokeWidth)</c>.</summary>
     InvalidWidth,
 
-    /// <summary>A filled slot has no sound.</summary>
-    MissingSound,
-
-    /// <summary>An effect slot has no effect ID.</summary>
-    MissingEffect,
-
     /// <summary>
     /// An effect slot names an ID that is not in <see cref="EffectCatalog"/>. <see cref="SettingsError.Effect"/>
     /// names the ID.
@@ -76,8 +70,6 @@ public sealed record SettingsError(
             SettingsErrorCode.MissingShortcut => $"{Name(Command)} requires a shortcut.",
             SettingsErrorCode.DuplicateShortcut => $"{Name(Command)} uses the same shortcut as {Name(Other)}.",
             SettingsErrorCode.InvalidWidth => $"Width must be {StrokeWidth.Min}–{StrokeWidth.Max} physical pixels.",
-            SettingsErrorCode.MissingSound => $"{Name(Command)} requires a sound.",
-            SettingsErrorCode.MissingEffect => $"{Name(Command)} requires an effect.",
             SettingsErrorCode.UnknownEffect => $"{Name(Command)} uses unsupported effect \"{Effect?.Value}\".",
             SettingsErrorCode.InvalidEffectLength =>
                 $"{Name(Command)} max length must be a whole number from {EffectAction.MinSeconds}–{EffectAction.MaxSeconds} seconds.",
@@ -157,11 +149,6 @@ public sealed record SettingsSnapshot
             errors.Add(new SettingsError(SettingsErrorCode.InvalidWidth));
         }
 
-        foreach (var slot in slotList.Where(slot => slot.Action is SoundAction { Sound: null }))
-        {
-            errors.Add(new SettingsError(SettingsErrorCode.MissingSound, SettingsCommand.ForSlot(slot.Number)));
-        }
-
         foreach (var slot in slotList)
         {
             if (slot.Action is not EffectAction effectAction)
@@ -169,11 +156,7 @@ public sealed record SettingsSnapshot
                 continue;
             }
 
-            if (effectAction.Effect is null)
-            {
-                errors.Add(new SettingsError(SettingsErrorCode.MissingEffect, SettingsCommand.ForSlot(slot.Number)));
-            }
-            else if (!EffectCatalog.TryFind(effectAction.Effect, out _))
+            if (!EffectCatalog.TryFind(effectAction.Effect, out _))
             {
                 errors.Add(new SettingsError(
                     SettingsErrorCode.UnknownEffect,
