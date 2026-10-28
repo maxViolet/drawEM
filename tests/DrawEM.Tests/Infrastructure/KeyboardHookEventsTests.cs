@@ -44,6 +44,15 @@ public class KeyboardHookEventsTests
     }
 
     [Fact]
+    public void HandleHook_NegativeCodeWithWideParameterIsPassedOn()
+    {
+        var events = new KeyboardHookEvents();
+        events.SetKeyHandler((_, _) => true);
+
+        Assert.False(events.HandleHook(-1, (IntPtr)(1L << 32), IntPtr.Zero));
+    }
+
+    [Fact]
     public void HandleHook_OtherMessageIsPassedOn()
     {
         const int WM_CHAR = 0x0102;

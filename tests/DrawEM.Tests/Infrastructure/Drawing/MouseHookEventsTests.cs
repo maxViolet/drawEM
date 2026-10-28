@@ -102,6 +102,15 @@ public class MouseHookEventsTests
         Assert.Equal(0, moves);
     }
 
+    [Fact]
+    public void HandleHook_NegativeCodeWithWideParameterIsPassedOn()
+    {
+        var events = Suppressing(out var calls);
+
+        Assert.False(events.HandleHook(-1, (IntPtr)(1L << 32), IntPtr.Zero));
+        Assert.Equal(0, calls());
+    }
+
     private static bool Ask(List<string> asked, string name, bool suppress)
     {
         asked.Add(name);

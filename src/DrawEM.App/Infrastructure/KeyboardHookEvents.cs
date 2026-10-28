@@ -40,9 +40,10 @@ public sealed class KeyboardHookEvents : IKeyboardHookSource
     /// message that is not a key press or release pass through unread.
     /// </summary>
     /// <returns><c>true</c> to hide the event from the focused application.</returns>
-    internal bool HandleHook(int nCode, int message, IntPtr lParam)
+    internal bool HandleHook(int nCode, IntPtr wParam, IntPtr lParam)
     {
-        if (nCode < NativeMethods.HC_ACTION || Direction(message) is not { } direction)
+        // wParam is read only for HC_ACTION: for other codes it may not fit in an int.
+        if (nCode < NativeMethods.HC_ACTION || Direction(wParam.ToInt32()) is not { } direction)
         {
             return false;
         }

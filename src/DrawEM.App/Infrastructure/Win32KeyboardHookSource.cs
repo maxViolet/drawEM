@@ -23,7 +23,7 @@ public sealed class Win32KeyboardHookSource : INeutralKeyEmitter, IDisposable
     public IKeyboardHookSource Events => events;
 
     private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam) =>
-        events.HandleHook(nCode, wParam.ToInt32(), lParam)
+        events.HandleHook(nCode, wParam, lParam)
             ? NativeMethods.SuppressMessage
             : NativeMethods.CallNextHookEx(hookHandle, nCode, wParam, lParam);
 

@@ -20,13 +20,15 @@ public sealed class MouseHookEvents : IMouseHookSource
     /// through unread.
     /// </summary>
     /// <returns><c>true</c> to hide the event from the window under the cursor.</returns>
-    internal bool HandleHook(int nCode, int message, IntPtr lParam)
+    internal bool HandleHook(int nCode, IntPtr wParam, IntPtr lParam)
     {
+        // wParam is read only for HC_ACTION: for other codes it may not fit in an int.
         if (nCode < NativeMethods.HC_ACTION)
         {
             return false;
         }
 
+        var message = wParam.ToInt32();
         if (message == NativeMethods.WM_MOUSEMOVE)
         {
             Move(Marshal.PtrToStructure<NativeMethods.MSLLHOOKSTRUCT>(lParam).pt);
