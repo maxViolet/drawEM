@@ -60,11 +60,7 @@ public sealed class EffectSampler : IEffectSampler
         ArgumentNullException.ThrowIfNull(reportFailure);
         ArgumentNullException.ThrowIfNull(runningChanged);
 
-        if (effect.Loop
-            && latest is { } current
-            && current.Command.Slot == slot
-            && current.Command.Loop
-            && ReferenceEquals(channel.ActiveInstance, current))
+        if (effect.Loop && IsLoopRunning(slot))
         {
             StopSamples();
             return;
@@ -72,21 +68,59 @@ public sealed class EffectSampler : IEffectSampler
 
         // A newer request ends the earlier sample's reports even when it cannot start. The earlier sample stays
         // owned until this one replaces it, so Cancel can still stop it.
+        ForgetLatestReports();
+        if (CommandAtCursor(slot, effect, reportFailure) is not { } command)
+        {
+            return;
+        }
+
+        // Watched before the start: a window that cannot be shown is reported inside it.
+        failures.Watch(command, reportFailure);
+        starts.Dequeue(command.MonitorEpoch, command);
+        if (ActiveInstanceOf(command) is { } started)
+        {
+            Own(started, effect.Loop, runningChanged);
+        }
+        else
+        {
+            NotStarted(command);
+        }
+    }
+
+    private void ForgetLatestReports()
+    {
         if (latest is not null)
         {
             failures.Forget(latest.Command);
         }
+    }
 
+    private EffectInstance? ActiveInstanceOf(StartEffectCommand command) =>
+        channel.ActiveInstance is { } active && ReferenceEquals(active.Command, command) ? active : null;
+
+    /// <summary>Whether this sampler's loop of <paramref name="slot"/> is the effect playing now.</summary>
+    private bool IsLoopRunning(int slot) =>
+        latest is { } current
+        && current.Command.Slot == slot
+        && current.Command.Loop
+        && ReferenceEquals(channel.ActiveInstance, current);
+
+    /// <summary>
+    /// The start command for the cursor's current point and monitor, with the monitor epoch queued; or
+    /// <c>null</c> after reporting why there is none.
+    /// </summary>
+    private StartEffectCommand? CommandAtCursor(int slot, EffectAction effect, Action<string> reportFailure)
+    {
         if (!EffectCatalog.TryFind(effect.Effect, out var builtIn))
         {
             reportFailure($"'{effect.Effect.Value}' is not a built-in effect.");
-            return;
+            return null;
         }
 
         if (!cursor.TryGetCurrentPosition(out var point))
         {
             reportFailure("The cursor position is not available.");
-            return;
+            return null;
         }
 
         var monitorEpoch = starts.Enqueue(point);
@@ -94,10 +128,10 @@ public sealed class EffectSampler : IEffectSampler
         {
             starts.Dequeue(monitorEpoch, null);
             reportFailure("The cursor is not on a monitor.");
-            return;
+            return null;
         }
 
-        var command = new StartEffectCommand(
+        return new StartEffectCommand(
             slot,
             effect.Effect,
             builtIn.Placement,
@@ -107,29 +141,27 @@ public sealed class EffectSampler : IEffectSampler
             effect.MaxLength,
             sampleConfigurationGeneration,
             monitorEpoch);
+    }
 
-        // Watched before the start: a window that cannot be shown is reported inside it.
-        failures.Watch(command, reportFailure);
-        starts.Dequeue(monitorEpoch, command);
-        if (channel.ActiveInstance is { } started && ReferenceEquals(started.Command, command))
+    private void Own(EffectInstance started, bool loop, Action<bool> runningChanged)
+    {
+        Forget();
+        latest = started;
+        if (loop)
+        {
+            this.runningChanged = runningChanged;
+            channel.ActiveInstanceChanged += OnActiveInstanceChanged;
+            runningChanged(true);
+        }
+    }
+
+    private void NotStarted(StartEffectCommand command)
+    {
+        // Nothing started, so nothing more can be reported for this command.
+        failures.Forget(command);
+        if (latest is not null && !ReferenceEquals(channel.ActiveInstance, latest))
         {
             Forget();
-            latest = started;
-            if (effect.Loop)
-            {
-                this.runningChanged = runningChanged;
-                channel.ActiveInstanceChanged += OnActiveInstanceChanged;
-                runningChanged(true);
-            }
-        }
-        else
-        {
-            // Nothing started, so nothing more can be reported for this command.
-            failures.Forget(command);
-            if (latest is not null && !ReferenceEquals(channel.ActiveInstance, latest))
-            {
-                Forget();
-            }
         }
     }
 

@@ -10,7 +10,22 @@ public static class CleanupSteps
     /// </summary>
     public static void RunAll(IEnumerable<Action> steps)
     {
-        List<Exception>? failures = null;
+        var failures = Failures(steps);
+        if (failures is [var failure])
+        {
+            ExceptionDispatchInfo.Throw(failure);
+        }
+
+        if (failures.Count > 0)
+        {
+            throw new AggregateException(failures);
+        }
+    }
+
+    /// <summary>Runs every step in order, even if one throws, and returns each failure in order.</summary>
+    public static IReadOnlyList<Exception> Failures(IEnumerable<Action> steps)
+    {
+        var failures = new List<Exception>();
         foreach (var step in steps)
         {
             try
@@ -19,18 +34,10 @@ public static class CleanupSteps
             }
             catch (Exception exception)
             {
-                (failures ??= []).Add(exception);
+                failures.Add(exception);
             }
         }
 
-        if (failures is [var failure])
-        {
-            ExceptionDispatchInfo.Throw(failure);
-        }
-
-        if (failures is not null)
-        {
-            throw new AggregateException(failures);
-        }
+        return failures;
     }
 }

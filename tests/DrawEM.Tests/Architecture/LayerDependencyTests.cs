@@ -13,6 +13,9 @@ public class LayerDependencyTests
     private const string Infrastructure = "DrawEM.App.Infrastructure";
     private const string Presentation = "DrawEM.App.Presentation";
 
+    // Coverlet adds a hit-tracker call to every instrumented method; it is not a real dependency.
+    private const string CoverageTracker = "Coverlet.Core.Instrumentation.Tracker";
+
     public static TheoryData<string, string[]> AllowedLayerDependencies => new()
     {
         { Domain, ["System", "Microsoft", Domain] },
@@ -36,7 +39,7 @@ public class LayerDependencyTests
             .That().ResideInNamespaceStartingWith(layer);
 
         Assert.NotEmpty(types.GetTypes());
-        var result = types.Should().OnlyHaveDependenciesOn(allowedDependencies).GetResult();
+        var result = types.Should().OnlyHaveDependenciesOn([.. allowedDependencies, CoverageTracker]).GetResult();
 
         Assert.True(result.IsSuccessful,
             $"{layer} may depend only on: {string.Join(", ", allowedDependencies)}. " +

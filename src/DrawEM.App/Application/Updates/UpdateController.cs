@@ -78,34 +78,32 @@ public sealed class UpdateController : IDisposable
     /// </summary>
     public void RequestUpdate()
     {
-        if (disposed || applying || confirming || readyVersion is not { } version)
+        // The confirmation dialog can outlive a Dispose that ran from a nested message loop.
+        if (OfferedVersion() is { } version && Confirm(version) && !disposed)
         {
-            return;
+            Apply();
         }
+    }
 
+    /// <summary>The ready version, unless disposed, applying, or already asking.</summary>
+    private string? OfferedVersion() => disposed || applying || confirming ? null : readyVersion;
+
+    private bool Confirm(string version)
+    {
         // The modal dialog pumps messages, so a tray click can arrive here again while it is open.
         confirming = true;
-        bool confirmed;
         try
         {
-            confirmed = confirmRestart(version);
+            return confirmRestart(version);
         }
         finally
         {
             confirming = false;
         }
+    }
 
-        if (!confirmed)
-        {
-            return;
-        }
-
-        // The confirmation dialog can outlive a Dispose that ran from a nested message loop.
-        if (disposed)
-        {
-            return;
-        }
-
+    private void Apply()
+    {
         try
         {
             service.ApplyAfterExit();
@@ -190,17 +188,23 @@ public sealed class UpdateController : IDisposable
 
         running = null;
         cancellation.Dispose();
-        if (disposed || check.IsCanceled)
+        if (!disposed)
+        {
+            Finish(check);
+        }
+    }
+
+    /// <summary>Reports a failed check or offers the version it found; a cancelled check does nothing.</summary>
+    private void Finish(Task<string?> check)
+    {
+        if (check.IsCanceled)
         {
             return;
         }
 
         if (check.IsFaulted)
         {
-            var exception = check.Exception!.InnerExceptions.Count == 1
-                ? check.Exception.InnerException!
-                : check.Exception;
-            failures.Report("check", exception.Message);
+            failures.Report("check", FailureOf(check).Message);
             return;
         }
 
@@ -209,6 +213,10 @@ public sealed class UpdateController : IDisposable
             Announce(version);
         }
     }
+
+    /// <summary>The one exception of a faulted check, or all of them together.</summary>
+    private static Exception FailureOf(Task check) =>
+        check.Exception!.InnerExceptions.Count == 1 ? check.Exception.InnerException! : check.Exception;
 
     private void Announce(string version)
     {

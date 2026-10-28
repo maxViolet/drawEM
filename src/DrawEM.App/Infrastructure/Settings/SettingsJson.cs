@@ -42,54 +42,11 @@ public static class SettingsJson
         {
             json.WriteStartObject();
             json.WriteNumber("schemaVersion", CurrentSchemaVersion);
-
-            json.WriteStartObject("drawing");
-            json.WriteString("color", snapshot.Style.Color.ToString());
-            json.WriteNumber("width", snapshot.Style.Width.Pixels);
-            json.WriteString("smoothing", snapshot.Style.Smoothing == StrokeSmoothing.None ? "none" : "bezier");
-            json.WriteString("drawShortcut", snapshot.DrawShortcut.ToString());
-            json.WriteString("clearShortcut", snapshot.ClearShortcut.ToString());
-            json.WriteEndObject();
-
+            WriteDrawing(json, snapshot);
             json.WriteStartArray("slots");
             foreach (var slot in snapshot.Slots)
             {
-                json.WriteStartObject();
-                json.WriteNumber("slot", slot.Number);
-                switch (slot.Action)
-                {
-                    case null:
-                        json.WriteNull("action");
-                        break;
-                    case SoundAction sound:
-                        json.WriteStartObject("action");
-                        json.WriteString("type", "sound");
-                        json.WriteString("file", sound.Sound.LibraryFileName);
-                        json.WriteString("name", sound.Sound.DisplayName);
-                        json.WriteString("shortcut", sound.Shortcut!.ToString());
-                        json.WriteEndObject();
-                        break;
-                    case EffectAction effect:
-                        json.WriteStartObject("action");
-                        json.WriteString("type", "effect");
-                        json.WriteString("effectId", effect.Effect.Value);
-                        json.WriteString("shortcut", effect.Shortcut!.ToString());
-                        json.WriteBoolean("loop", effect.Loop);
-                        if (effect.MaxLength is { } maxLength)
-                        {
-                            json.WriteNumber("maxSeconds", (int)maxLength.TotalSeconds);
-                        }
-                        else
-                        {
-                            json.WriteNull("maxSeconds");
-                        }
-                        json.WriteEndObject();
-                        break;
-                    default:
-                        throw new NotSupportedException($"Action type {slot.Action.GetType().Name} has no schema.");
-                }
-
-                json.WriteEndObject();
+                WriteSlot(json, slot);
             }
 
             json.WriteEndArray();
@@ -97,6 +54,67 @@ public static class SettingsJson
         }
 
         return buffer.ToArray();
+    }
+
+    private static void WriteDrawing(Utf8JsonWriter json, SettingsSnapshot snapshot)
+    {
+        json.WriteStartObject("drawing");
+        json.WriteString("color", snapshot.Style.Color.ToString());
+        json.WriteNumber("width", snapshot.Style.Width.Pixels);
+        json.WriteString("smoothing", snapshot.Style.Smoothing == StrokeSmoothing.None ? "none" : "bezier");
+        json.WriteString("drawShortcut", snapshot.DrawShortcut.ToString());
+        json.WriteString("clearShortcut", snapshot.ClearShortcut.ToString());
+        json.WriteEndObject();
+    }
+
+    private static void WriteSlot(Utf8JsonWriter json, ActionSlot slot)
+    {
+        json.WriteStartObject();
+        json.WriteNumber("slot", slot.Number);
+        switch (slot.Action)
+        {
+            case null:
+                json.WriteNull("action");
+                break;
+            case SoundAction sound:
+                WriteSound(json, sound);
+                break;
+            case EffectAction effect:
+                WriteEffect(json, effect);
+                break;
+            default:
+                throw new NotSupportedException($"Action type {slot.Action.GetType().Name} has no schema.");
+        }
+
+        json.WriteEndObject();
+    }
+
+    private static void WriteSound(Utf8JsonWriter json, SoundAction sound)
+    {
+        json.WriteStartObject("action");
+        json.WriteString("type", "sound");
+        json.WriteString("file", sound.Sound.LibraryFileName);
+        json.WriteString("name", sound.Sound.DisplayName);
+        json.WriteString("shortcut", sound.Shortcut!.ToString());
+        json.WriteEndObject();
+    }
+
+    private static void WriteEffect(Utf8JsonWriter json, EffectAction effect)
+    {
+        json.WriteStartObject("action");
+        json.WriteString("type", "effect");
+        json.WriteString("effectId", effect.Effect.Value);
+        json.WriteString("shortcut", effect.Shortcut!.ToString());
+        json.WriteBoolean("loop", effect.Loop);
+        if (effect.MaxLength is { } maxLength)
+        {
+            json.WriteNumber("maxSeconds", (int)maxLength.TotalSeconds);
+        }
+        else
+        {
+            json.WriteNull("maxSeconds");
+        }
+        json.WriteEndObject();
     }
 
     /// <exception cref="SettingsFormatException">
@@ -136,62 +154,71 @@ public static class SettingsJson
         using (document)
         {
             var root = Object(document.RootElement, "settings");
-            version = Int(root, "schemaVersion");
-            if (version is < 1 or > CurrentSchemaVersion)
-            {
-                throw new SettingsFormatException(
-                    $"Settings schema version {version} is not supported; this drawEM reads versions 1–{CurrentSchemaVersion}.");
-            }
-
+            version = ReadVersion(root);
             var drawing = Object(Property(root, "drawing"), "drawing");
-            var colorText = String(drawing, "color");
-            if (!HexColor.TryParse(colorText, out var color))
-            {
-                throw new SettingsFormatException($"drawing.color '{colorText}' is not a #RRGGBB color.");
-            }
-
-            var width = Int(drawing, "width");
-            if (!StrokeWidth.IsValid(width))
-            {
-                throw new SettingsFormatException(
-                    $"drawing.width {width} is outside {StrokeWidth.Min}–{StrokeWidth.Max}.");
-            }
-
-            var smoothing = version < 4
-                ? StrokeSmoothing.Bezier
-                : String(drawing, "smoothing") switch
-                {
-                    "none" => StrokeSmoothing.None,
-                    "bezier" => StrokeSmoothing.Bezier,
-                    var value => throw new SettingsFormatException($"drawing.smoothing '{value}' is not supported."),
-                };
-            var style = new DrawingStyle(color.Value, new StrokeWidth(width), smoothing);
+            var style = ReadStyle(drawing, version);
             var draw = ShortcutProperty(drawing, "drawShortcut");
             var clear = ShortcutProperty(drawing, "clearShortcut");
-
-            var slotsElement = Property(root, "slots");
-            if (slotsElement.ValueKind != JsonValueKind.Array)
-            {
-                throw new SettingsFormatException("slots must be an array.");
-            }
-
-            var schema = version;
-            var slots = slotsElement.EnumerateArray().Select(element => ReadSlot(element, schema)).ToArray();
+            var slots = ReadSlots(root, version);
             var validation = SettingsSnapshot.Validate(style, draw, clear, slots);
             return validation.Snapshot ?? throw new SettingsFormatException(
                 "Settings are invalid: " + string.Join(" ", validation.Errors));
         }
     }
 
+    private static int ReadVersion(JsonElement root)
+    {
+        var version = Int(root, "schemaVersion");
+        return version is < 1 or > CurrentSchemaVersion
+            ? throw new SettingsFormatException(
+                $"Settings schema version {version} is not supported; this drawEM reads versions 1–{CurrentSchemaVersion}.")
+            : version;
+    }
+
+    private static DrawingStyle ReadStyle(JsonElement drawing, int version)
+    {
+        var colorText = String(drawing, "color");
+        if (!HexColor.TryParse(colorText, out var color))
+        {
+            throw new SettingsFormatException($"drawing.color '{colorText}' is not a #RRGGBB color.");
+        }
+
+        var width = Int(drawing, "width");
+        if (!StrokeWidth.IsValid(width))
+        {
+            throw new SettingsFormatException(
+                $"drawing.width {width} is outside {StrokeWidth.Min}–{StrokeWidth.Max}.");
+        }
+
+        return new DrawingStyle(color.Value, new StrokeWidth(width), ReadSmoothing(drawing, version));
+    }
+
+    /// <summary>Files before schema 4 have no smoothing setting and draw with Bezier smoothing.</summary>
+    private static StrokeSmoothing ReadSmoothing(JsonElement drawing, int version) =>
+        version < 4
+            ? StrokeSmoothing.Bezier
+            : String(drawing, "smoothing") switch
+            {
+                "none" => StrokeSmoothing.None,
+                "bezier" => StrokeSmoothing.Bezier,
+                var value => throw new SettingsFormatException($"drawing.smoothing '{value}' is not supported."),
+            };
+
+    private static ActionSlot[] ReadSlots(JsonElement root, int version)
+    {
+        var slotsElement = Property(root, "slots");
+        if (slotsElement.ValueKind != JsonValueKind.Array)
+        {
+            throw new SettingsFormatException("slots must be an array.");
+        }
+
+        return slotsElement.EnumerateArray().Select(element => ReadSlot(element, version)).ToArray();
+    }
+
     private static ActionSlot ReadSlot(JsonElement element, int version)
     {
         var slot = Object(element, "slot entry");
-        var number = Int(slot, "slot");
-        if (number is < 1 or > ActionSlot.Count)
-        {
-            throw new SettingsFormatException($"Slot number {number} is outside 1–{ActionSlot.Count}.");
-        }
-
+        var number = ReadSlotNumber(slot);
         var action = Property(slot, "action");
         if (action.ValueKind == JsonValueKind.Null)
         {
@@ -199,11 +226,24 @@ public static class SettingsJson
         }
 
         Object(action, $"slot {number} action");
+        return new ActionSlot(number, ReadAction(action, number, version));
+    }
+
+    private static int ReadSlotNumber(JsonElement slot)
+    {
+        var number = Int(slot, "slot");
+        return number is < 1 or > ActionSlot.Count
+            ? throw new SettingsFormatException($"Slot number {number} is outside 1–{ActionSlot.Count}.")
+            : number;
+    }
+
+    private static SlotAction ReadAction(JsonElement action, int number, int version)
+    {
         var type = String(action, "type");
         return type switch
         {
-            "sound" => new ActionSlot(number, ReadSound(action, number)),
-            "effect" when version >= 2 => new ActionSlot(number, ReadEffect(action, number, version)),
+            "sound" => ReadSound(action, number),
+            "effect" when version >= 2 => ReadEffect(action, number, version),
             "effect" => throw new SettingsFormatException(
                 $"Slot {number} action type 'effect' is not supported in schema version {version}."),
             _ => throw new SettingsFormatException($"Slot {number} action type '{type}' is not supported."),
@@ -239,28 +279,25 @@ public static class SettingsJson
         }
 
         var shortcut = ShortcutProperty(action, "shortcut");
-        if (version < 3)
+        return version < 3
+            ? new EffectAction(effect, shortcut)
+            : new EffectAction(effect, shortcut, Boolean(action, "loop"), ReadMaxLength(action, number));
+    }
+
+    /// <summary><c>null</c> means no limit.</summary>
+    private static TimeSpan? ReadMaxLength(JsonElement action, int number)
+    {
+        if (Property(action, "maxSeconds").ValueKind == JsonValueKind.Null)
         {
-            return new EffectAction(effect, shortcut);
+            return null;
         }
 
-        var loop = Boolean(action, "loop");
-        var maxValue = Property(action, "maxSeconds");
-        TimeSpan? maxLength = null;
-        if (maxValue.ValueKind != JsonValueKind.Null)
-        {
-            var seconds = Int(action, "maxSeconds");
-            if (seconds is < EffectAction.MinSeconds or > EffectAction.MaxSeconds)
-            {
-                throw new SettingsFormatException(
-                    $"Slot {number} effect maxSeconds {seconds} is outside " +
-                    $"{EffectAction.MinSeconds}–{EffectAction.MaxSeconds}.");
-            }
-
-            maxLength = TimeSpan.FromSeconds(seconds);
-        }
-
-        return new EffectAction(effect, shortcut, loop, maxLength);
+        var seconds = Int(action, "maxSeconds");
+        return seconds is < EffectAction.MinSeconds or > EffectAction.MaxSeconds
+            ? throw new SettingsFormatException(
+                $"Slot {number} effect maxSeconds {seconds} is outside " +
+                $"{EffectAction.MinSeconds}–{EffectAction.MaxSeconds}.")
+            : TimeSpan.FromSeconds(seconds);
     }
 
     private static Shortcut ShortcutProperty(JsonElement element, string name)

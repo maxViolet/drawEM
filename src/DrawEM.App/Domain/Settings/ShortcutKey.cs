@@ -66,45 +66,45 @@ public readonly record struct ShortcutKey
     /// </summary>
     public static bool IsValid(ShortcutKey key) => key.Kind switch
     {
-        ShortcutKeyKind.Letter => key.Value is >= 'A' and <= 'Z',
-        ShortcutKeyKind.Digit => key.Value is >= 0 and <= 9,
-        ShortcutKeyKind.Function => key.Value is >= 1 and <= 12,
+        ShortcutKeyKind.Letter => InRange(key.Value, 'A', 'Z'),
+        ShortcutKeyKind.Digit => InRange(key.Value, 0, 9),
+        ShortcutKeyKind.Function => InRange(key.Value, 1, 12),
         _ => false,
     };
 
     /// <summary>Parses <c>A</c>–<c>Z</c>, <c>0</c>–<c>9</c>, or <c>F1</c>–<c>F12</c>, ignoring case.</summary>
     public static bool TryParse(string? text, [NotNullWhen(true)] out ShortcutKey? key)
     {
-        key = null;
-        if (string.IsNullOrEmpty(text))
-        {
-            return false;
-        }
-
-        if (text.Length == 1)
-        {
-            var c = char.ToUpperInvariant(text[0]);
-            if (c is >= 'A' and <= 'Z')
-            {
-                key = Letter(c);
-            }
-            else if (c is >= '0' and <= '9')
-            {
-                key = Digit(c - '0');
-            }
-
-            return key is not null;
-        }
-
-        if (text[0] is 'F' or 'f' && text.Length <= 3 && text[1] != '0' &&
-            int.TryParse(text.AsSpan(1), NumberStyles.None, CultureInfo.InvariantCulture, out var number) &&
-            number is >= 1 and <= 12)
-        {
-            key = Function(number);
-        }
-
+        key = string.IsNullOrEmpty(text) ? null
+            : text.Length == 1 ? ParseCharacter(text[0])
+            : ParseFunction(text);
         return key is not null;
     }
+
+    private static ShortcutKey? ParseCharacter(char character)
+    {
+        var c = char.ToUpperInvariant(character);
+        if (InRange(c, 'A', 'Z'))
+        {
+            return Letter(c);
+        }
+
+        return InRange(c, '0', '9') ? Digit(c - '0') : null;
+    }
+
+    /// <summary><c>F1</c>–<c>F12</c> with no leading zero, for text of two or more characters.</summary>
+    private static ShortcutKey? ParseFunction(string text) =>
+        HasFunctionPrefix(text) ? ParseFunctionNumber(text.AsSpan(1)) : null;
+
+    private static bool HasFunctionPrefix(string text) =>
+        char.ToUpperInvariant(text[0]) == 'F' && text.Length <= 3 && text[1] != '0';
+
+    private static ShortcutKey? ParseFunctionNumber(ReadOnlySpan<char> digits) =>
+        int.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out var number) && InRange(number, 1, 12)
+            ? Function(number)
+            : null;
+
+    private static bool InRange(int value, int min, int max) => value >= min && value <= max;
 
     public override string ToString() => Kind switch
     {

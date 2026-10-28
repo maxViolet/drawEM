@@ -67,24 +67,16 @@ public sealed class NotifyIconTrayHost : ITrayHost
         }
     }
 
-    private void OnChosen(TrayMenuCommand command)
+    private void OnChosen(TrayMenuCommand command) => RequestFor(command)?.Invoke();
+
+    private Action? RequestFor(TrayMenuCommand command) => command switch
     {
-        switch (command)
-        {
-            case TrayMenuCommand.Settings:
-                SettingsRequested?.Invoke();
-                break;
-            case TrayMenuCommand.StopEffects:
-                StopEffectsRequested?.Invoke();
-                break;
-            case TrayMenuCommand.Update:
-                UpdateRequested?.Invoke();
-                break;
-            case TrayMenuCommand.Exit:
-                ExitRequested?.Invoke();
-                break;
-        }
-    }
+        TrayMenuCommand.Settings => SettingsRequested,
+        TrayMenuCommand.StopEffects => StopEffectsRequested,
+        TrayMenuCommand.Update => UpdateRequested,
+        TrayMenuCommand.Exit => ExitRequested,
+        _ => null,
+    };
 
     public void Dispose()
     {

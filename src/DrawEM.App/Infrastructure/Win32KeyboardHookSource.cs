@@ -22,27 +22,10 @@ public sealed class Win32KeyboardHookSource : INeutralKeyEmitter, IDisposable
 
     public IKeyboardHookSource Events => events;
 
-    private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
-    {
-        if (nCode >= NativeMethods.HC_ACTION)
-        {
-            var data = Marshal.PtrToStructure<NativeMethods.KBDLLHOOKSTRUCT>(lParam);
-            KeyDirection? direction = wParam.ToInt32() switch
-            {
-                NativeMethods.WM_KEYDOWN or NativeMethods.WM_SYSKEYDOWN => KeyDirection.Down,
-                NativeMethods.WM_KEYUP or NativeMethods.WM_SYSKEYUP => KeyDirection.Up,
-                _ => null,
-            };
-
-            if (direction is { } keyDirection
-                && events.Handle((int)data.vkCode, keyDirection, (nuint)data.dwExtraInfo))
-            {
-                return NativeMethods.SuppressMessage;
-            }
-        }
-
-        return NativeMethods.CallNextHookEx(hookHandle, nCode, wParam, lParam);
-    }
+    private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam) =>
+        events.HandleHook(nCode, wParam, lParam)
+            ? NativeMethods.SuppressMessage
+            : NativeMethods.CallNextHookEx(hookHandle, nCode, wParam, lParam);
 
     public void Dispose()
     {

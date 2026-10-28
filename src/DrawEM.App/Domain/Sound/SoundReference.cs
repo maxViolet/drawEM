@@ -11,7 +11,7 @@ public sealed record SoundReference
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(libraryFileName);
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
-        if (libraryFileName.Contains('\\') || libraryFileName.Contains('/') || libraryFileName.Contains(':') || libraryFileName is "." or "..")
+        if (ContainsPath(libraryFileName))
         {
             throw new ArgumentException("Library file name must not contain a path.", nameof(libraryFileName));
         }
@@ -19,6 +19,9 @@ public sealed record SoundReference
         LibraryFileName = libraryFileName;
         DisplayName = displayName;
     }
+
+    private static bool ContainsPath(string name) =>
+        name.Contains('\\') || name.Contains('/') || name.Contains(':') || name is "." or "..";
 
     public string LibraryFileName { get; }
 

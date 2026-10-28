@@ -45,48 +45,69 @@ public sealed class EffectChannelController : IDisposable
             return null;
         }
 
-        if (command.Loop
-            && active is { } current
-            && current.Instance.Command.Loop
-            && current.Instance.Command.Slot == command.Slot
-            && current.Instance.Command.ConfigurationGeneration == command.ConfigurationGeneration)
+        var togglesOff = command.Loop && IsActiveLoopOf(command);
+        Stop();
+        if (togglesOff)
         {
-            Stop();
             return null;
         }
 
-        Stop();
-
         // StartedAt is the wall-clock record; the deadline uses elapsed time, which a clock change cannot move.
         var showing = time.GetTimestamp();
+        if (Show(command) is not { } run)
+        {
+            return null;
+        }
+
+        Activate(run);
+        ScheduleDeadline(run, showing);
+        return run.Instance;
+    }
+
+    private bool IsActiveLoopOf(StartEffectCommand command) =>
+        active is { } current
+        && current.Instance.Command.Loop
+        && current.Instance.Command.Slot == command.Slot
+        && current.Instance.Command.ConfigurationGeneration == command.ConfigurationGeneration;
+
+    /// <returns>The shown run, or <c>null</c> after reporting why the surface could not show it.</returns>
+    private Run? Show(StartEffectCommand command)
+    {
         var instance = new EffectInstance(new EffectInstanceId(++lastInstanceId), command, time.GetUtcNow());
-        IEffectPlayback playback;
         try
         {
-            playback = surface.Show(instance);
+            // The run object is the generation token: callbacks act only while it is still active.
+            return new Run(instance, surface.Show(instance));
         }
         catch (EffectPlaybackException exception)
         {
             failures.Report(instance, exception.Message);
             return null;
         }
+    }
 
-        // The run object is the generation token: callbacks act only while it is still active.
-        var run = new Run(instance, playback);
-        if (!command.Loop)
+    private void Activate(Run run)
+    {
+        if (!run.Instance.Command.Loop)
         {
             run.OnCompleted = () => End(run);
-            playback.Completed += run.OnCompleted;
+            run.Playback.Completed += run.OnCompleted;
         }
 
         run.OnFailed = reason => End(run, reason);
-        playback.Failed += run.OnFailed;
+        run.Playback.Failed += run.OnFailed;
         active = run;
-        ActiveInstanceChanged?.Invoke(instance);
+        ActiveInstanceChanged?.Invoke(run.Instance);
+    }
 
-        if (command.Loop || command.MaxLength is not { } maxLength)
+    /// <summary>The max length of a one-shot effect; a loop plays until stopped.</summary>
+    private static TimeSpan? Limit(StartEffectCommand command) => command.Loop ? null : command.MaxLength;
+
+    private void ScheduleDeadline(Run run, long showing)
+    {
+        if (Limit(run.Instance.Command) is not { } maxLength)
         {
-            return instance;
+            return;
         }
 
         // The deadline counts from the start, so time spent inside Show shortens what remains.
@@ -94,12 +115,11 @@ public sealed class EffectChannelController : IDisposable
         if (remaining <= TimeSpan.Zero)
         {
             End(run);
-            return instance;
+            return;
         }
 
         run.Deadline = time.CreateTimer(
             _ => dispatch(() => End(run)), null, remaining, Timeout.InfiniteTimeSpan);
-        return instance;
     }
 
     /// <summary>Releases the active instance, if any. The channel stays usable.</summary>
@@ -151,6 +171,17 @@ public sealed class EffectChannelController : IDisposable
         }
 
         active = null;
+        var releaseFailure = Release(run);
+
+        // Report only after the playback is released, so logging never delays the release.
+        Report(run.Instance, failureReason);
+        Report(run.Instance, releaseFailure);
+        ActiveInstanceChanged?.Invoke(null);
+    }
+
+    /// <returns>Why the playback could not be released, or <c>null</c>.</returns>
+    private static string? Release(Run run)
+    {
         if (run.OnCompleted is not null)
         {
             run.Playback.Completed -= run.OnCompleted;
@@ -158,27 +189,23 @@ public sealed class EffectChannelController : IDisposable
 
         run.Playback.Failed -= run.OnFailed;
         run.Deadline?.Dispose();
-
-        string? releaseFailure = null;
         try
         {
             run.Playback.Dispose();
+            return null;
         }
         catch (EffectPlaybackException exception)
         {
-            releaseFailure = exception.Message;
+            return exception.Message;
         }
+    }
 
-        // Report only after the playback is released, so logging never delays the release.
-        foreach (var reason in new[] { failureReason, releaseFailure })
+    private void Report(EffectInstance instance, string? reason)
+    {
+        if (reason is not null)
         {
-            if (reason is not null)
-            {
-                failures.Report(run.Instance, reason);
-            }
+            failures.Report(instance, reason);
         }
-
-        ActiveInstanceChanged?.Invoke(null);
     }
 
     private sealed class Run(EffectInstance instance, IEffectPlayback playback)
