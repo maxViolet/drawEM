@@ -49,7 +49,7 @@ public class KeyboardHookEventsTests
         var events = new KeyboardHookEvents();
         events.SetKeyHandler((_, _) => true);
 
-        Assert.False(events.HandleHook(-1, (IntPtr)(1L << 32), IntPtr.Zero));
+        Assert.False(events.HandleHook(-1, new IntPtr(1L << 32), IntPtr.Zero));
     }
 
     [Fact]

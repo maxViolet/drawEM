@@ -107,7 +107,7 @@ public class MouseHookEventsTests
     {
         var events = Suppressing(out var calls);
 
-        Assert.False(events.HandleHook(-1, (IntPtr)(1L << 32), IntPtr.Zero));
+        Assert.False(events.HandleHook(-1, new IntPtr(1L << 32), IntPtr.Zero));
         Assert.Equal(0, calls());
     }
 
