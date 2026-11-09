@@ -126,7 +126,7 @@ public partial class App : System.Windows.Application
             // Stops an effect when the cursor enters another monitor, drawing or not; frames recheck the cursor.
             // A display change also stops it and drops queued starts.
             var monitorGuard = new EffectMonitorGuard(
-                mouseHookSource, displays, monitorBoundsSource, cursor, effects, dispatchToUi);
+                mouseHookSource.Events, displays, monitorBoundsSource, cursor, effects, dispatchToUi);
             surface.FrameStarting += monitorGuard.CheckCursor;
             var shortcuts = new GlobalShortcutAdapter(
                 keyboardHookSource.Events,
@@ -141,7 +141,7 @@ public partial class App : System.Windows.Application
                 monitorGuard);
 
             _ = new GlobalMouseInputAdapter(
-                mouseHookSource, controller, inputGate, dispatchToUi, monitorBoundsSource);
+                mouseHookSource.Events, controller, inputGate, dispatchToUi, monitorBoundsSource);
 
             overlayWindow.Show();
 

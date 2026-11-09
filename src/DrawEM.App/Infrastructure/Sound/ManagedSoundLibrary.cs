@@ -42,13 +42,7 @@ public sealed partial class ManagedSoundLibrary : ISoundLibrary
     public SoundReference Import(string sourceFile)
     {
         ArgumentNullException.ThrowIfNull(sourceFile);
-        var displayName = Path.GetFileName(sourceFile);
-        var extension = Path.GetExtension(sourceFile).ToLowerInvariant();
-        if (string.IsNullOrWhiteSpace(displayName) || extension is not (".wav" or ".mp3"))
-        {
-            throw new SoundImportException($"'{sourceFile}' is not a WAV or MP3 file.");
-        }
-
+        var (displayName, extension) = SoundFileName(sourceFile);
         var temp = PathFor(TempPrefix + Guid.NewGuid().ToString("N") + TempSuffix);
         try
         {
@@ -60,19 +54,7 @@ public sealed partial class ManagedSoundLibrary : ISoundLibrary
 
             Directory.CreateDirectory(directory);
             var (hash, length) = CopyHashed(sourceFile, temp, displayName);
-            var name = hash + extension;
-            var target = PathFor(name);
-            lock (gate)
-            {
-                if (!IsIntactCopy(target, hash, length))
-                {
-                    File.Move(temp, target, overwrite: true);
-                }
-
-                draftImports.Add(name);
-            }
-
-            return new SoundReference(name, displayName);
+            return new SoundReference(Store(temp, hash + extension, hash, length), displayName);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException or NotSupportedException or SecurityException or ArgumentException)
         {
@@ -82,6 +64,37 @@ public sealed partial class ManagedSoundLibrary : ISoundLibrary
         {
             TryDelete(temp);
         }
+    }
+
+    /// <summary>The display name and lower-case extension of a WAV or MP3 file.</summary>
+    /// <exception cref="SoundImportException">The path does not name a WAV or MP3 file.</exception>
+    private static (string DisplayName, string Extension) SoundFileName(string sourceFile)
+    {
+        var displayName = Path.GetFileName(sourceFile);
+        var extension = Path.GetExtension(sourceFile).ToLowerInvariant();
+        return string.IsNullOrWhiteSpace(displayName) || extension is not (".wav" or ".mp3")
+            ? throw new SoundImportException($"'{sourceFile}' is not a WAV or MP3 file.")
+            : (displayName, extension);
+    }
+
+    /// <summary>
+    /// Moves the hashed copy to <paramref name="name"/> unless an intact copy is already there, and records it
+    /// as a draft import.
+    /// </summary>
+    private string Store(string temp, string name, string hash, long length)
+    {
+        var target = PathFor(name);
+        lock (gate)
+        {
+            if (!IsIntactCopy(target, hash, length))
+            {
+                File.Move(temp, target, overwrite: true);
+            }
+
+            draftImports.Add(name);
+        }
+
+        return name;
     }
 
     public IReadOnlyList<SoundCleanupFailure> DiscardDraft(SettingsSnapshot saved)

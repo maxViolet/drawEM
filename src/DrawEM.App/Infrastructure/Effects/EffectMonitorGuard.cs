@@ -123,18 +123,8 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
 
     private void Observe(ScreenPoint point)
     {
-        if (!monitorKnown)
-        {
-            monitor = monitors.TryGetBounds(anchor, out var pressed) ? pressed : null;
-            monitorKnown = true;
-        }
-
-        if (monitor is { } current && current.Contains(point))
-        {
-            return;
-        }
-
-        if (!monitors.TryGetBounds(point, out var entered))
+        EnsureMonitorKnown();
+        if (IsOnMonitor(point) || !monitors.TryGetBounds(point, out var entered))
         {
             return;
         }
@@ -143,6 +133,17 @@ public sealed class EffectMonitorGuard : IEffectStartQueue
         var reached = Interlocked.Increment(ref epoch);
         dispatch(() => channel.StopStartedBefore(reached));
     }
+
+    private void EnsureMonitorKnown()
+    {
+        if (!monitorKnown)
+        {
+            monitor = monitors.TryGetBounds(anchor, out var pressed) ? pressed : null;
+            monitorKnown = true;
+        }
+    }
+
+    private bool IsOnMonitor(ScreenPoint point) => monitor is { } current && current.Contains(point);
 
     /// <summary>
     /// Invalidates queued starts at once, on any thread. Then, on the UI thread, stops the effect and forgets the

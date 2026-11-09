@@ -128,18 +128,29 @@ public class SettingsSnapshotTests
         Assert.Equal([new SettingsError(SettingsErrorCode.InvalidWidth)], result.Errors);
     }
 
-    [Fact]
-    public void Validate_RejectsFilledSlotWithoutSound()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(9)]
+    public void SettingsCommand_ForSlotRejectsNumberOutsideOneToEight(int slot)
     {
-        var slots = EmptySlots();
+        Assert.Throws<ArgumentOutOfRangeException>(() => SettingsCommand.ForSlot(slot));
+    }
+
+    [Fact]
+    public void SettingsCommand_HasNoPublicConstructorAndOnlyDrawAndClearWithoutSlot()
+    {
+        Assert.Empty(typeof(SettingsCommand).GetConstructors());
+        Assert.Equal(SettingsCommand.Draw, default);
+        Assert.Equal((SettingsCommandKind.Clear, 0), (SettingsCommand.Clear.Kind, SettingsCommand.Clear.Slot));
+        Assert.Equal((SettingsCommandKind.Slot, 8), (SettingsCommand.ForSlot(8).Kind, SettingsCommand.ForSlot(8).Slot));
+    }
+
+    [Fact]
+    public void SoundAction_WithRejectsNullSound()
+    {
         var filled = new SoundAction(new SoundReference("a.wav", "a.wav"), Keys("Ctrl+Alt+1"));
-        slots[0] = new ActionSlot(1, filled with { Sound = null! });
 
-        var result = SettingsSnapshot.Validate(Style, Draw, Clear, slots);
-
-        Assert.False(result.IsValid);
-        Assert.Equal([new SettingsError(SettingsErrorCode.MissingSound, SettingsCommand.ForSlot(1))], result.Errors);
-        Assert.Equal("Slot 1 requires a sound.", result.Errors[0].ToString());
+        Assert.Throws<ArgumentNullException>(() => filled with { Sound = null! });
     }
 
     [Fact]
@@ -175,19 +186,28 @@ public class SettingsSnapshotTests
     [Theory]
     [InlineData(0)]
     [InlineData(61)]
-    public void Validate_RejectsEffectLengthOutsideOneToSixtySeconds(int seconds)
+    [InlineData(1.5)]
+    public void EffectAction_RejectsLengthThatIsNotWholeSecondsFromOneToSixty(double seconds)
     {
-        var slots = EmptySlots();
-        slots[0] = new ActionSlot(
-            1,
-            new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+1"), false, TimeSpan.FromSeconds(seconds)));
+        var length = TimeSpan.FromSeconds(seconds);
+        var valid = new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+1"));
 
-        var result = SettingsSnapshot.Validate(Style, Draw, Clear, slots);
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+1"), false, length));
+        Assert.Throws<ArgumentOutOfRangeException>(() => valid with { MaxLength = length });
+    }
 
-        Assert.Equal(
-            [new SettingsError(SettingsErrorCode.InvalidEffectLength, SettingsCommand.ForSlot(1))],
-            result.Errors);
-        Assert.Equal("Slot 1 max length must be a whole number from 1–60 seconds.", result.Errors[0].ToString());
+    [Theory]
+    [InlineData(1)]
+    [InlineData(60)]
+    public void EffectAction_AcceptsWholeSecondsFromOneToSixty(int seconds)
+    {
+        var length = TimeSpan.FromSeconds(seconds);
+        var valid = new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+1"));
+
+        Assert.Equal(length, new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+1"), false, length).MaxLength);
+        Assert.Equal(length, (valid with { MaxLength = length }).MaxLength);
+        Assert.Null((valid with { MaxLength = null }).MaxLength);
     }
 
     [Fact]
@@ -217,16 +237,11 @@ public class SettingsSnapshotTests
     }
 
     [Fact]
-    public void Validate_RejectsEffectSlotWithoutEffect()
+    public void EffectAction_WithRejectsNullEffect()
     {
-        var slots = EmptySlots();
         var filled = new EffectAction(new EffectId("confetti"), Keys("Ctrl+Alt+1"));
-        slots[0] = new ActionSlot(1, filled with { Effect = null! });
 
-        var result = SettingsSnapshot.Validate(Style, Draw, Clear, slots);
-
-        Assert.Equal([new SettingsError(SettingsErrorCode.MissingEffect, SettingsCommand.ForSlot(1))], result.Errors);
-        Assert.Equal("Slot 1 requires an effect.", result.Errors[0].ToString());
+        Assert.Throws<ArgumentNullException>(() => filled with { Effect = null! });
     }
 
     [Fact]

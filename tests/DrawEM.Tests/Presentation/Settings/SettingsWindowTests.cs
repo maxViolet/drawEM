@@ -2,10 +2,12 @@ using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using System.Windows;
 using DrawEM.App.Application.Settings;
+using DrawEM.App.Domain.Drawing;
 using DrawEM.App.Domain.Effects;
 using DrawEM.App.Domain.Settings;
 using DrawEM.App.Domain.Sound;
@@ -270,6 +272,115 @@ public sealed class SettingsWindowTests
             Assert.True(window.MinHeight <= workArea, $"Minimum height {window.MinHeight} exceeds {workArea}.");
             window.Close();
         });
+    }
+
+    [Fact]
+    public void WidthBox_UpAndDownArrowsStepTheWidthAndPutTheCaretAtTheEnd()
+    {
+        StaThread.Run(() =>
+        {
+            var (window, model, _) = ShowDefault();
+            var box = (TextBox)window.FindName("WidthBox");
+
+            Assert.True(PressKey(box, Key.Up));
+            Assert.Equal("5", model.WidthText);
+            Assert.Equal(box.Text.Length, box.CaretIndex);
+            Assert.True(PressKey(box, Key.Down));
+            Assert.True(PressKey(box, Key.Down));
+            Assert.Equal("3", model.WidthText);
+            Assert.False(PressKey(box, Key.Left));
+            Assert.Equal("3", model.WidthText);
+            window.Close();
+        });
+    }
+
+    [Fact]
+    public void Maximize_InsetsTheFrameAndShowsRestore()
+    {
+        StaThread.Run(() =>
+        {
+            var (window, _, _) = ShowDefault();
+            var frame = (Border)window.FindName("Frame");
+            var maximize = (Button)window.FindName("MaximizeButton");
+
+            window.WindowState = WindowState.Maximized;
+            Assert.Equal(SystemParameters.WindowResizeBorderThickness, frame.Margin);
+            Assert.Equal("", maximize.Content);
+            window.WindowState = WindowState.Normal;
+            Assert.Equal(default, frame.Margin);
+            Assert.Equal("", maximize.Content);
+            window.Close();
+        });
+    }
+
+    [Fact]
+    public void Save_ClosesTheWindowOnlyWhenTheDraftIsSaved()
+    {
+        StaThread.Run(() =>
+        {
+            var (window, _, save) = ShowDefault();
+            var closed = false;
+            window.Closed += (_, _) => closed = true;
+            var button = (Button)window.FindName("SaveButton");
+
+            save.Result = new SettingsSaveResult.NotSaved("disk full");
+            button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+            Assert.False(closed);
+            save.Result = null;
+            button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+            Assert.True(closed);
+            Assert.Single(save.Saved);
+        });
+    }
+
+    [Fact]
+    public void PickColor_SetsThePickedColorAndKeepsTheDraftWhenCancelled()
+    {
+        StaThread.Run(() =>
+        {
+            var (window, model, _) = ShowDefault();
+            var offered = new List<HexColor>();
+            HexColor? picked = null;
+            window.PickColor = current =>
+            {
+                offered.Add(current);
+                return picked;
+            };
+            var button = (Button)window.FindName("PickColorButton");
+
+            button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+            Assert.Equal("#FF4500", model.HexText);
+            picked = new HexColor(0x12, 0x34, 0x56);
+            button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+            Assert.Equal("#123456", model.HexText);
+            Assert.Equal([new HexColor(0xFF, 0x45, 0x00), new HexColor(0xFF, 0x45, 0x00)], offered);
+            window.Close();
+        });
+    }
+
+    private static (SettingsWindow Window, SettingsViewModel Model, FakeSettingsSave Save) ShowDefault()
+    {
+        var active = SettingsSnapshot.Default;
+        var save = new FakeSettingsSave();
+        var window = new SettingsWindow();
+        var model = new SettingsViewModel(
+            new SettingsEditor(() => active, new FakeLibrary(), save, new FakeSampler(), new FakeEffectSampler(), _ => { }),
+            new FakeCapture(),
+            window);
+        Show(window, model);
+        Layout(window);
+        return (window, model, save);
+    }
+
+    /// <returns>Whether the window handled the key.</returns>
+    private static bool PressKey(UIElement element, Key key)
+    {
+        var args = new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(element)!, 0, key)
+        {
+            RoutedEvent = Keyboard.PreviewKeyDownEvent,
+        };
+        element.RaiseEvent(args);
+        return args.Handled;
     }
 
     /// <summary>How many device-independent screen units one layout unit of <paramref name="element"/> spans.</summary>

@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 
 namespace DrawEM.App.Domain.Settings;
 
@@ -93,18 +94,18 @@ public sealed record Shortcut
         }
 
         var tokens = text.Split('+');
-        var modifiers = ShortcutModifiers.None;
-        foreach (var token in tokens[..^1])
-        {
-            var modifier = token.ToUpperInvariant() switch
-            {
-                "CTRL" => ShortcutModifiers.Control,
-                "ALT" => ShortcutModifiers.Alt,
-                "SHIFT" => ShortcutModifiers.Shift,
-                "WIN" => ShortcutModifiers.Windows,
-                _ => ShortcutModifiers.None,
-            };
+        return TryParseModifiers(tokens[..^1], out var modifiers)
+            && ShortcutKey.TryParse(tokens[^1], out var key)
+            && TryCreate(modifiers, key.Value, out shortcut, out error);
+    }
 
+    /// <summary>Each token names one modifier, and no modifier appears twice.</summary>
+    private static bool TryParseModifiers(string[] tokens, out ShortcutModifiers modifiers)
+    {
+        modifiers = ShortcutModifiers.None;
+        foreach (var token in tokens)
+        {
+            var modifier = ParseModifier(token);
             if (modifier == ShortcutModifiers.None || modifiers.HasFlag(modifier))
             {
                 return false;
@@ -113,13 +114,17 @@ public sealed record Shortcut
             modifiers |= modifier;
         }
 
-        if (!ShortcutKey.TryParse(tokens[^1], out var key))
-        {
-            return false;
-        }
-
-        return TryCreate(modifiers, key.Value, out shortcut, out error);
+        return true;
     }
+
+    private static ShortcutModifiers ParseModifier(string token) => token.ToUpperInvariant() switch
+    {
+        "CTRL" => ShortcutModifiers.Control,
+        "ALT" => ShortcutModifiers.Alt,
+        "SHIFT" => ShortcutModifiers.Shift,
+        "WIN" => ShortcutModifiers.Windows,
+        _ => ShortcutModifiers.None,
+    };
 
     /// <summary>Canonical text: modifiers in the order Ctrl, Alt, Shift, then the key.</summary>
     public override string ToString()
@@ -156,9 +161,7 @@ public sealed record Shortcut
             return ShortcutError.Unrecognized;
         }
 
-        var count = (modifiers.HasFlag(ShortcutModifiers.Control) ? 1 : 0) +
-            (modifiers.HasFlag(ShortcutModifiers.Alt) ? 1 : 0) +
-            (modifiers.HasFlag(ShortcutModifiers.Shift) ? 1 : 0);
-        return count >= 2 ? ShortcutError.None : ShortcutError.TooFewModifiers;
+        // Only Ctrl, Alt, and Shift are left, so each set bit is one of them.
+        return BitOperations.PopCount((uint)modifiers) >= 2 ? ShortcutError.None : ShortcutError.TooFewModifiers;
     }
 }

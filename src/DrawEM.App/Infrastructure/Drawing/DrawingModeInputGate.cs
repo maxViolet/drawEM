@@ -51,12 +51,12 @@ public sealed class DrawingModeInputGate
         drawPoint = point;
         lock (sync)
         {
-            if (active == Inactive || activeBounds is not { } bounds || bounds.Contains(point))
+            if (StartingMonitorLeftBy(point) is not { } bounds)
             {
                 return false;
             }
 
-            if (!monitors.TryGetBounds(point, out var monitor) || monitor == bounds)
+            if (!IsOnAnotherMonitor(monitors, point, bounds))
             {
                 drawPoint = bounds.Clamp(point);
                 return false;
@@ -68,6 +68,13 @@ public sealed class DrawingModeInputGate
             return true;
         }
     }
+
+    /// <summary>The starting monitor while the gate is open and <paramref name="point"/> is outside it.</summary>
+    private MonitorBounds? StartingMonitorLeftBy(ScreenPoint point) =>
+        active != Inactive && activeBounds is { } bounds && !bounds.Contains(point) ? bounds : null;
+
+    private static bool IsOnAnotherMonitor(IMonitorBoundsSource monitors, ScreenPoint point, MonitorBounds bounds) =>
+        monitors.TryGetBounds(point, out var monitor) && monitor != bounds;
 
     public void BlockUntilReleased()
     {

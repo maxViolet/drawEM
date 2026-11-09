@@ -98,14 +98,18 @@ internal static class NativeMethods
         public uint dwFlags;
     }
 
-    internal static bool IsPointerButtonMessage(int message) => message is
-        WM_LBUTTONDOWN or WM_LBUTTONUP or
-        WM_RBUTTONDOWN or WM_RBUTTONUP or
-        WM_MBUTTONDOWN or WM_MBUTTONUP or
-        WM_XBUTTONDOWN or WM_XBUTTONUP;
+    internal static bool IsPointerButtonMessage(int message) => PointerButtonMessages.Contains(message);
 
     internal static bool IsPointerWheelMessage(int message) =>
         message is WM_MOUSEWHEEL or WM_MOUSEHWHEEL;
+
+    private static readonly HashSet<int> PointerButtonMessages =
+    [
+        WM_LBUTTONDOWN, WM_LBUTTONUP,
+        WM_RBUTTONDOWN, WM_RBUTTONUP,
+        WM_MBUTTONDOWN, WM_MBUTTONUP,
+        WM_XBUTTONDOWN, WM_XBUTTONUP,
+    ];
 
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern IntPtr SetWindowsHookEx(

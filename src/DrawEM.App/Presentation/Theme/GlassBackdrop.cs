@@ -90,11 +90,20 @@ public static class GlassBackdrop
             return;
         }
 
+        ClearCompositionBackground(handle);
+        SetFrameAttributes(handle, theme);
+    }
+
+    private static void ClearCompositionBackground(IntPtr handle)
+    {
         if (HwndSource.FromHwnd(handle)?.CompositionTarget is { } target)
         {
             target.BackgroundColor = Colors.Transparent;
         }
+    }
 
+    private static void SetFrameAttributes(IntPtr handle, UiTheme theme)
+    {
         var dark = theme == UiTheme.Dark ? 1 : 0;
         var corners = NativeMethods.DWMWCP_ROUND;
         var backdrop = NativeMethods.DWMSBT_TRANSIENTWINDOW;

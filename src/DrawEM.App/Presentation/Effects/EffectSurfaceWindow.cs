@@ -118,7 +118,7 @@ public sealed class EffectSurfaceWindow : Window
         NativeMethods.SetWindowLong(handle, NativeMethods.GWL_EXSTYLE, exStyle);
     }
 
-    private static IntPtr WindowProcedure(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
+    internal static IntPtr WindowProcedure(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         switch (message)
         {
