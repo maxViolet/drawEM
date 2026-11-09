@@ -1,1 +1,5 @@
 graphify-out/graph.json merge=graphify
+# Video fixtures are hashed in tests/DrawEM.Tests/Fixtures/Video/SHA256SUMS.txt; never convert them or the manifest,
+# which New-VideoFixtures.ps1 -Verify compares byte for byte.
+*.mp4 binary
+tests/DrawEM.Tests/Fixtures/Video/SHA256SUMS.txt text eol=lf

@@ -9,7 +9,7 @@ in [steps](STEPS.md).
 
 | Outcome | Task IDs | Status |
 |---|---|---|
-| Fullscreen MP4 actions, including import, playback, controls, and published-app verification | `S5-01`–`S5-05` | Planned |
+| Fullscreen MP4 actions, including import, playback, controls, and published-app verification | `S5-01`–`S5-05` | S5-01 done; S5-02–S5-05 planned |
 
 ## Package structure
 
